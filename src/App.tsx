@@ -56,6 +56,29 @@ export const App: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+  const [newVersionAvailable, setNewVersionAvailable] = useState(false);
+
+  // Check for app version updates from server
+  const CLIENT_BUILD_VERSION = '2026.11.08.3';
+  useEffect(() => {
+    const checkVersion = async () => {
+      try {
+        const res = await fetch('/api/version', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.version && data.version !== CLIENT_BUILD_VERSION) {
+            setNewVersionAvailable(true);
+          }
+        }
+      } catch (e) {
+        // offline
+      }
+    };
+
+    checkVersion();
+    const verTimer = setInterval(checkVersion, 30000);
+    return () => clearInterval(verTimer);
+  }, []);
 
   // Listen for PWA beforeinstallprompt on supported browsers
   useEffect(() => {
@@ -848,6 +871,30 @@ export const App: React.FC = () => {
         deferredPrompt={deferredPrompt}
         onDirectInstall={handleDirectInstall}
       />
+
+      {/* Floating App Update Notification Banner */}
+      {newVersionAvailable && (
+        <div className="fixed bottom-5 left-4 right-4 max-w-md mx-auto z-50 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white shadow-2xl shadow-emerald-500/40 border border-emerald-300 flex items-center justify-between animate-bounce">
+          <div className="flex items-center space-x-2.5">
+            <Sparkles className="w-5 h-5 text-amber-300 animate-spin" />
+            <div>
+              <div className="font-black text-xs sm:text-sm">Yeni Güncelleme Yayında!</div>
+              <div className="text-[10px] text-emerald-100">Yeni özellikler ve düzeltmeler hazır.</div>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              if ('caches' in window) {
+                caches.keys().then(names => names.forEach(name => caches.delete(name)));
+              }
+              window.location.reload();
+            }}
+            className="px-3.5 py-1.5 rounded-xl bg-slate-950 text-emerald-300 font-black text-xs shadow-md hover:bg-slate-900 active:scale-95 transition-all cursor-pointer whitespace-nowrap border border-emerald-500/40"
+          >
+            🔄 Şimdi Güncelle
+          </button>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="mt-16 border-t border-slate-800/80 bg-slate-950 py-8">

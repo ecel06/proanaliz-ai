@@ -193,6 +193,16 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
+const APP_VERSION = '2026.11.08.3';
+
+app.get('/api/version', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.json({
+    version: APP_VERSION,
+    timestamp: Date.now()
+  });
+});
+
 app.get('/api/network-info', (req, res) => {
   const ip = getNetworkIp();
   res.json({
