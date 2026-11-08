@@ -12,7 +12,8 @@ import {
   Flame, 
   Smartphone,
   Layers,
-  Bot
+  Bot,
+  Ticket
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -30,6 +31,8 @@ interface HeaderProps {
   activeTabMode?: string;
   hasNewUpdate?: boolean;
   onUpdateApp?: () => void;
+  betslipCount?: number;
+  onOpenBetslip?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -46,7 +49,9 @@ export const Header: React.FC<HeaderProps> = ({
   isInstallable = false,
   activeTabMode = 'upcoming',
   hasNewUpdate = false,
-  onUpdateApp
+  onUpdateApp,
+  betslipCount = 0,
+  onOpenBetslip
 }) => {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl">
@@ -167,6 +172,21 @@ export const Header: React.FC<HeaderProps> = ({
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                   </span>
                 )}
+              </button>
+            )}
+
+            {/* User Betslip Button (if items in slip) */}
+            {betslipCount > 0 && onOpenBetslip && (
+              <button
+                onClick={onOpenBetslip}
+                className="flex items-center space-x-1.5 px-2.5 sm:px-3 sm:py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-extrabold text-xs border border-emerald-500/40 transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95 animate-pulse"
+                title="Kuponumu Aç & Hesapla"
+              >
+                <Ticket className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
+                <span className="hidden md:inline">Kuponum</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 font-black text-[10px]">
+                  {betslipCount}
+                </span>
               </button>
             )}
 

@@ -139,3 +139,14 @@ export interface MatchAnalysis {
   aiComment: string;
 }
 
+export interface UserBetslipItem {
+  id: string; // `${match.id}_${pickKey}`
+  matchId: string;
+  match: Match;
+  marketName: string;
+  pickKey: string;
+  pickLabel: string;
+  odd: number;
+  probability: number;
+}
+

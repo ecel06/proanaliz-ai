@@ -2,8 +2,9 @@
 // ProAnaliz AI - Complete Live Multi-League Football Analytics App
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Match, MatchAnalysis } from './types';
+import { Match, MatchAnalysis, UserBetslipItem } from './types';
 import { analyzeMatch } from './utils/predictionEngine';
+import { BettingPickOption } from './utils/oddsHelper';
 import { Header } from './components/Header';
 import { Filters, CategoryFilter, SortOption } from './components/Filters';
 import { LeagueTreeSelector } from './components/LeagueTreeSelector';
@@ -14,6 +15,7 @@ import { CustomMatchAnalyzer } from './components/CustomMatchAnalyzer';
 import { StandingsModal } from './components/StandingsModal';
 import { InstallAppModal } from './components/InstallAppModal';
 import { AIChatModal } from './components/AIChatModal';
+import { BetslipDrawer } from './components/BetslipDrawer';
 import { isMatchInLeague, POPULAR_LEAGUES } from './utils/leagueHelper';
 import {
   groupMatchesByCountry,
@@ -59,11 +61,49 @@ export const App: React.FC = () => {
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+
+  // User Betslip (Kullanıcı Kuponu & Hesaplayıcı)
+  const [betslipItems, setBetslipItems] = useState<UserBetslipItem[]>([]);
+  const [isBetslipOpen, setIsBetslipOpen] = useState(false);
+
+  const handleToggleBetslip = (match: Match, option: BettingPickOption) => {
+    setBetslipItems((prev) => {
+      const exists = prev.find((it) => it.matchId === match.id && it.pickKey === option.key);
+      if (exists) {
+        return prev.filter((it) => it.id !== exists.id);
+      }
+      const otherFromMatch = prev.filter((it) => it.matchId !== match.id);
+      const newItem: UserBetslipItem = {
+        id: `${match.id}_${option.key}`,
+        matchId: match.id,
+        match,
+        marketName: option.marketName,
+        pickKey: option.key,
+        pickLabel: option.label,
+        odd: option.odd,
+        probability: option.probability
+      };
+      return [...otherFromMatch, newItem];
+    });
+  };
+
+  const handleRemoveBetslipItem = (id: string) => {
+    setBetslipItems((prev) => prev.filter((it) => it.id !== id));
+  };
+
+  const handleClearBetslip = () => {
+    setBetslipItems([]);
+  };
+
+  const handleConsultAIFromSlip = (couponSummary: string) => {
+    setIsAIChatOpen(true);
+  };
+
   const [newVersionAvailable, setNewVersionAvailable] = useState(false);
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.08.9';
+  const CLIENT_BUILD_VERSION = '2026.11.08.10';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -453,6 +493,8 @@ export const App: React.FC = () => {
         activeTabMode={activeTabMode}
         hasNewUpdate={newVersionAvailable}
         onUpdateApp={handleUpdateApp}
+        betslipCount={betslipItems.length}
+        onOpenBetslip={() => setIsBetslipOpen(true)}
       />
 
       {/* Prominent Floating App Update Notification Banner - Fixed Top Position */}
@@ -904,6 +946,9 @@ export const App: React.FC = () => {
           match={selectedMatch}
           analysis={activeAnalysis}
           onClose={() => setSelectedMatch(null)}
+          betslipItems={betslipItems}
+          onToggleBetslip={handleToggleBetslip}
+          onOpenBetslip={() => setIsBetslipOpen(true)}
         />
       )}
 
@@ -947,6 +992,17 @@ export const App: React.FC = () => {
         analysesMap={matchAnalysesMap}
         currentTime={currentTime}
         onSelectMatch={(m) => setSelectedMatch(m)}
+      />
+
+      {/* Modal 6: Kupon Hesaplayıcı & Betslip Drawer */}
+      <BetslipDrawer
+        items={betslipItems}
+        isOpen={isBetslipOpen}
+        onOpen={() => setIsBetslipOpen(true)}
+        onClose={() => setIsBetslipOpen(false)}
+        onRemoveItem={handleRemoveBetslipItem}
+        onClearAll={handleClearBetslip}
+        onConsultAI={handleConsultAIFromSlip}
       />
 
       {/* Floating AI Kupon Robotu FAB Button (Always Accessible on Mobile & Desktop) */}

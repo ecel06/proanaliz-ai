@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Match, MatchAnalysis } from '../types';
+import React, { useState, useMemo } from 'react';
+import { Match, MatchAnalysis, UserBetslipItem } from '../types';
 import { runMonteCarloSimulation, MonteCarloResult, toFairOdds } from '../utils/predictionEngine';
+import { getMatchBettingMarkets, BettingPickOption } from '../utils/oddsHelper';
 import { TeamRadarChart } from './TeamRadarChart';
 import { FormBadgeTooltip } from './FormBadgeTooltip';
 import { getFormDetails } from '../utils/formDetails';
@@ -25,21 +26,29 @@ import {
   Scale,
   AlertTriangle,
   Target,
-  Compass
+  Compass,
+  Ticket,
+  Plus
 } from 'lucide-react';
 
 interface MatchDetailModalProps {
   match: Match | null;
   analysis: MatchAnalysis | null;
   onClose: () => void;
+  betslipItems?: UserBetslipItem[];
+  onToggleBetslip?: (match: Match, option: BettingPickOption) => void;
+  onOpenBetslip?: () => void;
 }
 
 export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   match,
   analysis,
-  onClose
+  onClose,
+  betslipItems = [],
+  onToggleBetslip,
+  onOpenBetslip
 }) => {
-  const [activeTab, setActiveTab] = useState<'analysis' | 'monte-carlo' | 'fair-odds'>('analysis');
+  const [activeTab, setActiveTab] = useState<'markets' | 'analysis' | 'monte-carlo' | 'fair-odds'>('markets');
   const [copied, setCopied] = useState(false);
   const [monteCarloResult, setMonteCarloResult] = useState<MonteCarloResult | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -49,6 +58,8 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const { homeTeam, awayTeam } = match;
   const homeFormDetails = getFormDetails(homeTeam, match.league);
   const awayFormDetails = getFormDetails(awayTeam, match.league);
+  const marketGroups = useMemo(() => getMatchBettingMarkets(match, analysis), [match, analysis]);
+  const selectedPickInMatch = betslipItems.find(it => it.matchId === match.id);
   const {
     ms1,
     msX,
@@ -166,10 +177,27 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
         </div>
 
         {/* Modal Navigation Tabs */}
-        <div className="flex items-center px-5 pt-3 border-b border-slate-800/80 bg-slate-950/40 text-xs font-semibold space-x-4">
+        <div className="flex items-center px-4 sm:px-5 pt-3 border-b border-slate-800/80 bg-slate-950/40 text-xs font-semibold space-x-3 sm:space-x-4 overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => setActiveTab('markets')}
+            className={`pb-2.5 flex items-center space-x-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'markets'
+                ? 'border-emerald-400 text-emerald-400 font-bold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Ticket className="w-4 h-4" />
+            <span>Tüm Bahis Seçimleri & Oranlar</span>
+            {selectedPickInMatch && (
+              <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 font-black text-[10px]">
+                Kuponda
+              </span>
+            )}
+          </button>
+
           <button
             onClick={() => setActiveTab('analysis')}
-            className={`pb-2.5 flex items-center space-x-1.5 border-b-2 transition-all cursor-pointer ${
+            className={`pb-2.5 flex items-center space-x-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'analysis'
                 ? 'border-emerald-400 text-emerald-400 font-bold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -184,7 +212,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               setActiveTab('monte-carlo');
               if (!monteCarloResult) handleRunMonteCarlo();
             }}
-            className={`pb-2.5 flex items-center space-x-1.5 border-b-2 transition-all cursor-pointer ${
+            className={`pb-2.5 flex items-center space-x-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'monte-carlo'
                 ? 'border-amber-400 text-amber-400 font-bold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -196,7 +224,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
           <button
             onClick={() => setActiveTab('fair-odds')}
-            className={`pb-2.5 flex items-center space-x-1.5 border-b-2 transition-all cursor-pointer ${
+            className={`pb-2.5 flex items-center space-x-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'fair-odds'
                 ? 'border-purple-400 text-purple-400 font-bold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -296,6 +324,103 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
             </div>
           </div>
+
+          {/* TAB 0: TÜM BAHİS SEÇİMLERİ VE ORANLAR (KUPONA EKLE) */}
+          {activeTab === 'markets' && (
+            <div className="space-y-4 animate-fadeIn">
+              
+              {/* Helper Banner */}
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-teal-950/60 border border-emerald-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                    <Ticket className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-extrabold text-white flex items-center space-x-1.5">
+                      <span>Tüm Bahis Seçenekleri & Oranlar</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
+                        {marketGroups.length} Bahis Pazarı
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-300">
+                      İstediğiniz orana tıklayarak kuponunuza ekleyin veya çıkarın.
+                    </p>
+                  </div>
+                </div>
+
+                {betslipItems.length > 0 && onOpenBetslip && (
+                  <button
+                    onClick={onOpenBetslip}
+                    className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shrink-0 cursor-pointer transition-all shadow-md active:scale-95 flex items-center justify-center space-x-1.5"
+                  >
+                    <Ticket className="w-4 h-4" />
+                    <span>Kuponumu Gör ({betslipItems.length} Maç)</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Markets Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {marketGroups.map((group) => (
+                  <div key={group.id} className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <h5 className="text-xs font-black text-slate-200 uppercase tracking-wider">
+                        {group.name}
+                      </h5>
+                      {group.description && (
+                        <span className="text-[10px] text-slate-500 hidden sm:inline">{group.description}</span>
+                      )}
+                    </div>
+
+                    <div className={`grid gap-2 ${
+                      group.options.length === 2
+                        ? 'grid-cols-2'
+                        : group.options.length === 3
+                        ? 'grid-cols-3'
+                        : 'grid-cols-2 sm:grid-cols-3'
+                    }`}>
+                      {group.options.map((opt) => {
+                        const isSelected = betslipItems.some(it => it.matchId === match.id && it.pickKey === opt.key);
+                        return (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => onToggleBetslip && onToggleBetslip(match, opt)}
+                            className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer relative group flex flex-col justify-between active:scale-95 ${
+                              isSelected
+                                ? 'bg-emerald-500/25 border-emerald-400 text-white shadow-lg shadow-emerald-500/20 ring-2 ring-emerald-400'
+                                : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200 hover:bg-slate-850'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <span className="text-[11px] font-bold truncate pr-1">{opt.label}</span>
+                              {isSelected && (
+                                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                              )}
+                            </div>
+
+                            <div className="flex items-baseline justify-between mt-2 pt-1.5 border-t border-slate-800/80 w-full">
+                              <span className="text-[10px] text-slate-400 font-mono">%{opt.probability}</span>
+                              <span className={`text-sm font-black font-mono ${isSelected ? 'text-emerald-300 font-extrabold' : 'text-amber-400'}`}>
+                                {opt.odd.toFixed(2)}
+                              </span>
+                            </div>
+
+                            {opt.recommendationBadge && (
+                              <span className="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-purple-600 text-white shadow-xs">
+                                {opt.recommendationBadge}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          )}
 
           {/* TAB 1: DETAILED ANALYSIS & AI COMMENTARY */}
           {activeTab === 'analysis' && (
