@@ -750,6 +750,9 @@ export const App: React.FC = () => {
                 {activeTabMode === 'coupons' && (
                   <CouponsSection
                     coupons={curatedCoupons}
+                    allMatches={allMatches}
+                    analysesMap={matchAnalysesMap}
+                    currentTime={currentTime}
                     onSelectMatch={(m) => setSelectedMatch(m)}
                     onViewAllMatches={() => setActiveTabMode('upcoming')}
                   />

@@ -1,10 +1,16 @@
 // src/components/CouponsSection.tsx
-// Rich UI section displaying AI-curated Banko, İdeal, and Sürpriz coupons with odds, stake calculator,
-// and real-time WON (Green Pulse & Stars) / LOST (Red) visual outcomes for both coupons and individual matches.
+// Rich UI section displaying AI-curated Daily Banko, İdeal, and Sürpriz coupons.
+// Features daily date selector, odds, stake calculator, and crystal clear TUTTU / YATTI badges
+// with the match score positioned strictly underneath the status badge.
 
-import React, { useState } from 'react';
-import { Match } from '../types';
-import { CuratedCoupon, CouponMatchItem } from '../utils/couponEngine';
+import React, { useState, useMemo } from 'react';
+import { Match, MatchAnalysis } from '../types';
+import {
+  CuratedCoupon,
+  CouponMatchItem,
+  CouponDayFilter,
+  generateCuratedCoupons
+} from '../utils/couponEngine';
 import {
   Flame,
   ShieldCheck,
@@ -20,24 +26,40 @@ import {
   XCircle,
   Radio,
   Star,
-  Info
+  Info,
+  Calendar
 } from 'lucide-react';
 
 interface CouponsSectionProps {
-  coupons: CuratedCoupon[];
+  coupons?: CuratedCoupon[];
+  allMatches?: Match[];
+  analysesMap?: Map<string, MatchAnalysis>;
+  currentTime?: Date;
   onSelectMatch: (match: Match) => void;
   onViewAllMatches?: () => void;
 }
 
 export const CouponsSection: React.FC<CouponsSectionProps> = ({
-  coupons,
+  coupons: initialCoupons,
+  allMatches = [],
+  analysesMap = new Map(),
+  currentTime = new Date(),
   onSelectMatch,
   onViewAllMatches
 }) => {
   const [stake, setStake] = useState<number>(100);
   const [copiedCouponId, setCopiedCouponId] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<CouponDayFilter>('today');
 
   const quickStakes = [50, 100, 250, 500, 1000];
+
+  // Dynamic daily coupons based on selected day tab
+  const activeCoupons = useMemo(() => {
+    if (allMatches.length > 0) {
+      return generateCuratedCoupons(allMatches, analysesMap, currentTime, selectedDay);
+    }
+    return initialCoupons || [];
+  }, [allMatches, analysesMap, currentTime, selectedDay, initialCoupons]);
 
   const handleCopyCoupon = (coupon: CuratedCoupon) => {
     const potentialWin = Math.round(stake * coupon.totalOdds);
@@ -46,11 +68,11 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
     coupon.items.forEach((item, idx) => {
       const outcomeText =
         item.pickStatus === 'won'
-          ? ` [✅ TUTTU (${item.currentScore.home}-${item.currentScore.away})]`
+          ? ` [✅ TUTTU - Skor: ${item.currentScore.home}-${item.currentScore.away}]`
           : item.pickStatus === 'lost'
-          ? ` [❌ YATTI (${item.currentScore.home}-${item.currentScore.away})]`
+          ? ` [❌ YATTI - Skor: ${item.currentScore.home}-${item.currentScore.away}]`
           : item.pickStatus === 'live'
-          ? ` [🔴 CANLI ${item.liveMinute || ''} (${item.currentScore.home}-${item.currentScore.away})]`
+          ? ` [🔴 CANLI ${item.liveMinute || ''} - Skor: ${item.currentScore.home}-${item.currentScore.away}]`
           : ` [📅 ${item.matchTimeText}]`;
 
       text += `${idx + 1}. ⚽ ${item.homeTeamName} vs ${item.awayTeamName} (KOD: ${item.iddaaCode})${outcomeText}\n`;
@@ -117,15 +139,15 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Yapay Zeka Destekli 3 Farklı Kupon Kombinasyonu</span>
+              <span>Günlük Yapay Zeka Kupon Kombinasyonları</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              Günün Kuponları: <span className="text-emerald-400">Banko</span> •{' '}
+              Günlük Kuponlar: <span className="text-emerald-400">Banko</span> •{' '}
               <span className="text-amber-400">İdeal</span> •{' '}
               <span className="text-purple-400">Sürpriz</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-              Poisson dağılımı, xG istatistikleri ve gerçek takım formları taranarak maçlar 3 farklı risk seviyesinde kuponlaştırıldı. Biten ve devam eden maçların durumunu kuponlar üzerinden anlık takip edebilirsiniz.
+              Her gün bülten otomatik taranarak günün en güvenilir maçları 3 farklı seviyede kuponlaştırılır. Karşılaşmalar bittikçe tutan maçlar yeşil, yatanlar kırmızı olarak anlık sonuçlanır.
             </p>
           </div>
 
@@ -162,15 +184,58 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
         </div>
       </div>
 
+      {/* GÜNLÜK KUPON TARİH SEÇİCİ (Bugün, Dün, Tüm Hafta) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-inner">
+        <div className="flex items-center space-x-2 text-xs font-bold text-slate-300">
+          <Calendar className="w-4 h-4 text-emerald-400" />
+          <span>Kupon Günü:</span>
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+          <button
+            onClick={() => setSelectedDay('today')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap flex items-center space-x-1.5 ${
+              selectedDay === 'today'
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'bg-slate-800/90 text-slate-300 hover:bg-slate-800 border border-slate-700/60'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-ping" />
+            <span>Bugünün Kuponları</span>
+          </button>
+
+          <button
+            onClick={() => setSelectedDay('yesterday')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              selectedDay === 'yesterday'
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'bg-slate-800/90 text-slate-300 hover:bg-slate-800 border border-slate-700/60'
+            }`}
+          >
+            <span>Dünün Kuponları (Arşiv)</span>
+          </button>
+
+          <button
+            onClick={() => setSelectedDay('all')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              selectedDay === 'all'
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'bg-slate-800/90 text-slate-300 hover:bg-slate-800 border border-slate-700/60'
+            }`}
+          >
+            <span>Tüm Hafta Sonu</span>
+          </button>
+        </div>
+      </div>
+
       {/* 3 Coupons Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {coupons.map((coupon) => {
+        {activeCoupons.map((coupon) => {
           const potentialWin = Math.round(stake * coupon.totalOdds);
           const isCopied = copiedCouponId === coupon.id;
 
           const isCouponWon = coupon.status === 'won';
           const isCouponLost = coupon.status === 'lost';
-          const isCouponPending = coupon.status === 'pending';
 
           // Dynamic coupon container styling based on outcome
           let containerClasses = 'border-slate-800 bg-slate-900/85';
@@ -371,41 +436,61 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
                         title="Detaylı Analiz & Simülasyonu Gör"
                       >
                         {/* Top League & Match Status Header */}
-                        <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1.5">
-                          <div className="flex items-center space-x-1.5">
-                            <span className="font-mono font-bold text-amber-300 bg-amber-400/15 border border-amber-400/30 px-1.5 py-0.2 rounded">
-                              KOD: {item.iddaaCode}
-                            </span>
-                            <span className="text-slate-300 font-semibold">{item.league}</span>
+                        <div className="flex items-start justify-between gap-2 mb-2 pb-1.5 border-b border-slate-800/40">
+                          <div className="flex flex-col space-y-1 min-w-0">
+                            <div className="flex items-center space-x-1.5">
+                              <span className="font-mono font-bold text-amber-300 bg-amber-400/15 border border-amber-400/30 px-1.5 py-0.2 rounded text-[10px]">
+                                KOD: {item.iddaaCode}
+                              </span>
+                              <span className="text-slate-300 font-semibold text-[11px] truncate">{item.league}</span>
+                            </div>
+                            <div className="flex items-center space-x-1 text-slate-400 text-[10px]">
+                              <Clock className="w-3 h-3 text-slate-500 shrink-0" />
+                              <span>{item.matchTimeText}</span>
+                            </div>
                           </div>
 
-                          {/* Dynamic Match Status Badge (TUTTU Yeşil / YATTI Kırmızı / CANLI) */}
-                          <div>
+                          {/* Dynamic Match Status Badge (TUTTU / YATTI ÜSTTE, Skor KESİNLİKLE ALTINDA) */}
+                          <div className="flex flex-col items-end text-right shrink-0">
                             {isMatchWon && (
-                              <span className="flex items-center space-x-1 px-2 py-0.5 rounded-md bg-emerald-500/25 border border-emerald-400/60 text-emerald-300 font-black text-[11px] shadow-sm">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>TUTTU • {item.currentScore.home}-{item.currentScore.away}</span>
-                              </span>
+                              <>
+                                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md bg-emerald-500/25 border border-emerald-400/60 text-emerald-300 font-black text-[11px] tracking-wide whitespace-nowrap shadow-sm">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                  <span>TUTTU</span>
+                                </span>
+                                <span className="text-[11px] font-mono font-black text-emerald-400 mt-1 whitespace-nowrap bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-md shadow-inner">
+                                  MS: {item.currentScore.home} - {item.currentScore.away}
+                                </span>
+                              </>
                             )}
 
                             {isMatchLost && (
-                              <span className="flex items-center space-x-1 px-2 py-0.5 rounded-md bg-rose-500/25 border border-rose-400/60 text-rose-300 font-black text-[11px] shadow-sm">
-                                <XCircle className="w-3.5 h-3.5 text-rose-400" />
-                                <span>YATTI • {item.currentScore.home}-{item.currentScore.away}</span>
-                              </span>
+                              <>
+                                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md bg-rose-500/25 border border-rose-400/60 text-rose-300 font-black text-[11px] tracking-wide whitespace-nowrap shadow-sm">
+                                  <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                                  <span>YATTI</span>
+                                </span>
+                                <span className="text-[11px] font-mono font-black text-rose-400 mt-1 whitespace-nowrap bg-rose-950/80 border border-rose-500/30 px-2 py-0.5 rounded-md shadow-inner">
+                                  MS: {item.currentScore.home} - {item.currentScore.away}
+                                </span>
+                              </>
                             )}
 
                             {isMatchLive && (
-                              <span className="flex items-center space-x-1 px-2 py-0.5 rounded-md bg-rose-500/20 border border-rose-500/40 text-rose-300 font-extrabold text-[10px] animate-pulse">
-                                <Radio className="w-3 h-3 text-rose-400" />
-                                <span>CANLI {item.liveMinute || ''} • {item.currentScore.home}-{item.currentScore.away}</span>
-                              </span>
+                              <>
+                                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-rose-500/20 border border-rose-500/40 text-rose-300 font-extrabold text-[10px] whitespace-nowrap animate-pulse">
+                                  <Radio className="w-3 h-3 text-rose-400 shrink-0" />
+                                  <span>CANLI {item.liveMinute ? `• ${item.liveMinute}` : ''}</span>
+                                </span>
+                                <span className="text-[11px] font-mono font-black text-rose-400 mt-1 whitespace-nowrap bg-slate-900 border border-rose-500/30 px-2 py-0.5 rounded-md">
+                                  Skor: {item.currentScore.home} - {item.currentScore.away}
+                                </span>
+                              </>
                             )}
 
                             {isMatchUpcoming && (
-                              <span className="flex items-center space-x-1 text-slate-400">
-                                <Clock className="w-3 h-3 text-slate-500" />
-                                <span>{item.matchTimeText}</span>
+                              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-slate-800/80 border border-slate-700 text-slate-300 font-bold text-[10px] whitespace-nowrap">
+                                <span>Başlamadı</span>
                               </span>
                             )}
                           </div>
@@ -510,7 +595,7 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
       <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs text-slate-400 flex items-start space-x-3">
         <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
         <p className="leading-relaxed">
-          Kuponlardaki maçlar ve oranlar açık spor veri uç noktalarından canlı analiz edilerek yapay zeka tarafından derlenmiştir. Karşılaşmalar bittikçe kazanan tahminler <strong>yeşil</strong>, kaybedenler <strong>kırmızı</strong> olarak güncellenir. Tüm maçları isabetli olan kuponlar <strong>yeşil yanıp sönerek ve yıldızlarla</strong> kutlanır.
+          Kuponlardaki maçlar ve oranlar her gün açık spor veri uç noktalarından canlı analiz edilerek yapay zeka tarafından derlenmiştir. Karşılaşmalar bittikçe kazanan tahminler <strong>yeşil</strong>, kaybedenler <strong>kırmızı</strong> olarak sonuçlanır. Tüm maçları isabetli olan kuponlar <strong>yeşil yanıp sönerek ve yıldızlarla</strong> kutlanır.
         </p>
       </div>
 
