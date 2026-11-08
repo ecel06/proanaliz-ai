@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "start": "node server/server.js",
+    "deploy": "node scripts/deploy.js",
     "server": "node server/server.js",
     "fetch-bulletin": "node scripts/fetchBulletin.js",
     "generate-icons": "node scripts/generateIcons.js",
