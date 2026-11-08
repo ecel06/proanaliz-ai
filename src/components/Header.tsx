@@ -11,7 +11,8 @@ import {
   Radio, 
   Flame, 
   Smartphone,
-  Layers
+  Layers,
+  Bot
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -20,6 +21,7 @@ interface HeaderProps {
   onOpenStandings?: () => void;
   onOpenCoupons?: () => void;
   onOpenInstallApp?: () => void;
+  onOpenAIChat?: () => void;
   onRefreshLiveBulletin?: () => void;
   isRefreshing?: boolean;
   lastUpdatedText?: string;
@@ -36,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenStandings,
   onOpenCoupons,
   onOpenInstallApp,
+  onOpenAIChat,
   onRefreshLiveBulletin,
   isRefreshing = false,
   lastUpdatedText,
@@ -164,6 +167,20 @@ export const Header: React.FC<HeaderProps> = ({
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                   </span>
                 )}
+              </button>
+            )}
+
+            {/* AI Chat Bot & Kupon Robotu Button */}
+            {onOpenAIChat && (
+              <button
+                onClick={onOpenAIChat}
+                className="flex items-center space-x-1.5 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 text-white font-black text-xs sm:text-sm shadow-lg shadow-purple-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0 border border-purple-400/30 group"
+                title="Yapay Zeka Sohbet & Kupon Robotu"
+              >
+                <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300 animate-pulse group-hover:scale-110 transition-transform" />
+                <span className="hidden md:inline">AI Robotu</span>
+                <span className="md:hidden text-[11px]">AI</span>
+                <Sparkles className="w-3 h-3 text-amber-300 fill-current opacity-80 hidden sm:inline" />
               </button>
             )}
 
