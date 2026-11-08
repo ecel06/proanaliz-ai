@@ -48,6 +48,10 @@ loadLocalCache();
 
 // Helper to save cache to public & src
 function persistCache(data) {
+  if (!data || !data.matches || data.matches.length === 0) {
+    console.warn('⚠️ [Server] Boş veri geldiği için önbellek üzerine yazılmadı.');
+    return;
+  }
   try {
     const publicDir = path.resolve(__dirname, '../public/data');
     if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
@@ -193,7 +197,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.08.5';
+const APP_VERSION = '2026.11.08.6';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -258,9 +262,11 @@ app.listen(PORT, '0.0.0.0', () => {
     try {
       isFetching = true;
       const freshData = await fetchLiveBulletin();
-      cachedBulletin = freshData;
-      lastFetchTime = freshData.updatedAt;
-      persistCache(cachedBulletin);
+      if (freshData && Array.isArray(freshData.matches) && freshData.matches.length > 0) {
+        cachedBulletin = freshData;
+        lastFetchTime = freshData.updatedAt;
+        persistCache(cachedBulletin);
+      }
       isFetching = false;
     } catch (err) {
       isFetching = false;

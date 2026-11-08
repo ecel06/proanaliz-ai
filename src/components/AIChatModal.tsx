@@ -60,6 +60,7 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({
         `• Veya istediğin takımı sor: *"Galatasaray maçı ne olur?"*\n\n` +
         `Poisson dağılımı ve gerçek form analizleriyle saniyeler içinde kuponunu hazırlıyorum!`,
       quickSuggestions: [
+        '🎲 3 Maçlık İlk Yarı / Maç Sonucu Kuponu Yap',
         '⚡ 3 Maçlık Banko Kupon Yap',
         '🎯 4 Maçlık İdeal Kupon Hazırla',
         '💣 3 Maçlık Sürpriz Kupon Ver',
@@ -314,6 +315,12 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({
                                 {item.score && (
                                   <span className="font-mono ml-1">({item.score.home}-{item.score.away})</span>
                                 )}
+                              </div>
+                            )}
+                            {item.pickStatus === 'upcoming' && (
+                              <div className="flex items-center space-x-1 px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 font-bold text-[10px] border border-indigo-500/30 shrink-0">
+                                <Clock className="w-3 h-3 text-indigo-400" />
+                                <span>Oynanmadı</span>
                               </div>
                             )}
                           </div>
