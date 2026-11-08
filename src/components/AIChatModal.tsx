@@ -6,6 +6,7 @@ import { Match, MatchAnalysis } from '../types';
 import {
   AIChatMessage,
   AIChatCoupon,
+  AICouponType,
   handleAIChatQuery,
   formatCouponForClipboard
 } from '../utils/aiChatEngine';
@@ -74,6 +75,14 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({
   const [isTyping, setIsTyping] = useState(false);
   const [copiedCouponId, setCopiedCouponId] = useState<string | null>(null);
 
+  // 3 Açılır Menü (Kupon Sihirbazı) State:
+  // 1. Menü: banko | ideal | surpriz
+  const [wizardRisk, setWizardRisk] = useState<'banko' | 'ideal' | 'surpriz'>('banko');
+  // 2. Menü: kaç maç (2, 3, 4, 5, 6)
+  const [wizardCount, setWizardCount] = useState<number>(3);
+  // 3. Menü: ne oynanacağı (otomatik, 3.5 üst, 2.5 üst, kg, vb.)
+  const [wizardPick, setWizardPick] = useState<string>('auto');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -96,7 +105,10 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = (
+    textToSend?: string,
+    optionsOverride?: { type?: AICouponType; matchCount?: number }
+  ) => {
     const query = (textToSend || inputText).trim();
     if (!query) return;
 
@@ -114,10 +126,38 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({
 
     // Simulate AI thinking delay for realism
     setTimeout(() => {
-      const aiResponse = handleAIChatQuery(query, allMatches, analysesMap, currentTime);
+      const aiResponse = handleAIChatQuery(query, allMatches, analysesMap, currentTime, optionsOverride);
       setMessages(prev => [...prev, aiResponse]);
       setIsTyping(false);
-    }, 600);
+    }, 550);
+  };
+
+  const handleWizardSubmit = () => {
+    let resolvedType: AICouponType = wizardRisk;
+    let label = '';
+    const riskNames: Record<string, string> = { banko: 'Banko', ideal: 'İdeal', surpriz: 'Sürpriz' };
+    
+    if (wizardPick === 'auto') {
+      resolvedType = wizardRisk;
+      label = `🎯 ${wizardCount} Maçlık ${riskNames[wizardRisk]} Kupon Hazırla`;
+    } else {
+      resolvedType = wizardPick as AICouponType;
+      const pickNames: Record<string, string> = {
+        over35: '3.5 Gol Üst',
+        over25: '2.5 Gol Üst',
+        btts: 'KG Var (Karşılıklı Gol)',
+        htft: 'İlk Yarı / Maç Sonucu (İY/MS)',
+        match_result: 'Maç Sonucu (Taraf Bahsi)',
+        under25: '2.5 Gol Alt',
+        under35: '3.5 Gol Alt',
+        over15: '1.5 Gol Üst',
+        btts_no: 'KG Yok',
+        first_half: 'İlk Yarı'
+      };
+      label = `🎯 ${wizardCount} Maçlık ${riskNames[wizardRisk]} ${pickNames[wizardPick] || ''} Kuponu`;
+    }
+
+    handleSendMessage(label, { type: resolvedType, matchCount: wizardCount });
   };
 
   const handleCopyCoupon = (coupon: AIChatCoupon) => {
@@ -423,6 +463,92 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({
         {/* Input & Action Bar */}
         <div className="p-3 sm:p-4 bg-slate-950 border-t border-slate-800 shrink-0">
           
+          {/* 3 Açılır Menülü Hızlı Kupon Sihirbazı */}
+          <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-2.5 sm:p-3 mb-2.5 shadow-lg backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-200">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Hızlı Kupon Menüsü</span>
+              </div>
+              <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
+                Açılır menüden seçin, tek tıkla kupon oluşsun
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+              {/* 1. Menü: Kupon Tarzı (Banko, İdeal, Sürpriz) */}
+              <div className="sm:col-span-3">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-0.5">
+                  1. Kupon Tarzı
+                </label>
+                <select
+                  value={wizardRisk}
+                  onChange={(e) => setWizardRisk(e.target.value as any)}
+                  className="w-full bg-slate-950 border border-slate-700/80 hover:border-slate-600 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer transition-colors"
+                >
+                  <option value="banko">🛡️ Banko</option>
+                  <option value="ideal">⚖️ İdeal</option>
+                  <option value="surpriz">💣 Sürpriz</option>
+                </select>
+              </div>
+
+              {/* 2. Menü: Kaç Maç (Rakamlar) */}
+              <div className="sm:col-span-3">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-0.5">
+                  2. Maç Sayısı
+                </label>
+                <select
+                  value={wizardCount}
+                  onChange={(e) => setWizardCount(Number(e.target.value))}
+                  className="w-full bg-slate-950 border border-slate-700/80 hover:border-slate-600 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer transition-colors"
+                >
+                  <option value={2}>2 Maç</option>
+                  <option value={3}>3 Maç</option>
+                  <option value={4}>4 Maç</option>
+                  <option value={5}>5 Maç</option>
+                  <option value={6}>6 Maç</option>
+                </select>
+              </div>
+
+              {/* 3. Menü: Ne Oynanacağı (Bahis Tercihleri) */}
+              <div className="sm:col-span-4">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-0.5">
+                  3. Bahis Tercihi
+                </label>
+                <select
+                  value={wizardPick}
+                  onChange={(e) => setWizardPick(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700/80 hover:border-slate-600 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer transition-colors truncate"
+                >
+                  <option value="auto">🎲 Karışık / Otomatik</option>
+                  <option value="over35">🔥 3.5 Gol Üstü</option>
+                  <option value="over25">⚽ 2.5 Gol Üstü</option>
+                  <option value="btts">🤝 Karşılıklı Gol Var (KG Var)</option>
+                  <option value="htft">🎲 İlk Yarı / Maç Sonu (İY/MS)</option>
+                  <option value="match_result">🏆 Maç Sonucu (MS 1 - X - 2)</option>
+                  <option value="under25">🔒 2.5 Gol Altı</option>
+                  <option value="under35">🛡️ 3.5 Gol Altı</option>
+                  <option value="over15">⚡ 1.5 Gol Üstü</option>
+                  <option value="btts_no">🚫 Karşılıklı Gol Yok (KG Yok)</option>
+                  <option value="first_half">⏱️ İlk Yarı Tercihleri</option>
+                </select>
+              </div>
+
+              {/* Kupon Hazırla Butonu */}
+              <div className="sm:col-span-2 flex items-end">
+                <button
+                  type="button"
+                  onClick={handleWizardSubmit}
+                  disabled={isTyping}
+                  className="w-full py-2 px-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 text-white font-black text-xs shadow-md shadow-purple-600/30 flex items-center justify-center space-x-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Kupon Yap</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <form 
             onSubmit={(e) => {
               e.preventDefault();

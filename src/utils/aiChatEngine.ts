@@ -888,82 +888,87 @@ export function handleAIChatQuery(
   userText: string,
   allMatches: Match[],
   analysesMap: Map<string, MatchAnalysis>,
-  now: Date = new Date()
+  now: Date = new Date(),
+  optionsOverride?: { type?: AICouponType; matchCount?: number }
 ): AIChatMessage {
   const norm = normalizeText(userText);
 
-  // 1. Check for specific team analysis request
-  const matchedTeam = findTeamMatch(userText, allMatches);
-  if (
-    matchedTeam &&
-    (norm.includes('nasil') ||
-      norm.includes('ne olur') ||
-      norm.includes('analiz') ||
-      norm.includes('tahmin') ||
-      norm.includes('kim kazanir') ||
-      norm.includes('skor'))
-  ) {
-    const analysis = analysesMap.get(matchedTeam.id);
-    if (analysis) {
-      let recLabel = 'MS 1 (Ev Sahibi)';
-      let recOdd = 1.45;
-      let recConf = analysis.ms1;
-      let recReason = `${matchedTeam.homeTeam.name} iç saha form avantajıyla maçı kazanmaya yakın.`;
+  // 1. Check for specific team analysis request (only if not an explicit coupon request)
+  if (!optionsOverride) {
+    const matchedTeam = findTeamMatch(userText, allMatches);
+    if (
+      matchedTeam &&
+      (norm.includes('nasil') ||
+        norm.includes('ne olur') ||
+        norm.includes('analiz') ||
+        norm.includes('tahmin') ||
+        norm.includes('kim kazanir') ||
+        norm.includes('skor'))
+    ) {
+      const analysis = analysesMap.get(matchedTeam.id);
+      if (analysis) {
+        let recLabel = 'MS 1 (Ev Sahibi)';
+        let recOdd = 1.45;
+        let recConf = analysis.ms1;
+        let recReason = `${matchedTeam.homeTeam.name} iç saha form avantajıyla maçı kazanmaya yakın.`;
 
-      if (analysis.ms2 > analysis.ms1 && analysis.ms2 >= 55) {
-        recLabel = 'MS 2 (Deplasman)';
-        recOdd = 1.65;
-        recConf = analysis.ms2;
-        recReason = `${matchedTeam.awayTeam.name} deplasman xG üretimiyle önde.`;
-      } else if (analysis.over25 >= 68) {
-        recLabel = '2.5 Gol Üst';
-        recOdd = 1.62;
-        recConf = analysis.over25;
-        recReason = `İki ekibin beklenen gol toplamı ${analysis.expectedTotalGoals}; gollü maç bekleniyor.`;
-      } else if (analysis.bttsYes >= 64) {
-        recLabel = 'KG Var (Karşılıklı Gol)';
-        recOdd = 1.72;
-        recConf = analysis.bttsYes;
-        recReason = `İki tarafın da gol yollarında üretken savunmalarında zaaf var.`;
+        if (analysis.ms2 > analysis.ms1 && analysis.ms2 >= 55) {
+          recLabel = 'MS 2 (Deplasman)';
+          recOdd = 1.65;
+          recConf = analysis.ms2;
+          recReason = `${matchedTeam.awayTeam.name} deplasman xG üretimiyle önde.`;
+        } else if (analysis.over25 >= 68) {
+          recLabel = '2.5 Gol Üst';
+          recOdd = 1.62;
+          recConf = analysis.over25;
+          recReason = `İki ekibin beklenen gol toplamı ${analysis.expectedTotalGoals}; gollü maç bekleniyor.`;
+        } else if (analysis.bttsYes >= 64) {
+          recLabel = 'KG Var (Karşılıklı Gol)';
+          recOdd = 1.72;
+          recConf = analysis.bttsYes;
+          recReason = `İki tarafın da gol yollarında üretken savunmalarında zaaf var.`;
+        }
+
+        return {
+          id: `msg_${Date.now()}`,
+          sender: 'assistant',
+          timestamp: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+          text:
+            `📊 **${matchedTeam.homeTeam.name} vs ${matchedTeam.awayTeam.name}** karşılaşmasını detaylı analiz ettim:\n\n` +
+            `• **Lig:** ${matchedTeam.league}\n` +
+            `• **Maç Saati:** ${formatDynamicMatchTime(matchedTeam, now)}\n` +
+            `• **Poisson Dağılımı:** Ev: %${analysis.ms1} | Beraberlik: %${analysis.msX} | Dep: %${analysis.ms2}\n` +
+            `• **Gol Beklentisi (xG):** ${analysis.expectedTotalGoals} Gol (2.5 Üst Olasılığı: %${analysis.over25})\n` +
+            `• **Karşılıklı Gol Var:** %${analysis.bttsYes}\n\n` +
+            `🎯 **Yapay Zeka Önerim:** **${recLabel}** (Tahmini Oran: ${recOdd}, Güven: %${recConf})\n` +
+            `💡 *${recReason}*`,
+          singleMatchAnalysis: {
+            match: matchedTeam,
+            analysis,
+            recommendedPick: {
+              label: recLabel,
+              odd: recOdd,
+              confidence: recConf,
+              reason: recReason
+            }
+          },
+          quickSuggestions: [
+            '⚡ 3 Maçlık İlk Yarı / Maç Sonucu Kuponu Yap',
+            '🛡️ 3 Maçlık Banko Kupon Ver',
+            '💣 4 Maçlık Sürpriz Kupon Hazırla'
+          ]
+        };
       }
-
-      return {
-        id: `msg_${Date.now()}`,
-        sender: 'assistant',
-        timestamp: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-        text:
-          `📊 **${matchedTeam.homeTeam.name} vs ${matchedTeam.awayTeam.name}** karşılaşmasını detaylı analiz ettim:\n\n` +
-          `• **Lig:** ${matchedTeam.league}\n` +
-          `• **Maç Saati:** ${formatDynamicMatchTime(matchedTeam, now)}\n` +
-          `• **Poisson Dağılımı:** Ev: %${analysis.ms1} | Beraberlik: %${analysis.msX} | Dep: %${analysis.ms2}\n` +
-          `• **Gol Beklentisi (xG):** ${analysis.expectedTotalGoals} Gol (2.5 Üst Olasılığı: %${analysis.over25})\n` +
-          `• **Karşılıklı Gol Var:** %${analysis.bttsYes}\n\n` +
-          `🎯 **Yapay Zeka Önerim:** **${recLabel}** (Tahmini Oran: ${recOdd}, Güven: %${recConf})\n` +
-          `💡 *${recReason}*`,
-        singleMatchAnalysis: {
-          match: matchedTeam,
-          analysis,
-          recommendedPick: {
-            label: recLabel,
-            odd: recOdd,
-            confidence: recConf,
-            reason: recReason
-          }
-        },
-        quickSuggestions: [
-          '⚡ 3 Maçlık İlk Yarı / Maç Sonucu Kuponu Yap',
-          '🛡️ 3 Maçlık Banko Kupon Ver',
-          '💣 4 Maçlık Sürpriz Kupon Hazırla'
-        ]
-      };
     }
   }
 
   // 2. Parse request for coupon generation
-  const { type, matchCount } = parseUserRequest(userText);
+  const parsed = parseUserRequest(userText);
+  const resolvedType: AICouponType = optionsOverride?.type || (parsed.type === 'general' ? 'banko' : parsed.type);
+  const resolvedCount: number = optionsOverride?.matchCount || parsed.matchCount;
 
-  // If user is just saying hello / greeting
-  if (norm === 'merhaba' || norm === 'selam' || norm === 'slm' || norm === 'gunaydin' || norm === 'iyi gunler') {
+  // If user is just saying hello / greeting and no override
+  if (!optionsOverride && (norm === 'merhaba' || norm === 'selam' || norm === 'slm' || norm === 'gunaydin' || norm === 'iyi gunler')) {
     return {
       id: `msg_${Date.now()}`,
       sender: 'assistant',
@@ -971,13 +976,9 @@ export function handleAIChatQuery(
       text:
         `Merhaba! Ben **ProAnaliz AI Sohbet & Kupon Robotu**. 🤖⚽\n\n` +
         `Bültendeki tüm **oynanmamış maçları** Poisson olasılık modelleri, gerçek takım formları ve gol beklentileriyle (xG) anlık tarıyorum.\n\n` +
-        `Bana örneğin şunları söyleyebilirsin:\n` +
-        `• *"Bana 3 maçlık ilk yarı maç sonucu kupon yap"*\n` +
-        `• *"4 maçlık sürpriz kupon hazırla"*\n` +
-        `• *"3 maçlık banko kupon ver"*\n` +
-        `• *"Karşılıklı gol var kuponu hazırla"*\n\n` +
-        `Aşağıdaki hazır butonlara basabilir veya istediğin kuponu yazabilirsin! 👇`,
+        `Aşağıdaki **3 Açılır Menüden (Kupon Tarzı, Maç Sayısı, Tercih)** dilediğin kombinasyonu seçip **"Kuponu Hazırla"** butonuna basabilir veya bana doğrudan mesaj yazabilirsin! 👇`,
       quickSuggestions: [
+        '🔥 3 Maçlık 3.5 Gol Üst Kuponu Yap',
         '🎲 3 Maçlık İlk Yarı / Maç Sonucu Kuponu Yap',
         '⚡ 3 Maçlık Banko Kupon Yap',
         '💣 4 Maçlık Sürpriz Kupon Ver',
@@ -988,8 +989,7 @@ export function handleAIChatQuery(
   }
 
   // 3. Generate coupon strictly with requested type and count
-  const resolvedType = type === 'general' ? 'banko' : type;
-  const coupon = generateAICoupon(resolvedType, matchCount, allMatches, analysesMap, now);
+  const coupon = generateAICoupon(resolvedType, resolvedCount, allMatches, analysesMap, now);
 
   let introText = `🤖 İstediğin komut doğrultusunda bültendeki **oynanmamış maçları** taradım ve **${coupon.title}** oluşturdum:\n\n`;
 
