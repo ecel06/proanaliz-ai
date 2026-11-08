@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+.system_generated/
+.user_uploaded/
+err.txt
+out.txt
+
+# Workspace other projects
+browser/
+ecommerce/
+healing-herbs-film/
+word-puzzle/
+scratch/
+implementation_plan.md*
+
+

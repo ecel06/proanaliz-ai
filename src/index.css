@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/20 selection:text-emerald-300;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #020617;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Glow effects */
+.glow-emerald {
+  box-shadow: 0 0 20px -3px rgba(16, 185, 129, 0.25);
+}
+
+.glow-amber {
+  box-shadow: 0 0 20px -3px rgba(245, 158, 11, 0.25);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px -3px rgba(168, 85, 247, 0.25);
+}
+
+/* Glassmorphism */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-panel-hover:hover {
+  border-color: rgba(16, 185, 129, 0.3);
+  transform: translateY(-2px);
+}
+
+/* ===== FORM BADGE TOOLTIP - GLOBAL PORTAL LAYER =====
+ * Portal tooltip'ler doğrudan body'e eklenir.
+ * z-index max değer (2147483647) ile HİÇBİR kart, modal,
+ * backdrop-filter veya transform stacking context'inden etkilenmez. */
+.proanaliz-tooltip-portal {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+/* Match kartları hover durumunda üste çıkar */
+.match-card-wrapper {
+  position: relative;
+  transition: z-index 0s;
+}
+.match-card-wrapper:hover {
+  z-index: 100;
+}
+
+/* Tooltip fade-in animasyonu */
+@keyframes fadeIn {
+  from { opacity: 0; transform-origin: top center; scale: 0.95; }
+  to   { opacity: 1; scale: 1; }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.1s ease-out;
+}
+

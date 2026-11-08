@@ -1,0 +1,50 @@
+{
+  "short_name": "ProAnaliz AI",
+  "name": "ProAnaliz AI - Futbol İstatistik & Olasılık Motoru",
+  "description": "Poisson dağılımı, form durumu ve yapay zeka analizleriyle profesyonel futbol olasılık simülatörü.",
+  "id": "/?source=pwa",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#030712",
+  "theme_color": "#030712",
+  "categories": ["sports", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Günün Maçları",
+      "short_name": "Bugün",
+      "description": "Günün maç bülteni ve istatistikleri",
+      "url": "/?filter=today",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Süper Lig Maçları",
+      "short_name": "Süper Lig",
+      "description": "Süper Lig maçları ve puan tablosu",
+      "url": "/?league=super-lig",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
