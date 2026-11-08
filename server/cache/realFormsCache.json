@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-08T17:51:30.816Z",
+  "updatedAt": "2026-11-08T18:01:44.964Z",
   "totalTeams": 285,
   "forms": {
     "1": [
@@ -17,7 +17,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -41,7 +41,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "Alanyaspor": [
@@ -185,7 +185,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -193,7 +193,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -227,7 +227,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -235,7 +235,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -269,7 +269,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -277,7 +277,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -419,7 +419,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "rize": [
@@ -461,7 +461,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "caykurrizespor": [
@@ -503,7 +503,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "Erzurum BB": [
@@ -529,7 +529,7 @@
         "score": "1 - 3",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -545,7 +545,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "erzurum": [
@@ -571,7 +571,7 @@
         "score": "1 - 3",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -587,7 +587,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "erzurumbb": [
@@ -613,7 +613,7 @@
         "score": "1 - 3",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -629,7 +629,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Eyupspor": [
@@ -655,7 +655,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -663,7 +663,7 @@
         "score": "5 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "L",
@@ -697,7 +697,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -705,7 +705,7 @@
         "score": "5 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "L",
@@ -739,7 +739,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -747,7 +747,7 @@
         "score": "5 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "L",
@@ -865,7 +865,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "26 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -907,7 +907,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "26 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -941,7 +941,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -949,7 +949,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -983,7 +983,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -991,7 +991,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -1025,7 +1025,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -1033,7 +1033,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -1075,7 +1075,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -1117,7 +1117,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -1151,7 +1151,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -1167,7 +1167,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -1193,7 +1193,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -1209,7 +1209,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -1369,7 +1369,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "D",
@@ -1411,7 +1411,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "D",
@@ -1437,7 +1437,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -1453,7 +1453,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "D",
@@ -1479,7 +1479,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -1495,7 +1495,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "D",
@@ -1521,7 +1521,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -1537,7 +1537,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "D",
@@ -1697,7 +1697,7 @@
         "score": "4 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "L",
@@ -1705,7 +1705,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -1721,7 +1721,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "samsun": [
@@ -1739,7 +1739,7 @@
         "score": "4 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "L",
@@ -1747,7 +1747,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -1763,7 +1763,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "samsunspor": [
@@ -1781,7 +1781,7 @@
         "score": "4 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "L",
@@ -1789,7 +1789,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -1805,7 +1805,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "Trabzonspor": [
@@ -1949,7 +1949,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "16 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -1965,7 +1965,7 @@
         "score": "1 - 3",
         "isHome": false,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -1991,7 +1991,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "16 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -2007,7 +2007,7 @@
         "score": "1 - 3",
         "isHome": false,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -2033,7 +2033,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "16 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -2049,7 +2049,7 @@
         "score": "1 - 3",
         "isHome": false,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -2099,7 +2099,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       }
     ],
     "afc": [
@@ -2141,7 +2141,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       }
     ],
     "afcbournemouth": [
@@ -2183,7 +2183,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       }
     ],
     "Arsenal": [
@@ -2293,7 +2293,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -2335,7 +2335,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -2377,7 +2377,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -2419,7 +2419,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -2461,7 +2461,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -2613,7 +2613,7 @@
         "score": "5 - 1",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 2-0"
+        "halfTimeScore": "İY: 2-1"
       },
       {
         "result": "W",
@@ -2655,7 +2655,7 @@
         "score": "5 - 1",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 2-0"
+        "halfTimeScore": "İY: 2-1"
       },
       {
         "result": "W",
@@ -2705,7 +2705,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "19 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -2713,7 +2713,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -2747,7 +2747,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "19 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -2755,7 +2755,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -2789,7 +2789,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "19 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -2797,7 +2797,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -2855,7 +2855,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       }
     ],
     "crystal": [
@@ -2897,7 +2897,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       }
     ],
     "crystalpalace": [
@@ -2939,7 +2939,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       }
     ],
     "Everton": [
@@ -2973,7 +2973,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "2 Kas 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -2981,7 +2981,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "6 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "everton": [
@@ -3015,7 +3015,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "2 Kas 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -3023,7 +3023,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "6 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Fulham": [
@@ -3033,7 +3033,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -3049,7 +3049,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -3057,7 +3057,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -3065,7 +3065,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "fulham": [
@@ -3075,7 +3075,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -3091,7 +3091,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -3099,7 +3099,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -3107,7 +3107,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Hull City": [
@@ -3149,7 +3149,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "hull": [
@@ -3191,7 +3191,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "hullcity": [
@@ -3233,7 +3233,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "Ipswich Town": [
@@ -3243,7 +3243,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -3285,7 +3285,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -3327,7 +3327,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -3401,7 +3401,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "leeds": [
@@ -3443,7 +3443,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "leedsunited": [
@@ -3485,7 +3485,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "Liverpool": [
@@ -3519,7 +3519,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -3527,7 +3527,7 @@
         "score": "1 - 3",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "liverpool": [
@@ -3561,7 +3561,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -3569,7 +3569,7 @@
         "score": "1 - 3",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Manchester City": [
@@ -3603,7 +3603,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -3621,7 +3621,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "20 Eyl 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "D",
@@ -3629,7 +3629,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -3637,7 +3637,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -3687,7 +3687,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -3705,7 +3705,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "20 Eyl 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "D",
@@ -3713,7 +3713,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -3721,7 +3721,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -3747,7 +3747,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "20 Eyl 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "D",
@@ -3755,7 +3755,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -3763,7 +3763,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -3797,7 +3797,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -3813,7 +3813,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "2 Kas 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -3839,7 +3839,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -3855,7 +3855,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "2 Kas 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -3881,7 +3881,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -3897,7 +3897,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "2 Kas 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -3931,7 +3931,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -3973,7 +3973,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -4015,7 +4015,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -4133,7 +4133,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "19 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -4175,7 +4175,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "19 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -4217,7 +4217,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "19 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -4251,7 +4251,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -4259,7 +4259,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "D",
@@ -4267,7 +4267,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -4293,7 +4293,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -4301,7 +4301,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "D",
@@ -4309,7 +4309,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -4335,7 +4335,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -4343,7 +4343,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "D",
@@ -4351,7 +4351,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -4385,7 +4385,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "21 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -4409,7 +4409,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "athletic": [
@@ -4427,7 +4427,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "21 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -4451,7 +4451,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "athleticclub": [
@@ -4469,7 +4469,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "21 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -4493,7 +4493,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "Atlético Madrid": [
@@ -4511,7 +4511,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -4527,7 +4527,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -4553,7 +4553,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -4569,7 +4569,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -4595,7 +4595,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -4611,7 +4611,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -4863,7 +4863,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "2 Kas 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "D",
@@ -4905,7 +4905,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "2 Kas 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "D",
@@ -4947,7 +4947,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -4989,7 +4989,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -5007,7 +5007,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "9 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5015,7 +5015,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -5049,7 +5049,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "9 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5057,7 +5057,7 @@
         "score": "0 - 1",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -5091,7 +5091,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "20 Eyl 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -5107,7 +5107,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "19 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -5133,7 +5133,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "20 Eyl 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -5149,7 +5149,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "19 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -5183,7 +5183,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "16 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -5225,7 +5225,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "16 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -5259,7 +5259,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "9 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5275,7 +5275,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5283,7 +5283,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5301,7 +5301,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "9 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5317,7 +5317,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5325,7 +5325,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5343,7 +5343,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "9 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5359,7 +5359,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "23 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5367,7 +5367,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5417,7 +5417,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "osasuna": [
@@ -5459,7 +5459,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "Racing Santander": [
@@ -5485,7 +5485,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5527,7 +5527,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5569,7 +5569,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -5745,7 +5745,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -5829,7 +5829,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -5855,7 +5855,7 @@
         "score": "4 - 1",
         "isHome": true,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 2-0"
+        "halfTimeScore": "İY: 2-1"
       },
       {
         "result": "W",
@@ -5863,7 +5863,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -5897,7 +5897,7 @@
         "score": "4 - 1",
         "isHome": true,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 2-0"
+        "halfTimeScore": "İY: 2-1"
       },
       {
         "result": "W",
@@ -5905,7 +5905,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -6023,7 +6023,7 @@
         "score": "4 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "W",
@@ -6039,7 +6039,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -6065,7 +6065,7 @@
         "score": "4 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "W",
@@ -6081,7 +6081,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -6115,7 +6115,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -6123,7 +6123,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -6157,7 +6157,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -6165,7 +6165,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -6191,7 +6191,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -6207,7 +6207,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -6233,7 +6233,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -6249,7 +6249,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -6551,7 +6551,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       }
     ],
     "atalanta": [
@@ -6593,7 +6593,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 0-1"
       }
     ],
     "Bologna": [
@@ -6603,7 +6603,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -6627,7 +6627,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -6645,7 +6645,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -6669,7 +6669,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "31 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -6719,7 +6719,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "cagliari": [
@@ -6761,7 +6761,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "Como": [
@@ -6855,7 +6855,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -6863,7 +6863,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -6871,7 +6871,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -6897,7 +6897,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -6905,7 +6905,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -6913,7 +6913,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -6971,7 +6971,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "frosinone": [
@@ -7013,7 +7013,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "Genoa": [
@@ -7031,7 +7031,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -7073,7 +7073,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -7123,7 +7123,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -7139,7 +7139,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "31 Eki 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "inter": [
@@ -7165,7 +7165,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -7181,7 +7181,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "31 Eki 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "internazionale": [
@@ -7207,7 +7207,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -7223,7 +7223,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "31 Eki 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "Juventus": [
@@ -7233,7 +7233,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -7275,7 +7275,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -7325,7 +7325,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -7367,7 +7367,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -7425,7 +7425,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -7467,7 +7467,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "D",
@@ -7501,7 +7501,7 @@
         "score": "1 - 4",
         "isHome": true,
         "weekOrDate": "28 Eki 2026",
-        "halfTimeScore": "İY: 0-2"
+        "halfTimeScore": "İY: 1-2"
       },
       {
         "result": "L",
@@ -7543,7 +7543,7 @@
         "score": "1 - 4",
         "isHome": true,
         "weekOrDate": "28 Eki 2026",
-        "halfTimeScore": "İY: 0-2"
+        "halfTimeScore": "İY: 1-2"
       },
       {
         "result": "L",
@@ -7601,7 +7601,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "napoli": [
@@ -7643,7 +7643,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Parma": [
@@ -7661,7 +7661,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -7703,7 +7703,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -7837,7 +7837,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "27 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -7879,7 +7879,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "27 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -8081,7 +8081,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -8105,7 +8105,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "1fcunionberlin": [
@@ -8123,7 +8123,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -8147,7 +8147,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "Bayer Leverkusen": [
@@ -8165,7 +8165,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -8207,7 +8207,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -8249,7 +8249,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -8315,7 +8315,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "bayern": [
@@ -8357,7 +8357,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "bayernmunich": [
@@ -8399,7 +8399,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Borussia Dortmund": [
@@ -8441,7 +8441,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "dortmund": [
@@ -8483,7 +8483,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "borussiadortmund": [
@@ -8525,7 +8525,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Borussia Mönchengladbach": [
@@ -8567,7 +8567,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "6 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "borussia": [
@@ -8609,7 +8609,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "6 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "borussiamonchengladbach": [
@@ -8651,7 +8651,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "6 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Eintracht Frankfurt": [
@@ -8669,7 +8669,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "16 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -8677,7 +8677,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -8685,7 +8685,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -8711,7 +8711,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "16 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -8719,7 +8719,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -8727,7 +8727,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -8753,7 +8753,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "16 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -8761,7 +8761,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "W",
@@ -8769,7 +8769,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -8803,7 +8803,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -8845,7 +8845,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -8887,7 +8887,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "L",
@@ -8921,7 +8921,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "16 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -8937,7 +8937,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -8945,7 +8945,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "cologne": [
@@ -8963,7 +8963,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "16 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -8979,7 +8979,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -8987,7 +8987,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "fccologne": [
@@ -9005,7 +9005,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "16 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -9021,7 +9021,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -9029,7 +9029,7 @@
         "score": "1 - 2",
         "isHome": true,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Hamburg SV": [
@@ -9047,7 +9047,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -9063,7 +9063,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -9089,7 +9089,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -9105,7 +9105,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -9131,7 +9131,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -9147,7 +9147,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -9257,7 +9257,7 @@
         "score": "6 - 1",
         "isHome": false,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 3-0"
+        "halfTimeScore": "İY: 3-1"
       },
       {
         "result": "W",
@@ -9299,7 +9299,7 @@
         "score": "6 - 1",
         "isHome": false,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 3-0"
+        "halfTimeScore": "İY: 3-1"
       },
       {
         "result": "W",
@@ -9341,7 +9341,7 @@
         "score": "6 - 1",
         "isHome": false,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 3-0"
+        "halfTimeScore": "İY: 3-1"
       },
       {
         "result": "W",
@@ -9383,7 +9383,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -9391,7 +9391,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -9399,7 +9399,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -9407,7 +9407,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "31 Eki 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "freiburg": [
@@ -9425,7 +9425,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -9433,7 +9433,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -9441,7 +9441,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -9449,7 +9449,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "31 Eki 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "scfreiburg": [
@@ -9467,7 +9467,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -9475,7 +9475,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -9483,7 +9483,7 @@
         "score": "1 - 3",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-1"
       },
       {
         "result": "W",
@@ -9491,7 +9491,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "31 Eki 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "SC Paderborn 07": [
@@ -9517,7 +9517,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -9559,7 +9559,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -9601,7 +9601,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "24 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -9651,7 +9651,7 @@
         "score": "4 - 1",
         "isHome": true,
         "weekOrDate": "30 Eki 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "L",
@@ -9659,7 +9659,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "sv": [
@@ -9693,7 +9693,7 @@
         "score": "4 - 1",
         "isHome": true,
         "weekOrDate": "30 Eki 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "L",
@@ -9701,7 +9701,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "svelversberg": [
@@ -9735,7 +9735,7 @@
         "score": "4 - 1",
         "isHome": true,
         "weekOrDate": "30 Eki 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "L",
@@ -9743,7 +9743,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "Schalke 04": [
@@ -9895,7 +9895,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -9937,7 +9937,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -9979,7 +9979,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -10013,7 +10013,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -10037,7 +10037,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "vfb": [
@@ -10055,7 +10055,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -10079,7 +10079,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "vfbstuttgart": [
@@ -10097,7 +10097,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -10121,7 +10121,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "Werder Bremen": [
@@ -10163,7 +10163,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "werder": [
@@ -10205,7 +10205,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "werderbremen": [
@@ -10247,7 +10247,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "AJ Auxerre": [
@@ -10273,7 +10273,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -10315,7 +10315,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -10357,7 +10357,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -10399,7 +10399,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "D",
@@ -10407,7 +10407,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -10415,7 +10415,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "monaco": [
@@ -10441,7 +10441,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "D",
@@ -10449,7 +10449,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -10457,7 +10457,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "asmonaco": [
@@ -10483,7 +10483,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "D",
@@ -10491,7 +10491,7 @@
         "score": "1 - 1",
         "isHome": true,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -10499,7 +10499,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "1 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Angers": [
@@ -10601,7 +10601,7 @@
         "score": "5 - 1",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "D",
@@ -10643,7 +10643,7 @@
         "score": "5 - 1",
         "isHome": true,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 2-1"
+        "halfTimeScore": "İY: 2-0"
       },
       {
         "result": "D",
@@ -10709,7 +10709,7 @@
         "score": "1 - 5",
         "isHome": true,
         "weekOrDate": "30 Eki 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-2"
+        "halfTimeScore": "İY: 1-2"
       }
     ],
     "le": [
@@ -10719,7 +10719,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "19 Eyl 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -10727,7 +10727,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -10743,7 +10743,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -10793,7 +10793,7 @@
         "score": "1 - 5",
         "isHome": true,
         "weekOrDate": "30 Eki 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-2"
+        "halfTimeScore": "İY: 1-2"
       }
     ],
     "Le Mans": [
@@ -10803,7 +10803,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "19 Eyl 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -10811,7 +10811,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -10827,7 +10827,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -10845,7 +10845,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "19 Eyl 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -10853,7 +10853,7 @@
         "score": "3 - 1",
         "isHome": false,
         "weekOrDate": "10 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "L",
@@ -10869,7 +10869,7 @@
         "score": "1 - 1",
         "isHome": false,
         "weekOrDate": "25 Eki 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 0-0"
       },
       {
         "result": "L",
@@ -10903,7 +10903,7 @@
         "score": "1 - 3",
         "isHome": false,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -10919,7 +10919,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "30 Eki 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "lens": [
@@ -10945,7 +10945,7 @@
         "score": "1 - 3",
         "isHome": false,
         "weekOrDate": "17 Eki 2026",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -10961,7 +10961,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "30 Eki 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "Lille": [
@@ -10995,7 +10995,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "30 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -11003,7 +11003,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "lille": [
@@ -11037,7 +11037,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "30 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -11045,7 +11045,7 @@
         "score": "1 - 2",
         "isHome": false,
         "weekOrDate": "8 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Lorient": [
@@ -11071,7 +11071,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -11113,7 +11113,7 @@
         "score": "1 - 0",
         "isHome": true,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "D",
@@ -11307,7 +11307,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "20 Eyl 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -11315,7 +11315,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -11323,7 +11323,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -11349,7 +11349,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "20 Eyl 2026",
-        "halfTimeScore": "İY: 1-1"
+        "halfTimeScore": "İY: 1-0"
       },
       {
         "result": "W",
@@ -11357,7 +11357,7 @@
         "score": "2 - 1",
         "isHome": true,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "L",
@@ -11365,7 +11365,7 @@
         "score": "2 - 1",
         "isHome": false,
         "weekOrDate": "18 Eki 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -11415,7 +11415,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -11423,7 +11423,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "psg": [
@@ -11457,7 +11457,7 @@
         "score": "1 - 5",
         "isHome": false,
         "weekOrDate": "30 Eki 2026",
-        "halfTimeScore": "İY: 1-2"
+        "halfTimeScore": "İY: 0-2"
       },
       {
         "result": "W",
@@ -11499,7 +11499,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "1 Kas 2026",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       },
       {
         "result": "W",
@@ -11507,7 +11507,7 @@
         "score": "0 - 1",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-1"
+        "halfTimeScore": "İY: 0-0"
       }
     ],
     "Paris Saint-Germain": [
@@ -11541,7 +11541,7 @@
         "score": "1 - 5",
         "isHome": false,
         "weekOrDate": "30 Eki 2026",
-        "halfTimeScore": "İY: 1-2"
+        "halfTimeScore": "İY: 0-2"
       },
       {
         "result": "W",
@@ -11583,7 +11583,7 @@
         "score": "1 - 5",
         "isHome": false,
         "weekOrDate": "30 Eki 2026",
-        "halfTimeScore": "İY: 1-2"
+        "halfTimeScore": "İY: 0-2"
       },
       {
         "result": "W",
@@ -11601,7 +11601,7 @@
         "score": "4 - 1",
         "isHome": true,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 2-0"
+        "halfTimeScore": "İY: 2-1"
       },
       {
         "result": "L",
@@ -11643,7 +11643,7 @@
         "score": "4 - 1",
         "isHome": true,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 2-0"
+        "halfTimeScore": "İY: 2-1"
       },
       {
         "result": "L",
@@ -11685,7 +11685,7 @@
         "score": "4 - 1",
         "isHome": true,
         "weekOrDate": "11 Eki 2026",
-        "halfTimeScore": "İY: 2-0"
+        "halfTimeScore": "İY: 2-1"
       },
       {
         "result": "L",
@@ -11843,7 +11843,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "6 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "toulouse": [
@@ -11885,7 +11885,7 @@
         "score": "3 - 1",
         "isHome": true,
         "weekOrDate": "6 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 1-0"
+        "halfTimeScore": "İY: 1-1"
       }
     ],
     "Troyes": [
@@ -11927,7 +11927,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       }
     ],
     "troyes": [
@@ -11969,7 +11969,7 @@
         "score": "1 - 0",
         "isHome": false,
         "weekOrDate": "7 Kas 2026 (Son Maç)",
-        "halfTimeScore": "İY: 0-0"
+        "halfTimeScore": "İY: 1-0"
       }
     ]
   }

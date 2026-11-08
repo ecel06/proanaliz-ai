@@ -26,6 +26,8 @@ interface HeaderProps {
   totalMatches: number;
   isInstallable?: boolean;
   activeTabMode?: string;
+  hasNewUpdate?: boolean;
+  onUpdateApp?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -39,7 +41,9 @@ export const Header: React.FC<HeaderProps> = ({
   lastUpdatedText,
   totalMatches,
   isInstallable = false,
-  activeTabMode = 'upcoming'
+  activeTabMode = 'upcoming',
+  hasNewUpdate = false,
+  onUpdateApp
 }) => {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl">
@@ -82,6 +86,19 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Right Action Buttons & Badges */}
           <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
             
+            {/* Direct Update Trigger in Header */}
+            {hasNewUpdate && onUpdateApp && (
+              <button
+                onClick={onUpdateApp}
+                className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/50 ring-2 ring-emerald-300 animate-pulse active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+                title="Yeni Güncelleme Mevcut - Yenilemek için Tıklayın"
+              >
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-950 stroke-[3]" />
+                <span>Güncelle</span>
+                <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
+              </button>
+            )}
+
             {/* Live Sync Refresh Button */}
             {onRefreshLiveBulletin && (
               <button

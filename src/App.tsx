@@ -57,6 +57,7 @@ export const App: React.FC = () => {
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [newVersionAvailable, setNewVersionAvailable] = useState(false);
+  const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
   const CLIENT_BUILD_VERSION = '2026.11.08.3';
@@ -67,7 +68,11 @@ export const App: React.FC = () => {
         if (res.ok) {
           const data = await res.json();
           if (data.version && data.version !== CLIENT_BUILD_VERSION) {
-            setNewVersionAvailable(true);
+            const dismissed = localStorage.getItem('proanaliz_dismissed_version');
+            if (dismissed !== data.version) {
+              setServerVersion(data.version);
+              setNewVersionAvailable(true);
+            }
           }
         }
       } catch (e) {
@@ -76,9 +81,24 @@ export const App: React.FC = () => {
     };
 
     checkVersion();
-    const verTimer = setInterval(checkVersion, 30000);
+    const verTimer = setInterval(checkVersion, 20000);
     return () => clearInterval(verTimer);
   }, []);
+
+  const handleUpdateApp = () => {
+    if (serverVersion) {
+      try {
+        localStorage.setItem('proanaliz_dismissed_version', serverVersion);
+      } catch (e) {}
+    }
+    if ('caches' in window) {
+      caches.keys().then(names => names.forEach(name => caches.delete(name)));
+    }
+    try {
+      sessionStorage.clear();
+    } catch (e) {}
+    window.location.reload();
+  };
 
   // Listen for PWA beforeinstallprompt on supported browsers
   useEffect(() => {
@@ -427,7 +447,50 @@ export const App: React.FC = () => {
         totalMatches={totalMatches}
         isInstallable={isInstallable}
         activeTabMode={activeTabMode}
+        hasNewUpdate={newVersionAvailable}
+        onUpdateApp={handleUpdateApp}
       />
+
+      {/* Prominent Floating App Update Notification Banner - Fixed Top Position */}
+      {newVersionAvailable && (
+        <aside 
+          aria-label="Uygulama Güncellemesi"
+          className="fixed top-2 sm:top-4 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:max-w-xl z-[99999] p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white shadow-2xl shadow-emerald-500/60 border-2 border-emerald-300 ring-4 ring-emerald-500/25 backdrop-blur-xl flex items-center justify-between gap-2.5 animate-bounce"
+        >
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-slate-950/80 border border-emerald-400/60 flex items-center justify-center shrink-0 shadow-inner">
+              <Sparkles className="w-5 h-5 text-amber-300 animate-spin" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center space-x-1.5">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-300 animate-ping" />
+                <span className="font-black text-xs sm:text-sm tracking-wide text-white drop-shadow">
+                  YENİ GÜNCELLEME YAYINDA!
+                </span>
+              </div>
+              <div className="text-[11px] sm:text-xs text-emerald-100 font-medium truncate">
+                Yeni özellikler hazır. Tek tıkla yenileyin.
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-1.5 shrink-0">
+            <button
+              onClick={handleUpdateApp}
+              className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-slate-950 text-emerald-300 hover:text-emerald-200 font-black text-xs sm:text-sm shadow-xl hover:bg-slate-900 active:scale-95 transition-all cursor-pointer whitespace-nowrap border-2 border-emerald-400 flex items-center space-x-1.5"
+            >
+              <span>🔄</span>
+              <span>Şimdi Güncelle</span>
+            </button>
+            <button
+              onClick={() => setNewVersionAvailable(false)}
+              className="p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer text-xs font-bold"
+              title="Kapat"
+            >
+              ✕
+            </button>
+          </div>
+        </aside>
+      )}
 
       {/* Main Container with Two Column Responsive Grid */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
@@ -872,29 +935,7 @@ export const App: React.FC = () => {
         onDirectInstall={handleDirectInstall}
       />
 
-      {/* Floating App Update Notification Banner */}
-      {newVersionAvailable && (
-        <div className="fixed bottom-5 left-4 right-4 max-w-md mx-auto z-50 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white shadow-2xl shadow-emerald-500/40 border border-emerald-300 flex items-center justify-between animate-bounce">
-          <div className="flex items-center space-x-2.5">
-            <Sparkles className="w-5 h-5 text-amber-300 animate-spin" />
-            <div>
-              <div className="font-black text-xs sm:text-sm">Yeni Güncelleme Yayında!</div>
-              <div className="text-[10px] text-emerald-100">Yeni özellikler ve düzeltmeler hazır.</div>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              if ('caches' in window) {
-                caches.keys().then(names => names.forEach(name => caches.delete(name)));
-              }
-              window.location.reload();
-            }}
-            className="px-3.5 py-1.5 rounded-xl bg-slate-950 text-emerald-300 font-black text-xs shadow-md hover:bg-slate-900 active:scale-95 transition-all cursor-pointer whitespace-nowrap border border-emerald-500/40"
-          >
-            🔄 Şimdi Güncelle
-          </button>
-        </div>
-      )}
+
 
       {/* Footer */}
       <footer className="mt-16 border-t border-slate-800/80 bg-slate-950 py-8">
