@@ -14,7 +14,11 @@ export type AICouponType =
   | 'htft'
   | 'first_half'
   | 'over'
+  | 'over35'
   | 'under'
+  | 'under35'
+  | 'over15'
+  | 'under15'
   | 'btts'
   | 'btts_no'
   | 'match_result';
@@ -29,7 +33,7 @@ export interface AICouponItem {
   league: string;
   matchTimeText: string;
   pickLabel: string;
-  pickType: 'ms1' | 'ms2' | 'msX' | 'over25' | 'under25' | 'btts' | 'htft' | 'over15';
+  pickType: 'ms1' | 'ms2' | 'msX' | 'over15' | 'under15' | 'over25' | 'under25' | 'over35' | 'under35' | 'btts' | 'htft';
   odd: number;
   confidence: number;
   reasoning: string;
@@ -81,6 +85,10 @@ function normalizeText(text: string): string {
     .replace(/ı/g, 'i')
     .replace(/ö/g, 'o')
     .replace(/ç/g, 'c')
+    .replace(/3[.,]5/g, '3 5')
+    .replace(/2[.,]5/g, '2 5')
+    .replace(/1[.,]5/g, '1 5')
+    .replace(/0[.,]5/g, '0 5')
     .replace(/[\/\\\-_.,;:!?]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -200,9 +208,51 @@ export function parseUserRequest(message: string): {
     return { type: 'first_half', matchCount };
   }
 
-  // E. 2.5 Gol Altı (Alt) - check before Gol Üst!
+  // E. 3.5 Gol Üstü (3.5 Üst, 4 Gol) - check BEFORE 2.5 and generic ust!
+  if (
+    norm.includes('3 5 ust') ||
+    norm.includes('3 5 ve uzeri') ||
+    norm.includes('3 5 uzeri') ||
+    norm.includes('4 gol') ||
+    norm.includes('4 ve uzeri') ||
+    (norm.includes('3 5') && (norm.includes('ust') || norm.includes('gol')) && !norm.includes('alt'))
+  ) {
+    return { type: 'over35', matchCount };
+  }
+
+  // F. 3.5 Gol Altı (3.5 Alt) - check BEFORE 2.5 and generic alt!
+  if (
+    norm.includes('3 5 alt') ||
+    norm.includes('3 5 alti') ||
+    (norm.includes('3 5') && norm.includes('alt'))
+  ) {
+    return { type: 'under35', matchCount };
+  }
+
+  // G. 1.5 Gol Üstü (1.5 Üst, 2 Gol)
+  if (
+    norm.includes('1 5 ust') ||
+    norm.includes('1 5 ustu') ||
+    norm.includes('1 5 uzeri') ||
+    norm.includes('2 gol') ||
+    (norm.includes('1 5') && (norm.includes('ust') || norm.includes('gol')) && !norm.includes('alt'))
+  ) {
+    return { type: 'over15', matchCount };
+  }
+
+  // H. 1.5 Gol Altı (1.5 Alt)
+  if (
+    norm.includes('1 5 alt') ||
+    norm.includes('1 5 alti') ||
+    (norm.includes('1 5') && norm.includes('alt'))
+  ) {
+    return { type: 'under15', matchCount };
+  }
+
+  // I. 2.5 Gol Altı (Alt) - check before Gol Üst!
   if (
     norm.includes('2 5 alt') ||
+    norm.includes('2 5 alti') ||
     norm.includes('alt kupon') ||
     norm.includes('kisir') ||
     norm.includes('az gol') ||
@@ -214,9 +264,10 @@ export function parseUserRequest(message: string): {
     return { type: 'under', matchCount };
   }
 
-  // F. 2.5 Gol Üstü (Üst)
+  // J. 2.5 Gol Üstü (Üst)
   if (
     norm.includes('2 5 ust') ||
+    norm.includes('2 5 ustu') ||
     norm.includes('ust kupon') ||
     norm.includes('bol gol') ||
     norm.includes('gollu') ||
@@ -463,7 +514,85 @@ export function generateAICoupon(
     }
 
     // -------------------------------------------------------------------------
-    // 5. 2.5 GOL ÜSTÜ (Üst)
+    // 5. 3.5 GOL ÜSTÜ (3.5 Üst)
+    // -------------------------------------------------------------------------
+    else if (type === 'over35') {
+      const over35Prob = analysis.over35 || Math.round((analysis.over25 || 58) * 0.65);
+      const conf = Math.max(52, Math.min(84, over35Prob));
+      const overOdd = Number((1 / (conf / 100) * 0.94).toFixed(2));
+      const odd = Math.max(2.10, Math.min(3.40, overOdd));
+      candidates.push({
+        match,
+        analysis,
+        pickLabel: '3.5 Gol Üst',
+        pickType: 'over35',
+        odd,
+        confidence: conf,
+        reasoning: `İki ekip de yüksek hücum temposuna sahip. Beklenen toplam gol (xG) ${analysis.expectedTotalGoals || 3.10}; maçta 4 ve üzeri gol (3.5 Üst) ihtimali %${conf}.`,
+        selectionScore: (analysis.expectedTotalGoals || 2.5) * 35 + conf + Math.random() * 5
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. 3.5 GOL ALTI (3.5 Alt)
+    // -------------------------------------------------------------------------
+    else if (type === 'under35') {
+      const under35Prob = analysis.under35 || 75;
+      const conf = Math.max(62, Math.min(88, under35Prob));
+      const underOdd = Number((1 / (conf / 100) * 0.94).toFixed(2));
+      const odd = Math.max(1.30, Math.min(1.70, underOdd));
+      candidates.push({
+        match,
+        analysis,
+        pickLabel: '3.5 Gol Alt',
+        pickType: 'under35',
+        odd,
+        confidence: conf,
+        reasoning: `Kontrollü oyun ve sağlam defans hatları maçı 4 golden az bitmeye (%${conf} güvenle) yönlendiriyor.`,
+        selectionScore: conf + (4 - (analysis.expectedTotalGoals || 2.3)) * 25 + Math.random() * 5
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 7. 1.5 GOL ÜSTÜ (1.5 Üst)
+    // -------------------------------------------------------------------------
+    else if (type === 'over15') {
+      const over15Prob = analysis.over15 || 82;
+      const conf = Math.max(72, Math.min(94, over15Prob));
+      const overOdd = Number((1 / (conf / 100) * 0.94).toFixed(2));
+      const odd = Math.max(1.22, Math.min(1.48, overOdd));
+      candidates.push({
+        match,
+        analysis,
+        pickLabel: '1.5 Gol Üst',
+        pickType: 'over15',
+        odd,
+        confidence: conf,
+        reasoning: `Karşılaşmada en az 2 gol çıkma olasılığı %${conf}; takımların hücum üretkenliği güven veriyor.`,
+        selectionScore: conf + (analysis.expectedTotalGoals || 2.5) * 15 + Math.random() * 5
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 8. 1.5 GOL ALTI (1.5 Alt)
+    // -------------------------------------------------------------------------
+    else if (type === 'under15') {
+      const under15Prob = analysis.under15 || 32;
+      const conf = Math.max(40, Math.min(65, under15Prob));
+      candidates.push({
+        match,
+        analysis,
+        pickLabel: '1.5 Gol Alt',
+        pickType: 'under15',
+        odd: 2.85,
+        confidence: conf,
+        reasoning: `Savunma kurgusu çok sert, gol beklentisi minimum seviyede kısır karşılaşma.`,
+        selectionScore: conf + Math.random() * 5
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 9. 2.5 GOL ÜSTÜ (Üst)
     // -------------------------------------------------------------------------
     else if (type === 'over') {
       const overOdd = Number((1 / ((analysis.over25 || 65) / 100) * 0.94).toFixed(2));
@@ -472,15 +601,15 @@ export function generateAICoupon(
         analysis,
         pickLabel: '2.5 Gol Üst',
         pickType: 'over25',
-        odd: Math.max(1.52, Math.min(1.82, overOdd)),
+        odd: Math.max(1.52, Math.min(1.88, overOdd)),
         confidence: analysis.over25 || 65,
         reasoning: `Beklenen toplam gol (xG) ${analysis.expectedTotalGoals || 2.70}; mücadelede 3 ve üzeri gol ihtimali %${analysis.over25 || 65}.`,
-        selectionScore: (analysis.over25 || 65) + Math.random() * 5
+        selectionScore: (analysis.expectedTotalGoals || 2.5) * 25 + (analysis.over25 || 65) + Math.random() * 5
       });
     }
 
     // -------------------------------------------------------------------------
-    // 6. 2.5 GOL ALTI (Alt)
+    // 10. 2.5 GOL ALTI (Alt)
     // -------------------------------------------------------------------------
     else if (type === 'under') {
       const underOdd = Number((1 / ((analysis.under25 || 45) / 100) * 0.94).toFixed(2));
@@ -492,7 +621,7 @@ export function generateAICoupon(
         odd: Math.max(1.65, Math.min(2.10, underOdd)),
         confidence: analysis.under25 || 48,
         reasoning: `İki ekibin hücum kısırlığı ve defansif kapanma eğilimi maçı 2.5 Altına yönlendiriyor.`,
-        selectionScore: (analysis.under25 || 48) + Math.random() * 5
+        selectionScore: (analysis.under25 || 48) + (3 - (analysis.expectedTotalGoals || 2.3)) * 15 + Math.random() * 5
       });
     }
 
@@ -608,14 +737,46 @@ export function generateAICoupon(
       if (!pickedMatches.has(match.id)) {
         pickedMatches.add(match.id);
         const analysis = analysesMap.get(match.id) || ({} as MatchAnalysis);
+        let pickLabel = '2.5 Gol Üst';
+        let pickType: AICouponItem['pickType'] = 'over25';
+        let odd = 1.65;
+        let confidence = 70;
+        let reasoning = 'Oynanmamış lig karşılaşmasında istatistiksel Poisson beklentisi yüksek.';
+
+        if (type === 'htft') {
+          pickLabel = 'İY 1 / MS 1';
+          pickType = 'htft';
+          odd = 2.45;
+          confidence = 72;
+          reasoning = 'İlk yarıdan üstünlük kurma olasılığı yüksek değerli İY/MS tercihi.';
+        } else if (type === 'over35') {
+          pickLabel = '3.5 Gol Üst';
+          pickType = 'over35';
+          odd = 2.40;
+          confidence = 62;
+          reasoning = 'Hücum potansiyeli yüksek karşılaşmada 4 ve üzeri gol (3.5 Üst) bekleniyor.';
+        } else if (type === 'under35') {
+          pickLabel = '3.5 Gol Alt';
+          pickType = 'under35';
+          odd = 1.35;
+          confidence = 78;
+          reasoning = 'Kontrollü oyunda mücadelenin 4 golden az bitmesi kuvvetle muhtemel.';
+        } else if (type === 'over15') {
+          pickLabel = '1.5 Gol Üst';
+          pickType = 'over15';
+          odd = 1.28;
+          confidence = 82;
+          reasoning = 'Erken gol ihtimali yüksek ve en az 2 gol çıkma güveni tam.';
+        }
+
         selectedCandidates.push({
           match,
           analysis,
-          pickLabel: type === 'htft' ? 'İY 1 / MS 1' : '2.5 Gol Üst',
-          pickType: type === 'htft' ? 'htft' : 'over25',
-          odd: type === 'htft' ? 2.45 : 1.65,
-          confidence: 72,
-          reasoning: `Oynanmamış lig karşılaşmasında istatistiksel Poisson beklentisi yüksek.`,
+          pickLabel,
+          pickType,
+          odd,
+          confidence,
+          reasoning,
           selectionScore: 70
         });
         if (selectedCandidates.length >= count) break;
@@ -670,6 +831,22 @@ export function generateAICoupon(
     title = `${count} Maçlık İdeal Kupon`;
     badge = 'DENGELİ DEĞER';
     riskRating = 'Dengeli Değer';
+  } else if (type === 'over35') {
+    title = `${count} Maçlık 3.5 Gol Üst Kuponu`;
+    badge = '3.5 ÜST';
+    riskRating = 'Yüksek Oran & Bol Gol';
+  } else if (type === 'under35') {
+    title = `${count} Maçlık 3.5 Gol Alt Kuponu`;
+    badge = '3.5 ALT';
+    riskRating = 'Güvenli Gol Altı';
+  } else if (type === 'over15') {
+    title = `${count} Maçlık 1.5 Gol Üst Kuponu`;
+    badge = '1.5 ÜST';
+    riskRating = 'Yüksek Güven';
+  } else if (type === 'under15') {
+    title = `${count} Maçlık 1.5 Gol Alt Kuponu`;
+    badge = '1.5 ALT';
+    riskRating = 'Sürpriz Kısır';
   } else if (type === 'over') {
     title = `${count} Maçlık 2.5 Gol Üst Kuponu`;
     badge = '2.5 ÜST';
@@ -826,6 +1003,14 @@ export function handleAIChatQuery(
     introText += `💣 **${coupon.title}:** Yüksek kazanç hedefleyen, oranı yüksek sürpriz beraberlik ve deplasman değer maçları seçildi.`;
   } else if (resolvedType === 'ideal') {
     introText += `⚖️ **${coupon.title}:** Risk ve oran dengesi kusursuz, xG istatistiği kuvvetli değerli maçlar bir araya getirildi.`;
+  } else if (resolvedType === 'over35') {
+    introText += `🔥 **${coupon.title}:** Bültendeki maçlar arasında hücum temposu en yüksek, maç başına 4 ve üzeri gol (3.5 Üst) potansiyeli en kuvvetli maçlar seçildi.`;
+  } else if (resolvedType === 'under35') {
+    introText += `🛡️ **${coupon.title}:** Takımların dengeli oyunu ve savunma güvenliği dikkate alınarak 4 golden az bitmesi beklenen (3.5 Alt) maçlar seçildi.`;
+  } else if (resolvedType === 'over15') {
+    introText += `🎯 **${coupon.title}:** Karşılaşmalarda en az 2 gol atılması beklenen (%80+ olasılıklı) yüksek güvenilirlikteki maçlar listelendi.`;
+  } else if (resolvedType === 'under15') {
+    introText += `🔒 **${coupon.title}:** Katı savunma anlayışına sahip takımların düşük skorlu maçları seçildi.`;
   } else if (resolvedType === 'over') {
     introText += `⚽ **${coupon.title}:** İki takımın da hücum gücünün zirvede olduğu, en az 3 gol beklenen maçlar seçildi.`;
   } else if (resolvedType === 'under') {
@@ -845,11 +1030,12 @@ export function handleAIChatQuery(
     text: introText,
     coupon,
     quickSuggestions: [
+      '🔥 3 Maçlık 3.5 Gol Üst Kuponu Yap',
       '🎲 3 Maçlık İlk Yarı / Maç Sonucu Kuponu Yap',
       '⚡ 3 Maçlık Banko Kupon Yap',
+      '⚽ 3 Maçlık 2.5 Üst Kuponu',
       '💣 4 Maçlık Sürpriz Kupon Hazırla',
-      '🤝 Karşılıklı Gol Var Kuponu Yap',
-      '⚽ 2.5 Gol Üst Kuponu Ver'
+      '🤝 Karşılıklı Gol Var Kuponu Yap'
     ]
   };
 }

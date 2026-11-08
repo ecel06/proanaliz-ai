@@ -59,14 +59,20 @@ export function analyzeMatch(home: TeamStats, away: TeamStats, matchId?: string)
   const homeAdvantage = 1.12; // Ev sahibi saha ve seyirci avantajı
   const awayDisadvantage = 0.92;
 
+  // İstatistikleri eksik veya 0 olan takımlar için profesyonel lig ortalaması varsayılanı kullan
+  const homeScored = (home.avgGoalsScored && home.avgGoalsScored > 0) ? home.avgGoalsScored : 1.48;
+  const awayConceded = (away.avgGoalsConceded && away.avgGoalsConceded > 0) ? away.avgGoalsConceded : 1.32;
+  const awayScored = (away.avgGoalsScored && away.avgGoalsScored > 0) ? away.avgGoalsScored : 1.25;
+  const homeConceded = (home.avgGoalsConceded && home.avgGoalsConceded > 0) ? home.avgGoalsConceded : 1.15;
+
   // Ev sahibi gol beklentisi: Kendi atma gücü * Rakip yeme zaafı / base * form * ev katsayısı
-  let expHomeGoals = (home.avgGoalsScored * (away.avgGoalsConceded || 1.1) / baseAvg) * homeFormFactor * homeAdvantage;
+  let expHomeGoals = (homeScored * awayConceded / baseAvg) * homeFormFactor * homeAdvantage;
   // Deplasman gol beklentisi
-  let expAwayGoals = (away.avgGoalsScored * (home.avgGoalsConceded || 1.1) / baseAvg) * awayFormFactor * awayDisadvantage;
+  let expAwayGoals = (awayScored * homeConceded / baseAvg) * awayFormFactor * awayDisadvantage;
 
   // Uç değerleri filtrele ve gerçekçi aralığa oturt
-  expHomeGoals = Math.max(0.4, Math.min(3.8, expHomeGoals));
-  expAwayGoals = Math.max(0.3, Math.min(3.4, expAwayGoals));
+  expHomeGoals = Math.max(0.5, Math.min(3.8, expHomeGoals));
+  expAwayGoals = Math.max(0.4, Math.min(3.4, expAwayGoals));
   const expectedTotalGoals = Number((expHomeGoals + expAwayGoals).toFixed(2));
 
   // 3. İlk Yarı Gol Beklentileri (Maç gollerinin ortalama %43'ü ilk yarıda olur)

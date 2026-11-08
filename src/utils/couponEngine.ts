@@ -20,7 +20,7 @@ export interface CouponMatchItem {
   iddaaCode: string;
   matchTimeText: string;
   pickLabel: string;
-  pickType: 'ms1' | 'ms2' | 'msX' | 'over25' | 'under25' | 'btts' | 'htft' | 'over15';
+  pickType: 'ms1' | 'ms2' | 'msX' | 'over15' | 'under15' | 'over25' | 'under25' | 'over35' | 'under35' | 'btts' | 'htft';
   odd: number;
   confidence: number;
   reasoning: string;
@@ -127,6 +127,36 @@ export function evaluatePickStatus(
           pickStatus = 'won';
         } else if (isFinished) {
           pickStatus = 'lost';
+        } else {
+          pickStatus = 'live';
+        }
+        break;
+
+      case 'under15':
+        if (totalGoals >= 2) {
+          pickStatus = 'lost';
+        } else if (isFinished) {
+          pickStatus = 'won';
+        } else {
+          pickStatus = 'live';
+        }
+        break;
+
+      case 'over35':
+        if (totalGoals > 3.5) {
+          pickStatus = 'won';
+        } else if (isFinished) {
+          pickStatus = 'lost';
+        } else {
+          pickStatus = 'live';
+        }
+        break;
+
+      case 'under35':
+        if (totalGoals >= 4) {
+          pickStatus = 'lost';
+        } else if (isFinished) {
+          pickStatus = 'won';
         } else {
           pickStatus = 'live';
         }
