@@ -329,6 +329,10 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                             <Radio className="w-3 h-3 text-rose-400" />
                             <span>{liveState.liveMinute}</span>
                           </span>
+                        ) : (match.status === 'postponed' || (match as any).isPostponed) ? (
+                          <span className="font-bold text-amber-400 text-xs bg-amber-400/10 border border-amber-400/30 px-1.5 py-0.5 rounded">
+                            Ertelendi
+                          </span>
                         ) : (
                           <span className="font-mono font-black text-emerald-400 text-sm">
                             {time}
@@ -538,6 +542,10 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                           <span className="flex items-center space-x-1 text-rose-400 font-black text-[11px] bg-rose-500/15 border border-rose-500/30 px-2 py-0.5 rounded-md animate-pulse">
                             <Radio className="w-3 h-3 text-rose-400" />
                             <span>CANLI {liveState.liveMinute}</span>
+                          </span>
+                        ) : (match.status === 'postponed' || (match as any).isPostponed) ? (
+                          <span className="flex items-center space-x-1 text-amber-400 font-bold text-[11px] bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                            <span>Ertelendi</span>
                           </span>
                         ) : (
                           <span className="flex items-center space-x-1 text-emerald-400 font-semibold text-[11px] bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">

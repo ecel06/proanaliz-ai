@@ -55,7 +55,7 @@ export interface Match {
   referee?: string;
   homeTeam: TeamStats;
   awayTeam: TeamStats;
-  status?: 'upcoming' | 'live' | 'finished';
+  status?: 'upcoming' | 'live' | 'finished' | 'postponed' | 'cancelled';
   liveMinute?: string;
   currentScore?: {
     home: number;

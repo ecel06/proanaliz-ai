@@ -61,30 +61,48 @@ export function mapEvent(event, league) {
   const competition = event.competitions?.[0] || {};
   const statusObj = competition.status || {};
   const state = statusObj.type?.state || 'pre'; // 'pre', 'in', 'post'
-  const isCompleted = state === 'post' || statusObj.type?.completed === true;
-  const isLive = state === 'in';
+  const typeName = String(statusObj.type?.name || '').toUpperCase();
+  const desc = String(statusObj.type?.description || statusObj.type?.detail || '').toLowerCase();
+
+  const isPostponed = typeName.includes('POSTPONED') || desc.includes('postponed') || desc.includes('ertelendi');
+  const isCanceled = typeName.includes('CANCEL') || desc.includes('cancel') || desc.includes('iptal');
+  const isSuspended = typeName.includes('SUSPENDED') || desc.includes('suspended');
+
+  // Kickoff time check: A match whose kickoff is in the future can NEVER be finished
+  const eventTime = event.date ? new Date(event.date).getTime() : NaN;
+  const nowMs = Date.now();
+  const isFuture = !isNaN(eventTime) && eventTime > (nowMs + 60 * 60 * 1000); // 1 hour buffer
+
+  // A match is truly completed ONLY IF it is not postponed/canceled/suspended/future
+  // and either explicitly completed or in post-match state
+  const isCompleted = !isPostponed && !isCanceled && !isSuspended && !isFuture &&
+    (statusObj.type?.completed === true || (state === 'post' && !isPostponed && !isCanceled));
+
+  const isLive = !isCompleted && !isPostponed && !isCanceled && state === 'in';
 
   const homeComp = (competition.competitors || []).find(c => c.homeAway === 'home') || {};
   const awayComp = (competition.competitors || []).find(c => c.homeAway === 'away') || {};
   const homeTeam = homeComp.team || {};
   const awayTeam = awayComp.team || {};
 
-  // Extract real live and final scores from competitors
+  // Extract real live and final scores from competitors ONLY if match is finished or currently live
   let parsedHomeScore = null;
   let parsedAwayScore = null;
 
-  if (homeComp.score !== undefined && homeComp.score !== null && homeComp.score !== '') {
-    const s = parseInt(homeComp.score, 10);
-    if (!isNaN(s)) parsedHomeScore = s;
-  }
-  if (awayComp.score !== undefined && awayComp.score !== null && awayComp.score !== '') {
-    const s = parseInt(awayComp.score, 10);
-    if (!isNaN(s)) parsedAwayScore = s;
+  if (isCompleted || isLive) {
+    if (homeComp.score !== undefined && homeComp.score !== null && homeComp.score !== '') {
+      const s = parseInt(homeComp.score, 10);
+      if (!isNaN(s)) parsedHomeScore = s;
+    }
+    if (awayComp.score !== undefined && awayComp.score !== null && awayComp.score !== '') {
+      const s = parseInt(awayComp.score, 10);
+      if (!isNaN(s)) parsedAwayScore = s;
+    }
   }
 
-  const hasScores = parsedHomeScore !== null && parsedAwayScore !== null;
+  const hasScores = (isCompleted || isLive) && parsedHomeScore !== null && parsedAwayScore !== null;
   const currentScore = hasScores ? { home: parsedHomeScore, away: parsedAwayScore } : undefined;
-  const finalScore = isCompleted && hasScores ? { home: parsedHomeScore, away: parsedAwayScore } : currentScore;
+  const finalScore = isCompleted && hasScores ? { home: parsedHomeScore, away: parsedAwayScore } : undefined;
 
   // Real-time live minute (e.g. "72'", "İY", "HT")
   let liveMinute = '';
@@ -99,8 +117,25 @@ export function mapEvent(event, league) {
     }
   }
 
-  const dayCategory = state === 'pre' ? 'upcoming' : isLive ? 'live' : 'completed';
-  const status = isCompleted ? 'finished' : isLive ? 'live' : 'upcoming';
+  let dayCategory = 'upcoming';
+  let status = 'upcoming';
+
+  if (isCompleted) {
+    status = 'finished';
+    dayCategory = 'completed';
+  } else if (isLive) {
+    status = 'live';
+    dayCategory = 'live';
+  } else if (isPostponed) {
+    status = 'postponed';
+    dayCategory = 'upcoming';
+  } else if (isCanceled) {
+    status = 'cancelled';
+    dayCategory = 'upcoming';
+  } else {
+    status = 'upcoming';
+    dayCategory = 'upcoming';
+  }
 
   const idStr = String(event.id || '');
   let hash = 0;
@@ -126,8 +161,9 @@ export function mapEvent(event, league) {
     liveMinute,
     currentScore,
     finalScore,
-    homeScore: parsedHomeScore ?? 0,
-    awayScore: parsedAwayScore ?? 0,
+    homeScore: hasScores ? parsedHomeScore : null,
+    awayScore: hasScores ? parsedAwayScore : null,
+    isPostponed: isPostponed || undefined,
     homeTeam: {
       id: homeTeam.id?.toString() || '',
       name: homeTeam.displayName || homeTeam.name || '',

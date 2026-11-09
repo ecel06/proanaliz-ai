@@ -4,10 +4,11 @@
 import { Match } from '../types';
 
 export interface MatchLiveState {
-  status: 'upcoming' | 'live' | 'finished';
+  status: 'upcoming' | 'live' | 'finished' | 'postponed' | 'cancelled';
   isLive: boolean;
   isFinished: boolean;
   isUpcoming: boolean;
+  isPostponed?: boolean;
   liveMinute?: string;
   displayScore: {
     home: number;
@@ -91,7 +92,33 @@ export function getKickoffTimestamp(match: Match): number {
  * it is treated as LIVE with real-time minute calculation and live score display.
  */
 export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLiveState {
-  // 1. Explicitly finished match
+  const kickoffMs = getKickoffTimestamp(match);
+  const nowMs = now.getTime();
+
+  // 0. Postponed or Cancelled match
+  if (match.status === 'postponed' || (match as any).status === 'cancelled' || (match as any).isPostponed) {
+    return {
+      status: (match.status === 'cancelled' ? 'cancelled' : 'postponed') as any,
+      isLive: false,
+      isFinished: false,
+      isUpcoming: true,
+      isPostponed: true,
+      displayScore: { home: 0, away: 0 }
+    };
+  }
+
+  // 1. Kickoff is in the future (more than 10 mins ahead) => CANNOT be finished or live
+  if (kickoffMs !== null && kickoffMs > (nowMs + 10 * 60 * 1000)) {
+    return {
+      status: 'upcoming',
+      isLive: false,
+      isFinished: false,
+      isUpcoming: true,
+      displayScore: { home: 0, away: 0 }
+    };
+  }
+
+  // 2. Explicitly finished match (valid ONLY if kickoff has occurred)
   if (match.status === 'finished') {
     const finalScore = match.finalScore || {
       home: (match as any).homeScore ?? 0,
@@ -111,7 +138,7 @@ export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLi
     };
   }
 
-  // 2. Explicit live status
+  // 3. Explicit live status
   if (match.status === 'live') {
     const score = match.currentScore || match.finalScore || {
       home: (match as any).homeScore ?? 0,
@@ -132,8 +159,7 @@ export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLi
     };
   }
 
-  // 3. Kickoff-based automatic detection
-  const kickoffMs = getKickoffTimestamp(match);
+  // 4. Kickoff-based automatic detection
   if (kickoffMs !== null) {
     const diffMs = now.getTime() - kickoffMs;
 

@@ -124,7 +124,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.09.11';
+  const CLIENT_BUILD_VERSION = '2026.11.09.12';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -467,7 +467,8 @@ export const App: React.FC = () => {
       const liveState = getMatchLiveState(m, currentTime);
       return liveState.isFinished && filterMatchItem(m);
     });
-    return list.sort((m1, m2) => parseMatchKickoffEpoch(m1) - parseMatchKickoffEpoch(m2));
+    // En son tamamlanan maçlar en üstte görünsün (kronolojik azalan)
+    return list.sort((m1, m2) => parseMatchKickoffEpoch(m2) - parseMatchKickoffEpoch(m1));
   }, [allMatches, currentTime, searchQuery, selectedLeague, selectedDate, matchAnalysesMap]);
 
   // Live Goal Radar Alerts (Momentum & Pressure detection for in-play matches)
