@@ -52,7 +52,7 @@ import { getDynamicDateOptions, isMatchOnDateFilter } from './utils/dateHelper';
 import { generateCuratedCoupons } from './utils/couponEngine';
 import { CouponsSection } from './components/CouponsSection';
 import { detectMatchValueBets } from './utils/valueBetHelper';
-import { detectLiveGoalRadarAlerts, LiveGoalRadarAlert } from './utils/liveGoalRadarHelper';
+import { detectLiveGoalRadarAlerts, getSampleRadarAlerts, LiveGoalRadarAlert } from './utils/liveGoalRadarHelper';
 
 export const App: React.FC = () => {
   // 1. Live Bulletin State (Loaded immediately from bundled data, updated via API)
@@ -124,7 +124,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.09.7';
+  const CLIENT_BUILD_VERSION = '2026.11.09.8';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -299,6 +299,7 @@ export const App: React.FC = () => {
   const [sortOption, setSortOption] = useState<SortOption>('time');
   const [activeTabMode, setActiveTabMode] = useState<'upcoming' | 'coupons' | 'finished'>('upcoming');
   const [isMobileLeagueTreeOpen, setIsMobileLeagueTreeOpen] = useState(false);
+  const [showRadarDemo, setShowRadarDemo] = useState(false);
 
   // Modals
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
@@ -480,6 +481,16 @@ export const App: React.FC = () => {
     return detectLiveGoalRadarAlerts(liveFiltered, matchAnalysesMap);
   }, [liveFiltered, matchAnalysesMap]);
 
+  const sampleRadarAlerts = useMemo(() => {
+    return getSampleRadarAlerts(allMatches);
+  }, [allMatches]);
+
+  const activeRadarAlerts = useMemo(() => {
+    if (liveGoalAlerts.length > 0) return liveGoalAlerts;
+    if (showRadarDemo) return sampleRadarAlerts;
+    return [];
+  }, [liveGoalAlerts, showRadarDemo, sampleRadarAlerts]);
+
   const activeAnalysis = selectedMatch ? matchAnalysesMap.get(selectedMatch.id) || null : null;
   const isSearching = searchQuery.trim().length > 0;
 
@@ -656,6 +667,124 @@ export const App: React.FC = () => {
               dateOptions={dynamicDateOptions}
               counts={counts}
             />
+
+            {/* CANLI GOL RADARI & ANLIK MOMENTUM TAKİP KONSOLU (ALWAYS VISIBLE & INTERACTIVE) */}
+            <div className="my-3.5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900 to-slate-950 border border-slate-800 p-3.5 sm:p-4 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center space-x-3">
+                  <span className="relative flex h-3.5 w-3.5 shrink-0">
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                      liveGoalAlerts.length > 0 ? 'bg-rose-400' : 'bg-emerald-400'
+                    }`}></span>
+                    <span className={`relative inline-flex rounded-full h-3.5 w-3.5 ${
+                      liveGoalAlerts.length > 0 ? 'bg-rose-500' : 'bg-emerald-500'
+                    }`}></span>
+                  </span>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-white flex items-center space-x-1.5">
+                        <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
+                        <span>Canlı Gol Radarı & Momentum Takibi</span>
+                      </span>
+                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                        liveGoalAlerts.length > 0
+                          ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
+                          : liveFiltered.length > 0
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                          : 'bg-slate-800 text-slate-300 border-slate-700'
+                      }`}>
+                        {liveGoalAlerts.length > 0
+                          ? `🔥 ${liveGoalAlerts.length} Maçta Kritik Baskı!`
+                          : liveFiltered.length > 0
+                          ? `📡 ${liveFiltered.length} Canlı Maç Taranıyor`
+                          : '⚡ 7/24 Otomatik Tarama Devrede'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      {liveGoalAlerts.length > 0
+                        ? 'Oynanan maçlarda xG ve dakika baskısı (60-88\' / 35-45\') tavan yaptı! Yakın gol sinyali üretildi.'
+                        : liveFiltered.length > 0
+                        ? `Şu anda ${liveFiltered.length} canlı maç taranıyor. 35'-45' ve 60'-88' pencerelerinde gol alarmı tetiklenecektir.`
+                        : 'Devam eden canlı maçlarda xG ve dakika baskısı oluştuğunda sistem anlık kritik gol alarmları üretir.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowRadarDemo(!showRadarDemo)}
+                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      showRadarDemo
+                        ? 'bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/20'
+                        : 'bg-slate-800 hover:bg-slate-750 text-slate-200 hover:text-white border border-slate-700'
+                    }`}
+                    title="Canlı gol radarı uyarısının maç anında nasıl göründüğünü test edin"
+                  >
+                    <Flame className={`w-3.5 h-3.5 ${showRadarDemo ? 'text-slate-950' : 'text-amber-400'}`} />
+                    <span>{showRadarDemo ? 'Örnek Alarmı Kapat' : '⚡ Örnek Alarmı Gör'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* ACTIVE ALERTS OR DEMO ALERTS GRID */}
+              {activeRadarAlerts.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-3 mt-3 border-t border-slate-800/80 animate-fadeIn">
+                  {activeRadarAlerts.map((alert) => (
+                    <div
+                      key={alert.match.id}
+                      onClick={() => setSelectedMatch(alert.match)}
+                      className={`p-3 rounded-xl border transition-all cursor-pointer hover:scale-[1.01] ${
+                        alert.urgency === 'critical'
+                          ? 'bg-rose-950/30 border-rose-500/50 hover:border-rose-400 shadow-md shadow-rose-950/40'
+                          : 'bg-amber-950/30 border-amber-500/40 hover:border-amber-300 shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                              alert.urgency === 'critical'
+                                ? 'bg-rose-500 text-slate-950 font-black animate-pulse'
+                                : 'bg-amber-400 text-slate-950 font-black'
+                            }`}
+                          >
+                            {alert.title}
+                          </span>
+                          <span className="font-mono text-xs font-bold text-rose-300">
+                            {alert.minuteText}
+                          </span>
+                          {showRadarDemo && liveGoalAlerts.length === 0 && (
+                            <span className="text-[9px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.2 rounded">
+                              Simülasyon
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-[10px] text-slate-400">Gol Beklentisi:</span>
+                          <span className="font-mono font-black text-amber-300 text-xs bg-slate-900 px-1.5 py-0.5 rounded border border-amber-500/30">
+                            %{alert.goalProbability}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-2 font-bold text-xs sm:text-sm text-white">
+                        <div className="truncate pr-2">
+                          {alert.match.homeTeam.name} vs {alert.match.awayTeam.name}
+                        </div>
+                        <div className="font-mono font-black text-amber-400 shrink-0 bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800">
+                          {alert.currentScoreText}
+                        </div>
+                      </div>
+
+                      <div className="mt-1.5 text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
+                        {alert.reason}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Mode Switcher when NOT searching: "Oynanacak Maçlar", "Canlı Maçlar", "Haftanın Biten Maçları" */}
             {!isSearching && (
@@ -850,77 +979,6 @@ export const App: React.FC = () => {
                 {/* TAB 1: OYNANACAK MAÇLAR */}
                 {activeTabMode === 'upcoming' && (
                   <div>
-                    {/* CANLI GOL RADARI & BASKI ALARMI (REAL-TIME MOMENTUM RADAR) */}
-                    {liveGoalAlerts.length > 0 && (
-                      <div className="mb-5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-950/40 via-rose-950/40 to-slate-900 border border-amber-500/50 shadow-2xl animate-fadeIn">
-                        <div className="flex items-center justify-between pb-2.5 border-b border-amber-500/20">
-                          <div className="flex items-center space-x-2">
-                            <span className="relative flex h-3 w-3">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
-                            </span>
-                            <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300 flex items-center space-x-1.5">
-                              <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
-                              <span>Canlı Gol Radarı & Baskı Alarmı ({liveGoalAlerts.length} Maçta Gol Yakın!)</span>
-                            </span>
-                          </div>
-                          <span className="text-[10px] sm:text-xs font-mono font-bold text-amber-400/90 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                            Algoritmik Momentum
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-3">
-                          {liveGoalAlerts.map((alert) => (
-                            <div
-                              key={alert.match.id}
-                              onClick={() => setSelectedMatch(alert.match)}
-                              className={`p-3 rounded-xl border transition-all cursor-pointer hover:scale-[1.01] ${
-                                alert.urgency === 'critical'
-                                  ? 'bg-rose-950/30 border-rose-500/50 hover:border-rose-400 shadow-md shadow-rose-950/50'
-                                  : 'bg-amber-950/30 border-amber-500/40 hover:border-amber-300 shadow-sm'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  <span
-                                    className={`px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
-                                      alert.urgency === 'critical'
-                                        ? 'bg-rose-500 text-slate-950 font-black animate-pulse'
-                                        : 'bg-amber-400 text-slate-950 font-black'
-                                    }`}
-                                  >
-                                    {alert.title}
-                                  </span>
-                                  <span className="font-mono text-xs font-bold text-rose-300">
-                                    {alert.minuteText}
-                                  </span>
-                                </div>
-                                <div className="flex items-center space-x-1.5">
-                                  <span className="text-[10px] text-slate-400">Gol Beklentisi:</span>
-                                  <span className="font-mono font-black text-amber-300 text-xs bg-slate-900 px-1.5 py-0.5 rounded border border-amber-500/30">
-                                    %{alert.goalProbability}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-between mt-2 font-bold text-xs sm:text-sm text-white">
-                                <div className="truncate pr-2">
-                                  {alert.match.homeTeam.name} vs {alert.match.awayTeam.name}
-                                </div>
-                                <div className="font-mono font-black text-amber-400 shrink-0 bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800">
-                                  {alert.currentScoreText}
-                                </div>
-                              </div>
-
-                              <div className="mt-1.5 text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
-                                {alert.reason}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                     {/* EN ÜSTTE BAŞLAMIŞ / CANLI MAÇLAR BÖLÜMÜ (SAAT SIRASINA GÖRE) */}
                     {liveFiltered.length > 0 && (
                       <div className="space-y-3 mb-6 p-4 rounded-2xl bg-gradient-to-r from-rose-950/40 via-slate-900/80 to-slate-950 border border-rose-500/40 shadow-xl animate-fadeIn">

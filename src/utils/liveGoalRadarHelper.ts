@@ -79,3 +79,55 @@ export function detectLiveGoalRadarAlerts(
 
   return alerts;
 }
+
+export function getSampleRadarAlerts(sampleMatches?: Match[]): LiveGoalRadarAlert[] {
+  const m1 = sampleMatches?.[0] || ({
+    id: 'sample_radar_1',
+    homeTeam: { id: 'fb', name: 'Fenerbahçe', shortName: 'FB', logo: '', form: ['W', 'W', 'D', 'W', 'L'] },
+    awayTeam: { id: 'ts', name: 'Trabzonspor', shortName: 'TS', logo: '', form: ['W', 'D', 'L', 'W', 'W'] },
+    league: 'Trendyol Süper Lig',
+    date: 'Bugün',
+    time: '20:00',
+    status: 'LIVE',
+    liveMinute: "78'",
+    stadium: 'Ülker Stadyumu',
+    score: { home: 1, away: 1 }
+  } as unknown as Match);
+
+  const m2 = sampleMatches?.[1] || ({
+    id: 'sample_radar_2',
+    homeTeam: { id: 'ars', name: 'Arsenal', shortName: 'ARS', logo: '', form: ['W', 'W', 'W', 'D', 'W'] },
+    awayTeam: { id: 'che', name: 'Chelsea', shortName: 'CHE', logo: '', form: ['D', 'W', 'L', 'W', 'D'] },
+    league: 'Premier League',
+    date: 'Bugün',
+    time: '20:30',
+    status: 'LIVE',
+    liveMinute: "41'",
+    stadium: 'Emirates Stadium',
+    score: { home: 1, away: 0 }
+  } as unknown as Match);
+
+  return [
+    {
+      match: m1,
+      minuteText: "78'",
+      minuteNum: 78,
+      currentScoreText: "1 - 1",
+      goalProbability: 84,
+      urgency: 'critical',
+      title: '🔥 KRİTİK GOL ALARMI!',
+      reason: "Dakika 78' • Skor 1-1 • xG 2.6 baskısıyla iki ekip de galibiyet için yükleniyor. Son 12 dakikada gol olasılığı %84!"
+    },
+    {
+      match: m2,
+      minuteText: "41'",
+      minuteNum: 41,
+      currentScoreText: "1 - 0",
+      goalProbability: 76,
+      urgency: 'high',
+      title: '⚡ İLK YARI SONU BASKISI',
+      reason: "Dakika 41' • Deplasman beraberlik için tüm hatlarıyla yükleniyor, devre bitmeden gol olasılığı %76."
+    }
+  ];
+}
+
