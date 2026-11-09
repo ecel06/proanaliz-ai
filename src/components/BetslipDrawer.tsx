@@ -20,7 +20,8 @@ import {
   ChevronUp,
   ChevronDown,
   ShieldCheck,
-  Share2
+  Share2,
+  Wallet
 } from 'lucide-react';
 
 interface BetslipDrawerProps {
@@ -31,6 +32,7 @@ interface BetslipDrawerProps {
   onRemoveItem: (id: string) => void;
   onClearAll: () => void;
   onConsultAI?: (couponSummary: string) => void;
+  onSaveToBankroll?: (items: UserBetslipItem[], stake: number, totalOdds: number) => void;
 }
 
 export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
@@ -40,10 +42,12 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
   onClose,
   onRemoveItem,
   onClearAll,
-  onConsultAI
+  onConsultAI,
+  onSaveToBankroll
 }) => {
   const [stake, setStake] = useState<number>(100);
   const [copied, setCopied] = useState(false);
+  const [savedToBankroll, setSavedToBankroll] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Monte Carlo Simulation Engine (Runs 5,000 runs)
@@ -91,6 +95,14 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
       `\nToplam Oran: ${totalOdds.toFixed(2)}. Bu kupon tutar mı, riskleri ve analizi nedir?`;
     onClose();
     onConsultAI(summary);
+  };
+
+  const handleSaveToBankroll = () => {
+    if (onSaveToBankroll) {
+      onSaveToBankroll(items, stake, totalOdds);
+      setSavedToBankroll(true);
+      setTimeout(() => setSavedToBankroll(false), 2500);
+    }
   };
 
   // If no items in slip, show nothing
@@ -327,6 +339,18 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                     {monteCarlo.aiAdvice}
                   </p>
                 </div>
+              )}
+
+              {/* Save to Bankroll Button */}
+              {onSaveToBankroll && (
+                <button
+                  type="button"
+                  onClick={handleSaveToBankroll}
+                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5 shadow-md shadow-amber-500/25 active:scale-95"
+                >
+                  <Wallet className="w-4 h-4 text-slate-950" />
+                  <span>{savedToBankroll ? 'Kupon Kasaya Kaydedildi! 💼' : `Sanal Kasaya Oyna (${stake} ₺)`}</span>
+                </button>
               )}
 
               {/* Action Buttons Row (3 Columns: Paylaş, Kopyala, AI'a Danış) */}

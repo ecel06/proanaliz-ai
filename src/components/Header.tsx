@@ -13,7 +13,10 @@ import {
   Smartphone,
   Layers,
   Bot,
-  Ticket
+  Ticket,
+  Wallet,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -33,6 +36,10 @@ interface HeaderProps {
   onUpdateApp?: () => void;
   betslipCount?: number;
   onOpenBetslip?: () => void;
+  onOpenBankroll?: () => void;
+  bankrollBalance?: number;
+  isMuted?: boolean;
+  onToggleMute?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -51,7 +58,11 @@ export const Header: React.FC<HeaderProps> = ({
   hasNewUpdate = false,
   onUpdateApp,
   betslipCount = 0,
-  onOpenBetslip
+  onOpenBetslip,
+  onOpenBankroll,
+  bankrollBalance = 10000,
+  isMuted = false,
+  onToggleMute
 }) => {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl">
@@ -187,6 +198,32 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 font-black text-[10px]">
                   {betslipCount}
                 </span>
+              </button>
+            )}
+
+            {/* Virtual Bankroll Button */}
+            {onOpenBankroll && (
+              <button
+                onClick={onOpenBankroll}
+                className="flex items-center space-x-1.5 px-2.5 sm:px-3 sm:py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/35 font-bold text-xs transition-all cursor-pointer shadow-md group shrink-0"
+                title="Sanal Kasa & Kupon Takibi"
+              >
+                <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span className="hidden lg:inline">Kasa:</span>
+                <span className="font-mono font-black text-amber-400">
+                  {bankrollBalance.toLocaleString('tr-TR')} ₺
+                </span>
+              </button>
+            )}
+
+            {/* Live Goal Sound Toggle Button */}
+            {onToggleMute && (
+              <button
+                onClick={onToggleMute}
+                className="p-2 sm:p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 text-slate-300 hover:text-white transition-all cursor-pointer shrink-0"
+                title={isMuted ? 'Canlı Gol Sesini Aç' : 'Canlı Gol Sesini Kapat'}
+              >
+                {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
               </button>
             )}
 

@@ -1,7 +1,7 @@
 // src/App.tsx
 // ProAnaliz AI - Complete Live Multi-League Football Analytics App
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Match, MatchAnalysis, UserBetslipItem } from './types';
 import { analyzeMatch } from './utils/predictionEngine';
 import { BettingPickOption } from './utils/oddsHelper';
@@ -17,6 +17,17 @@ import { InstallAppModal } from './components/InstallAppModal';
 import { AIChatModal } from './components/AIChatModal';
 import { BetslipDrawer } from './components/BetslipDrawer';
 import { NesineBulletinView } from './components/NesineBulletinView';
+import { MatchOfTheDayBanner } from './components/MatchOfTheDayBanner';
+import { GoalNotificationToast, LiveGoalEvent } from './components/GoalNotificationToast';
+import { BankrollTrackerModal } from './components/BankrollTrackerModal';
+import {
+  getSavedSlips,
+  saveNewSlip,
+  evaluateSlipsWithMatches,
+  calculateBankrollStats,
+  SavedSlip
+} from './utils/bankrollHelper';
+import { isSoundEnabled, setSoundEnabled, playGoalChime } from './utils/soundHelper';
 import { isMatchInLeague, POPULAR_LEAGUES } from './utils/leagueHelper';
 import {
   groupMatchesByCountry,
@@ -120,11 +131,28 @@ export const App: React.FC = () => {
     setIsAIChatOpen(true);
   };
 
+  // Virtual Bankroll & Saved Slips State
+  const [isBankrollModalOpen, setIsBankrollModalOpen] = useState(false);
+  const [savedSlips, setSavedSlips] = useState<SavedSlip[]>(() => getSavedSlips());
+
+  // Live Goal Sound & Toast State
+  const [isMuted, setIsMuted] = useState<boolean>(() => !isSoundEnabled());
+  const [activeGoalToast, setActiveGoalToast] = useState<LiveGoalEvent | null>(null);
+
+  const handleToggleMute = () => {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    setSoundEnabled(!nextMuted);
+    if (!nextMuted) {
+      playGoalChime();
+    }
+  };
+
   const [newVersionAvailable, setNewVersionAvailable] = useState(false);
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.09.13';
+  const CLIENT_BUILD_VERSION = '2026.11.09.14';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -264,6 +292,62 @@ export const App: React.FC = () => {
 
   // 3. Pre-calculate Poisson analyses for all matches in bulletin
   const allMatches: Match[] = weeklyMatches;
+
+  // Track previous scores for live goal chime & toast notification
+  const prevScoresRef = useRef<Map<string, { home: number; away: number }>>(new Map());
+  const isInitialPollRef = useRef(true);
+
+  useEffect(() => {
+    const prevScores = prevScoresRef.current;
+    if (isInitialPollRef.current) {
+      allMatches.forEach(m => {
+        const live = getMatchLiveState(m, currentTime);
+        if (live.isLive) {
+          prevScores.set(String(m.id), { home: live.displayScore.home, away: live.displayScore.away });
+        }
+      });
+      isInitialPollRef.current = false;
+      return;
+    }
+
+    for (const match of allMatches) {
+      const live = getMatchLiveState(match, currentTime);
+      if (!live.isLive) continue;
+      const old = prevScores.get(String(match.id));
+      const currentH = live.displayScore.home;
+      const currentA = live.displayScore.away;
+
+      if (old) {
+        if (currentH > old.home || currentA > old.away) {
+          const scoringTeam = currentH > old.home ? match.homeTeam.name : match.awayTeam.name;
+          playGoalChime();
+          setActiveGoalToast({
+            id: `goal-${match.id}-${Date.now()}`,
+            matchId: String(match.id),
+            scoringTeamName: scoringTeam,
+            homeTeamName: match.homeTeam.name,
+            awayTeamName: match.awayTeam.name,
+            scoreHome: currentH,
+            scoreAway: currentA,
+            league: match.league,
+            minute: live.liveMinute || undefined,
+            timestamp: Date.now()
+          });
+          break;
+        }
+      }
+      prevScores.set(String(match.id), { home: currentH, away: currentA });
+    }
+  }, [allMatches, currentTime]);
+
+  // Virtual Bankroll auto-settle & statistics
+  const settledSlips = useMemo(() => {
+    return evaluateSlipsWithMatches(savedSlips, allMatches);
+  }, [savedSlips, allMatches]);
+
+  const bankrollStats = useMemo(() => {
+    return calculateBankrollStats(settledSlips);
+  }, [settledSlips]);
 
   const matchAnalysesMap = useMemo(() => {
     const map = new Map<string, MatchAnalysis>();
@@ -486,6 +570,25 @@ export const App: React.FC = () => {
     return [];
   }, [liveGoalAlerts, showRadarDemo, sampleRadarAlerts]);
 
+  // Günün Vitrin Karşılaşması (Hero Match of the Day)
+  const heroMatch = useMemo(() => {
+    if (upcomingFiltered.length === 0) return null;
+    const sorted = [...upcomingFiltered].sort((a, b) => {
+      const aA = matchAnalysesMap.get(a.id);
+      const bA = matchAnalysesMap.get(b.id);
+      const aConf = aA?.primaryPrediction.confidence || 0;
+      const bConf = bA?.primaryPrediction.confidence || 0;
+      return bConf - aConf;
+    });
+    return sorted[0] || null;
+  }, [upcomingFiltered, matchAnalysesMap]);
+
+  const heroAnalysis = heroMatch ? matchAnalysesMap.get(heroMatch.id) || null : null;
+  const isHeroInBetslip = useMemo(() => {
+    if (!heroMatch) return false;
+    return betslipItems.some(it => it.matchId === heroMatch.id);
+  }, [heroMatch, betslipItems]);
+
   const activeAnalysis = selectedMatch ? matchAnalysesMap.get(selectedMatch.id) || null : null;
   const isSearching = searchQuery.trim().length > 0;
 
@@ -533,6 +636,10 @@ export const App: React.FC = () => {
         onUpdateApp={handleUpdateApp}
         betslipCount={betslipItems.length}
         onOpenBetslip={() => setIsBetslipOpen(true)}
+        onOpenBankroll={() => setIsBankrollModalOpen(true)}
+        bankrollBalance={bankrollStats.currentBalance}
+        isMuted={isMuted}
+        onToggleMute={handleToggleMute}
       />
 
       {/* Prominent Floating App Update Notification Banner - Fixed Top Position */}
@@ -1007,6 +1114,19 @@ export const App: React.FC = () => {
                       </div>
                     )}
 
+                    {/* GÜNÜN VİTRİN KARŞILAŞMASI (HERO SHOWCASE BANNER) */}
+                    {heroMatch && heroAnalysis && (
+                      <div className="mb-4">
+                        <MatchOfTheDayBanner
+                          match={heroMatch}
+                          analysis={heroAnalysis}
+                          onSelectMatch={(m) => setSelectedMatch(m)}
+                          onAddToBetslip={handleToggleBetslip}
+                          isAlreadyInBetslip={isHeroInBetslip}
+                        />
+                      </div>
+                    )}
+
                     {/* OYNANACAK MAÇLAR LİSTESİ (BAŞLAMA SAATİNE GÖRE ERKENDEN GEÇE SIRALI) */}
                     {upcomingFiltered.length > 0 && liveFiltered.length > 0 && (
                       <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
@@ -1212,6 +1332,27 @@ export const App: React.FC = () => {
         onRemoveItem={handleRemoveBetslipItem}
         onClearAll={handleClearBetslip}
         onConsultAI={handleConsultAIFromSlip}
+        onSaveToBankroll={(items, stake, totalOdds) => {
+          saveNewSlip(items, stake, totalOdds);
+          setSavedSlips(getSavedSlips());
+        }}
+      />
+
+      {/* Modal 7: Sanal Kasa & Kupon Takip Sistemi */}
+      <BankrollTrackerModal
+        isOpen={isBankrollModalOpen}
+        onClose={() => setIsBankrollModalOpen(false)}
+        slips={settledSlips}
+        stats={bankrollStats}
+        onRefreshSlips={() => setSavedSlips(getSavedSlips())}
+      />
+
+      {/* Canlı Gol Sesi & Bildirim Kartı */}
+      <GoalNotificationToast
+        goal={activeGoalToast}
+        onClose={() => setActiveGoalToast(null)}
+        isMuted={isMuted}
+        onToggleMute={handleToggleMute}
       />
 
       {/* Floating AI Kupon Robotu FAB Button (Always Accessible on Mobile & Desktop) */}
