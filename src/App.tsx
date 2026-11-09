@@ -124,7 +124,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.09.9';
+  const CLIENT_BUILD_VERSION = '2026.11.09.10';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -440,28 +440,22 @@ export const App: React.FC = () => {
       if (sortOption === 'time') {
         const t1 = parseMatchKickoffEpoch(m1);
         const t2 = parseMatchKickoffEpoch(m2);
-        if (t1 !== t2) return t1 - t2; // Erkenden geçe doğru tam kronolojik sıra!
+        if (t1 !== t2) return t1 - t2; // Erkenden geçe doğru tam kronolojik sıra
       }
       if (sortOption === 'confidence') {
-        const a1 = matchAnalysesMap.get(m1.id);
-        const a2 = matchAnalysesMap.get(m2.id);
-        if (a1 && a2 && a2.primaryPrediction.confidence !== a1.primaryPrediction.confidence) {
-          return a2.primaryPrediction.confidence - a1.primaryPrediction.confidence;
-        }
+        const c1 = matchAnalysesMap.get(m1.id)?.primaryPrediction.confidence ?? 0;
+        const c2 = matchAnalysesMap.get(m2.id)?.primaryPrediction.confidence ?? 0;
+        if (c1 !== c2) return c2 - c1; // En yüksek güvenden en düşüğe
       }
       if (sortOption === 'goals') {
-        const a1 = matchAnalysesMap.get(m1.id);
-        const a2 = matchAnalysesMap.get(m2.id);
-        if (a1 && a2 && a2.expectedTotalGoals !== a1.expectedTotalGoals) {
-          return a2.expectedTotalGoals - a1.expectedTotalGoals;
-        }
+        const g1 = matchAnalysesMap.get(m1.id)?.expectedTotalGoals ?? 0;
+        const g2 = matchAnalysesMap.get(m2.id)?.expectedTotalGoals ?? 0;
+        if (g1 !== g2) return g2 - g1; // En yüksek xG beklentisinden en düşüğe
       }
       if (sortOption === 'ms1') {
-        const a1 = matchAnalysesMap.get(m1.id);
-        const a2 = matchAnalysesMap.get(m2.id);
-        if (a1 && a2 && a2.ms1 !== a1.ms1) {
-          return a2.ms1 - a1.ms1;
-        }
+        const p1 = matchAnalysesMap.get(m1.id)?.ms1 ?? 0;
+        const p2 = matchAnalysesMap.get(m2.id)?.ms1 ?? 0;
+        if (p1 !== p2) return p2 - p1; // En yüksek MS 1 oranından en düşüğe
       }
       // Varsayılan / eşitlik durumunda: Başlama saatine göre erkenden geçe
       return parseMatchKickoffEpoch(m1) - parseMatchKickoffEpoch(m2);

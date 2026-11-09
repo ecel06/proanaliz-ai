@@ -133,9 +133,33 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
   onToggleBetslip,
   sortOption = 'time'
 }) => {
-  // Group matches by league and sort chronologically from earliest to latest
+  // If user selected a Rank-based sort (confidence, goals, ms1), show a single unified ranked leaderboard!
+  // If user selected 'time', group chronologically by league (traditional Nesine style).
+  const isRankedSort = Boolean(sortOption && sortOption !== 'time');
+
   const groupedMatches = useMemo(() => {
-    const groups: { league: string; matches: Match[] }[] = [];
+    if (isRankedSort) {
+      let title = '🏆 En Yüksek Güven Skoru Sıralaması';
+      let subtitle = 'Yapay zeka başarı olasılığı en yüksek olan maçtan aşağıya doğru sıralanmıştır';
+      if (sortOption === 'goals') {
+        title = '⚡ En Yüksek Gol Beklentisi (xG) Sıralaması';
+        subtitle = 'Maç başına beklenen toplam gol (xG) potansiyeli en yüksek olan maçlar başta';
+      } else if (sortOption === 'ms1') {
+        title = '👑 Ev Sahibi Üstünlüğü (MS 1) Sıralaması';
+        subtitle = 'Ev sahibi galibiyet olasılığı en yüksek karşılaşmalar başta';
+      }
+
+      return [
+        {
+          league: title,
+          subtitle,
+          isRanked: true,
+          matches // strictly in sorted order from App.tsx!
+        }
+      ];
+    }
+
+    const groups: { league: string; subtitle?: string; isRanked?: boolean; matches: Match[] }[] = [];
     const leagueMap = new Map<string, Match[]>();
 
     matches.forEach((m) => {
@@ -147,24 +171,19 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
     });
 
     leagueMap.forEach((mList, lg) => {
-      // If sorting by time, ensure matches within league are chronological
-      if (sortOption === 'time') {
-        mList.sort((a, b) => parseMatchKickoffEpoch(a) - parseMatchKickoffEpoch(b));
-      }
+      mList.sort((a, b) => parseMatchKickoffEpoch(a) - parseMatchKickoffEpoch(b));
       groups.push({ league: lg, matches: mList });
     });
 
-    // If sorting by time, sort league blocks by their earliest kickoff time (next upcoming league at top!)
-    if (sortOption === 'time') {
-      groups.sort((g1, g2) => {
-        const t1 = g1.matches[0] ? parseMatchKickoffEpoch(g1.matches[0]) : 0;
-        const t2 = g2.matches[0] ? parseMatchKickoffEpoch(g2.matches[0]) : 0;
-        return t1 - t2;
-      });
-    }
+    // Sort league blocks by their earliest kickoff time (next upcoming league at top!)
+    groups.sort((g1, g2) => {
+      const t1 = g1.matches[0] ? parseMatchKickoffEpoch(g1.matches[0]) : 0;
+      const t2 = g2.matches[0] ? parseMatchKickoffEpoch(g2.matches[0]) : 0;
+      return t1 - t2;
+    });
 
     return groups;
-  }, [matches, sortOption]);
+  }, [matches, sortOption, isRankedSort]);
 
   if (matches.length === 0) {
     return (
@@ -187,16 +206,27 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
           key={group.league}
           className="rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl overflow-hidden backdrop-blur-md"
         >
-          {/* League Header Strip (Nesine Style) */}
+          {/* League Header Strip (Nesine Style) or Ranked Leaderboard Strip */}
           <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/40 px-3.5 sm:px-5 py-2.5 border-b border-slate-800 flex items-center justify-between">
             <div className="flex items-center space-x-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400/50" />
-              <h3 className="text-xs sm:text-sm font-black text-white tracking-wide uppercase">
-                {group.league}
-              </h3>
-              <span className="text-[10px] sm:text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700/60">
-                {group.matches.length} Maç
-              </span>
+              <span className={`w-2.5 h-2.5 rounded-full inline-block shadow-sm ${
+                group.isRanked ? 'bg-amber-400 shadow-amber-400/50' : 'bg-emerald-400 shadow-emerald-400/50'
+              }`} />
+              <div className="flex flex-col">
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-xs sm:text-sm font-black text-white tracking-wide uppercase">
+                    {group.league}
+                  </h3>
+                  <span className="text-[10px] sm:text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700/60">
+                    {group.matches.length} Maç
+                  </span>
+                </div>
+                {group.subtitle && (
+                  <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 font-medium">
+                    {group.subtitle}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Desktop Table Headers Hint */}
@@ -216,7 +246,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
 
           {/* Matches List */}
           <div className="divide-y divide-slate-800/70">
-            {group.matches.map((match) => {
+            {group.matches.map((match, matchIndex) => {
               const analysis = matchAnalysesMap.get(match.id);
               if (!analysis) return null;
 
@@ -233,8 +263,25 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                 >
                   {/* DESKTOP & TABLET VIEW (lg and up): 3 clear non-colliding columns */}
                   <div className="hidden lg:flex items-center justify-between gap-4">
-                    {/* Col 1: Star, Time & Code (Fixed width ~110px, shrink-0) */}
-                    <div className="flex items-center space-x-2.5 w-28 shrink-0">
+                    {/* Col 1: Star, Rank, Time & Code */}
+                    <div className="flex items-center space-x-2 w-32 shrink-0">
+                      {group.isRanked && (
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-black font-mono shrink-0 ${
+                            matchIndex === 0
+                              ? 'bg-amber-400 text-slate-950 ring-1 ring-amber-300 shadow-xs'
+                              : matchIndex === 1
+                              ? 'bg-slate-300 text-slate-950 ring-1 ring-slate-200'
+                              : matchIndex === 2
+                              ? 'bg-amber-700 text-amber-100 ring-1 ring-amber-600'
+                              : 'bg-slate-800 text-slate-400'
+                          }`}
+                          title={`Sıralama: #${matchIndex + 1}`}
+                        >
+                          #{matchIndex + 1}
+                        </span>
+                      )}
+
                       {onToggleFavorite && (
                         <button
                           type="button"
@@ -251,7 +298,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                         </button>
                       )}
 
-                      <div className="flex flex-col">
+                      <div className="flex flex-col min-w-0">
                         {liveState.isLive ? (
                           <span className="flex items-center space-x-1 text-rose-400 font-extrabold text-xs animate-pulse">
                             <Radio className="w-3 h-3 text-rose-400" />
@@ -263,8 +310,16 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                           </span>
                         )}
 
-                        <div className="flex items-center space-x-1 text-[10px] text-slate-400 font-medium">
+                        <div className="flex items-center space-x-1 text-[10px] text-slate-400 font-medium truncate">
                           <span>{date}</span>
+                          {group.isRanked && match.league && (
+                            <>
+                              <span className="text-slate-600">•</span>
+                              <span className="text-emerald-400 font-semibold truncate max-w-[70px]" title={match.league}>
+                                {match.league}
+                              </span>
+                            </>
+                          )}
                           {match.iddaaCode && (
                             <>
                               <span className="text-slate-600">•</span>
@@ -408,9 +463,25 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
 
                   {/* MOBILE & TABLET COMPACT VIEW (< lg): 3 clean stacked rows */}
                   <div className="lg:hidden flex flex-col space-y-2.5">
-                    {/* Row 1: Time, Code, Favorite on left, AI Pick on right */}
+                    {/* Row 1: Time, Rank, Code, Favorite on left, AI Pick on right */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                        {group.isRanked && (
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-black font-mono shrink-0 ${
+                              matchIndex === 0
+                                ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
+                                : matchIndex === 1
+                                ? 'bg-slate-300 text-slate-950 font-black'
+                                : matchIndex === 2
+                                ? 'bg-amber-700 text-amber-100 font-black'
+                                : 'bg-slate-800 text-slate-400 font-bold'
+                            }`}
+                          >
+                            #{matchIndex + 1}
+                          </span>
+                        )}
+
                         {onToggleFavorite && (
                           <button
                             type="button"
@@ -424,6 +495,12 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                           >
                             <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
                           </button>
+                        )}
+
+                        {group.isRanked && match.league && (
+                          <span className="text-[10px] text-emerald-400 font-bold truncate max-w-[85px] bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                            {match.league}
+                          </span>
                         )}
 
                         {match.iddaaCode && (
