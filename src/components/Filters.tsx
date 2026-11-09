@@ -52,37 +52,37 @@ export const Filters: React.FC<FiltersProps> = ({
     {
       id: 'all',
       label: 'Tüm Maçlar',
-      icon: <Trophy className="w-4 h-4" />,
+      icon: <Trophy className="w-3.5 h-3.5" />,
       count: counts.all
     },
     {
       id: 'banko',
-      label: 'Günün Bankoları (+%75)',
-      icon: <Flame className="w-4 h-4 text-emerald-400" />,
+      label: 'Bankolar (+%75)',
+      icon: <Flame className="w-3.5 h-3.5 text-emerald-400" />,
       count: counts.banko
     },
     {
       id: 'over25',
-      label: '2.5 Üst Beklenenler',
-      icon: <Zap className="w-4 h-4 text-amber-400" />,
+      label: '2.5 Gol Üst',
+      icon: <Zap className="w-3.5 h-3.5 text-amber-400" />,
       count: counts.over25
     },
     {
       id: 'btts',
-      label: 'KG Var Adayları',
-      icon: <Sparkles className="w-4 h-4 text-purple-400" />,
+      label: 'KG Var',
+      icon: <Sparkles className="w-3.5 h-3.5 text-purple-400" />,
       count: counts.btts
     },
     {
       id: 'htft',
-      label: 'İY/MS Sürprizleri',
-      icon: <ShieldAlert className="w-4 h-4 text-rose-400" />,
+      label: 'İY/MS Sürpriz',
+      icon: <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />,
       count: counts.htft
     },
     {
       id: 'favorites',
-      label: 'Favorilerim',
-      icon: <Star className="w-4 h-4 text-amber-400 fill-current" />,
+      label: 'Favoriler',
+      icon: <Star className="w-3.5 h-3.5 text-amber-400 fill-current" />,
       count: counts.favorites
     }
   ];
@@ -139,7 +139,7 @@ export const Filters: React.FC<FiltersProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-800/60">
         
         {/* Date Selector Pills */}
-        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
           <span className="text-slate-500 text-[11px] font-medium flex items-center space-x-1 shrink-0 mr-1">
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
             <span>Tarih:</span>
@@ -191,24 +191,24 @@ export const Filters: React.FC<FiltersProps> = ({
 
       </div>
 
-      {/* Quick Category Tabs */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-1 no-scrollbar">
+      {/* Quick Category Tabs (Wrap compactly, smaller text, NO horizontal scrollbar) */}
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1">
         {categories.map((cat) => {
           const isActive = selectedCategory === cat.id;
           return (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? 'bg-slate-800 text-white border border-emerald-500/50 shadow-md shadow-emerald-500/10'
+                  ? 'bg-slate-800 text-white border border-emerald-500/50 shadow-sm shadow-emerald-500/10'
                   : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-slate-800/60'
               }`}
             >
               <span>{cat.icon}</span>
               <span>{cat.label}</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                className={`text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                   isActive
                     ? 'bg-emerald-500/20 text-emerald-300'
                     : 'bg-slate-800 text-slate-400'

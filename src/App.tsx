@@ -82,7 +82,7 @@ export const App: React.FC = () => {
     setViewMode(mode);
     try {
       localStorage.setItem('proanaliz_view_mode', mode);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const handleToggleBetslip = (match: Match, option: BettingPickOption) => {
@@ -122,7 +122,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.09.5';
+  const CLIENT_BUILD_VERSION = '2026.11.09.6';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -151,14 +151,14 @@ export const App: React.FC = () => {
     if (serverVersion) {
       try {
         localStorage.setItem('proanaliz_dismissed_version', serverVersion);
-      } catch (e) {}
+      } catch (e) { }
     }
     if ('caches' in window) {
       caches.keys().then(names => names.forEach(name => caches.delete(name)));
     }
     try {
       sessionStorage.clear();
-    } catch (e) {}
+    } catch (e) { }
     window.location.reload();
   };
 
@@ -483,7 +483,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-20 md:pb-12">
-      
+
       {/* Toast Notification */}
       {refreshToast && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-2 bg-emerald-500 text-slate-950 px-4 py-2.5 rounded-2xl font-bold text-xs shadow-2xl animate-bounce">
@@ -518,7 +518,7 @@ export const App: React.FC = () => {
 
       {/* Prominent Floating App Update Notification Banner - Fixed Top Position */}
       {newVersionAvailable && (
-        <aside 
+        <aside
           aria-label="Uygulama Güncellemesi"
           className="fixed top-2 sm:top-4 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:max-w-xl z-[99999] p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white shadow-2xl shadow-emerald-500/60 border-2 border-emerald-300 ring-4 ring-emerald-500/25 backdrop-blur-xl flex items-center justify-between gap-2.5 animate-bounce"
         >
@@ -559,9 +559,9 @@ export const App: React.FC = () => {
 
       {/* Main Container with Two Column Responsive Grid */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
-        
+
         <div className="flex flex-col lg:flex-row gap-6 items-start">
-          
+
           {/* LEFT COLUMN: League Tree & Bulletin Sidebar */}
           <LeagueTreeSelector
             leagueGroups={leagueGroups}
@@ -580,7 +580,7 @@ export const App: React.FC = () => {
               <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-5 items-center">
-                
+
                 <div className="lg:col-span-8 space-y-1.5 sm:space-y-3">
                   <div className="inline-flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                     <Radio className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400 animate-pulse" />
@@ -592,7 +592,7 @@ export const App: React.FC = () => {
                   </h1>
 
                   <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed hidden sm:block">
-                    Süper Lig, Premier Lig, La Liga, Serie A, Bundesliga, Şampiyonlar Ligi ve tüm dünya bülteni açık spor uç noktalarından canlı çekilir. 
+                    Süper Lig, Premier Lig, La Liga, Serie A, Bundesliga, Şampiyonlar Ligi ve tüm dünya bülteni açık spor uç noktalarından canlı çekilir.
                     <strong className="text-emerald-400"> Bahis veya kupon oynatmaz;</strong> Poisson ve xG olasılıklarını hesaplar.
                   </p>
                 </div>
@@ -650,11 +650,10 @@ export const App: React.FC = () => {
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => setActiveTabMode('upcoming')}
-                    className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                      activeTabMode === 'upcoming'
+                    className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeTabMode === 'upcoming'
                         ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 shadow-sm'
                         : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
-                    }`}
+                      }`}
                   >
                     <Clock className="w-4 h-4 text-emerald-400" />
                     <span>Başlamış & Oynanacak Maçlar</span>
@@ -665,30 +664,27 @@ export const App: React.FC = () => {
 
                   <button
                     onClick={() => setActiveTabMode('coupons')}
-                    className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                      activeTabMode === 'coupons'
+                    className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeTabMode === 'coupons'
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm shadow-amber-950/30'
                         : 'bg-slate-900/60 text-slate-400 hover:text-amber-300 border border-slate-800'
-                    }`}
+                      }`}
                   >
                     <Flame className={`w-4 h-4 ${activeTabMode === 'coupons' ? 'text-amber-400 animate-pulse' : 'text-slate-400'}`} />
                     <span>Günün Kuponları (Banko • İdeal • Sürpriz)</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                      activeTabMode === 'coupons'
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${activeTabMode === 'coupons'
                         ? 'bg-amber-950 text-amber-300 border border-amber-500/40'
                         : 'bg-slate-800 text-slate-400'
-                    }`}>
+                      }`}>
                       3
                     </span>
                   </button>
 
                   <button
                     onClick={() => setActiveTabMode('finished')}
-                    className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                      activeTabMode === 'finished'
+                    className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${activeTabMode === 'finished'
                         ? 'bg-slate-800 text-slate-100 border border-slate-600 shadow-sm'
                         : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
-                    }`}
+                      }`}
                   >
                     <CalendarCheck className="w-4 h-4 text-slate-400" />
                     <span>Haftanın Tamamlanan Maçları</span>
@@ -704,11 +700,10 @@ export const App: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleSetViewMode('bulletin')}
-                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          viewMode === 'bulletin'
+                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'bulletin'
                             ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
                             : 'text-slate-400 hover:text-white'
-                        }`}
+                          }`}
                         title="Nesine.com Tarzı Sade Bülten Görünümü"
                       >
                         <LayoutList className="w-3.5 h-3.5" />
@@ -717,11 +712,10 @@ export const App: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleSetViewMode('cards')}
-                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          viewMode === 'cards'
+                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'cards'
                             ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
                             : 'text-slate-400 hover:text-white'
-                        }`}
+                          }`}
                         title="Detaylı Kart Görünümü"
                       >
                         <LayoutGrid className="w-3.5 h-3.5" />
@@ -734,8 +728,8 @@ export const App: React.FC = () => {
                     {activeTabMode === 'upcoming'
                       ? `${upcomingFiltered.length + liveFiltered.length} Analiz & Maç`
                       : activeTabMode === 'coupons'
-                      ? '3 Özel Kupon'
-                      : `${finishedFiltered.length} Sonuç`}
+                        ? '3 Özel Kupon'
+                        : `${finishedFiltered.length} Sonuç`}
                   </div>
                 </div>
               </div>
