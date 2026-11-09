@@ -19,14 +19,23 @@ export interface MatchLiveState {
 
 /**
  * Parses match kickoff into an exact epoch timestamp in milliseconds.
- * Accurately parses Turkish dates (e.g. "8 Kasım Pazar") and kick-off times (e.g. "13:30").
+ * Accurately handles ISO strings (e.g. "2026-11-09T19:30Z") and Turkish date formats.
  */
 export function parseMatchKickoffEpoch(match: Match): number {
+  // 1. Direct ISO Date parsing from utcDate or date
+  const rawDate = match.utcDate || match.date;
+  if (rawDate) {
+    const parsed = new Date(rawDate);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.getTime();
+    }
+  }
+
+  // 2. Fallback: Parse Turkish dates (e.g. "8 Kasım Pazar")
   let day = 8;
   let month = 11;
   let year = 2026;
 
-  // 1. Parse date from match.date or match.utcDate
   if (match.date) {
     const m = match.date.match(/(\d{1,2})\s*(Kasım|Kas|Aralık|Ara|Ekim|Eki|Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül)/i);
     if (m) {
@@ -52,22 +61,18 @@ export function parseMatchKickoffEpoch(match: Match): number {
         if (parts[2]) year = parseInt(parts[2], 10);
       }
     }
-  } else if (match.utcDate) {
-    const d = new Date(match.utcDate);
-    if (!isNaN(d.getTime())) {
-      day = d.getDate();
-      month = d.getMonth() + 1;
-      year = d.getFullYear();
-    }
   }
 
-  // 2. Parse time (e.g. "13:30", "16:00", "19:00", "21:00")
+  // Parse time (e.g. "13:30", "16:00", "19:00", "21:00")
   let hours = 12;
   let minutes = 0;
-  if (match.time && match.time.includes(':')) {
-    const [h, min] = match.time.split(':');
-    hours = parseInt(h.trim(), 10) || 12;
-    minutes = parseInt(min.trim(), 10) || 0;
+  if (match.time) {
+    // If time is full ISO, parse just hours and minutes
+    const timeMatch = match.time.match(/(\d{2}):(\d{2})/);
+    if (timeMatch) {
+      hours = parseInt(timeMatch[1], 10);
+      minutes = parseInt(timeMatch[2], 10);
+    }
   }
 
   return new Date(year, month - 1, day, hours, minutes, 0).getTime();

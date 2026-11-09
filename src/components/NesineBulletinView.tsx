@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Match, MatchAnalysis, UserBetslipItem } from '../types';
 import { BettingPickOption, calcMarketOdd } from '../utils/oddsHelper';
 import { getMatchParsedDate, TURKISH_MONTHS } from '../utils/dateHelper';
-import { getMatchLiveState } from '../utils/liveMatchHelper';
+import { getMatchLiveState, parseMatchKickoffEpoch } from '../utils/liveMatchHelper';
 import { Clock, Star, ChevronRight, Trophy, Bot, Radio } from 'lucide-react';
 
 interface NesineBulletinViewProps {
@@ -13,6 +13,7 @@ interface NesineBulletinViewProps {
   onToggleFavorite?: (matchId: string) => void;
   betslipItems: UserBetslipItem[];
   onToggleBetslip: (match: Match, option: BettingPickOption) => void;
+  sortOption?: string;
 }
 
 interface QuickOddDef {
@@ -128,9 +129,10 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
   favorites = [],
   onToggleFavorite,
   betslipItems,
-  onToggleBetslip
+  onToggleBetslip,
+  sortOption = 'time'
 }) => {
-  // Group matches by league for clean Nesine-style bulletin sections
+  // Group matches by league and sort chronologically from earliest to latest
   const groupedMatches = useMemo(() => {
     const groups: { league: string; matches: Match[] }[] = [];
     const leagueMap = new Map<string, Match[]>();
@@ -144,11 +146,24 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
     });
 
     leagueMap.forEach((mList, lg) => {
+      // If sorting by time, ensure matches within league are chronological
+      if (sortOption === 'time') {
+        mList.sort((a, b) => parseMatchKickoffEpoch(a) - parseMatchKickoffEpoch(b));
+      }
       groups.push({ league: lg, matches: mList });
     });
 
+    // If sorting by time, sort league blocks by their earliest kickoff time (next upcoming league at top!)
+    if (sortOption === 'time') {
+      groups.sort((g1, g2) => {
+        const t1 = g1.matches[0] ? parseMatchKickoffEpoch(g1.matches[0]) : 0;
+        const t2 = g2.matches[0] ? parseMatchKickoffEpoch(g2.matches[0]) : 0;
+        return t1 - t2;
+      });
+    }
+
     return groups;
-  }, [matches]);
+  }, [matches, sortOption]);
 
   if (matches.length === 0) {
     return (

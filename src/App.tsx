@@ -122,7 +122,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.09.4';
+  const CLIENT_BUILD_VERSION = '2026.11.09.5';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -790,6 +790,7 @@ export const App: React.FC = () => {
                         onToggleFavorite={toggleFavorite}
                         betslipItems={betslipItems}
                         onToggleBetslip={handleToggleBetslip}
+                        sortOption={sortOption}
                       />
                     ) : (
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
@@ -896,6 +897,7 @@ export const App: React.FC = () => {
                           onToggleFavorite={toggleFavorite}
                           betslipItems={betslipItems}
                           onToggleBetslip={handleToggleBetslip}
+                          sortOption={sortOption}
                         />
                       ) : (
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
