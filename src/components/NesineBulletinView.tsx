@@ -4,7 +4,7 @@ import { BettingPickOption, calcMarketOdd } from '../utils/oddsHelper';
 import { getMatchParsedDate, TURKISH_MONTHS } from '../utils/dateHelper';
 import { getMatchLiveState, parseMatchKickoffEpoch } from '../utils/liveMatchHelper';
 import { detectMatchValueBets } from '../utils/valueBetHelper';
-import { Clock, Star, ChevronRight, Trophy, Bot, Radio, Target } from 'lucide-react';
+import { Clock, Star, ChevronRight, Trophy, Bot, Radio, Target, Zap } from 'lucide-react';
 
 interface NesineBulletinViewProps {
   matches: Match[];
@@ -256,6 +256,31 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
               const { time, date } = getCleanTimeAndDate(match);
               const valueSummary = detectMatchValueBets(match, analysis);
 
+              const sortPill = (() => {
+                if (sortOption === 'goals') {
+                  return {
+                    icon: <Zap className="w-3.5 h-3.5 text-amber-400" />,
+                    label: `xG ${analysis.expectedTotalGoals.toFixed(1)}`,
+                    sub: `%${analysis.over25} Üst`,
+                    style: 'bg-amber-500/15 text-amber-300 border-amber-500/35'
+                  };
+                }
+                if (sortOption === 'ms1') {
+                  return {
+                    icon: <Trophy className="w-3.5 h-3.5 text-emerald-400" />,
+                    label: 'MS 1',
+                    sub: `%${analysis.ms1}`,
+                    style: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35'
+                  };
+                }
+                return {
+                  icon: <Bot className="w-3.5 h-3.5 text-emerald-400" />,
+                  label: primaryPrediction.label,
+                  sub: `%${primaryPrediction.confidence}`,
+                  style: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                };
+              })();
+
               return (
                 <div
                   key={match.id}
@@ -367,12 +392,12 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                       {/* AI & Value Recommendation Pills */}
                       <div className="shrink-0 pl-2 flex items-center space-x-1.5">
                         <span
-                          className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-black border bg-emerald-500/10 text-emerald-300 border-emerald-500/30 whitespace-nowrap shadow-xs"
-                          title="Yapay Zeka Poisson & Form Tahmini"
+                          className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-black border whitespace-nowrap shadow-xs ${sortPill.style}`}
+                          title="Yapay Zeka Poisson & Sıralama Değeri"
                         >
-                          <Bot className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>{primaryPrediction.label}</span>
-                          <span className="text-emerald-400 font-mono">%{primaryPrediction.confidence}</span>
+                          {sortPill.icon}
+                          <span>{sortPill.label}</span>
+                          <span className="font-mono font-bold opacity-90">{sortPill.sub}</span>
                         </span>
 
                         {valueSummary.hasValue && valueSummary.bestValuePick && (
@@ -524,10 +549,10 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
 
                       {/* AI & Value Pill on top right */}
                       <div className="flex items-center space-x-1 shrink-0">
-                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-black border bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
-                          <Bot className="w-3 h-3 text-emerald-400" />
-                          <span>{primaryPrediction.label}</span>
-                          <span className="text-emerald-400 font-mono">%{primaryPrediction.confidence}</span>
+                        <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-black border ${sortPill.style}`}>
+                          {sortPill.icon}
+                          <span>{sortPill.label}</span>
+                          <span className="font-mono">{sortPill.sub}</span>
                         </span>
 
                         {valueSummary.hasValue && valueSummary.bestValuePick && (
