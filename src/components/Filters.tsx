@@ -1,6 +1,6 @@
 // src/components/Filters.tsx
 import React from 'react';
-import { Search, Flame, Zap, Trophy, ShieldAlert, Sparkles, X, Star, ArrowDownUp, Calendar, Layers, Globe, ChevronRight } from 'lucide-react';
+import { Search, Flame, Zap, Trophy, ShieldAlert, Sparkles, X, Star, ArrowDownUp, Calendar, Layers, ChevronRight } from 'lucide-react';
 import { LeagueCategory } from '../types';
 import { POPULAR_LEAGUES } from '../utils/leagueHelper';
 import { DateFilterOption } from '../utils/dateHelper';
@@ -48,28 +48,6 @@ export const Filters: React.FC<FiltersProps> = ({
   dateOptions: propDateOptions,
   counts
 }) => {
-  const isLeagueTabActive = (tabId: string) => {
-    if (tabId === 'all') return selectedLeague === 'all';
-    if (selectedLeague === tabId) return true;
-    const sel = selectedLeague.toLowerCase();
-    if (tabId === 'super-lig') return sel.includes('süper') || sel === 'tur.1';
-    if (tabId === '1-lig') return (sel.includes('1. lig') || sel === 'tur.2') && !sel.includes('süper');
-    if (tabId === 'premier-league') return sel.includes('premier') || sel === 'eng.1';
-    if (tabId === 'la-liga') return sel.includes('la liga') || sel === 'esp.1';
-    if (tabId === 'serie-a') return sel.includes('serie a') || sel === 'ita.1';
-    if (tabId === 'bundesliga') return sel.includes('bundesliga') || sel === 'ger.1';
-    if (tabId === 'cl') return sel.includes('şampiyonlar') || sel.includes('champions') || sel === 'uefa.champions';
-    if (tabId === 'ligue-1') return sel.includes('ligue 1') || sel === 'fra.1';
-    if (tabId === 'eredivisie') return sel.includes('eredivisie') || sel === 'ned.1';
-    if (tabId === 'primeira-liga') return sel.includes('primeira') || sel === 'por.1';
-    return false;
-  };
-
-  const quickSearchTeams = [
-    'Galatasaray', 'Fenerbahçe', 'Beşiktaş', 'Amed', 'Kocaelispor', 
-    'Çorum FK', 'Arsenal', 'Real Madrid', 'Inter', 'Bayern'
-  ];
-
   const categories: { id: CategoryFilter; label: string; icon: React.ReactNode; count: number }[] = [
     {
       id: 'all',
@@ -119,11 +97,11 @@ export const Filters: React.FC<FiltersProps> = ({
     : defaultDateOptions;
 
   return (
-    <div className="space-y-3.5 my-5">
+    <div className="space-y-3.5 my-3">
       
-      {/* Search Input Bar with Quick Team Chips */}
-      <div className="space-y-2">
-        <div className="relative">
+      {/* Search Input Bar */}
+      <div className="flex items-center space-x-2">
+        <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
             <Search className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400/80" />
           </div>
@@ -131,8 +109,8 @@ export const Filters: React.FC<FiltersProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tüm dünya bülteninde takım, lig veya ülke ara..."
-            className="w-full pl-10 sm:pl-12 pr-10 py-3 sm:py-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-slate-100 placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-inner"
+            placeholder="Takım, lig veya ülke ara..."
+            className="w-full pl-10 sm:pl-12 pr-10 py-2.5 sm:py-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-slate-100 placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-inner"
           />
           {searchQuery && (
             <button
@@ -144,75 +122,17 @@ export const Filters: React.FC<FiltersProps> = ({
           )}
         </div>
 
-        {/* Quick Search Chips */}
-        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 no-scrollbar text-[11px]">
-          <span className="text-slate-500 font-medium shrink-0">Hızlı Takım:</span>
-          {quickSearchTeams.map((team) => (
-            <button
-              key={team}
-              onClick={() => setSearchQuery(team)}
-              className={`px-2.5 py-1 rounded-lg border font-medium whitespace-nowrap cursor-pointer transition-all ${
-                searchQuery.toLowerCase() === team.toLowerCase()
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                  : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 border-slate-800/80 hover:bg-slate-850'
-              }`}
-            >
-              {team}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Prominent Horizontal League Selector Bar */}
-      <div className="space-y-1.5 pt-1 border-t border-slate-800/60">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1.5 text-xs text-slate-300 font-extrabold uppercase tracking-wider">
-            <Globe className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Ligler & Turnuvalar</span>
-          </div>
-          {onOpenMobileLeagueTree && (
-            <button
-              onClick={onOpenMobileLeagueTree}
-              className="lg:hidden text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center space-x-1 cursor-pointer"
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Tüm Ligler Ağacı</span>
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center space-x-2 overflow-x-auto pb-1 no-scrollbar text-xs">
-          {POPULAR_LEAGUES.map((league) => {
-            const isActive = isLeagueTabActive(league.id);
-            const count = leagueMatchCounts ? leagueMatchCounts[league.id] : undefined;
-
-            return (
-              <button
-                key={league.id}
-                onClick={() => setSelectedLeague(league.id)}
-                className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-md shadow-emerald-500/10'
-                    : 'bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800/80'
-                }`}
-              >
-                <span className="text-sm leading-none">{league.flag}</span>
-                <span>{league.name}</span>
-                {typeof count === 'number' && count > 0 && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                      isActive
-                        ? 'bg-emerald-500 text-slate-950'
-                        : 'bg-slate-800 text-slate-400'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {/* Mobile-Only League Tree Drawer Opener */}
+        {onOpenMobileLeagueTree && (
+          <button
+            onClick={onOpenMobileLeagueTree}
+            className="lg:hidden flex items-center space-x-1.5 px-3 py-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-emerald-400 text-xs font-bold shrink-0 hover:bg-slate-850 cursor-pointer shadow-inner"
+            title="Tüm Ligler Menüsü"
+          >
+            <Layers className="w-4 h-4 text-emerald-400" />
+            <span>Ligler</span>
+          </button>
+        )}
       </div>
 
       {/* Date Filter & Sort Controls Row */}
