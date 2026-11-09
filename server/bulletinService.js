@@ -137,6 +137,13 @@ export function mapEvent(event, league) {
     dayCategory = 'upcoming';
   }
 
+  const parseFormLetters = (formStr) => {
+    if (!formStr || typeof formStr !== 'string') return [];
+    return formStr.toUpperCase().split('').filter(c => c === 'W' || c === 'D' || c === 'L');
+  };
+  const homeForm = parseFormLetters(homeComp.team?.form);
+  const awayForm = parseFormLetters(awayComp.team?.form);
+
   const idStr = String(event.id || '');
   let hash = 0;
   for (let i = 0; i < idStr.length; i++) {
@@ -169,7 +176,7 @@ export function mapEvent(event, league) {
       name: homeTeam.displayName || homeTeam.name || '',
       shortName: homeTeam.abbreviation || '',
       rank: null,
-      form: [],
+      form: homeForm,
       recentMatches: [],
       avgGoalsScored: 0,
       avgGoalsConceded: 0,
@@ -186,7 +193,7 @@ export function mapEvent(event, league) {
       name: awayTeam.displayName || awayTeam.name || '',
       shortName: awayTeam.abbreviation || '',
       rank: null,
-      form: [],
+      form: awayForm,
       recentMatches: [],
       avgGoalsScored: 0,
       avgGoalsConceded: 0,

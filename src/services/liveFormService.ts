@@ -164,14 +164,8 @@ export function getLiveRealForm(teamName: string = ''): FormMatchDetail[] | null
   const norm = normalizeName(teamName);
 
   if (cachedForms[teamName]) return cachedForms[teamName];
-  if (cachedForms[root]) return cachedForms[root];
-  if (cachedForms[norm]) return cachedForms[norm];
-
-  for (const [key, val] of Object.entries(cachedForms)) {
-    if (key.includes(root) || root.includes(key)) {
-      return val;
-    }
-  }
+  if (root && root.length >= 3 && cachedForms[root]) return cachedForms[root];
+  if (norm && norm.length >= 3 && cachedForms[norm]) return cachedForms[norm];
 
   return null;
 }
