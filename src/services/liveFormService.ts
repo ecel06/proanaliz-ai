@@ -128,7 +128,7 @@ export async function initLiveFormService(): Promise<void> {
 
   isInitialized = true;
   // Trigger background live refresh
-  refreshLiveForms().catch(() => {});
+  refreshLiveForms().catch(() => { });
 }
 
 // 2. Refresh from backend API dynamically

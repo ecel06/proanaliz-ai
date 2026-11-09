@@ -16,6 +16,7 @@ import { StandingsModal } from './components/StandingsModal';
 import { InstallAppModal } from './components/InstallAppModal';
 import { AIChatModal } from './components/AIChatModal';
 import { BetslipDrawer } from './components/BetslipDrawer';
+import { NesineBulletinView } from './components/NesineBulletinView';
 import { isMatchInLeague, POPULAR_LEAGUES } from './utils/leagueHelper';
 import {
   groupMatchesByCountry,
@@ -42,7 +43,9 @@ import {
   Check,
   Activity,
   ChevronRight,
-  Bot
+  Bot,
+  LayoutList,
+  LayoutGrid
 } from 'lucide-react';
 import { getMatchLiveState, parseMatchKickoffEpoch } from './utils/liveMatchHelper';
 import { getDynamicDateOptions, isMatchOnDateFilter } from './utils/dateHelper';
@@ -65,6 +68,22 @@ export const App: React.FC = () => {
   // User Betslip (Kullanıcı Kuponu & Hesaplayıcı)
   const [betslipItems, setBetslipItems] = useState<UserBetslipItem[]>([]);
   const [isBetslipOpen, setIsBetslipOpen] = useState(false);
+
+  // View Mode: 'bulletin' (Nesine Tarzı Sade Liste) vs 'cards' (Detaylı Geniş Kartlar)
+  const [viewMode, setViewMode] = useState<'bulletin' | 'cards'>(() => {
+    try {
+      return (localStorage.getItem('proanaliz_view_mode') as 'bulletin' | 'cards') || 'bulletin';
+    } catch {
+      return 'bulletin';
+    }
+  });
+
+  const handleSetViewMode = (mode: 'bulletin' | 'cards') => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('proanaliz_view_mode', mode);
+    } catch (e) {}
+  };
 
   const handleToggleBetslip = (match: Match, option: BettingPickOption) => {
     setBetslipItems((prev) => {
@@ -103,7 +122,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.08.10';
+  const CLIENT_BUILD_VERSION = '2026.11.09.1';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -679,12 +698,45 @@ export const App: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="text-xs text-slate-500 hidden sm:block font-mono">
-                  {activeTabMode === 'upcoming'
-                    ? `${upcomingFiltered.length + liveFiltered.length} Analiz & Maç`
-                    : activeTabMode === 'coupons'
-                    ? '3 Özel Kupon'
-                    : `${finishedFiltered.length} Sonuç`}
+                <div className="flex items-center space-x-3">
+                  {activeTabMode === 'upcoming' && (
+                    <div className="flex items-center space-x-1 bg-slate-900 border border-slate-800 p-0.5 rounded-xl shadow-inner">
+                      <button
+                        type="button"
+                        onClick={() => handleSetViewMode('bulletin')}
+                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          viewMode === 'bulletin'
+                            ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                        title="Nesine.com Tarzı Sade Bülten Görünümü"
+                      >
+                        <LayoutList className="w-3.5 h-3.5" />
+                        <span>Bülten (Nesine)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSetViewMode('cards')}
+                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          viewMode === 'cards'
+                            ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                        title="Detaylı Kart Görünümü"
+                      >
+                        <LayoutGrid className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Kartlar</span>
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="text-xs text-slate-500 hidden sm:block font-mono">
+                    {activeTabMode === 'upcoming'
+                      ? `${upcomingFiltered.length + liveFiltered.length} Analiz & Maç`
+                      : activeTabMode === 'coupons'
+                      ? '3 Özel Kupon'
+                      : `${finishedFiltered.length} Sonuç`}
+                  </div>
                 </div>
               </div>
             )}
@@ -729,22 +781,34 @@ export const App: React.FC = () => {
                   </div>
 
                   {upcomingFiltered.length > 0 ? (
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
-                      {upcomingFiltered?.map((match) => {
-                        const analysis = matchAnalysesMap.get(match.id);
-                        if (!analysis) return null;
-                        return (
-                          <MatchCard
-                            key={match.id}
-                            match={match}
-                            analysis={analysis}
-                            onSelect={(m) => setSelectedMatch(m)}
-                            isFavorite={favorites.includes(match.id)}
-                            onToggleFavorite={toggleFavorite}
-                          />
-                        );
-                      })}
-                    </div>
+                    viewMode === 'bulletin' ? (
+                      <NesineBulletinView
+                        matches={upcomingFiltered}
+                        matchAnalysesMap={matchAnalysesMap}
+                        onSelectMatch={(m) => setSelectedMatch(m)}
+                        favorites={favorites}
+                        onToggleFavorite={toggleFavorite}
+                        betslipItems={betslipItems}
+                        onToggleBetslip={handleToggleBetslip}
+                      />
+                    ) : (
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
+                        {upcomingFiltered?.map((match) => {
+                          const analysis = matchAnalysesMap.get(match.id);
+                          if (!analysis) return null;
+                          return (
+                            <MatchCard
+                              key={match.id}
+                              match={match}
+                              analysis={analysis}
+                              onSelect={(m) => setSelectedMatch(m)}
+                              isFavorite={favorites.includes(match.id)}
+                              onToggleFavorite={toggleFavorite}
+                            />
+                          );
+                        })}
+                      </div>
+                    )
                   ) : (
                     <div className="p-6 text-center rounded-2xl bg-slate-900/40 border border-slate-800/80 text-xs text-slate-500">
                       Oynanacak maç bulunamadı.
@@ -823,22 +887,34 @@ export const App: React.FC = () => {
                     )}
 
                     {upcomingFiltered.length > 0 ? (
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
-                        {upcomingFiltered?.map((match) => {
-                          const analysis = matchAnalysesMap.get(match.id);
-                          if (!analysis) return null;
-                          return (
-                            <MatchCard
-                              key={match.id}
-                              match={match}
-                              analysis={analysis}
-                              onSelect={(m) => setSelectedMatch(m)}
-                              isFavorite={favorites.includes(match.id)}
-                              onToggleFavorite={toggleFavorite}
-                            />
-                          );
-                        })}
-                      </div>
+                      viewMode === 'bulletin' ? (
+                        <NesineBulletinView
+                          matches={upcomingFiltered}
+                          matchAnalysesMap={matchAnalysesMap}
+                          onSelectMatch={(m) => setSelectedMatch(m)}
+                          favorites={favorites}
+                          onToggleFavorite={toggleFavorite}
+                          betslipItems={betslipItems}
+                          onToggleBetslip={handleToggleBetslip}
+                        />
+                      ) : (
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
+                          {upcomingFiltered?.map((match) => {
+                            const analysis = matchAnalysesMap.get(match.id);
+                            if (!analysis) return null;
+                            return (
+                              <MatchCard
+                                key={match.id}
+                                match={match}
+                                analysis={analysis}
+                                onSelect={(m) => setSelectedMatch(m)}
+                                isFavorite={favorites.includes(match.id)}
+                                onToggleFavorite={toggleFavorite}
+                              />
+                            );
+                          })}
+                        </div>
+                      )
                     ) : liveFiltered.length === 0 ? (
                       <div className="p-12 text-center rounded-3xl bg-slate-900/60 border border-slate-800 space-y-3">
                         <Trophy className="w-10 h-10 text-slate-600 mx-auto" />
