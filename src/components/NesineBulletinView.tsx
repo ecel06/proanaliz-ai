@@ -3,7 +3,8 @@ import { Match, MatchAnalysis, UserBetslipItem } from '../types';
 import { BettingPickOption, calcMarketOdd } from '../utils/oddsHelper';
 import { getMatchParsedDate, TURKISH_MONTHS } from '../utils/dateHelper';
 import { getMatchLiveState, parseMatchKickoffEpoch } from '../utils/liveMatchHelper';
-import { Clock, Star, ChevronRight, Trophy, Bot, Radio } from 'lucide-react';
+import { detectMatchValueBets } from '../utils/valueBetHelper';
+import { Clock, Star, ChevronRight, Trophy, Bot, Radio, Target } from 'lucide-react';
 
 interface NesineBulletinViewProps {
   matches: Match[];
@@ -223,6 +224,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
               const isFav = favorites.includes(match.id);
               const { primaryPrediction } = analysis;
               const { time, date } = getCleanTimeAndDate(match);
+              const valueSummary = detectMatchValueBets(match, analysis);
 
               return (
                 <div
@@ -307,8 +309,8 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                         </div>
                       </div>
 
-                      {/* AI Recommendation Pill (Right beside teams) */}
-                      <div className="shrink-0 pl-2">
+                      {/* AI & Value Recommendation Pills */}
+                      <div className="shrink-0 pl-2 flex items-center space-x-1.5">
                         <span
                           className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-black border bg-emerald-500/10 text-emerald-300 border-emerald-500/30 whitespace-nowrap shadow-xs"
                           title="Yapay Zeka Poisson & Form Tahmini"
@@ -317,6 +319,16 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                           <span>{primaryPrediction.label}</span>
                           <span className="text-emerald-400 font-mono">%{primaryPrediction.confidence}</span>
                         </span>
+
+                        {valueSummary.hasValue && valueSummary.bestValuePick && (
+                          <span
+                            className="inline-flex items-center space-x-1 px-2 py-1 rounded-lg text-[11px] font-black border bg-amber-500/15 text-amber-300 border-amber-500/40 whitespace-nowrap shadow-xs"
+                            title={`Değer Bahsi: ${valueSummary.bestValuePick.pickLabel} (Piyasa oranından +%${valueSummary.bestValuePick.edgePercent} daha değerli!)`}
+                          >
+                            <Target className="w-3 h-3 text-amber-400" />
+                            <span>+%{valueSummary.bestValuePick.edgePercent} Değer</span>
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -328,6 +340,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                           const isSelected = betslipItems.some(
                             (item) => item.matchId === match.id && item.pickKey === def.key
                           );
+                          const isValueOdd = valueSummary.hasValue && valueSummary.bestValuePick?.pickKey === def.key;
 
                           const option: BettingPickOption = {
                             key: def.key,
@@ -347,23 +360,28 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                               key={def.key}
                               type="button"
                               onClick={() => onToggleBetslip(match, option)}
-                              title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)} (%${prob} Güven)`}
-                              className={`flex flex-col items-center justify-center min-w-[44px] px-1 py-1 sm:py-1.5 rounded-lg text-center transition-all cursor-pointer select-none active:scale-95 ${
+                              title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)} (%${prob} Güven)${isValueOdd ? ' • 🎯 Değer Bahsi!' : ''}`}
+                              className={`relative flex flex-col items-center justify-center min-w-[44px] px-1 py-1 sm:py-1.5 rounded-lg text-center transition-all cursor-pointer select-none active:scale-95 ${
                                 isSelected
                                   ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-300 scale-105'
+                                  : isValueOdd
+                                  ? 'bg-amber-950/40 text-amber-200 border border-amber-500/60 ring-1 ring-amber-400/50 hover:bg-amber-900/40'
                                   : 'bg-slate-950/80 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-emerald-500/40 hover:text-emerald-300'
                               }`}
                             >
+                              {isValueOdd && !isSelected && (
+                                <span className="absolute -top-1 -right-0.5 w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400" />
+                              )}
                               <span
                                 className={`text-[9px] uppercase tracking-wider font-extrabold ${
-                                  isSelected ? 'text-slate-950' : 'text-slate-400'
+                                  isSelected ? 'text-slate-950' : isValueOdd ? 'text-amber-300' : 'text-slate-400'
                                 }`}
                               >
                                 {def.shortLabel}
                               </span>
                               <span
                                 className={`font-mono text-xs sm:text-[13px] font-bold ${
-                                  isSelected ? 'text-slate-950 font-black' : 'text-white'
+                                  isSelected ? 'text-slate-950 font-black' : isValueOdd ? 'text-amber-200 font-black' : 'text-white'
                                 }`}
                               >
                                 {odd.toFixed(2)}
@@ -427,12 +445,21 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                         )}
                       </div>
 
-                      {/* AI Pill on top right */}
-                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-black border bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
-                        <Bot className="w-3 h-3 text-emerald-400" />
-                        <span>{primaryPrediction.label}</span>
-                        <span className="text-emerald-400 font-mono">%{primaryPrediction.confidence}</span>
-                      </span>
+                      {/* AI & Value Pill on top right */}
+                      <div className="flex items-center space-x-1 shrink-0">
+                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-black border bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
+                          <Bot className="w-3 h-3 text-emerald-400" />
+                          <span>{primaryPrediction.label}</span>
+                          <span className="text-emerald-400 font-mono">%{primaryPrediction.confidence}</span>
+                        </span>
+
+                        {valueSummary.hasValue && valueSummary.bestValuePick && (
+                          <span className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-black border bg-amber-500/15 text-amber-300 border-amber-500/40">
+                            <Target className="w-2.5 h-2.5 text-amber-400" />
+                            <span>+%{valueSummary.bestValuePick.edgePercent}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Row 2: Team Names (Large, bold, 100% visible, clicking opens modal) */}
@@ -460,6 +487,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                         const isSelected = betslipItems.some(
                           (item) => item.matchId === match.id && item.pickKey === def.key
                         );
+                        const isValueOdd = valueSummary.hasValue && valueSummary.bestValuePick?.pickKey === def.key;
 
                         const option: BettingPickOption = {
                           key: def.key,
@@ -479,10 +507,12 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                             key={def.key}
                             type="button"
                             onClick={() => onToggleBetslip(match, option)}
-                            title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)}`}
+                            title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)}${isValueOdd ? ' • 🎯 Değer Bahsi!' : ''}`}
                             className={`flex flex-col items-center justify-center p-1 rounded text-center transition-all cursor-pointer select-none active:scale-95 ${
                               isSelected
                                 ? 'bg-emerald-500 text-slate-950 font-black ring-1 ring-emerald-300'
+                                : isValueOdd
+                                ? 'bg-amber-950/40 text-amber-200 border border-amber-500/60 ring-1 ring-amber-400/50'
                                 : 'bg-slate-950 hover:bg-slate-800 text-slate-200 border border-slate-800'
                             }`}
                           >

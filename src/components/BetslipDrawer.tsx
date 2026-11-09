@@ -1,8 +1,10 @@
 // src/components/BetslipDrawer.tsx
 // Interactive Kupon Hesaplayıcı & Betslip Drawer for ProAnaliz AI
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Match, UserBetslipItem } from '../types';
+import { simulateBetslipMonteCarlo } from '../utils/monteCarloHelper';
+import { CouponShareModal } from './CouponShareModal';
 import {
   Ticket,
   X,
@@ -16,7 +18,9 @@ import {
   Percent,
   Coins,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  ShieldCheck,
+  Share2
 } from 'lucide-react';
 
 interface BetslipDrawerProps {
@@ -40,6 +44,10 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
 }) => {
   const [stake, setStake] = useState<number>(100);
   const [copied, setCopied] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Monte Carlo Simulation Engine (Runs 5,000 runs)
+  const monteCarlo = useMemo(() => simulateBetslipMonteCarlo(items), [items]);
 
   // Calculate totals
   const totalOdds = Number(
@@ -303,12 +311,39 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                 </div>
               </div>
 
-              {/* Action Buttons Row */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
+              {/* Monte Carlo Risk & Confidence Bar */}
+              {monteCarlo && (
+                <div className="p-3 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/40 border border-slate-800 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center space-x-1.5 text-slate-300 font-bold">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      <span>Kupon Güven Endeksi:</span>
+                    </span>
+                    <span className={`font-mono font-black text-[11px] px-2 py-0.5 rounded-lg border ${monteCarlo.riskColor}`}>
+                      %{monteCarlo.combinedTheoreticalProb} • {monteCarlo.riskLabel}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    {monteCarlo.aiAdvice}
+                  </p>
+                </div>
+              )}
+
+              {/* Action Buttons Row (3 Columns: Paylaş, Kopyala, AI'a Danış) */}
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="py-2.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1 shadow-md shadow-emerald-500/20 active:scale-95"
+                >
+                  <Share2 className="w-4 h-4 text-white" />
+                  <span>Paylaş</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleCopySlip}
-                  className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer flex items-center justify-center space-x-1.5 active:scale-95"
+                  className="py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer flex items-center justify-center space-x-1 active:scale-95"
                 >
                   {copied ? (
                     <>
@@ -318,7 +353,7 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                   ) : (
                     <>
                       <Copy className="w-4 h-4 text-slate-400" />
-                      <span>Kuponu Kopyala</span>
+                      <span>Kopyala</span>
                     </>
                   )}
                 </button>
@@ -327,7 +362,7 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                   <button
                     type="button"
                     onClick={handleAskAI}
-                    className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center space-x-1.5 shadow-md shadow-purple-600/30 active:scale-95"
+                    className="py-2.5 px-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center space-x-1 shadow-md shadow-purple-600/30 active:scale-95"
                   >
                     <Bot className="w-4 h-4 text-amber-300" />
                     <span>AI'a Danış</span>
@@ -341,6 +376,17 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
 
         </div>
       )}
+
+      {/* 3. SHARE COUPON MODAL */}
+      <CouponShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        items={items}
+        totalOdds={totalOdds}
+        stake={stake}
+        potentialWin={estimatedWin}
+        monteCarlo={monteCarlo}
+      />
     </>
   );
 };

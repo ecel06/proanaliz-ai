@@ -1,11 +1,11 @@
 // src/components/Filters.tsx
 import React from 'react';
-import { Search, Flame, Zap, Trophy, ShieldAlert, Sparkles, X, Star, ArrowDownUp, Calendar, Layers, ChevronRight } from 'lucide-react';
+import { Search, Flame, Zap, Trophy, ShieldAlert, Sparkles, X, Star, ArrowDownUp, Calendar, Layers, ChevronRight, Target } from 'lucide-react';
 import { LeagueCategory } from '../types';
 import { POPULAR_LEAGUES } from '../utils/leagueHelper';
 import { DateFilterOption } from '../utils/dateHelper';
 
-export type CategoryFilter = 'all' | 'banko' | 'over25' | 'btts' | 'htft' | 'favorites';
+export type CategoryFilter = 'all' | 'banko' | 'over25' | 'btts' | 'htft' | 'favorites' | 'value';
 export type SortOption = 'confidence' | 'time' | 'goals' | 'ms1';
 
 interface FiltersProps {
@@ -29,6 +29,7 @@ interface FiltersProps {
     btts: number;
     htft: number;
     favorites: number;
+    value: number;
   };
 }
 
@@ -54,6 +55,12 @@ export const Filters: React.FC<FiltersProps> = ({
       label: 'Tüm Maçlar',
       icon: <Trophy className="w-3.5 h-3.5" />,
       count: counts.all
+    },
+    {
+      id: 'value',
+      label: '🎯 Değer Bahisleri',
+      icon: <Target className="w-3.5 h-3.5 text-amber-400" />,
+      count: counts.value
     },
     {
       id: 'banko',
