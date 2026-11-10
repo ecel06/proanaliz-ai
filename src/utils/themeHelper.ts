@@ -26,8 +26,8 @@ export const PRESET_THEMES: TeamTheme[] = [
     emoji: '💛💙',
     primaryColor: '#fbbf24', // Kanarya Sarısı
     secondaryColor: '#1e3a8a', // Koyu Lacivert
-    bgDark: '#040918', // Derin Gece Laciverti
-    cardBg: '#09132c',
+    bgDark: '#040a1c', // Derin Gece Laciverti
+    cardBg: '#091536',
     cardBorder: 'rgba(251, 191, 36, 0.35)',
     accentText: '#fde047',
     badgeBg: 'rgba(251, 191, 36, 0.18)'
@@ -40,8 +40,8 @@ export const PRESET_THEMES: TeamTheme[] = [
     emoji: '❤️💛',
     primaryColor: '#f59e0b', // Aslan Sarısı
     secondaryColor: '#be123c', // Gül/Bordo Kırmızı
-    bgDark: '#110307', // Derin Kırmızımsı Gece
-    cardBg: '#20080e',
+    bgDark: '#120306', // Derin Bordo Gece
+    cardBg: '#24080e',
     cardBorder: 'rgba(245, 158, 11, 0.35)',
     accentText: '#fbbf24',
     badgeBg: 'rgba(245, 158, 11, 0.18)'
@@ -55,7 +55,7 @@ export const PRESET_THEMES: TeamTheme[] = [
     primaryColor: '#ffffff', // Saf Kar Beyazı
     secondaryColor: '#64748b', // Kartal Grisi
     bgDark: '#000000', // Saf OLED Siyah
-    cardBg: '#0e0e12',
+    cardBg: '#111116',
     cardBorder: 'rgba(255, 255, 255, 0.3)',
     accentText: '#ffffff',
     badgeBg: 'rgba(255, 255, 255, 0.15)'
@@ -68,8 +68,8 @@ export const PRESET_THEMES: TeamTheme[] = [
     emoji: '💙❤️',
     primaryColor: '#38bdf8', // Karadeniz Gök Mavisi
     secondaryColor: '#9f1239', // Bordo
-    bgDark: '#0c0409', // Derin Bordo Gece
-    cardBg: '#180812',
+    bgDark: '#0d0409', // Derin Bordo Gece
+    cardBg: '#1c0814',
     cardBorder: 'rgba(56, 189, 248, 0.35)',
     accentText: '#7dd3fc',
     badgeBg: 'rgba(56, 189, 248, 0.18)'
@@ -83,7 +83,7 @@ export const PRESET_THEMES: TeamTheme[] = [
     primaryColor: '#22c55e', // Timsah Yeşili
     secondaryColor: '#ffffff',
     bgDark: '#021006',
-    cardBg: '#071f0d',
+    cardBg: '#08210f',
     cardBorder: 'rgba(34, 197, 94, 0.35)',
     accentText: '#4ade80',
     badgeBg: 'rgba(34, 197, 94, 0.18)'
@@ -96,8 +96,8 @@ export const PRESET_THEMES: TeamTheme[] = [
     emoji: '💛❤️',
     primaryColor: '#eab308', // Göztepe Sarısı
     secondaryColor: '#dc2626', // Kırmızı
-    bgDark: '#120504',
-    cardBg: '#210a08',
+    bgDark: '#140504',
+    cardBg: '#260a08',
     cardBorder: 'rgba(234, 179, 8, 0.35)',
     accentText: '#fde047',
     badgeBg: 'rgba(234, 179, 8, 0.18)'
@@ -110,8 +110,8 @@ export const PRESET_THEMES: TeamTheme[] = [
     emoji: '💙⚡',
     primaryColor: '#0ea5e9', // Şimşek Mavisi
     secondaryColor: '#1e3a8a', // Lacivert
-    bgDark: '#030814',
-    cardBg: '#081226',
+    bgDark: '#030816',
+    cardBg: '#091530',
     cardBorder: 'rgba(14, 165, 233, 0.35)',
     accentText: '#38bdf8',
     badgeBg: 'rgba(14, 165, 233, 0.18)'
@@ -124,8 +124,8 @@ export const PRESET_THEMES: TeamTheme[] = [
     emoji: '👑🤍',
     primaryColor: '#fbbf24', // Kraliyet Altını
     secondaryColor: '#7c3aed', // Mor
-    bgDark: '#050512',
-    cardBg: '#0c0d24',
+    bgDark: '#060614',
+    cardBg: '#0e0f2b',
     cardBorder: 'rgba(251, 191, 36, 0.35)',
     accentText: '#fde047',
     badgeBg: 'rgba(251, 191, 36, 0.18)'
@@ -138,8 +138,8 @@ export const PRESET_THEMES: TeamTheme[] = [
     emoji: '🔴🔵',
     primaryColor: '#f43f5e', // Blaugrana Kırmızı
     secondaryColor: '#2563eb', // Blaugrana Mavi
-    bgDark: '#080514',
-    cardBg: '#130a2a',
+    bgDark: '#0a0516',
+    cardBg: '#170b30',
     cardBorder: 'rgba(244, 63, 94, 0.35)',
     accentText: '#fb7185',
     badgeBg: 'rgba(244, 63, 94, 0.18)'
@@ -184,20 +184,107 @@ export function saveStoredTheme(theme: TeamTheme): void {
 }
 
 /**
- * Injects CSS variables onto document.documentElement to immediately re-theme the app.
+ * Injects dynamic CSS rules globally onto document.head so the entire app
+ * instantly transforms into the chosen team's colors (background, cards, borders, buttons, and accents).
  */
 export function applyThemeToDOM(theme: TeamTheme): void {
   if (typeof document === 'undefined') return;
 
-  const root = document.documentElement;
+  const styleId = 'proanaliz-dynamic-team-theme';
+  let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
 
-  root.style.setProperty('--theme-bg-dark', theme.bgDark);
-  root.style.setProperty('--theme-card-bg', theme.cardBg);
-  root.style.setProperty('--theme-card-border', theme.cardBorder);
-  root.style.setProperty('--theme-primary', theme.primaryColor);
-  root.style.setProperty('--theme-secondary', theme.secondaryColor);
-  root.style.setProperty('--theme-accent-text', theme.accentText);
-  root.style.setProperty('--theme-badge-bg', theme.badgeBg);
+  if (theme.id === 'proanaliz') {
+    if (styleEl) {
+      styleEl.innerHTML = '';
+    }
+    if (document.body) {
+      document.body.style.backgroundColor = '#020617';
+    }
+    return;
+  }
+
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = styleId;
+    document.head.appendChild(styleEl);
+  }
+
+  styleEl.innerHTML = `
+    /* ProAnaliz AI - Active Team Theme: ${theme.name} (${theme.id}) */
+    html, body, #root, .min-h-screen, .bg-slate-950 {
+      background-color: ${theme.bgDark} !important;
+    }
+    
+    /* Card & Panel Surfaces */
+    .bg-slate-900, 
+    .bg-slate-900\\/40, 
+    .bg-slate-900\\/60, 
+    .bg-slate-900\\/70, 
+    .bg-slate-900\\/80, 
+    .bg-slate-900\\/90, 
+    .bg-slate-950\\/60, 
+    .bg-slate-950\\/70, 
+    .bg-slate-950\\/80, 
+    .bg-slate-950\\/90,
+    .glass-panel {
+      background-color: ${theme.cardBg} !important;
+    }
+    
+    /* Borders */
+    .border-slate-800, 
+    .border-slate-800\\/60, 
+    .border-slate-800\\/80,
+    .border-slate-700,
+    .border-slate-700\\/80 {
+      border-color: ${theme.cardBorder} !important;
+    }
+    
+    /* Primary Text & Icon Highlights */
+    .text-emerald-400, 
+    .text-emerald-300, 
+    .text-emerald-500 {
+      color: ${theme.primaryColor} !important;
+    }
+    
+    /* Primary Buttons & Solid Badges */
+    .bg-emerald-500, 
+    .bg-emerald-400, 
+    .bg-emerald-600 {
+      background-color: ${theme.primaryColor} !important;
+      color: ${theme.bgDark} !important;
+    }
+    
+    /* Soft Pill Badges */
+    .bg-emerald-500\\/10, 
+    .bg-emerald-500\\/15, 
+    .bg-emerald-500\\/20, 
+    .bg-emerald-500\\/25, 
+    .bg-emerald-500\\/30,
+    .bg-emerald-500\\/40 {
+      background-color: ${theme.badgeBg} !important;
+      color: ${theme.primaryColor} !important;
+    }
+    
+    /* Primary Accent Borders */
+    .border-emerald-500, 
+    .border-emerald-400, 
+    .border-emerald-500\\/20, 
+    .border-emerald-500\\/30, 
+    .border-emerald-500\\/40, 
+    .border-emerald-500\\/50 {
+      border-color: ${theme.primaryColor} !important;
+    }
+    
+    /* Ambient Glows */
+    .glow-emerald {
+      box-shadow: 0 0 25px -4px ${theme.primaryColor}40 !important;
+    }
+
+    ::selection {
+      background-color: ${theme.primaryColor} !important;
+      color: ${theme.bgDark} !important;
+    }
+  `;
 
   if (document.body) {
     document.body.style.backgroundColor = theme.bgDark;
@@ -216,13 +303,13 @@ export function createCustomTheme(
   return {
     id: `custom_${Date.now()}`,
     name: name || 'Özel Temam',
-    shortName: 'ÖZEL',
+    shortName: (name || 'Özel').slice(0, 4).toUpperCase(),
     club: 'Özel Renkler',
     emoji: '🎨',
     primaryColor,
     secondaryColor,
     bgDark,
-    cardBg: adjustBrightness(bgDark, 12),
+    cardBg: adjustBrightness(bgDark, 14),
     cardBorder: hexToRgba(primaryColor, 0.35),
     accentText: primaryColor,
     badgeBg: hexToRgba(primaryColor, 0.18),
