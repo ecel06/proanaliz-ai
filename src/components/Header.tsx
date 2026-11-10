@@ -17,7 +17,10 @@ import {
   Wallet,
   Volume2,
   VolumeX,
-  Palette
+  Palette,
+  Trophy,
+  Bell,
+  BellOff
 } from 'lucide-react';
 import { TeamTheme } from '../utils/themeHelper';
 
@@ -25,6 +28,7 @@ interface HeaderProps {
   onGoHome?: () => void;
   onOpenCustomAnalyzer: () => void;
   onOpenStandings?: () => void;
+  onOpenAIPerformance?: () => void;
   onOpenCoupons?: () => void;
   onOpenInstallApp?: () => void;
   onOpenAIChat?: () => void;
@@ -42,6 +46,8 @@ interface HeaderProps {
   bankrollBalance?: number;
   isMuted?: boolean;
   onToggleMute?: () => void;
+  isPushEnabled?: boolean;
+  onTogglePush?: () => void;
   activeTheme?: TeamTheme;
   onOpenThemeModal?: () => void;
 }
@@ -50,6 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
   onGoHome,
   onOpenCustomAnalyzer,
   onOpenStandings,
+  onOpenAIPerformance,
   onOpenCoupons,
   onOpenInstallApp,
   onOpenAIChat,
@@ -67,6 +74,8 @@ export const Header: React.FC<HeaderProps> = ({
   bankrollBalance = 10000,
   isMuted = false,
   onToggleMute,
+  isPushEnabled = false,
+  onTogglePush,
   activeTheme,
   onOpenThemeModal
 }) => {
@@ -149,6 +158,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Activity className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="hidden lg:inline">Puan Durumu</span>
+              </button>
+            )}
+
+            {/* AI Performance Scorecard Button */}
+            {onOpenAIPerformance && (
+              <button
+                onClick={onOpenAIPerformance}
+                className="hidden sm:flex items-center space-x-1.5 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs"
+                title="Yapay Zeka Başarı Karnesi & Şeffaf İstatistikler"
+              >
+                <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden lg:inline">Başarı Karnesi</span>
               </button>
             )}
 
@@ -239,6 +260,21 @@ export const Header: React.FC<HeaderProps> = ({
                 title={isMuted ? 'Canlı Gol Sesini Aç' : 'Canlı Gol Sesini Kapat'}
               >
                 {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+              </button>
+            )}
+
+            {/* Native Web Push Notification Toggle Button */}
+            {onTogglePush && (
+              <button
+                onClick={onTogglePush}
+                className={`p-1.5 sm:p-2 rounded-xl border transition-all cursor-pointer shrink-0 shadow-xs ${
+                  isPushEnabled
+                    ? 'bg-amber-400/20 text-amber-300 border-amber-400/50 shadow-amber-500/20'
+                    : 'bg-slate-900/90 hover:bg-slate-800 text-slate-400 border-slate-700/80 hover:text-white'
+                }`}
+                title={isPushEnabled ? 'Anlık Push Bildirimleri Açık (Kapatmak için tıkla)' : 'Anlık Push Bildirimlerini Aç (Kilit ekranı gol uyarısı)'}
+              >
+                {isPushEnabled ? <Bell className="w-3.5 h-3.5 text-amber-400" /> : <BellOff className="w-3.5 h-3.5" />}
               </button>
             )}
 

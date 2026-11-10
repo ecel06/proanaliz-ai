@@ -21,6 +21,16 @@ import { MatchOfTheDayBanner } from './components/MatchOfTheDayBanner';
 import { GoalNotificationToast, LiveGoalEvent } from './components/GoalNotificationToast';
 import { BankrollTrackerModal } from './components/BankrollTrackerModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
+import { AIPerformanceModal } from './components/AIPerformanceModal';
+import { ShareSlipModal } from './components/ShareSlipModal';
+import { computeAIPerformance } from './utils/aiPerformanceHelper';
+import {
+  isPushNotificationSupported,
+  isPushNotificationEnabled,
+  requestPushNotificationPermission,
+  setPushNotificationEnabled,
+  sendNativePushNotification
+} from './utils/pushNotificationHelper';
 import {
   TeamTheme,
   getStoredTheme,
@@ -197,11 +207,30 @@ export const App: React.FC = () => {
     applyThemeToDOM(theme);
   };
 
+  // AI Accuracy Scorecard Modal State
+  const [isAIPerformanceOpen, setIsAIPerformanceOpen] = useState(false);
+
+  // Social Coupon Share Modal State
+  const [shareSlipCoupon, setShareSlipCoupon] = useState<any | null>(null);
+
+  // Native Web Push & PWA Notification State
+  const [isPushEnabled, setIsPushEnabled] = useState<boolean>(() => isPushNotificationEnabled());
+
+  const handleTogglePush = async () => {
+    if (isPushEnabled) {
+      setPushNotificationEnabled(false);
+      setIsPushEnabled(false);
+    } else {
+      const granted = await requestPushNotificationPermission();
+      setIsPushEnabled(granted);
+    }
+  };
+
   const [newVersionAvailable, setNewVersionAvailable] = useState(false);
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.10.18';
+  const CLIENT_BUILD_VERSION = '2026.11.10.19';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -390,6 +419,12 @@ export const App: React.FC = () => {
               minute: live.liveMinute || undefined,
               timestamp: Date.now()
             });
+
+            // Send native lockscreen / browser push notification
+            sendNativePushNotification(`⚽ GOOOL! ${scoringTeam}`, {
+              body: `${match.homeTeam.name} ${currentH} - ${currentA} ${match.awayTeam.name} (${live.liveMinute || 'Canlı'})`,
+              tag: `goal-${match.id}`
+            });
           }
           break;
         }
@@ -414,6 +449,11 @@ export const App: React.FC = () => {
     });
     return map;
   }, [allMatches]);
+
+  // AI Accuracy & Historical Performance Report
+  const aiPerformanceReport = useMemo(() => {
+    return computeAIPerformance(allMatches, matchAnalysesMap);
+  }, [allMatches, matchAnalysesMap]);
 
   // Group matches for League Tree
   const leagueGroups = useMemo(() => {
@@ -733,6 +773,7 @@ export const App: React.FC = () => {
         }}
         onOpenCustomAnalyzer={() => setIsCustomAnalyzerOpen(true)}
         onOpenStandings={() => setIsStandingsOpen(true)}
+        onOpenAIPerformance={() => setIsAIPerformanceOpen(true)}
         onOpenCoupons={() => setActiveTabMode('coupons')}
         onOpenInstallApp={() => setIsInstallModalOpen(true)}
         onOpenAIChat={() => setIsAIChatOpen(true)}
@@ -750,6 +791,8 @@ export const App: React.FC = () => {
         bankrollBalance={bankrollStats.currentBalance}
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
+        isPushEnabled={isPushEnabled}
+        onTogglePush={handleTogglePush}
         activeTheme={activeTheme}
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
       />
@@ -1117,7 +1160,7 @@ export const App: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                       {liveFiltered?.map((match) => (
-                        <FinishedMatchCard key={match.id} match={match} now={currentTime} />
+                        <FinishedMatchCard key={match.id} match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
                       ))}
                     </div>
                   </div>
@@ -1177,7 +1220,7 @@ export const App: React.FC = () => {
                   {finishedFiltered.length > 0 ? (
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                       {finishedFiltered?.map((match) => (
-                        <FinishedMatchCard key={match.id} match={match} now={currentTime} />
+                        <FinishedMatchCard key={match.id} match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
                       ))}
                     </div>
                   ) : (
@@ -1219,7 +1262,7 @@ export const App: React.FC = () => {
                               onClick={() => setSelectedMatch(match)}
                               className="cursor-pointer transform hover:scale-[1.01] transition-all"
                             >
-                              <FinishedMatchCard match={match} now={currentTime} />
+                              <FinishedMatchCard match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
                             </div>
                           ))}
                         </div>
@@ -1329,6 +1372,7 @@ export const App: React.FC = () => {
                     onSelectMatch={(m) => setSelectedMatch(m)}
                     onViewAllMatches={() => setActiveTabMode('upcoming')}
                     onAddCouponToBetslip={handleAddCuratedCouponToBetslip}
+                    onShareCoupon={(coupon) => setShareSlipCoupon(coupon)}
                   />
                 )}
 
@@ -1344,7 +1388,7 @@ export const App: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                           {liveFiltered?.map((match) => (
-                            <FinishedMatchCard key={match.id} match={match} now={currentTime} />
+                            <FinishedMatchCard key={match.id} match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
                           ))}
                         </div>
                       </div>
@@ -1360,7 +1404,7 @@ export const App: React.FC = () => {
                       {finishedFiltered.length > 0 ? (
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                           {finishedFiltered?.map((match) => (
-                            <FinishedMatchCard key={match.id} match={match} now={currentTime} />
+                            <FinishedMatchCard key={match.id} match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
                           ))}
                         </div>
                       ) : (
@@ -1477,6 +1521,20 @@ export const App: React.FC = () => {
         onClose={() => setIsThemeModalOpen(false)}
         activeTheme={activeTheme}
         onSelectTheme={handleSelectTheme}
+      />
+
+      {/* Modal 9: Yapay Zeka Başarı Karnesi (Şeffaf Başarı İstatistikleri) */}
+      <AIPerformanceModal
+        isOpen={isAIPerformanceOpen}
+        onClose={() => setIsAIPerformanceOpen(false)}
+        report={aiPerformanceReport}
+      />
+
+      {/* Modal 10: Kupon Görseli Paylaşım Kartı (WhatsApp / Resim İndir) */}
+      <ShareSlipModal
+        isOpen={!!shareSlipCoupon}
+        onClose={() => setShareSlipCoupon(null)}
+        coupon={shareSlipCoupon}
       />
 
       {/* Floating AI Kupon Robotu FAB Button (Always Accessible on Mobile & Desktop) */}

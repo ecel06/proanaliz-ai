@@ -27,7 +27,8 @@ import {
   Radio,
   Star,
   Info,
-  Calendar
+  Calendar,
+  Share2
 } from 'lucide-react';
 
 interface CouponsSectionProps {
@@ -38,6 +39,7 @@ interface CouponsSectionProps {
   onSelectMatch: (match: Match) => void;
   onViewAllMatches?: () => void;
   onAddCouponToBetslip?: (coupon: CuratedCoupon) => void;
+  onShareCoupon?: (coupon: CuratedCoupon) => void;
 }
 
 export const CouponsSection: React.FC<CouponsSectionProps> = ({
@@ -47,7 +49,8 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
   currentTime = new Date(),
   onSelectMatch,
   onViewAllMatches,
-  onAddCouponToBetslip
+  onAddCouponToBetslip,
+  onShareCoupon
 }) => {
   const [stake, setStake] = useState<number>(100);
   const [copiedCouponId, setCopiedCouponId] = useState<string | null>(null);
@@ -608,6 +611,16 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
                     </>
                   )}
                 </button>
+
+                {onShareCoupon && (
+                  <button
+                    onClick={() => onShareCoupon(coupon)}
+                    className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md bg-slate-800 hover:bg-slate-750 text-amber-300 border border-amber-400/30"
+                  >
+                    <Share2 className="w-4 h-4 text-amber-400" />
+                    <span>📸 Kupon Kartını Paylaş / İndir</span>
+                  </button>
+                )}
               </div>
 
             </div>

@@ -1,25 +1,40 @@
 // src/components/FinishedMatchCard.tsx
-// Displays finished match results as well as live/in-progress matches with real-time score & minute.
+// Displays finished match results as well as live/in-progress matches with real-time score & minute,
+// and real-time tracking of pre-match AI prediction (Green when hitting, Red when losing).
 
 import React from 'react';
-import { Match } from '../types';
-import { CheckCircle2, Flag, FileWarning, MapPin, Radio, Activity } from 'lucide-react';
+import { Match, MatchAnalysis } from '../types';
+import { CheckCircle2, Flag, FileWarning, MapPin, Radio, Activity, Sparkles, Check, X } from 'lucide-react';
 import { getMatchLiveState } from '../utils/liveMatchHelper';
 import { formatDynamicMatchTime } from '../utils/dateHelper';
+import { evaluatePredictionStatus } from '../utils/predictionTrackerHelper';
 
 interface FinishedMatchCardProps {
   match: Match;
   now?: Date;
+  analysis?: MatchAnalysis | null;
 }
 
-export const FinishedMatchCard: React.FC<FinishedMatchCardProps> = ({ match, now }) => {
+export const FinishedMatchCard: React.FC<FinishedMatchCardProps> = ({ match, now, analysis }) => {
   const { homeTeam, awayTeam } = match;
   const liveState = getMatchLiveState(match, now);
-  const { isLive, liveMinute, displayScore } = liveState;
+  const { isLive, isFinished, liveMinute, displayScore } = liveState;
 
   const isHomeWinner = displayScore.home > displayScore.away;
   const isAwayWinner = displayScore.away > displayScore.home;
   const isDraw = displayScore.home === displayScore.away;
+
+  // Real-time evaluation of AI Pre-match Prediction
+  const predStatus = analysis ? evaluatePredictionStatus(
+    analysis.primaryPrediction.label,
+    analysis.primaryPrediction.confidence,
+    displayScore.home,
+    displayScore.away,
+    isLive,
+    isFinished,
+    displayScore.htHome,
+    displayScore.htAway
+  ) : null;
 
   return (
     <div
@@ -156,6 +171,65 @@ export const FinishedMatchCard: React.FC<FinishedMatchCardProps> = ({ match, now
         </div>
 
       </div>
+
+      {/* AI Pre-Match Prediction Real-Time Tracker */}
+      {predStatus && (
+        <div
+          className={`mt-3 p-2.5 rounded-xl flex items-center justify-between gap-2 border transition-all duration-300 ${
+            predStatus.isWinning
+              ? 'bg-emerald-950/70 border-emerald-400/80 text-emerald-200 shadow-lg shadow-emerald-950/40 ring-1 ring-emerald-400/40'
+              : 'bg-rose-950/70 border-rose-500/80 text-rose-200 shadow-lg shadow-rose-950/40 ring-1 ring-rose-500/40'
+          }`}
+        >
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div
+              className={`p-1.5 rounded-lg shrink-0 ${
+                predStatus.isWinning
+                  ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-400/30'
+                  : 'bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/30'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase font-bold tracking-wider text-slate-300 flex items-center space-x-1.5">
+                <span>Maç Önü Yapay Zeka Tahmini</span>
+                {analysis?.primaryPrediction.confidence ? (
+                  <span className="font-mono text-amber-300 font-extrabold bg-amber-400/20 px-1 py-0.2 rounded text-[10px]">
+                    %{analysis.primaryPrediction.confidence}
+                  </span>
+                ) : null}
+              </div>
+              <div className="font-black text-sm sm:text-base text-white truncate tracking-wide mt-0.5">
+                {predStatus.predictionLabel}
+              </div>
+            </div>
+          </div>
+
+          {/* Glowing Status Indicator (Green when winning/hit, Red when losing/missed) */}
+          <div className="shrink-0">
+            <span
+              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-black tracking-wide border shadow-md transition-all ${
+                predStatus.isWinning
+                  ? 'bg-emerald-500 text-slate-950 border-emerald-300 shadow-emerald-500/40 ring-2 ring-emerald-400/50'
+                  : 'bg-rose-600 text-white border-rose-400 shadow-rose-600/40 ring-2 ring-rose-500/40'
+              }`}
+            >
+              {predStatus.isWinning ? (
+                <>
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>{isLive ? '🟢 ANLIK TUTUYOR' : '✅ TAHMİN TUTTU'}</span>
+                </>
+              ) : (
+                <>
+                  <X className="w-4 h-4 stroke-[3]" />
+                  <span>{isLive ? '🔴 ŞU AN TUTMUYOR' : '❌ TAHMİN YATTI'}</span>
+                </>
+              )}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Outcome / Status Summary Footer */}
       <div className="mt-3 pt-3 border-t border-slate-800/50 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
