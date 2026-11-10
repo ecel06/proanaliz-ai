@@ -37,14 +37,14 @@ export const PRESET_THEMES: TeamTheme[] = [
     name: 'Galatasaray',
     shortName: 'GS',
     club: 'Galatasaray SK',
-    emoji: '❤️💛',
-    primaryColor: '#FFD100', // Canlı Parlak Aslan Sarısı
-    secondaryColor: '#E30613', // Resmi Canlı Bayrak Kırmızısı
-    bgDark: '#080103', // Derin Saf Gece (Kahverengilik kesinlikle sıfır)
-    cardBg: '#150307', // Net Asil Yakut Kırmızısı Kart Yüzeyi
-    cardBorder: 'rgba(227, 6, 19, 0.55)', // Alev Kırmızısı Çerçeveler
-    accentText: '#FFD100', // Canlı Aslan Sarısı Vurgular
-    badgeBg: 'rgba(227, 6, 19, 0.25)'
+    emoji: '💛❤️',
+    primaryColor: '#FFD100', // Parlak Canlı Aslan Sarısı (Vurgular, Çerçeveler, Rozetler)
+    secondaryColor: '#E30613', // Resmi Canlı Bayrak Kırmızısı (Butonlar, Parıltılar)
+    bgDark: '#080104', // Derin Asil Gece Siyahı
+    cardBg: '#140308', // Koyu Asil Bordo-Yakut Kart Zeminleri
+    cardBorder: 'rgba(255, 209, 0, 0.50)', // Parlak Aslan Sarısı Çerçeveler (Fenerbahçe gibi yüksek kontrast!)
+    accentText: '#FFD100', // Aslan Sarısı Metin Vurguları
+    badgeBg: 'rgba(255, 209, 0, 0.18)' // Altın Sarısı Rozet Zeminleri
   },
   {
     id: 'besiktas',
@@ -257,13 +257,22 @@ export function applyThemeToDOM(theme: TeamTheme): void {
       background-image: none !important;
     }
 
-    /* Neutralize Tailwind gradient stops so emerald green does NOT blend with red */
-    [class*="to-emerald-"],
-    [class*="from-emerald-"],
-    [class*="via-emerald-"],
-    [class*="to-teal-"],
-    [class*="from-teal-"],
-    [class*="via-teal-"] {
+    /* Gradient text (bg-clip-text) MUST be bright, glowing and readable in the team primary color */
+    .bg-clip-text {
+      background-image: linear-gradient(135deg, #FFFFFF 15%, ${theme.primaryColor} 90%) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      color: transparent !important;
+    }
+
+    /* Neutralize non-text gradient stops so emerald green does NOT blend with background */
+    :not(.bg-clip-text)[class*="to-emerald-"],
+    :not(.bg-clip-text)[class*="from-emerald-"],
+    :not(.bg-clip-text)[class*="via-emerald-"],
+    :not(.bg-clip-text)[class*="to-teal-"],
+    :not(.bg-clip-text)[class*="from-teal-"],
+    :not(.bg-clip-text)[class*="via-teal-"] {
       --tw-gradient-from: ${theme.cardBg} var(--tw-gradient-from-position, 0%) !important;
       --tw-gradient-to: ${theme.cardBg} var(--tw-gradient-to-position, 100%) !important;
       --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
@@ -272,12 +281,12 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     /* Ambient Corner Glows */
     .theme-glow-primary,
     [class*="blur-3xl"][class*="bg-emerald"] {
-      background-color: ${theme.id === 'galatasaray' ? 'rgba(227, 6, 19, 0.25)' : (theme.id === 'fenerbahce' ? 'rgba(0, 45, 114, 0.35)' : theme.badgeBg)} !important;
+      background-color: ${theme.id === 'galatasaray' ? 'rgba(227, 6, 19, 0.35)' : (theme.id === 'fenerbahce' ? 'rgba(0, 45, 114, 0.45)' : theme.badgeBg)} !important;
     }
     .theme-glow-secondary,
     [class*="blur-3xl"][class*="bg-cyan"],
     [class*="blur-3xl"][class*="bg-teal"] {
-      background-color: ${theme.id === 'galatasaray' ? 'rgba(255, 209, 0, 0.18)' : (theme.id === 'fenerbahce' ? 'rgba(255, 237, 0, 0.18)' : theme.badgeBg)} !important;
+      background-color: ${theme.id === 'galatasaray' ? 'rgba(255, 209, 0, 0.25)' : (theme.id === 'fenerbahce' ? 'rgba(255, 237, 0, 0.22)' : theme.badgeBg)} !important;
     }
     
     /* Borders */
@@ -291,7 +300,7 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     
     /* Secondary Action Buttons (e.g. Detaylı İncele) */
     .bg-slate-800, .bg-slate-800\\/80, .bg-slate-800\\/90 {
-      background-color: ${theme.id === 'galatasaray' ? '#1c050a' : (theme.id === 'fenerbahce' ? '#091A42' : '#1A1A22')} !important;
+      background-color: ${theme.id === 'galatasaray' ? '#22040c' : (theme.id === 'fenerbahce' ? '#091A42' : '#1A1A22')} !important;
       border: 1px solid ${theme.cardBorder} !important;
       color: #FFFFFF !important;
     }
@@ -308,10 +317,11 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     .bg-emerald-400, 
     .bg-emerald-600 {
       ${theme.id === 'galatasaray' ? `
-        background: linear-gradient(135deg, #E30613 0%, #B8000F 100%) !important;
+        background: linear-gradient(135deg, #E30613 0%, #A5000C 100%) !important;
         color: #FFD100 !important;
         border: 1.5px solid #FFD100 !important;
         text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+        box-shadow: 0 4px 18px rgba(227, 6, 19, 0.45) !important;
       ` : `
         background-color: ${theme.primaryColor} !important;
         color: ${buttonTextColor} !important;
@@ -324,17 +334,11 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     .bg-emerald-500\\/15, 
     .bg-emerald-500\\/20, 
     .bg-emerald-500\\/25, 
-    .bg-emerald-500\\/30,
+    .bg-emerald-500\\/30, 
     .bg-emerald-500\\/40 {
-      ${theme.id === 'galatasaray' ? `
-        background-color: rgba(227, 6, 19, 0.22) !important;
-        color: #FFD100 !important;
-        border: 1px solid rgba(227, 6, 19, 0.6) !important;
-      ` : `
-        background-color: ${theme.badgeBg} !important;
-        color: ${theme.primaryColor} !important;
-        border-color: ${theme.cardBorder} !important;
-      `}
+      background-color: ${theme.badgeBg} !important;
+      color: ${theme.primaryColor} !important;
+      border-color: ${theme.cardBorder} !important;
     }
     
     /* Primary Accent Borders */
@@ -344,12 +348,12 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     .border-emerald-500\\/30, 
     .border-emerald-500\\/40, 
     .border-emerald-500\\/50 {
-      border-color: ${theme.id === 'galatasaray' ? '#E30613' : theme.primaryColor} !important;
+      border-color: ${theme.primaryColor} !important;
     }
     
     /* Ambient Glows */
     .glow-emerald {
-      box-shadow: 0 0 35px -4px ${theme.id === 'galatasaray' ? '#E30613' : theme.primaryColor}60 !important;
+      box-shadow: 0 0 35px -4px ${theme.primaryColor}60 !important;
     }
 
     ::selection {
