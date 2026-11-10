@@ -7,11 +7,11 @@ export interface TeamTheme {
   shortName: string;
   club: string;
   emoji: string;
-  primaryColor: string; // Vurgu & Yazı & Buton Rengi (örn #fbbf24 Kanarya Sarısı)
-  secondaryColor: string; // İkincil Renk (örn #1e3a8a Lacivert)
-  bgDark: string; // Ana Sayfa Arka Planı (örn #030816 Derin Gece Laciverti)
-  cardBg: string; // Kart ve Panel Arka Planı (örn #081126)
-  cardBorder: string; // Kenarlık rengi (örn rgba(251, 191, 36, 0.28))
+  primaryColor: string; // Vurgu & Yazı & Buton Rengi (örn #FFED00 Canlı Kanarya Sarısı)
+  secondaryColor: string; // İkincil Renk (örn #002D72 Resmi Lacivert)
+  bgDark: string; // Ana Sayfa Arka Planı (örn #030B1E Derin Gece Laciverti)
+  cardBg: string; // Kart ve Panel Arka Planı (örn #071638 Net Lacivert)
+  cardBorder: string; // Kenarlık rengi (örn rgba(255, 237, 0, 0.45))
   accentText: string; // Parlak metin rengi
   badgeBg: string; // Rozet arka planı
   isCustom?: boolean;
@@ -24,13 +24,13 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'FB',
     club: 'Fenerbahçe SK',
     emoji: '💛💙',
-    primaryColor: '#fbbf24', // Kanarya Sarısı
-    secondaryColor: '#1e3a8a', // Koyu Lacivert
-    bgDark: '#040a1c', // Derin Gece Laciverti
-    cardBg: '#091536',
-    cardBorder: 'rgba(251, 191, 36, 0.35)',
-    accentText: '#fde047',
-    badgeBg: 'rgba(251, 191, 36, 0.18)'
+    primaryColor: '#FFED00', // Resmi 100% Canlı Kanarya Sarısı (Asla koyu veya hardal değil)
+    secondaryColor: '#002D72', // Resmi Fenerbahçe Laciverti
+    bgDark: '#030B1E', // Derin Gece Laciverti (Soluk gri değil, net lacivert)
+    cardBg: '#071638', // Net Canlı Lacivert Kartlar
+    cardBorder: 'rgba(255, 237, 0, 0.45)', // Parlak Sarı Çerçeve
+    accentText: '#FFED00',
+    badgeBg: 'rgba(255, 237, 0, 0.22)'
   },
   {
     id: 'galatasaray',
@@ -38,13 +38,13 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'GS',
     club: 'Galatasaray SK',
     emoji: '❤️💛',
-    primaryColor: '#f59e0b', // Aslan Sarısı
-    secondaryColor: '#be123c', // Gül/Bordo Kırmızı
-    bgDark: '#120306', // Derin Bordo Gece
-    cardBg: '#24080e',
-    cardBorder: 'rgba(245, 158, 11, 0.35)',
-    accentText: '#fbbf24',
-    badgeBg: 'rgba(245, 158, 11, 0.18)'
+    primaryColor: '#FF1A2D', // Canlı Ateş Kırmızısı (Asla kahverengi değil!)
+    secondaryColor: '#FDB913', // Aslan Sarısı
+    bgDark: '#080204', // Koyu Gece Antrasiti
+    cardBg: '#180508', // Net Ateş Kırmızısı Yansımalı Kart
+    cardBorder: 'rgba(255, 26, 45, 0.45)', // Canlı Kırmızı Çerçeve
+    accentText: '#FDB913', // Aslan Sarısı Metin Vurguları
+    badgeBg: 'rgba(255, 26, 45, 0.22)'
   },
   {
     id: 'besiktas',
@@ -52,13 +52,13 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'BJK',
     club: 'Beşiktaş JK',
     emoji: '🖤🤍',
-    primaryColor: '#ffffff', // Saf Kar Beyazı
-    secondaryColor: '#64748b', // Kartal Grisi
+    primaryColor: '#FFFFFF', // Saf Kar Beyazı
+    secondaryColor: '#94A3B8', // Kartal Grisi
     bgDark: '#000000', // Saf OLED Siyah
-    cardBg: '#111116',
-    cardBorder: 'rgba(255, 255, 255, 0.3)',
-    accentText: '#ffffff',
-    badgeBg: 'rgba(255, 255, 255, 0.15)'
+    cardBg: '#101014', // Mat Siyah Kart
+    cardBorder: 'rgba(255, 255, 255, 0.4)', // Beyaz Çerçeve
+    accentText: '#FFFFFF',
+    badgeBg: 'rgba(255, 255, 255, 0.18)'
   },
   {
     id: 'trabzonspor',
@@ -66,13 +66,13 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'TS',
     club: 'Trabzonspor',
     emoji: '💙❤️',
-    primaryColor: '#38bdf8', // Karadeniz Gök Mavisi
-    secondaryColor: '#9f1239', // Bordo
-    bgDark: '#0d0409', // Derin Bordo Gece
-    cardBg: '#1c0814',
-    cardBorder: 'rgba(56, 189, 248, 0.35)',
-    accentText: '#7dd3fc',
-    badgeBg: 'rgba(56, 189, 248, 0.18)'
+    primaryColor: '#00A3E0', // Karadeniz Gök Mavisi (Canlı Turkuaz/Mavi)
+    secondaryColor: '#990033', // Ateş Bordosu
+    bgDark: '#060205',
+    cardBg: '#15060E',
+    cardBorder: 'rgba(0, 163, 224, 0.45)',
+    accentText: '#38BDF8',
+    badgeBg: 'rgba(0, 163, 224, 0.22)'
   },
   {
     id: 'bursaspor',
@@ -80,13 +80,13 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'BUR',
     club: 'Bursaspor',
     emoji: '💚🤍',
-    primaryColor: '#22c55e', // Timsah Yeşili
-    secondaryColor: '#ffffff',
-    bgDark: '#021006',
-    cardBg: '#08210f',
-    cardBorder: 'rgba(34, 197, 94, 0.35)',
-    accentText: '#4ade80',
-    badgeBg: 'rgba(34, 197, 94, 0.18)'
+    primaryColor: '#00C853', // Parlak Timsah Yeşili
+    secondaryColor: '#FFFFFF',
+    bgDark: '#010D05',
+    cardBg: '#051E0C',
+    cardBorder: 'rgba(0, 200, 83, 0.45)',
+    accentText: '#69F0AE',
+    badgeBg: 'rgba(0, 200, 83, 0.22)'
   },
   {
     id: 'goztepe',
@@ -94,13 +94,13 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'GÖZ',
     club: 'Göztepe SK',
     emoji: '💛❤️',
-    primaryColor: '#eab308', // Göztepe Sarısı
-    secondaryColor: '#dc2626', // Kırmızı
-    bgDark: '#140504',
-    cardBg: '#260a08',
-    cardBorder: 'rgba(234, 179, 8, 0.35)',
-    accentText: '#fde047',
-    badgeBg: 'rgba(234, 179, 8, 0.18)'
+    primaryColor: '#FFD700', // Altın Sarısı
+    secondaryColor: '#E00000', // Canlı Kırmızı
+    bgDark: '#0F0302',
+    cardBg: '#220705',
+    cardBorder: 'rgba(255, 215, 0, 0.45)',
+    accentText: '#FFE082',
+    badgeBg: 'rgba(255, 215, 0, 0.22)'
   },
   {
     id: 'adanademir',
@@ -108,13 +108,13 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'ADS',
     club: 'Adana Demirspor',
     emoji: '💙⚡',
-    primaryColor: '#0ea5e9', // Şimşek Mavisi
-    secondaryColor: '#1e3a8a', // Lacivert
-    bgDark: '#030816',
-    cardBg: '#091530',
-    cardBorder: 'rgba(14, 165, 233, 0.35)',
-    accentText: '#38bdf8',
-    badgeBg: 'rgba(14, 165, 233, 0.18)'
+    primaryColor: '#00B4D8', // Canlı Şimşek Mavisi
+    secondaryColor: '#002855', // Lacivert
+    bgDark: '#020712',
+    cardBg: '#05132B',
+    cardBorder: 'rgba(0, 180, 216, 0.45)',
+    accentText: '#90E0EF',
+    badgeBg: 'rgba(0, 180, 216, 0.22)'
   },
   {
     id: 'realmadrid',
@@ -122,13 +122,13 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'RMA',
     club: 'Real Madrid CF',
     emoji: '👑🤍',
-    primaryColor: '#fbbf24', // Kraliyet Altını
-    secondaryColor: '#7c3aed', // Mor
-    bgDark: '#060614',
-    cardBg: '#0e0f2b',
-    cardBorder: 'rgba(251, 191, 36, 0.35)',
-    accentText: '#fde047',
-    badgeBg: 'rgba(251, 191, 36, 0.18)'
+    primaryColor: '#FFD700', // Kraliyet Altını
+    secondaryColor: '#6A0DAD', // Kraliyet Moru
+    bgDark: '#050514',
+    cardBg: '#0E0F2E',
+    cardBorder: 'rgba(255, 215, 0, 0.45)',
+    accentText: '#FFD700',
+    badgeBg: 'rgba(255, 215, 0, 0.22)'
   },
   {
     id: 'barcelona',
@@ -136,13 +136,13 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'FCB',
     club: 'FC Barcelona',
     emoji: '🔴🔵',
-    primaryColor: '#f43f5e', // Blaugrana Kırmızı
-    secondaryColor: '#2563eb', // Blaugrana Mavi
-    bgDark: '#0a0516',
-    cardBg: '#170b30',
-    cardBorder: 'rgba(244, 63, 94, 0.35)',
-    accentText: '#fb7185',
-    badgeBg: 'rgba(244, 63, 94, 0.18)'
+    primaryColor: '#FF1E42', // Canlı Blaugrana Kırmızı
+    secondaryColor: '#004D98', // Blaugrana Mavi
+    bgDark: '#060312',
+    cardBg: '#140828',
+    cardBorder: 'rgba(255, 30, 66, 0.45)',
+    accentText: '#FF7088',
+    badgeBg: 'rgba(255, 30, 66, 0.22)'
   },
   {
     id: 'proanaliz',
@@ -150,12 +150,12 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'AI',
     club: 'Varsayılan Tema',
     emoji: '🟢⚽',
-    primaryColor: '#10b981', // Zümrüt Yeşili
-    secondaryColor: '#064e3b',
+    primaryColor: '#10B981', // Zümrüt Yeşili
+    secondaryColor: '#064E3B',
     bgDark: '#020617', // Slate 950
-    cardBg: '#0f172a',
+    cardBg: '#0F172A',
     cardBorder: 'rgba(16, 185, 129, 0.25)',
-    accentText: '#34d399',
+    accentText: '#34D399',
     badgeBg: 'rgba(16, 185, 129, 0.15)'
   }
 ];
@@ -185,7 +185,7 @@ export function saveStoredTheme(theme: TeamTheme): void {
 
 /**
  * Injects dynamic CSS rules globally onto document.head so the entire app
- * instantly transforms into the chosen team's colors (background, cards, borders, buttons, and accents).
+ * instantly transforms into the chosen team's authentic colors.
  */
 export function applyThemeToDOM(theme: TeamTheme): void {
   if (typeof document === 'undefined') return;
@@ -208,6 +208,12 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     styleEl.id = styleId;
     document.head.appendChild(styleEl);
   }
+
+  // Button text contrast color: if yellow/white, use dark background; else white
+  const isLightPrimary = theme.primaryColor.toUpperCase() === '#FFED00' || 
+                         theme.primaryColor.toUpperCase() === '#FFD700' || 
+                         theme.primaryColor.toUpperCase() === '#FFFFFF';
+  const buttonTextColor = isLightPrimary ? (theme.id === 'fenerbahce' ? '#030B1E' : '#000000') : '#FFFFFF';
 
   styleEl.innerHTML = `
     /* ProAnaliz AI - Active Team Theme: ${theme.name} (${theme.id}) */
@@ -251,7 +257,8 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     .bg-emerald-400, 
     .bg-emerald-600 {
       background-color: ${theme.primaryColor} !important;
-      color: ${theme.bgDark} !important;
+      color: ${buttonTextColor} !important;
+      font-weight: 900 !important;
     }
     
     /* Soft Pill Badges */
@@ -263,6 +270,7 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     .bg-emerald-500\\/40 {
       background-color: ${theme.badgeBg} !important;
       color: ${theme.primaryColor} !important;
+      border-color: ${theme.cardBorder} !important;
     }
     
     /* Primary Accent Borders */
@@ -277,12 +285,12 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     
     /* Ambient Glows */
     .glow-emerald {
-      box-shadow: 0 0 25px -4px ${theme.primaryColor}40 !important;
+      box-shadow: 0 0 30px -4px ${theme.primaryColor}60 !important;
     }
 
     ::selection {
       background-color: ${theme.primaryColor} !important;
-      color: ${theme.bgDark} !important;
+      color: ${buttonTextColor} !important;
     }
   `;
 
@@ -303,16 +311,16 @@ export function createCustomTheme(
   return {
     id: `custom_${Date.now()}`,
     name: name || 'Özel Temam',
-    shortName: (name || 'Özel').slice(0, 4).toUpperCase(),
+    shortName: (name || 'ÖZEL').slice(0, 4).toUpperCase(),
     club: 'Özel Renkler',
     emoji: '🎨',
     primaryColor,
     secondaryColor,
     bgDark,
     cardBg: adjustBrightness(bgDark, 14),
-    cardBorder: hexToRgba(primaryColor, 0.35),
+    cardBorder: hexToRgba(primaryColor, 0.45),
     accentText: primaryColor,
-    badgeBg: hexToRgba(primaryColor, 0.18),
+    badgeBg: hexToRgba(primaryColor, 0.22),
     isCustom: true
   };
 }
@@ -323,7 +331,7 @@ function hexToRgba(hex: string, alpha: number): string {
     c = c.split('').map(x => x + x).join('');
   }
   const num = parseInt(c, 16);
-  if (isNaN(num)) return `rgba(251, 191, 36, ${alpha})`;
+  if (isNaN(num)) return `rgba(255, 237, 0, ${alpha})`;
   const r = (num >> 16) & 255;
   const g = (num >> 8) & 255;
   const b = num & 255;
@@ -334,9 +342,9 @@ function adjustBrightness(hex: string, percent: number): string {
   let c = hex.replace('#', '');
   if (c.length === 3) c = c.split('').map(x => x + x).join('');
   let num = parseInt(c, 16);
-  if (isNaN(num)) return '#0a1020';
+  if (isNaN(num)) return '#081226';
   let r = Math.min(255, Math.max(0, ((num >> 16) & 255) + percent));
   let g = Math.min(255, Math.max(0, ((num >> 8) & 255) + percent));
-  let b = Math.min(255, Math.max(0, (num & 255) + percent));
+  let b = Math.min(255, Math.max(0, (num & 255) + percent + 6)); // crisp cool tint to prevent muddy brown
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }

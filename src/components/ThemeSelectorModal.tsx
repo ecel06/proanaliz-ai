@@ -29,16 +29,16 @@ interface ThemeSelectorModalProps {
 
 // Quick selectable color chips
 const POPULAR_SWATCHES = [
-  { label: 'Kanarya Sarısı', hex: '#fbbf24' },
-  { label: 'Koyu Lacivert', hex: '#040a1c' },
-  { label: 'Aslan Kırmızısı', hex: '#dc2626' },
+  { label: 'Kanarya Sarısı', hex: '#FFED00' },
+  { label: 'FB Laciverti', hex: '#002D72' },
+  { label: 'Ateş Kırmızısı', hex: '#FF1A2D' },
+  { label: 'Aslan Sarısı', hex: '#FDB913' },
   { label: 'Kartal Siyahı', hex: '#000000' },
-  { label: 'Kar Beyazı', hex: '#ffffff' },
-  { label: 'Karadeniz Mavisi', hex: '#0284c7' },
-  { label: 'Bordo', hex: '#881337' },
-  { label: 'Timsah Yeşili', hex: '#16a34a' },
-  { label: 'Zümrüt Yeşili', hex: '#10b981' },
-  { label: 'Gece Mavisi', hex: '#0b1329' }
+  { label: 'Kar Beyazı', hex: '#FFFFFF' },
+  { label: 'Karadeniz Mavisi', hex: '#00A3E0' },
+  { label: 'Ateş Bordosu', hex: '#990033' },
+  { label: 'Timsah Yeşili', hex: '#00C853' },
+  { label: 'Gece Laciverti', hex: '#030B1E' }
 ];
 
 export const ThemeSelectorModal: React.FC<ThemeSelectorModalProps> = ({
@@ -52,9 +52,9 @@ export const ThemeSelectorModal: React.FC<ThemeSelectorModalProps> = ({
 
   // Custom theme editor state
   const [customName, setCustomName] = useState('Takımım');
-  const [customPrimary, setCustomPrimary] = useState('#fbbf24'); // Yellow
-  const [customSecondary, setCustomSecondary] = useState('#1e3a8a'); // Navy
-  const [customBg, setCustomBg] = useState('#040a1c'); // Deep Navy
+  const [customPrimary, setCustomPrimary] = useState('#FFED00'); // Pure Canary Yellow
+  const [customSecondary, setCustomSecondary] = useState('#002D72'); // FB Navy
+  const [customBg, setCustomBg] = useState('#030B1E'); // Deep Navy
 
   if (!isOpen) return null;
 
