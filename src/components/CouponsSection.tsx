@@ -326,17 +326,29 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
                     </div>
                   </div>
 
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase ${
-                      isCouponWon
-                        ? 'bg-emerald-500/25 border border-emerald-400 text-emerald-300'
-                        : isCouponLost
-                        ? 'bg-rose-500/20 border border-rose-500/50 text-rose-300'
-                        : `${coupon.badgeBg} ${coupon.badgeText}`
-                    }`}
-                  >
-                    {isCouponWon ? '🏆 KAZANDI' : isCouponLost ? 'YATTI' : coupon.badge}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    {onAddCouponToBetslip && (
+                      <button
+                        onClick={() => onAddCouponToBetslip(coupon)}
+                        className="px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase bg-amber-400 text-slate-950 hover:bg-amber-300 transition-all cursor-pointer shadow-md flex items-center space-x-1"
+                        title="Bu 3 maçı kuponuma ekle"
+                      >
+                        <Zap className="w-3 h-3 fill-slate-950" />
+                        <span>Kupona Ekle</span>
+                      </button>
+                    )}
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase ${
+                        isCouponWon
+                          ? 'bg-emerald-500/25 border border-emerald-400 text-emerald-300'
+                          : isCouponLost
+                          ? 'bg-rose-500/20 border border-rose-500/50 text-rose-300'
+                          : `${coupon.badgeBg} ${coupon.badgeText}`
+                      }`}
+                    >
+                      {isCouponWon ? '🏆 KAZANDI' : isCouponLost ? 'YATTI' : coupon.badge}
+                    </span>
+                  </div>
                 </div>
 
                 <p className="text-xs text-slate-400 leading-snug">
@@ -558,14 +570,14 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
               </div>
 
               {/* Bottom Actions: Transfer to Betslip & Copy Coupon */}
-              <div className="pt-4 mt-4 border-t border-slate-800/80 relative z-10 space-y-2">
-                {onAddCouponToBetslip && !isCouponLost && (
+              <div className="pt-4 mt-4 border-t border-slate-800/80 relative z-10 space-y-2.5">
+                {onAddCouponToBetslip && (
                   <button
                     onClick={() => onAddCouponToBetslip(coupon)}
-                    className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl text-xs font-black transition-all cursor-pointer shadow-md bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 active:scale-95"
+                    className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer shadow-xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 hover:from-emerald-400 hover:to-teal-300 text-slate-950 active:scale-95 border-2 border-emerald-300/80 ring-2 ring-emerald-500/30"
                   >
-                    <Zap className="w-4 h-4 fill-slate-950 text-slate-950" />
-                    <span>⚡ Kuponuma Aktar ({coupon.items.length} Maç)</span>
+                    <Zap className="w-4 h-4 fill-slate-950 text-slate-950 stroke-[2.5]" />
+                    <span>⚡ BU KUPONU KUPONUMA AKTAR ({coupon.items.length} MAÇ)</span>
                   </button>
                 )}
 
