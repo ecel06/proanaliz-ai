@@ -39,12 +39,12 @@ export const PRESET_THEMES: TeamTheme[] = [
     club: 'Galatasaray SK',
     emoji: '💛❤️',
     primaryColor: '#FFD200', // Görseldeki Birebir Parlak Altın Sarısı
-    secondaryColor: '#C40008', // Görseldeki Birebir Canlı Galatasaray Kırmızısı
-    bgDark: '#080103', // Derin Asil Gece Siyahı
-    cardBg: '#130205', // Görseldeki Koyu Bordo-Yakut Kart Zeminleri
+    secondaryColor: '#D4000A', // Görseldeki Birebir Canlı Al Kırmızı
+    bgDark: '#070709', // Saf Kömür Gece Siyahı (Kahverengilik KESİNLİKLE SIFIR)
+    cardBg: '#101015', // Saf Asil Grafit Kartlar (Kahverengilik KESİNLİKLE SIFIR)
     cardBorder: 'rgba(255, 210, 0, 0.55)', // Görseldeki Parlak Altın Sarısı Çerçeve
     accentText: '#FFD200', // Parlak Altın Sarısı Vurgular
-    badgeBg: 'rgba(196, 0, 8, 0.28)' // Canlı Kırmızı Rozet Zeminleri
+    badgeBg: 'rgba(212, 0, 10, 0.25)' // Canlı Kırmızı Rozet Zeminleri
   },
   {
     id: 'besiktas',
@@ -290,12 +290,12 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     /* Ambient Corner Glows */
     .theme-glow-primary,
     [class*="blur-3xl"][class*="bg-emerald"] {
-      background-color: ${theme.id === 'galatasaray' ? 'rgba(227, 6, 19, 0.35)' : (theme.id === 'fenerbahce' ? 'rgba(0, 45, 114, 0.45)' : theme.badgeBg)} !important;
+      background-color: ${theme.id === 'galatasaray' ? 'rgba(212, 0, 10, 0.22)' : (theme.id === 'fenerbahce' ? 'rgba(0, 45, 114, 0.45)' : theme.badgeBg)} !important;
     }
     .theme-glow-secondary,
     [class*="blur-3xl"][class*="bg-cyan"],
     [class*="blur-3xl"][class*="bg-teal"] {
-      background-color: ${theme.id === 'galatasaray' ? 'rgba(255, 209, 0, 0.25)' : (theme.id === 'fenerbahce' ? 'rgba(255, 237, 0, 0.22)' : theme.badgeBg)} !important;
+      background-color: ${theme.id === 'galatasaray' ? 'rgba(255, 210, 0, 0.15)' : (theme.id === 'fenerbahce' ? 'rgba(255, 237, 0, 0.22)' : theme.badgeBg)} !important;
     }
     
     /* Borders */
@@ -309,7 +309,7 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     
     /* Secondary Action Buttons (e.g. Detaylı İncele) */
     .bg-slate-800, .bg-slate-800\\/80, .bg-slate-800\\/90 {
-      background-color: ${theme.id === 'galatasaray' ? '#22040c' : (theme.id === 'fenerbahce' ? '#091A42' : '#1A1A22')} !important;
+      background-color: ${theme.id === 'galatasaray' ? '#181820' : (theme.id === 'fenerbahce' ? '#091A42' : '#1A1A22')} !important;
       border: 1px solid ${theme.cardBorder} !important;
       color: #FFFFFF !important;
     }
