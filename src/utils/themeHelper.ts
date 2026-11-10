@@ -266,7 +266,16 @@ export function applyThemeToDOM(theme: TeamTheme): void {
       color: transparent !important;
     }
 
-    /* Neutralize non-button, non-text gradient stops so emerald green does NOT blend with background */
+    /* Neutralize non-button, non-text gradient stops so unwanted color tints do NOT bleed into cards */
+    :not(button):not(.bg-clip-text)[class*="to-indigo-"],
+    :not(button):not(.bg-clip-text)[class*="from-indigo-"],
+    :not(button):not(.bg-clip-text)[class*="via-indigo-"],
+    :not(button):not(.bg-clip-text)[class*="to-purple-"],
+    :not(button):not(.bg-clip-text)[class*="from-purple-"],
+    :not(button):not(.bg-clip-text)[class*="via-purple-"],
+    :not(button):not(.bg-clip-text)[class*="to-cyan-"],
+    :not(button):not(.bg-clip-text)[class*="from-cyan-"],
+    :not(button):not(.bg-clip-text)[class*="via-cyan-"],
     :not(button):not(.bg-clip-text)[class*="to-emerald-"],
     :not(button):not(.bg-clip-text)[class*="from-emerald-"],
     :not(button):not(.bg-clip-text)[class*="via-emerald-"],

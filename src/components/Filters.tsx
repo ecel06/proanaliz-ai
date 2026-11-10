@@ -157,18 +157,18 @@ export const Filters: React.FC<FiltersProps> = ({
               <button
                 key={opt.id}
                 onClick={() => setSelectedDate(opt.id)}
-                className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg font-medium transition-all whitespace-nowrap cursor-pointer ${
+                className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg font-bold transition-all whitespace-nowrap cursor-pointer ${
                   isDateActive
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold shadow-xs'
+                    ? 'bg-emerald-500 text-slate-950 shadow-xs'
                     : 'text-slate-400 hover:text-slate-200 bg-slate-900/50 hover:bg-slate-800 border border-slate-800/60'
                 }`}
               >
                 <span>{opt.label}</span>
                 {typeof opt.count === 'number' && (
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black ${
                       isDateActive
-                        ? 'bg-emerald-500/30 text-emerald-200 font-bold'
+                        ? 'bg-black/30 text-current'
                         : 'bg-slate-800 text-slate-400'
                     }`}
                   >

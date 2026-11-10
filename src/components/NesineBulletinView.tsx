@@ -207,7 +207,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
           className="rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl overflow-hidden backdrop-blur-md"
         >
           {/* League Header Strip (Nesine Style) or Ranked Leaderboard Strip */}
-          <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/40 px-3.5 sm:px-5 py-2.5 border-b border-slate-800 flex items-center justify-between">
+          <div className="bg-slate-950/80 px-3.5 sm:px-5 py-2.5 border-b border-slate-800 flex items-center justify-between">
             <div className="flex items-center space-x-2.5">
               <span className={`w-2.5 h-2.5 rounded-full inline-block shadow-sm ${
                 group.isRanked ? 'bg-amber-400 shadow-amber-400/50' : 'bg-emerald-400 shadow-emerald-400/50'

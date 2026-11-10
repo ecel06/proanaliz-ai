@@ -173,7 +173,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.10.9';
+  const CLIENT_BUILD_VERSION = '2026.11.10.10';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -777,7 +777,7 @@ export const App: React.FC = () => {
           <div className="flex-1 min-w-0 w-full space-y-4 sm:space-y-6">
 
             {/* Hero / Highlight Banner */}
-            <div className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-indigo-950/60 border border-slate-800 p-4 sm:p-7 overflow-hidden shadow-2xl">
+            <div className="relative rounded-2xl sm:rounded-3xl bg-slate-900/90 border border-slate-800 p-4 sm:p-7 overflow-hidden shadow-2xl">
               <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-5 items-center">
@@ -789,7 +789,7 @@ export const App: React.FC = () => {
                   </div>
 
                   <h1 className="text-base sm:text-3xl font-black text-white tracking-tight">
-                    Tüm Dünya Ligleri <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Yapay Zeka Analizinde</span>
+                    Tüm Dünya Ligleri <span className="text-emerald-400">Yapay Zeka Analizinde</span>
                   </h1>
 
                   <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed hidden sm:block">
@@ -813,13 +813,13 @@ export const App: React.FC = () => {
 
                   <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-slate-950/60 border border-slate-800 backdrop-blur-sm">
                     <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-semibold">2.5 Üst Trendi</div>
-                    <div className="text-sm sm:text-lg font-black text-purple-400 font-mono mt-0.5">{counts.over25} Maç</div>
+                    <div className="text-sm sm:text-lg font-black text-amber-400 font-mono mt-0.5">{counts.over25} Maç</div>
                     <div className="text-[9px] sm:text-[10px] text-slate-500">Yüksek Tempolu</div>
                   </div>
 
                   <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-slate-950/60 border border-slate-800 backdrop-blur-sm">
                     <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-semibold">KG Var Adayları</div>
-                    <div className="text-sm sm:text-lg font-black text-cyan-400 font-mono mt-0.5">{counts.btts} Maç</div>
+                    <div className="text-sm sm:text-lg font-black text-emerald-400 font-mono mt-0.5">{counts.btts} Maç</div>
                     <div className="text-[9px] sm:text-[10px] text-slate-500">Karşılıklı Gol</div>
                   </div>
                 </div>

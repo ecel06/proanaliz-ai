@@ -325,7 +325,7 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
 
               {/* Monte Carlo Risk & Confidence Bar */}
               {monteCarlo && (
-                <div className="p-3 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/40 border border-slate-800 space-y-1.5">
+                <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="flex items-center space-x-1.5 text-slate-300 font-bold">
                       <ShieldCheck className="w-4 h-4 text-emerald-400" />
