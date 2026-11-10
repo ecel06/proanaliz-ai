@@ -152,7 +152,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.09.14';
+  const CLIENT_BUILD_VERSION = '2026.11.10.1';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -570,18 +570,67 @@ export const App: React.FC = () => {
     return [];
   }, [liveGoalAlerts, showRadarDemo, sampleRadarAlerts]);
 
-  // Günün Vitrin Karşılaşması (Hero Match of the Day)
+  // Günün Vitrin Karşılaşması (Hero Match of the Day) - Kesinlikle Günlük (Bugün veya Önümüzdeki 24 Saat)
   const heroMatch = useMemo(() => {
     if (upcomingFiltered.length === 0) return null;
-    const sorted = [...upcomingFiltered].sort((a, b) => {
+
+    const nowEpoch = currentTime.getTime();
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    const THIRTY_SIX_HOURS = 36 * 60 * 60 * 1000;
+
+    // 1. Kademe: Öncelikle BUGÜN (takvim günü veya önümüzdeki 24 saat içinde) başlayacak maçlar
+    const todayCandidates = upcomingFiltered.filter(m => {
+      const kickoff = parseMatchKickoffEpoch(m);
+      const isToday = isMatchOnDateFilter(m, 'today', currentTime);
+      const isWithin24h = kickoff >= nowEpoch && kickoff <= nowEpoch + TWENTY_FOUR_HOURS;
+      return isToday || isWithin24h;
+    });
+
+    if (todayCandidates.length > 0) {
+      return [...todayCandidates].sort((a, b) => {
+        const aA = matchAnalysesMap.get(a.id);
+        const bA = matchAnalysesMap.get(b.id);
+        const aConf = aA?.primaryPrediction.confidence || 0;
+        const bConf = bA?.primaryPrediction.confidence || 0;
+        return bConf - aConf;
+      })[0];
+    }
+
+    // 2. Kademe: Bugün maç kalmadıysa YARIN (sonraki 36 saat içindeki en yakın maçlar)
+    const tomorrowCandidates = upcomingFiltered.filter(m => {
+      const kickoff = parseMatchKickoffEpoch(m);
+      const isTomorrow = isMatchOnDateFilter(m, 'tomorrow', currentTime);
+      const isWithin36h = kickoff >= nowEpoch && kickoff <= nowEpoch + THIRTY_SIX_HOURS;
+      return isTomorrow || isWithin36h;
+    });
+
+    if (tomorrowCandidates.length > 0) {
+      return [...tomorrowCandidates].sort((a, b) => {
+        const aA = matchAnalysesMap.get(a.id);
+        const bA = matchAnalysesMap.get(b.id);
+        const aConf = aA?.primaryPrediction.confidence || 0;
+        const bConf = bA?.primaryPrediction.confidence || 0;
+        return bConf - aConf;
+      })[0];
+    }
+
+    // 3. Kademe: Önümüzdeki 36 saatte hiçbir maç yoksa, en erken oynanacak ilk maç günündeki maçlar
+    const sortedByTime = [...upcomingFiltered].sort(
+      (a, b) => parseMatchKickoffEpoch(a) - parseMatchKickoffEpoch(b)
+    );
+    const earliestKickoff = parseMatchKickoffEpoch(sortedByTime[0]);
+    const earliestBatch = sortedByTime.filter(
+      m => Math.abs(parseMatchKickoffEpoch(m) - earliestKickoff) <= 12 * 60 * 60 * 1000
+    );
+
+    return [...earliestBatch].sort((a, b) => {
       const aA = matchAnalysesMap.get(a.id);
       const bA = matchAnalysesMap.get(b.id);
       const aConf = aA?.primaryPrediction.confidence || 0;
       const bConf = bA?.primaryPrediction.confidence || 0;
       return bConf - aConf;
-    });
-    return sorted[0] || null;
-  }, [upcomingFiltered, matchAnalysesMap]);
+    })[0] || null;
+  }, [upcomingFiltered, matchAnalysesMap, currentTime]);
 
   const heroAnalysis = heroMatch ? matchAnalysesMap.get(heroMatch.id) || null : null;
   const isHeroInBetslip = useMemo(() => {

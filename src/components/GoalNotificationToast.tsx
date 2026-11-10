@@ -96,3 +96,4 @@ export const GoalNotificationToast: React.FC<GoalNotificationToastProps> = ({
     </aside>
   );
 };
+

@@ -69,3 +69,4 @@ export function playGoalChime(): void {
     // Graceful fallback if audio is blocked by browser policy
   }
 }
+

@@ -218,3 +218,4 @@ export const BankrollTrackerModal: React.FC<BankrollTrackerModalProps> = ({
     </div>
   );
 };
+

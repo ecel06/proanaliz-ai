@@ -23,7 +23,7 @@ export const MatchOfTheDayBanner: React.FC<MatchOfTheDayBannerProps> = ({
   isAlreadyInBetslip = false
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
 
   useEffect(() => {
     if (!match) return;
@@ -37,10 +37,11 @@ export const MatchOfTheDayBanner: React.FC<MatchOfTheDayBannerProps> = ({
         return;
       }
       const totalSec = Math.floor(diff / 1000);
-      const hours = Math.floor(totalSec / 3600);
+      const days = Math.floor(totalSec / 86400);
+      const hours = Math.floor((totalSec % 86400) / 3600);
       const minutes = Math.floor((totalSec % 3600) / 60);
       const seconds = totalSec % 60;
-      setTimeLeft({ hours, minutes, seconds });
+      setTimeLeft({ days, hours, minutes, seconds });
     };
 
     updateTimer();
@@ -78,7 +79,7 @@ export const MatchOfTheDayBanner: React.FC<MatchOfTheDayBannerProps> = ({
         <div className="flex items-center space-x-2">
           <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 animate-pulse">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Günün Vitrin Karşılaşması</span>
+            <span>{timeLeft && timeLeft.days > 0 ? 'Sıradaki Vitrin Karşılaşması' : 'Günün Vitrin Karşılaşması'}</span>
           </span>
           <span className="text-xs text-slate-400 font-bold hidden sm:inline">•</span>
           <span className="text-xs text-emerald-400 font-bold hidden sm:inline">{match.league}</span>
@@ -86,10 +87,14 @@ export const MatchOfTheDayBanner: React.FC<MatchOfTheDayBannerProps> = ({
 
         <div className="flex items-center space-x-3">
           {timeLeft && (
-            <div className="flex items-center space-x-1 text-xs font-mono font-bold text-amber-300 bg-amber-400/10 border border-amber-400/30 px-2.5 py-0.5 rounded-lg">
-              <Clock className="w-3 h-3 text-amber-400" />
+            <div className="flex items-center space-x-1.5 text-xs font-mono font-bold text-amber-300 bg-amber-400/10 border border-amber-400/30 px-2.5 py-1 rounded-xl shadow-xs">
+              <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
               <span>
-                {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+                {timeLeft.days > 0 ? (
+                  `${timeLeft.days} Gün ${timeLeft.hours} Sa`
+                ) : (
+                  `${String(timeLeft.hours).padStart(2, '0')}:${String(timeLeft.minutes).padStart(2, '0')}:${String(timeLeft.seconds).padStart(2, '0')}`
+                )}
               </span>
             </div>
           )}
@@ -133,8 +138,24 @@ export const MatchOfTheDayBanner: React.FC<MatchOfTheDayBannerProps> = ({
                 <span className="px-3 py-1 rounded-xl bg-slate-800/90 border border-slate-700 text-xs font-black text-amber-400 font-mono shadow-inner">
                   VS
                 </span>
-                <span className="text-[10px] text-slate-400 mt-1 font-mono">
-                  {match.time ? String(match.time).slice(11, 16) || match.time : 'Canlı'}
+                <span className="text-[10px] text-slate-300 mt-1 font-mono font-bold">
+                  {(() => {
+                    const raw = match.utcDate || match.date;
+                    if (!raw) return match.time || 'Canlı';
+                    const d = new Date(raw);
+                    if (isNaN(d.getTime())) return match.time || 'Canlı';
+                    const now = new Date();
+                    const isToday = d.toDateString() === now.toDateString();
+                    const tomorrow = new Date(now);
+                    tomorrow.setDate(now.getDate() + 1);
+                    const isTomorrow = d.toDateString() === tomorrow.toDateString();
+                    const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                    if (isToday) return `Bugün ${timeStr}`;
+                    if (isTomorrow) return `Yarın ${timeStr}`;
+                    const day = d.getDate();
+                    const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+                    return `${day} ${months[d.getMonth()]} ${timeStr}`;
+                  })()}
                 </span>
               </div>
 
