@@ -110,23 +110,47 @@ export const FormBadgeTooltip: React.FC<FormBadgeTooltipProps> = ({
   }
 
   const result = detail.result || 'D';
-  let badgeBg = 'bg-slate-600 text-slate-100';
+  let badgeStyle: React.CSSProperties = {
+    backgroundColor: '#F59E0B',
+    color: '#000000',
+    border: 'none',
+    boxShadow: 'none',
+    backgroundImage: 'none'
+  };
   let badgeLetter = 'B';
   let statusBadgeStyle = 'bg-amber-500/15 text-amber-300 border-amber-500/30';
   let pointsLabel = '1 Puan (Beraberlik)';
 
   if (result === 'W') {
-    badgeBg = 'bg-emerald-500 text-emerald-950 font-black';
+    badgeStyle = {
+      backgroundColor: '#10B981',
+      color: '#022C22',
+      border: 'none',
+      boxShadow: 'none',
+      backgroundImage: 'none'
+    };
     badgeLetter = 'G';
     statusBadgeStyle = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
     pointsLabel = '3 Puan (Galibiyet)';
   } else if (result === 'L') {
-    badgeBg = 'bg-rose-500 text-rose-950 font-black';
+    badgeStyle = {
+      backgroundColor: '#EF4444',
+      color: '#FFFFFF',
+      border: 'none',
+      boxShadow: 'none',
+      backgroundImage: 'none'
+    };
     badgeLetter = 'M';
     statusBadgeStyle = 'bg-rose-500/15 text-rose-400 border-rose-500/30';
     pointsLabel = '0 Puan (Mağlubiyet)';
   } else {
-    badgeBg = 'bg-amber-400 text-amber-950 font-black';
+    badgeStyle = {
+      backgroundColor: '#F59E0B',
+      color: '#000000',
+      border: 'none',
+      boxShadow: 'none',
+      backgroundImage: 'none'
+    };
     badgeLetter = 'B';
     statusBadgeStyle = 'bg-amber-500/15 text-amber-300 border-amber-500/30';
     pointsLabel = '1 Puan (Beraberlik)';
@@ -147,7 +171,8 @@ export const FormBadgeTooltip: React.FC<FormBadgeTooltipProps> = ({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
-        className={`inline-flex items-center justify-center font-black shadow-xs transition-transform hover:scale-125 focus:scale-125 focus:outline-hidden cursor-pointer select-none ${boxSizeClass} ${badgeBg} ${
+        style={badgeStyle}
+        className={`form-badge-btn inline-flex items-center justify-center font-black shadow-xs transition-transform hover:scale-125 focus:scale-125 focus:outline-hidden cursor-pointer select-none ${boxSizeClass} ${
           isLast ? 'ring-1.5 ring-amber-400/90 shadow-amber-400/40' : ''
         }`}
         aria-label={`${teamName} - ${detail.weekOrDate || 'Maç'}: ${badgeLetter}`}
