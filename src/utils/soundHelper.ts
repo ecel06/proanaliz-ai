@@ -36,87 +36,66 @@ export function setSoundEnabled(enabled: boolean): void {
 }
 
 /**
- * Plays an authentic football stadium goal sound:
- * 1. Hakem düdüğü (Referee whistle - çift patlama trrr-trrrt!)
- * 2. Stadyum kornası ve sevinç akorları (Stadium horns)
- * 3. Gerçek coşkulu "Goooooooooool!" spiker anonsu (Web SpeechSynthesis)
+ * Plays the authentic, crisp, professional Nesine.com & İddaa electronic goal chime:
+ * Clean, crystal-clear, modern double-tone chime (ti-ling! / dı-dın!)
+ * Zero harsh whistles, zero robot voices. 100% pleasant sports app notification sound.
  */
 export function playGoalChime(): void {
   if (!isSoundEnabled()) return;
 
-  // 1. Spiker Coşkulu "Goooool!" Sesi
-  try {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance('Gooooooooool! Gooooooooool!');
-      utter.lang = 'tr-TR';
-      utter.rate = 1.15;
-      utter.pitch = 1.35;
-      utter.volume = 1.0;
-      window.speechSynthesis.speak(utter);
-    }
-  } catch {}
-
-  // 2. Hakem Düdüğü & Stadyum Kornası (Web Audio API - %100 Çevrimdışı ve Güvenilir)
   const ctx = getAudioContext();
   if (!ctx) return;
 
   try {
     const now = ctx.currentTime;
 
-    // Gerçek hakem düdüğü simülasyonu (3000Hz + 28Hz titreşim)
-    const playWhistleBurst = (startTime: number, duration: number) => {
+    // Nesine.com / İddaa Iconic Double Chime Frequencies
+    // Tone 1: 932.33 Hz (A#5) - Crisp, prompt intro bell
+    // Tone 2: 1396.91 Hz (F6) - Bright, ringing, triumphant resolution
+    const playBellTone = (freq: number, startTime: number, duration: number, peakGain: number) => {
+      // Primary sine oscillator (crystal clear body)
       const osc = ctx.createOscillator();
-      const mod = ctx.createOscillator();
-      const modGain = ctx.createGain();
       const gain = ctx.createGain();
+
+      // Subtle harmonic overtone for warm metallic chime depth (Nesine app chime feel)
+      const harmonicOsc = ctx.createOscillator();
+      const harmonicGain = ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(3100, startTime);
+      osc.frequency.setValueAtTime(freq, startTime);
 
-      mod.type = 'triangle';
-      mod.frequency.setValueAtTime(28, startTime);
-      modGain.gain.setValueAtTime(140, startTime);
+      harmonicOsc.type = 'sine';
+      harmonicOsc.frequency.setValueAtTime(freq * 2.02, startTime); // Slight chorus detune
 
-      mod.connect(osc.frequency);
-
+      // Super fast attack (4ms) to make it snap, then smooth bell curve
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.35, startTime + 0.02);
-      gain.gain.setValueAtTime(0.35, startTime + duration - 0.03);
-      gain.gain.linearRampToValueAtTime(0.001, startTime + duration);
+      gain.gain.linearRampToValueAtTime(peakGain, startTime + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+      harmonicGain.gain.setValueAtTime(0, startTime);
+      harmonicGain.gain.linearRampToValueAtTime(peakGain * 0.35, startTime + 0.006);
+      harmonicGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.6);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      mod.start(startTime);
+      harmonicOsc.connect(harmonicGain);
+      harmonicGain.connect(ctx.destination);
+
       osc.start(startTime);
-      mod.stop(startTime + duration);
-      osc.stop(startTime + duration);
+      harmonicOsc.start(startTime);
+
+      osc.stop(startTime + duration + 0.05);
+      harmonicOsc.stop(startTime + duration + 0.05);
     };
 
-    // Düdük 1 (Kısa) ve Düdük 2 (Uzun gol düdüğü)
-    playWhistleBurst(now, 0.16);
-    playWhistleBurst(now + 0.22, 0.42);
+    // First bell: short & snappy
+    playBellTone(932.33, now, 0.16, 0.35);
 
-    // Stadyum kutlama akorları
-    const fanfareNotes = [523.25, 659.25, 783.99, 1046.50];
-    fanfareNotes.forEach((freq, idx) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(freq, now + 0.35 + idx * 0.12);
-
-      gain.gain.setValueAtTime(0, now + 0.35 + idx * 0.12);
-      gain.gain.linearRampToValueAtTime(0.22, now + 0.35 + idx * 0.12 + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35 + idx * 0.12 + 0.7);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(now + 0.35 + idx * 0.12);
-      osc.stop(now + 0.35 + idx * 0.12 + 0.75);
-    });
-  } catch {}
+    // Second bell: higher pitch, longer resonant sustain
+    playBellTone(1396.91, now + 0.11, 0.65, 0.45);
+  } catch {
+    // Graceful fallback
+  }
 }
 
