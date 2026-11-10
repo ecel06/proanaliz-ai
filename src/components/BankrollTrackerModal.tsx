@@ -1,9 +1,16 @@
 // src/components/BankrollTrackerModal.tsx
 // Virtual Bankroll & Saved Coupons Modal for ProAnaliz AI.
 
-import React from 'react';
-import { SavedSlip, BankrollStats, deleteSavedSlip, clearAllSavedSlips } from '../utils/bankrollHelper';
-import { Wallet, X, TrendingUp, TrendingDown, CheckCircle2, XCircle, Clock, Trash2, Ticket } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  SavedSlip,
+  BankrollStats,
+  deleteSavedSlip,
+  clearAllSavedSlips,
+  getInitialBankroll,
+  setInitialBankroll
+} from '../utils/bankrollHelper';
+import { Wallet, X, TrendingUp, TrendingDown, CheckCircle2, XCircle, Clock, Trash2, Ticket, Coins } from 'lucide-react';
 
 interface BankrollTrackerModalProps {
   isOpen: boolean;
@@ -20,7 +27,15 @@ export const BankrollTrackerModal: React.FC<BankrollTrackerModalProps> = ({
   stats,
   onRefreshSlips
 }) => {
+  const [activeInitial, setActiveInitial] = useState<number>(() => getInitialBankroll());
+
   if (!isOpen) return null;
+
+  const handleSelectInitial = (amount: number) => {
+    setActiveInitial(amount);
+    setInitialBankroll(amount);
+    onRefreshSlips();
+  };
 
   const handleDelete = (id: string) => {
     deleteSavedSlip(id);
@@ -95,6 +110,33 @@ export const BankrollTrackerModal: React.FC<BankrollTrackerModalProps> = ({
             <div className="text-xs font-mono font-bold mt-1 space-x-1 text-slate-300">
               <span className="text-emerald-400">{stats.wonSlips} Tutan</span> • <span className="text-rose-400">{stats.lostSlips} Yatan</span>
             </div>
+          </div>
+        </div>
+
+        {/* Quick Initial Bankroll Budget Selector */}
+        <div className="px-4 py-2.5 bg-slate-950/60 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center space-x-1.5 text-slate-400 font-medium">
+            <Coins className="w-3.5 h-3.5 text-amber-400" />
+            <span>Kasa Başlangıç Bütçesi:</span>
+          </div>
+          <div className="flex items-center gap-1.5 font-mono text-[11px] font-bold">
+            {[1000, 2500, 5000, 10000, 25000, 50000].map((amt) => {
+              const isSelected = activeInitial === amt;
+              return (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => handleSelectInitial(amt)}
+                  className={`px-2 py-0.5 rounded-lg border transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-amber-400/20 border-amber-400 text-amber-300 shadow-xs'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {amt.toLocaleString('tr-TR')} ₺
+                </button>
+              );
+            })}
           </div>
         </div>
 

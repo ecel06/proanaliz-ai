@@ -26,7 +26,26 @@ export interface BankrollStats {
 }
 
 const STORAGE_KEY = 'proanaliz_saved_slips';
-const INITIAL_BANKROLL = 10000;
+const BANKROLL_INIT_KEY = 'proanaliz_initial_bankroll';
+const DEFAULT_INITIAL_BANKROLL = 10000;
+
+export function getInitialBankroll(): number {
+  if (typeof window === 'undefined') return DEFAULT_INITIAL_BANKROLL;
+  try {
+    const raw = localStorage.getItem(BANKROLL_INIT_KEY);
+    const parsed = Number(raw);
+    return isNaN(parsed) || parsed <= 0 ? DEFAULT_INITIAL_BANKROLL : parsed;
+  } catch {
+    return DEFAULT_INITIAL_BANKROLL;
+  }
+}
+
+export function setInitialBankroll(amount: number): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(BANKROLL_INIT_KEY, String(amount));
+  } catch {}
+}
 
 export function getSavedSlips(): SavedSlip[] {
   if (typeof window === 'undefined') return [];
@@ -147,7 +166,8 @@ export function evaluateSlipsWithMatches(slips: SavedSlip[], matches: Match[]): 
   return evaluated;
 }
 
-export function calculateBankrollStats(slips: SavedSlip[]): BankrollStats {
+export function calculateBankrollStats(slips: SavedSlip[], customInitial?: number): BankrollStats {
+  const initialBankroll = customInitial !== undefined ? customInitial : getInitialBankroll();
   const totalSlips = slips.length;
   const wonSlips = slips.filter(s => s.status === 'won').length;
   const lostSlips = slips.filter(s => s.status === 'lost').length;
@@ -158,13 +178,13 @@ export function calculateBankrollStats(slips: SavedSlip[]): BankrollStats {
     .filter(s => s.status === 'won')
     .reduce((acc, s) => acc + s.potentialWin, 0);
 
-  const currentBalance = INITIAL_BANKROLL - totalStakes + totalWonReturn;
-  const netProfit = currentBalance - INITIAL_BANKROLL;
+  const currentBalance = initialBankroll - totalStakes + totalWonReturn;
+  const netProfit = currentBalance - initialBankroll;
   const settled = wonSlips + lostSlips;
   const winRate = settled > 0 ? Math.round((wonSlips / settled) * 100) : 0;
 
   return {
-    initialBankroll: INITIAL_BANKROLL,
+    initialBankroll,
     currentBalance: Math.round(currentBalance),
     netProfit: Math.round(netProfit),
     totalSlips,

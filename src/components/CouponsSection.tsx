@@ -37,6 +37,7 @@ interface CouponsSectionProps {
   currentTime?: Date;
   onSelectMatch: (match: Match) => void;
   onViewAllMatches?: () => void;
+  onAddCouponToBetslip?: (coupon: CuratedCoupon) => void;
 }
 
 export const CouponsSection: React.FC<CouponsSectionProps> = ({
@@ -45,7 +46,8 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
   analysesMap = new Map(),
   currentTime = new Date(),
   onSelectMatch,
-  onViewAllMatches
+  onViewAllMatches,
+  onAddCouponToBetslip
 }) => {
   const [stake, setStake] = useState<number>(100);
   const [copiedCouponId, setCopiedCouponId] = useState<string | null>(null);
@@ -555,8 +557,18 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
                 </div>
               </div>
 
-              {/* Bottom Action: Copy Coupon Button */}
-              <div className="pt-4 mt-4 border-t border-slate-800/80 relative z-10">
+              {/* Bottom Actions: Transfer to Betslip & Copy Coupon */}
+              <div className="pt-4 mt-4 border-t border-slate-800/80 relative z-10 space-y-2">
+                {onAddCouponToBetslip && !isCouponLost && (
+                  <button
+                    onClick={() => onAddCouponToBetslip(coupon)}
+                    className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl text-xs font-black transition-all cursor-pointer shadow-md bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 active:scale-95"
+                  >
+                    <Zap className="w-4 h-4 fill-slate-950 text-slate-950" />
+                    <span>⚡ Kuponuma Aktar ({coupon.items.length} Maç)</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => handleCopyCoupon(coupon)}
                   className={`w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md ${

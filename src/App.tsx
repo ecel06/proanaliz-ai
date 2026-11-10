@@ -138,9 +138,37 @@ export const App: React.FC = () => {
     setIsAIChatOpen(true);
   };
 
+  // 1-Click Curated Coupon to Betslip Integration
+  const handleAddCuratedCouponToBetslip = (coupon: any) => {
+    const newItems: UserBetslipItem[] = [];
+    coupon.items.forEach((item: any) => {
+      const match = allMatches.find((m) => String(m.id) === String(item.matchId));
+      if (match) {
+        newItems.push({
+          id: `${match.id}_${item.pickKey}`,
+          matchId: match.id,
+          match,
+          marketName: item.marketName,
+          pickKey: item.pickKey,
+          pickLabel: item.pickLabel,
+          odd: item.odd,
+          probability: item.confidence
+        });
+      }
+    });
+
+    if (newItems.length > 0) {
+      setBetslipItems(newItems);
+      setIsBetslipOpen(true);
+      setRefreshToast(`⚡ ${coupon.shortTitle} (${newItems.length} Maç) Kuponunuza Aktarıldı!`);
+      setTimeout(() => setRefreshToast(null), 3000);
+    }
+  };
+
   // Virtual Bankroll & Saved Slips State
   const [isBankrollModalOpen, setIsBankrollModalOpen] = useState(false);
   const [savedSlips, setSavedSlips] = useState<SavedSlip[]>(() => getSavedSlips());
+  const [bankrollRefreshKey, setBankrollRefreshKey] = useState(0);
 
   // Live Goal Sound & Toast State
   const [isMuted, setIsMuted] = useState<boolean>(() => !isSoundEnabled());
@@ -173,7 +201,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.10.15';
+  const CLIENT_BUILD_VERSION = '2026.11.10.16';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -377,7 +405,7 @@ export const App: React.FC = () => {
 
   const bankrollStats = useMemo(() => {
     return calculateBankrollStats(settledSlips);
-  }, [settledSlips]);
+  }, [settledSlips, bankrollRefreshKey]);
 
   const matchAnalysesMap = useMemo(() => {
     const map = new Map<string, MatchAnalysis>();
@@ -1300,6 +1328,7 @@ export const App: React.FC = () => {
                     currentTime={currentTime}
                     onSelectMatch={(m) => setSelectedMatch(m)}
                     onViewAllMatches={() => setActiveTabMode('upcoming')}
+                    onAddCouponToBetslip={handleAddCuratedCouponToBetslip}
                   />
                 )}
 
@@ -1428,7 +1457,10 @@ export const App: React.FC = () => {
         onClose={() => setIsBankrollModalOpen(false)}
         slips={settledSlips}
         stats={bankrollStats}
-        onRefreshSlips={() => setSavedSlips(getSavedSlips())}
+        onRefreshSlips={() => {
+          setSavedSlips(getSavedSlips());
+          setBankrollRefreshKey(k => k + 1);
+        }}
       />
 
       {/* Canlı Gol Sesi & Bildirim Kartı */}
