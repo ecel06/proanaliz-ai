@@ -30,6 +30,14 @@ export const GoalNotificationToast: React.FC<GoalNotificationToastProps> = ({
   isMuted,
   onToggleMute
 }) => {
+  React.useEffect(() => {
+    if (!goal) return;
+    const timer = setTimeout(() => {
+      onClose();
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [goal, onClose]);
+
   if (!goal) return null;
 
   return (

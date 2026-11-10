@@ -173,7 +173,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.10.13';
+  const CLIENT_BUILD_VERSION = '2026.11.10.14';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -314,8 +314,9 @@ export const App: React.FC = () => {
   // 3. Pre-calculate Poisson analyses for all matches in bulletin
   const allMatches: Match[] = weeklyMatches;
 
-  // Track previous scores for live goal chime & toast notification
+  // Track previous scores and notified goals for live goal chime & toast notification
   const prevScoresRef = useRef<Map<string, { home: number; away: number }>>(new Map());
+  const notifiedGoalsRef = useRef<Set<string>>(new Set());
   const isInitialPollRef = useRef(true);
 
   useEffect(() => {
@@ -341,19 +342,27 @@ export const App: React.FC = () => {
       if (old) {
         if (currentH > old.home || currentA > old.away) {
           const scoringTeam = currentH > old.home ? match.homeTeam.name : match.awayTeam.name;
-          playGoalChime();
-          setActiveGoalToast({
-            id: `goal-${match.id}-${Date.now()}`,
-            matchId: String(match.id),
-            scoringTeamName: scoringTeam,
-            homeTeamName: match.homeTeam.name,
-            awayTeamName: match.awayTeam.name,
-            scoreHome: currentH,
-            scoreAway: currentA,
-            league: match.league,
-            minute: live.liveMinute || undefined,
-            timestamp: Date.now()
-          });
+          const goalKey = `${match.id}-${currentH}-${currentA}`;
+
+          // ALWAYS update score in map immediately so it NEVER loops
+          prevScores.set(String(match.id), { home: currentH, away: currentA });
+
+          if (!notifiedGoalsRef.current.has(goalKey)) {
+            notifiedGoalsRef.current.add(goalKey);
+            playGoalChime();
+            setActiveGoalToast({
+              id: `goal-${match.id}-${Date.now()}`,
+              matchId: String(match.id),
+              scoringTeamName: scoringTeam,
+              homeTeamName: match.homeTeam.name,
+              awayTeamName: match.awayTeam.name,
+              scoreHome: currentH,
+              scoreAway: currentA,
+              league: match.league,
+              minute: live.liveMinute || undefined,
+              timestamp: Date.now()
+            });
+          }
           break;
         }
       }

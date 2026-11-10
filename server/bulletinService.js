@@ -141,8 +141,8 @@ export function mapEvent(event, league) {
     if (!formStr || typeof formStr !== 'string') return [];
     return formStr.toUpperCase().split('').filter(c => c === 'W' || c === 'D' || c === 'L');
   };
-  const homeForm = parseFormLetters(homeComp.team?.form);
-  const awayForm = parseFormLetters(awayComp.team?.form);
+  const homeForm = parseFormLetters(homeComp.form || homeComp.team?.form);
+  const awayForm = parseFormLetters(awayComp.form || awayComp.team?.form);
 
   const idStr = String(event.id || '');
   let hash = 0;

@@ -12275,7 +12275,45 @@ export const LEAGUE_TEAMS: Record<string, string[]> = {
 export function getLeagueTeamPool(leagueName: string = ''): string[] {
   const norm = String(leagueName || '').toLowerCase();
   
-  if (norm.includes('premier')) return LEAGUE_TEAMS['eng.1'];
+  // English Cups & Trophies
+  if (norm.includes('trophy') || norm.includes('efl')) {
+    return [...(LEAGUE_TEAMS['eng.3'] || []), ...(LEAGUE_TEAMS['eng.4'] || []), ...(LEAGUE_TEAMS['eng.2'] || [])];
+  }
+  if (norm.includes('fa cup') || norm.includes('carabao') || norm.includes('league cup')) {
+    return [...(LEAGUE_TEAMS['eng.1'] || []), ...(LEAGUE_TEAMS['eng.2'] || []), ...(LEAGUE_TEAMS['eng.3'] || [])];
+  }
+
+  // Spanish Cup
+  if (norm.includes('copa del rey') || norm.includes('kral kupası')) {
+    return [...(LEAGUE_TEAMS['esp.1'] || []), ...(LEAGUE_TEAMS['esp.2'] || [])];
+  }
+
+  // German Cup
+  if (norm.includes('dfb pokal') || norm.includes('dfb')) {
+    return [...(LEAGUE_TEAMS['ger.1'] || []), ...(LEAGUE_TEAMS['ger.2'] || [])];
+  }
+
+  // Italian Cup
+  if (norm.includes('coppa italia')) {
+    return [...(LEAGUE_TEAMS['ita.1'] || []), ...(LEAGUE_TEAMS['ita.2'] || [])];
+  }
+
+  // French Cup
+  if (norm.includes('coupe de france')) {
+    return [...(LEAGUE_TEAMS['fra.1'] || []), ...(LEAGUE_TEAMS['fra.2'] || [])];
+  }
+
+  // Dutch Cup
+  if (norm.includes('knvb')) {
+    return LEAGUE_TEAMS['ned.1'] || [];
+  }
+
+  // Turkish Cup
+  if (norm.includes('türkiye kupası') || norm.includes('turkiye kupasi') || norm.includes('ziraat')) {
+    return [...(LEAGUE_TEAMS['tur.1'] || []), ...(LEAGUE_TEAMS['tur.2'] || [])];
+  }
+
+  if (norm.includes('premier') || norm.includes('epl')) return LEAGUE_TEAMS['eng.1'];
   if (norm.includes('championship')) return LEAGUE_TEAMS['eng.2'];
   if (norm.includes('league one') || norm.includes('league 1')) return LEAGUE_TEAMS['eng.3'];
   if (norm.includes('league two') || norm.includes('league 2')) return LEAGUE_TEAMS['eng.4'];
@@ -12305,6 +12343,12 @@ export function getLeagueTeamPool(leagueName: string = ''): string[] {
   if (norm.includes('yunanistan') || norm.includes('gre')) return LEAGUE_TEAMS['gre.1'];
   if (norm.includes('isviçre') || norm.includes('sui')) return LEAGUE_TEAMS['sui.1'];
   if (norm.includes('champions') || norm.includes('şampiyonlar') || norm.includes('avrupa') || norm.includes('uefa') || norm.includes('konferans')) return LEAGUE_TEAMS['uefa'];
+
+  if (norm.includes('ingiltere') || norm.includes('eng')) return LEAGUE_TEAMS['eng.1'];
+  if (norm.includes('ispanya') || norm.includes('esp')) return LEAGUE_TEAMS['esp.1'];
+  if (norm.includes('italya') || norm.includes('ita')) return LEAGUE_TEAMS['ita.1'];
+  if (norm.includes('almanya') || norm.includes('ger')) return LEAGUE_TEAMS['ger.1'];
+  if (norm.includes('fransa') || norm.includes('fra')) return LEAGUE_TEAMS['fra.1'];
 
   if (norm.includes('türkiye') || norm.includes('tur')) return LEAGUE_TEAMS['tur.1'];
   return LEAGUE_TEAMS['tur.1'];
@@ -12391,34 +12435,30 @@ export function getFormDetails(team?: Partial<TeamStats> | null, leagueName: str
 
   const teamName = team.name || 'Takım';
   const root = getTeamRoot(teamName);
+  const norm = normalizeTeamName(teamName);
 
   // 1. First priority: Real matches already attached to team from live bulletin
   if (Array.isArray(team.recentMatches) && team.recentMatches.length > 0) {
-    if (!leagueName || areOpponentsValidForLeague(team.recentMatches, leagueName)) {
-      return team.recentMatches;
-    }
+    return team.recentMatches;
   }
 
-  // 2. Second priority: Live dynamic real form fetched from official feeds (verified strictly against league)
+  // 2. Second priority: Live dynamic real form fetched from official feeds
   const liveRealForm = getLiveRealForm(teamName);
   if (liveRealForm && Array.isArray(liveRealForm) && liveRealForm.length > 0) {
-    if (!leagueName || areOpponentsValidForLeague(liveRealForm, leagueName)) {
-      return liveRealForm;
-    }
+    return liveRealForm;
   }
 
-  // 3. Third priority: Static match history, ONLY IF opponents belong to the team's actual league
-  if (REAL_TEAM_MATCH_HISTORY[root]) {
-    const candidate = REAL_TEAM_MATCH_HISTORY[root];
-    if (!leagueName || areOpponentsValidForLeague(candidate, leagueName)) {
+  // 3. Third priority: Static official match history
+  if (REAL_TEAM_MATCH_HISTORY[teamName] || REAL_TEAM_MATCH_HISTORY[root] || REAL_TEAM_MATCH_HISTORY[norm]) {
+    const candidate = REAL_TEAM_MATCH_HISTORY[teamName] || REAL_TEAM_MATCH_HISTORY[root] || REAL_TEAM_MATCH_HISTORY[norm];
+    if (candidate && candidate.length > 0) {
       return candidate;
     }
   }
 
-  // 4. Guaranteed 100% League-Isolated Authentic Opponents:
-  // An opponent will NEVER cross leagues (Mexican teams play Mexican teams, League One plays League One, Süper Lig plays Süper Lig, etc.)
-  const rawForm = Array.isArray(team.form) && team.form.length > 0
-    ? team.form
+  // 4. Guaranteed League-Isolated Authentic Opponents using the team's actual recent form results (W, D, L):
+  const rawForm: MatchResult[] = Array.isArray(team.form) && team.form.length > 0
+    ? (team.form as MatchResult[])
     : (['W', 'D', 'W', 'L', 'W'] as MatchResult[]);
 
   return generateLeagueIsolatedForm(teamName, leagueName, rawForm);
