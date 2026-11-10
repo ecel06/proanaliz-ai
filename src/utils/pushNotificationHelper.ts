@@ -77,3 +77,4 @@ export function sendNativePushNotification(title: string, options?: Notification
     console.warn('Native bildirim gönderilemedi:', e);
   }
 }
+

@@ -172,21 +172,18 @@ export async function getWeeklyMatches(): Promise<Record<string, Match[]>> {
     };
   });
 
-  // Determine current calendar week (Monday 00:00 - Sunday 23:59:59 + Monday night)
+  // Determine current match window (past 7 days through next 8 days) to cover all finished and upcoming matches
   const now = new Date();
-  const day = now.getUTCDay(); // 0=Sun, 1=Mon, ...
-  const offsetToMonday = (day + 6) % 7; // days since Monday
-  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - offsetToMonday, 0, 0, 0, 0));
-  // Include through Tuesday morning to cover Monday evening fixtures
-  const sunday = new Date(monday.getTime() + 8 * 24 * 60 * 60 * 1000 - 1);
+  const windowStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const windowEnd = new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000);
 
-  // Filter matches belonging to the current week
+  // Filter matches belonging to the active match week
   const weekMatches = enrichedMatches.filter(m => {
     const rawDate = m.utcDate || m.date;
     if (!rawDate) return true;
     const d = new Date(rawDate);
     if (isNaN(d.getTime())) return true;
-    return d >= monday && d <= sunday;
+    return d >= windowStart && d <= windowEnd;
   });
 
   // Safe fallback if week calculation yields zero

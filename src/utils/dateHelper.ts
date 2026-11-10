@@ -184,66 +184,45 @@ export function getDynamicDateOptions(
   }
 
   if (activeTabMode === 'finished') {
-    // Finished matches: only include today, yesterday, and past dates
+    // Finished matches: dynamic date options based on actual dates in finished matches
     const finMatches = allMatches.filter((m) => getMatchLiveState(m, now).isFinished);
 
-    const todayCount = finMatches.filter((m) => {
+    const dateCounts: Record<string, number> = {};
+    finMatches.forEach((m) => {
       const d = getMatchParsedDate(m);
-      return d && toLocalDateKey(d) === todayKey;
-    }).length;
-
-    const yesterdayCount = finMatches.filter((m) => {
-      const d = getMatchParsedDate(m);
-      return d && toLocalDateKey(d) === yesterdayKey;
-    }).length;
-
-    const fridayCount = finMatches.filter((m) => {
-      const d = getMatchParsedDate(m);
-      return d && toLocalDateKey(d) === '2026-11-06';
-    }).length;
-
-    const cupsCount = finMatches.filter((m) => {
-      const d = getMatchParsedDate(m);
-      if (!d) return false;
-      const k = toLocalDateKey(d);
-      return ['2026-11-03', '2026-11-04', '2026-11-05'].includes(k);
-    }).length;
+      if (d) {
+        const k = toLocalDateKey(d);
+        dateCounts[k] = (dateCounts[k] || 0) + 1;
+      }
+    });
 
     const options: DateFilterOption[] = [
       { id: 'all', label: 'Tüm Bitenler', count: finMatches.length }
     ];
 
-    if (todayCount > 0) {
-      options.push({
-        id: 'today',
-        label: `Bugün (${todayDayName})`,
-        count: todayCount
-      });
-    }
+    // Sort dates descending (most recent finished matches first)
+    const sortedKeys = Object.keys(dateCounts).sort((a, b) => b.localeCompare(a));
 
-    if (yesterdayCount > 0) {
-      options.push({
-        id: 'yesterday',
-        label: `Dün (${yesterdayDayName})`,
-        count: yesterdayCount
-      });
-    }
+    sortedKeys.forEach((key) => {
+      let label = key;
+      if (key === todayKey) {
+        label = `Bugün (${todayDayName})`;
+      } else if (key === yesterdayKey) {
+        label = `Dün (${yesterdayDayName})`;
+      } else {
+        const [y, mo, da] = key.split('-').map(Number);
+        const parsed = new Date(y, mo - 1, da);
+        const dayName = TURKISH_DAYS[parsed.getDay()];
+        const monthName = TURKISH_MONTHS[parsed.getMonth()];
+        label = `${da} ${monthName} ${dayName}`;
+      }
 
-    if (fridayCount > 0) {
       options.push({
-        id: '2026-11-06',
-        label: '6 Kasım Cuma',
-        count: fridayCount
+        id: key,
+        label,
+        count: dateCounts[key]
       });
-    }
-
-    if (cupsCount > 0) {
-      options.push({
-        id: 'weekday_cups',
-        label: 'Hafta İçi Kupalar (3-5 Kasım)',
-        count: cupsCount
-      });
-    }
+    });
 
     return options;
   }
