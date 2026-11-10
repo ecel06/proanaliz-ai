@@ -16,8 +16,10 @@ import {
   Ticket,
   Wallet,
   Volume2,
-  VolumeX
+  VolumeX,
+  Palette
 } from 'lucide-react';
+import { TeamTheme } from '../utils/themeHelper';
 
 interface HeaderProps {
   onGoHome?: () => void;
@@ -40,6 +42,8 @@ interface HeaderProps {
   bankrollBalance?: number;
   isMuted?: boolean;
   onToggleMute?: () => void;
+  activeTheme?: TeamTheme;
+  onOpenThemeModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -62,7 +66,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenBankroll,
   bankrollBalance = 10000,
   isMuted = false,
-  onToggleMute
+  onToggleMute,
+  activeTheme,
+  onOpenThemeModal
 }) => {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl">
@@ -213,6 +219,24 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="font-mono font-black text-amber-400">
                   {bankrollBalance.toLocaleString('tr-TR')} ₺
                 </span>
+              </button>
+            )}
+
+            {/* Team Theme & Color Selector Button */}
+            {onOpenThemeModal && (
+              <button
+                onClick={onOpenThemeModal}
+                className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl border font-bold text-xs transition-all cursor-pointer shadow-md group shrink-0 active:scale-95"
+                style={{
+                  backgroundColor: activeTheme?.badgeBg || 'rgba(16, 185, 129, 0.15)',
+                  borderColor: activeTheme?.cardBorder || 'rgba(16, 185, 129, 0.35)',
+                  color: activeTheme?.primaryColor || '#10b981'
+                }}
+                title={`Takım & Renk Teması Seçici (Aktif: ${activeTheme?.name || 'ProAnaliz'})`}
+              >
+                <Palette className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:rotate-45 transition-transform" />
+                <span className="hidden sm:inline font-black tracking-tight">{activeTheme?.emoji} {activeTheme?.shortName}</span>
+                <span className="sm:hidden text-xs">{activeTheme?.emoji || '🎨'}</span>
               </button>
             )}
 

@@ -20,6 +20,13 @@ import { NesineBulletinView } from './components/NesineBulletinView';
 import { MatchOfTheDayBanner } from './components/MatchOfTheDayBanner';
 import { GoalNotificationToast, LiveGoalEvent } from './components/GoalNotificationToast';
 import { BankrollTrackerModal } from './components/BankrollTrackerModal';
+import { ThemeSelectorModal } from './components/ThemeSelectorModal';
+import {
+  TeamTheme,
+  getStoredTheme,
+  saveStoredTheme,
+  applyThemeToDOM
+} from './utils/themeHelper';
 import {
   getSavedSlips,
   saveNewSlip,
@@ -148,11 +155,25 @@ export const App: React.FC = () => {
     }
   };
 
+  // Team & Custom Theme State
+  const [activeTheme, setActiveTheme] = useState<TeamTheme>(() => getStoredTheme());
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+
+  useEffect(() => {
+    applyThemeToDOM(activeTheme);
+  }, [activeTheme]);
+
+  const handleSelectTheme = (theme: TeamTheme) => {
+    setActiveTheme(theme);
+    saveStoredTheme(theme);
+    applyThemeToDOM(theme);
+  };
+
   const [newVersionAvailable, setNewVersionAvailable] = useState(false);
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.10.1';
+  const CLIENT_BUILD_VERSION = '2026.11.10.2';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -653,7 +674,10 @@ export const App: React.FC = () => {
   }, [lastUpdatedAt]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-20 md:pb-12">
+    <div
+      className="min-h-screen text-slate-100 flex flex-col pb-20 md:pb-12 transition-colors duration-300"
+      style={{ backgroundColor: activeTheme.bgDark }}
+    >
 
       {/* Toast Notification */}
       {refreshToast && (
@@ -689,6 +713,8 @@ export const App: React.FC = () => {
         bankrollBalance={bankrollStats.currentBalance}
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
+        activeTheme={activeTheme}
+        onOpenThemeModal={() => setIsThemeModalOpen(true)}
       />
 
       {/* Prominent Floating App Update Notification Banner - Fixed Top Position */}
@@ -1402,6 +1428,14 @@ export const App: React.FC = () => {
         onClose={() => setActiveGoalToast(null)}
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
+      />
+
+      {/* Modal 8: Takım & Renk Teması Seçici */}
+      <ThemeSelectorModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+        activeTheme={activeTheme}
+        onSelectTheme={handleSelectTheme}
       />
 
       {/* Floating AI Kupon Robotu FAB Button (Always Accessible on Mobile & Desktop) */}
