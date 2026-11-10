@@ -38,13 +38,13 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'GS',
     club: 'Galatasaray SK',
     emoji: '💛❤️',
-    primaryColor: '#FFD200', // Görseldeki Birebir Parlak Altın Sarısı
-    secondaryColor: '#D4000A', // Görseldeki Birebir Canlı Al Kırmızı
-    bgDark: '#070709', // Saf Kömür Gece Siyahı (Kahverengilik KESİNLİKLE SIFIR)
-    cardBg: '#101015', // Saf Asil Grafit Kartlar (Kahverengilik KESİNLİKLE SIFIR)
-    cardBorder: 'rgba(255, 210, 0, 0.55)', // Görseldeki Parlak Altın Sarısı Çerçeve
-    accentText: '#FFD200', // Parlak Altın Sarısı Vurgular
-    badgeBg: 'rgba(212, 0, 10, 0.25)' // Canlı Kırmızı Rozet Zeminleri
+    primaryColor: '#FFD200', // Resmi Canlı Aslan Sarısı
+    secondaryColor: '#D4000A', // Resmi Canlı Al Kırmızı
+    bgDark: '#1E0206', // Derin Asil Gece Kırmızısı (Kahverengi ve Siyah KESİNLİKLE YOK)
+    cardBg: '#36060E', // Net Belirgin Zengin Kırmızı Kartlar (Fenerbahçe laciverti dengesinde)
+    cardBorder: 'rgba(255, 210, 0, 0.70)', // Parlak Altın Sarısı Çerçeveler
+    accentText: '#FFD200', // Parlak Altın Sarısı Yazılar
+    badgeBg: 'rgba(212, 0, 10, 0.45)' // Canlı Kırmızı Rozet Zeminleri
   },
   {
     id: 'besiktas',
@@ -170,7 +170,11 @@ export function getStoredTheme(): TeamTheme {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_THEME;
     const parsed = JSON.parse(raw);
-    return parsed.id ? parsed : DEFAULT_THEME;
+    if (!parsed || !parsed.id) return DEFAULT_THEME;
+    // Hazır tema ise daima PRESET_THEMES içindeki güncel renkleri kullan
+    const preset = PRESET_THEMES.find(p => p.id === parsed.id);
+    if (preset) return preset;
+    return parsed;
   } catch {
     return DEFAULT_THEME;
   }
@@ -213,9 +217,10 @@ export function applyThemeToDOM(theme: TeamTheme): void {
   const isLightPrimary = theme.primaryColor.toUpperCase() === '#FFED00' || 
                          theme.primaryColor.toUpperCase() === '#FFD700' || 
                          theme.primaryColor.toUpperCase() === '#FFD100' || 
+                         theme.primaryColor.toUpperCase() === '#FFD200' || 
                          theme.primaryColor.toUpperCase() === '#FFB800' || 
                          theme.primaryColor.toUpperCase() === '#FFFFFF';
-  const buttonTextColor = isLightPrimary ? (theme.id === 'fenerbahce' ? '#020718' : '#000000') : '#FFFFFF';
+  const buttonTextColor = isLightPrimary ? (theme.id === 'fenerbahce' ? '#020718' : (theme.id === 'galatasaray' ? '#1E0206' : '#000000')) : '#FFFFFF';
 
   styleEl.innerHTML = `
     /* ProAnaliz AI - Active Team Theme: ${theme.name} (${theme.id}) */
@@ -226,16 +231,23 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     /* Card & Panel Surfaces */
     .bg-slate-900, 
     .bg-slate-900\\/40, 
+    .bg-slate-900\\/50,
     .bg-slate-900\\/60, 
     .bg-slate-900\\/70, 
     .bg-slate-900\\/80, 
     .bg-slate-900\\/90, 
+    .glass-panel {
+      background-color: ${theme.cardBg} !important;
+    }
+
+    /* Nested Inner Surfaces */
+    .bg-slate-950\\/40,
+    .bg-slate-950\\/50,
     .bg-slate-950\\/60, 
     .bg-slate-950\\/70, 
     .bg-slate-950\\/80, 
-    .bg-slate-950\\/90,
-    .glass-panel {
-      background-color: ${theme.cardBg} !important;
+    .bg-slate-950\\/90 {
+      background-color: ${theme.id === 'galatasaray' ? '#240308' : (theme.id === 'fenerbahce' ? '#030C22' : theme.cardBg)} !important;
     }
     
     /* Neutralize all hardcoded emerald & teal & cyan background tints that turn into muddy brown */
@@ -290,12 +302,12 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     /* Ambient Corner Glows */
     .theme-glow-primary,
     [class*="blur-3xl"][class*="bg-emerald"] {
-      background-color: ${theme.id === 'galatasaray' ? 'rgba(212, 0, 10, 0.22)' : (theme.id === 'fenerbahce' ? 'rgba(0, 45, 114, 0.45)' : theme.badgeBg)} !important;
+      background-color: ${theme.id === 'galatasaray' ? 'rgba(212, 0, 10, 0.35)' : (theme.id === 'fenerbahce' ? 'rgba(0, 45, 114, 0.45)' : theme.badgeBg)} !important;
     }
     .theme-glow-secondary,
     [class*="blur-3xl"][class*="bg-cyan"],
     [class*="blur-3xl"][class*="bg-teal"] {
-      background-color: ${theme.id === 'galatasaray' ? 'rgba(255, 210, 0, 0.15)' : (theme.id === 'fenerbahce' ? 'rgba(255, 237, 0, 0.22)' : theme.badgeBg)} !important;
+      background-color: ${theme.id === 'galatasaray' ? 'rgba(255, 210, 0, 0.20)' : (theme.id === 'fenerbahce' ? 'rgba(255, 237, 0, 0.22)' : theme.badgeBg)} !important;
     }
     
     /* Borders */
@@ -309,9 +321,9 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     
     /* Secondary Action Buttons (e.g. Detaylı İncele) */
     .bg-slate-800, .bg-slate-800\\/80, .bg-slate-800\\/90 {
-      background-color: ${theme.id === 'galatasaray' ? '#181820' : (theme.id === 'fenerbahce' ? '#091A42' : '#1A1A22')} !important;
+      background-color: ${theme.id === 'galatasaray' ? '#4D0814' : (theme.id === 'fenerbahce' ? '#091A42' : '#1A1A22')} !important;
       border: 1px solid ${theme.cardBorder} !important;
-      color: #FFFFFF !important;
+      color: ${theme.id === 'galatasaray' ? '#FFD200' : '#FFFFFF'} !important;
     }
     
     /* Primary Text & Icon Highlights */
@@ -331,7 +343,7 @@ export function applyThemeToDOM(theme: TeamTheme): void {
       ${theme.id === 'galatasaray' ? `
         background: linear-gradient(180deg, #D4000A 0%, #A80008 100%) !important;
         color: #FFD200 !important;
-        border: 1.5px solid #FFD200 !important;
+        border: 2px solid #FFD200 !important;
         text-shadow: 0 1px 2px rgba(0,0,0,0.85) !important;
         box-shadow: 0 4px 18px rgba(212, 0, 10, 0.45) !important;
       ` : `
@@ -360,9 +372,9 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     .bg-emerald-500\\/30, 
     .bg-emerald-500\\/40 {
       ${theme.id === 'galatasaray' ? `
-        background-color: rgba(196, 0, 8, 0.28) !important;
+        background-color: rgba(212, 0, 10, 0.35) !important;
         color: #FFD200 !important;
-        border: 1px solid rgba(255, 210, 0, 0.60) !important;
+        border: 1px solid rgba(255, 210, 0, 0.70) !important;
       ` : `
         background-color: ${theme.badgeBg} !important;
         color: ${theme.primaryColor} !important;
@@ -389,6 +401,89 @@ export function applyThemeToDOM(theme: TeamTheme): void {
       background-color: ${theme.primaryColor} !important;
       color: ${buttonTextColor} !important;
     }
+
+    ${theme.id === 'galatasaray' ? `
+      /* ========================================================
+         GALATASARAY ÖZEL TEMA: ARKA PLAN KIRMIZI, YAZILAR SARI
+         (Fenerbahçe'deki gibi yüksek kontrast: Kırmızı Zemin + Sarı Metinler)
+         ======================================================== */
+
+      /* Tüm Başlıklar ve Vurgulu Yazılar Canlı Aslan Sarısı */
+      h1, h2, h3, h4, h5, h6,
+      .font-black,
+      .font-extrabold {
+        color: #FFD200 !important;
+      }
+
+      /* Tüm İstatistik Sayıları & Özet Rakamları (%75 Güven, 74 Maç, xG vb.) */
+      .text-amber-400,
+      .text-amber-300,
+      .text-emerald-400,
+      .text-emerald-300,
+      .text-emerald-500 {
+        color: #FFD200 !important;
+      }
+
+      /* Paragraf ve Açıklama Metinleri - Sıcak Parlak Sarı/Krem (Karanlıkta son derece net ve okunaklı) */
+      p.text-slate-300,
+      p.text-slate-400,
+      span.text-slate-300,
+      span.text-slate-400,
+      .text-slate-300,
+      .text-slate-400 {
+        color: #FFF2B2 !important;
+      }
+
+      .text-slate-200,
+      .text-slate-100 {
+        color: #FFD200 !important;
+      }
+
+      /* İkonlar Sarı */
+      svg.text-emerald-400,
+      svg.text-amber-400,
+      svg.text-slate-400 {
+        color: #FFD200 !important;
+        stroke: #FFD200 !important;
+      }
+
+      /* Form Rozetleri ve Takım Başlıkları */
+      .bg-slate-950\\/70 span.text-emerald-400,
+      .bg-slate-950\\/70 span.text-indigo-400 {
+        color: #FFD200 !important;
+      }
+
+      /* Arama Çubuğu & Seçim Kutuları */
+      input, select, textarea {
+        background-color: #240308 !important;
+        color: #FFD200 !important;
+        border-color: rgba(255, 210, 0, 0.70) !important;
+      }
+      input::placeholder {
+        color: #FFF2B2 !important;
+        opacity: 0.85 !important;
+      }
+
+      /* Buton Metinleri ve İncele Butonları */
+      .bg-slate-800 *,
+      .bg-slate-800\\/80 *,
+      .bg-slate-800\\/90 * {
+        color: #FFD200 !important;
+        stroke: #FFD200 !important;
+      }
+
+      /* Aktif Olmayan Filtre ve Kategori Hapları */
+      .bg-slate-900\\/50,
+      .bg-slate-900\\/60 {
+        background-color: #2A040A !important;
+        color: #FFD200 !important;
+        border-color: rgba(255, 210, 0, 0.50) !important;
+      }
+      .bg-slate-900\\/50 *,
+      .bg-slate-900\\/60 * {
+        color: #FFD200 !important;
+      }
+    ` : ''}
   `;
 
   if (document.body) {
