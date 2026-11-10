@@ -173,7 +173,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.10.5';
+  const CLIENT_BUILD_VERSION = '2026.11.10.6';
   useEffect(() => {
     const checkVersion = async () => {
       try {

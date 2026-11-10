@@ -69,13 +69,13 @@ export const MatchOfTheDayBanner: React.FC<MatchOfTheDayBannerProps> = ({
   };
 
   return (
-    <div className="relative mb-6 rounded-3xl overflow-hidden border border-emerald-500/40 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/40 shadow-2xl shadow-emerald-950/30">
+    <div className="relative mb-6 rounded-3xl overflow-hidden border border-slate-800 bg-slate-900/90 shadow-2xl">
       {/* Decorative Glow Elements */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl pointer-events-none opacity-40 bg-emerald-500/10 theme-glow-primary" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl pointer-events-none opacity-40 bg-cyan-500/10 theme-glow-secondary" />
 
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 bg-slate-900/80 border-b border-emerald-500/20 backdrop-blur-md">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 bg-slate-950/70 border-b border-slate-800 backdrop-blur-md">
         <div className="flex items-center space-x-2">
           <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 animate-pulse">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -175,7 +175,7 @@ export const MatchOfTheDayBanner: React.FC<MatchOfTheDayBannerProps> = ({
             </div>
 
             {/* AI Recommendation & Actions (Cols 8-12) */}
-            <div className="lg:col-span-5 flex flex-col justify-between space-y-3 p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30">
+            <div className="lg:col-span-5 flex flex-col justify-between space-y-3 p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-400">
                   <Bot className="w-4 h-4 text-emerald-400" />
@@ -187,7 +187,7 @@ export const MatchOfTheDayBanner: React.FC<MatchOfTheDayBannerProps> = ({
               </div>
 
               {/* Pick Badge */}
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/90 border border-emerald-500/40">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-black text-white">
                     {pred.label}
