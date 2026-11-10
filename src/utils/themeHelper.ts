@@ -38,13 +38,13 @@ export const PRESET_THEMES: TeamTheme[] = [
     shortName: 'GS',
     club: 'Galatasaray SK',
     emoji: '💛❤️',
-    primaryColor: '#FFD100', // Parlak Canlı Aslan Sarısı (Vurgular, Çerçeveler, Rozetler)
-    secondaryColor: '#E30613', // Resmi Canlı Bayrak Kırmızısı (Butonlar, Parıltılar)
-    bgDark: '#080104', // Derin Asil Gece Siyahı
-    cardBg: '#140308', // Koyu Asil Bordo-Yakut Kart Zeminleri
-    cardBorder: 'rgba(255, 209, 0, 0.50)', // Parlak Aslan Sarısı Çerçeveler (Fenerbahçe gibi yüksek kontrast!)
-    accentText: '#FFD100', // Aslan Sarısı Metin Vurguları
-    badgeBg: 'rgba(255, 209, 0, 0.18)' // Altın Sarısı Rozet Zeminleri
+    primaryColor: '#FFD200', // Görseldeki Birebir Parlak Altın Sarısı
+    secondaryColor: '#C40008', // Görseldeki Birebir Canlı Galatasaray Kırmızısı
+    bgDark: '#080103', // Derin Asil Gece Siyahı
+    cardBg: '#130205', // Görseldeki Koyu Bordo-Yakut Kart Zeminleri
+    cardBorder: 'rgba(255, 210, 0, 0.55)', // Görseldeki Parlak Altın Sarısı Çerçeve
+    accentText: '#FFD200', // Parlak Altın Sarısı Vurgular
+    badgeBg: 'rgba(196, 0, 8, 0.28)' // Canlı Kırmızı Rozet Zeminleri
   },
   {
     id: 'besiktas',
@@ -266,13 +266,13 @@ export function applyThemeToDOM(theme: TeamTheme): void {
       color: transparent !important;
     }
 
-    /* Neutralize non-text gradient stops so emerald green does NOT blend with background */
-    :not(.bg-clip-text)[class*="to-emerald-"],
-    :not(.bg-clip-text)[class*="from-emerald-"],
-    :not(.bg-clip-text)[class*="via-emerald-"],
-    :not(.bg-clip-text)[class*="to-teal-"],
-    :not(.bg-clip-text)[class*="from-teal-"],
-    :not(.bg-clip-text)[class*="via-teal-"] {
+    /* Neutralize non-button, non-text gradient stops so emerald green does NOT blend with background */
+    :not(button):not(.bg-clip-text)[class*="to-emerald-"],
+    :not(button):not(.bg-clip-text)[class*="from-emerald-"],
+    :not(button):not(.bg-clip-text)[class*="via-emerald-"],
+    :not(button):not(.bg-clip-text)[class*="to-teal-"],
+    :not(button):not(.bg-clip-text)[class*="from-teal-"],
+    :not(button):not(.bg-clip-text)[class*="via-teal-"] {
       --tw-gradient-from: ${theme.cardBg} var(--tw-gradient-from-position, 0%) !important;
       --tw-gradient-to: ${theme.cardBg} var(--tw-gradient-to-position, 100%) !important;
       --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
@@ -312,21 +312,35 @@ export function applyThemeToDOM(theme: TeamTheme): void {
       color: ${theme.primaryColor} !important;
     }
     
-    /* Primary Buttons & Solid Badges */
+    /* Primary Action Buttons & Solid Badges (including gradients) */
     .bg-emerald-500, 
     .bg-emerald-400, 
-    .bg-emerald-600 {
+    .bg-emerald-600,
+    button[class*="from-emerald"],
+    button[class*="to-emerald"],
+    button[class*="bg-emerald-500"] {
       ${theme.id === 'galatasaray' ? `
-        background: linear-gradient(135deg, #E30613 0%, #A5000C 100%) !important;
-        color: #FFD100 !important;
-        border: 1.5px solid #FFD100 !important;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
-        box-shadow: 0 4px 18px rgba(227, 6, 19, 0.45) !important;
+        background: linear-gradient(180deg, #D4000A 0%, #A80008 100%) !important;
+        color: #FFD200 !important;
+        border: 1.5px solid #FFD200 !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.85) !important;
+        box-shadow: 0 4px 18px rgba(212, 0, 10, 0.45) !important;
       ` : `
         background-color: ${theme.primaryColor} !important;
+        background-image: none !important;
         color: ${buttonTextColor} !important;
       `}
       font-weight: 900 !important;
+    }
+    
+    /* Force text & icons inside primary action buttons to be 100% contrast-safe */
+    .bg-emerald-500 *,
+    .bg-emerald-400 *,
+    button[class*="from-emerald"] *,
+    button[class*="to-emerald"] * {
+      color: ${theme.id === 'galatasaray' ? '#FFD200' : buttonTextColor} !important;
+      stroke: ${theme.id === 'galatasaray' ? '#FFD200' : buttonTextColor} !important;
+      ${theme.id === 'galatasaray' ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.85) !important;' : ''}
     }
     
     /* Soft Pill Badges */
@@ -336,9 +350,15 @@ export function applyThemeToDOM(theme: TeamTheme): void {
     .bg-emerald-500\\/25, 
     .bg-emerald-500\\/30, 
     .bg-emerald-500\\/40 {
-      background-color: ${theme.badgeBg} !important;
-      color: ${theme.primaryColor} !important;
-      border-color: ${theme.cardBorder} !important;
+      ${theme.id === 'galatasaray' ? `
+        background-color: rgba(196, 0, 8, 0.28) !important;
+        color: #FFD200 !important;
+        border: 1px solid rgba(255, 210, 0, 0.60) !important;
+      ` : `
+        background-color: ${theme.badgeBg} !important;
+        color: ${theme.primaryColor} !important;
+        border-color: ${theme.cardBorder} !important;
+      `}
     }
     
     /* Primary Accent Borders */
