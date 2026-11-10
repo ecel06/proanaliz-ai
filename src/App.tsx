@@ -201,7 +201,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.10.17';
+  const CLIENT_BUILD_VERSION = '2026.11.10.18';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -712,7 +712,7 @@ export const App: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen text-slate-100 flex flex-col pb-20 md:pb-12 transition-colors duration-300"
+      className="min-h-screen text-slate-100 flex flex-col pb-20 md:pb-12 transition-colors duration-300 w-full overflow-x-hidden max-w-[100vw]"
       style={{ backgroundColor: activeTheme.bgDark }}
     >
 

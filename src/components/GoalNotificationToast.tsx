@@ -43,7 +43,7 @@ export const GoalNotificationToast: React.FC<GoalNotificationToastProps> = ({
   return (
     <aside
       aria-label="Canlı Gol Bildirimi"
-      className="fixed bottom-4 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-[999999] p-3.5 sm:p-4 rounded-2xl bg-slate-900/98 border border-emerald-500/80 shadow-2xl shadow-emerald-500/30 backdrop-blur-2xl transition-all duration-300 animate-fadeIn"
+      className="fixed top-20 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-md z-[999999] p-3.5 sm:p-4 rounded-2xl bg-slate-900/98 border-2 border-emerald-400/90 shadow-2xl shadow-emerald-500/40 backdrop-blur-2xl transition-all duration-300 animate-fadeIn"
     >
       <div className="flex items-center justify-between gap-3">
         {/* Left: Soccer ball badge & Info */}
