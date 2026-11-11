@@ -139,6 +139,43 @@ export interface MatchAnalysis {
   aiComment: string;
 }
 
+export interface H2HGameItem {
+  id: string;
+  date: string;
+  competition: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  completed: boolean;
+}
+
+export interface InjuryReportItem {
+  teamName: string;
+  playerName: string;
+  position: string;
+  status: string;
+  detail?: string;
+}
+
+export interface OfficialInfo {
+  name: string;
+  position: string;
+}
+
+export interface MatchInsightsPayload {
+  source: 'espn' | 'partial' | 'none';
+  h2hSummary?: string;
+  h2hGames: H2HGameItem[];
+  officials: OfficialInfo[];
+  injuries: InjuryReportItem[];
+  venue?: {
+    name: string;
+    city?: string;
+    country?: string;
+  } | null;
+}
+
 export interface UserBetslipItem {
   id: string; // `${match.id}_${pickKey}`
   matchId: string;

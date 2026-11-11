@@ -1,7 +1,14 @@
-import React, { useState, useMemo } from 'react';
-import { Match, MatchAnalysis, UserBetslipItem } from '../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Match, MatchAnalysis, MatchInsightsPayload, UserBetslipItem } from '../types';
 import { runMonteCarloSimulation, MonteCarloResult, toFairOdds } from '../utils/predictionEngine';
 import { getMatchBettingMarkets, BettingPickOption } from '../utils/oddsHelper';
+import {
+  fetchMatchInsightsFromApi,
+  summarizeH2HGames,
+  computeRefereeCardProfile,
+  evaluateSquadAndMissingImpact,
+  SquadMissingImpactOptions
+} from '../utils/matchInsightsHelper';
 import { TeamRadarChart } from './TeamRadarChart';
 import { FormBadgeTooltip } from './FormBadgeTooltip';
 import { getFormDetails } from '../utils/formDetails';
@@ -13,6 +20,7 @@ import {
   TrendingUp,
   Shield,
   ShieldCheck,
+  ShieldAlert,
   Swords,
   Timer,
   Flag,
@@ -28,7 +36,11 @@ import {
   Target,
   Compass,
   Ticket,
-  Plus
+  Plus,
+  History,
+  Stethoscope,
+  Users,
+  MapPin
 } from 'lucide-react';
 
 interface MatchDetailModalProps {
@@ -48,10 +60,41 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   onToggleBetslip,
   onOpenBetslip
 }) => {
-  const [activeTab, setActiveTab] = useState<'markets' | 'analysis' | 'monte-carlo' | 'fair-odds'>('markets');
+  const [activeTab, setActiveTab] = useState<'markets' | 'h2h' | 'squad-ref' | 'analysis' | 'monte-carlo' | 'fair-odds'>('markets');
   const [copied, setCopied] = useState(false);
   const [monteCarloResult, setMonteCarloResult] = useState<MonteCarloResult | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [insights, setInsights] = useState<MatchInsightsPayload | null>(null);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+  const [missingToggles, setMissingToggles] = useState<SquadMissingImpactOptions>({
+    homeAttackerOut: false,
+    homeDefenderOut: false,
+    awayAttackerOut: false,
+    awayDefenderOut: false
+  });
+
+  useEffect(() => {
+    setInsights(null);
+    setMissingToggles({
+      homeAttackerOut: false,
+      homeDefenderOut: false,
+      awayAttackerOut: false,
+      awayDefenderOut: false
+    });
+    if (!match) return;
+    let cancelled = false;
+    setIsLoadingInsights(true);
+    fetchMatchInsightsFromApi(match)
+      .then(res => {
+        if (!cancelled) setInsights(res);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingInsights(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [match?.id]);
 
   if (!match || !analysis) return null;
 
@@ -60,6 +103,19 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const awayFormDetails = getFormDetails(awayTeam, match.league);
   const marketGroups = useMemo(() => getMatchBettingMarkets(match, analysis), [match, analysis]);
   const selectedPickInMatch = betslipItems.find(it => it.matchId === match.id);
+  const h2hGames = insights?.h2hGames || [];
+  const h2hSummary = useMemo(
+    () => summarizeH2HGames(h2hGames, homeTeam.name, awayTeam.name),
+    [h2hGames, homeTeam.name, awayTeam.name]
+  );
+  const refProfile = useMemo(
+    () => computeRefereeCardProfile(match, analysis, insights?.officials),
+    [match, analysis, insights?.officials]
+  );
+  const squadImpact = useMemo(
+    () => evaluateSquadAndMissingImpact(match, analysis, insights?.injuries || [], missingToggles),
+    [match, analysis, insights?.injuries, missingToggles]
+  );
   const {
     ms1,
     msX,
@@ -196,6 +252,35 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('h2h')}
+            className={`pb-2.5 flex items-center space-x-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'h2h'
+                ? 'border-cyan-400 text-cyan-400 font-bold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <History className="w-4 h-4" />
+            <span>İkili Rekabet (H2H)</span>
+            {h2hSummary.total > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono text-[10px]">
+                {h2hSummary.total}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('squad-ref')}
+            className={`pb-2.5 flex items-center space-x-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'squad-ref'
+                ? 'border-rose-400 text-rose-400 font-bold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Stethoscope className="w-4 h-4" />
+            <span>Revir & Hakem</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('analysis')}
             className={`pb-2.5 flex items-center space-x-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'analysis'
@@ -324,6 +409,442 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
             </div>
           </div>
+
+          {/* Quick Info Strip: Stadyum • Hakem Kart Profili • Kadro / Revir Durumu */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+            <div className="px-3 py-2 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center space-x-2">
+              <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="text-slate-400 truncate">
+                Stadyum: <strong className="text-slate-200">{insights?.venue?.name || match.stadium}</strong>
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('squad-ref')}
+              className="px-3 py-2 rounded-xl bg-slate-950/70 hover:bg-slate-800/80 border border-slate-800 flex items-center justify-between transition-colors cursor-pointer text-left"
+            >
+              <span className="flex items-center space-x-1.5 text-slate-400 truncate">
+                <FileWarning className={`w-3.5 h-3.5 shrink-0 ${
+                  refProfile.strictnessColor === 'rose'
+                    ? 'text-rose-400'
+                    : refProfile.strictnessColor === 'amber'
+                    ? 'text-amber-400'
+                    : 'text-emerald-400'
+                }`} />
+                <span className="truncate">
+                  Hakem: <strong className="text-slate-200">{refProfile.refereeName || 'Atama Bekleniyor'}</strong>
+                </span>
+              </span>
+              <span className="font-mono font-bold text-amber-300 shrink-0 ml-1">~{refProfile.avgYellowCards} Kart</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('squad-ref')}
+              className="px-3 py-2 rounded-xl bg-slate-950/70 hover:bg-slate-800/80 border border-slate-800 flex items-center justify-between transition-colors cursor-pointer text-left"
+            >
+              <span className="flex items-center space-x-1.5 text-slate-400 truncate">
+                <Stethoscope className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                <span className="truncate">
+                  Revir: <strong className="text-slate-200">{squadImpact.summaryBadge}</strong>
+                </span>
+              </span>
+              <span className="font-mono font-bold text-emerald-300 shrink-0 ml-1">xG Sim →</span>
+            </button>
+          </div>
+
+          {/* TAB: İKİLİ REKABET (H2H) */}
+          {activeTab === 'h2h' && (
+            <div className="space-y-4 animate-fadeIn">
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/50 via-slate-900 to-indigo-950/40 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="text-xs sm:text-sm font-extrabold text-cyan-300 flex items-center space-x-2">
+                    <History className="w-4 h-4" />
+                    <span>İkili Rekabet Geçmişi (Head-to-Head)</span>
+                  </h4>
+                  <p className="text-[11px] text-slate-300 mt-0.5">
+                    {insights?.h2hSummary
+                      ? `Resmi Kayıt Özeti: ${insights.h2hSummary}`
+                      : 'İki takım arasındaki son resmi karşılaşmalar, KG Var ve 2.5 Üst dağılımları.'}
+                  </p>
+                </div>
+                {isLoadingInsights && (
+                  <span className="inline-flex items-center space-x-1.5 text-[11px] text-cyan-300 font-semibold">
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Canlı H2H yükleniyor...</span>
+                  </span>
+                )}
+              </div>
+
+              {h2hSummary.total > 0 ? (
+                <>
+                  {/* Win / Draw / Loss Distribution */}
+                  <div className="rounded-2xl bg-slate-950/75 border border-slate-800 p-4 space-y-3">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+                      <span>Son {h2hSummary.total} Karşılaşma Galibiyet Dağılımı</span>
+                      <span className="font-mono text-cyan-300">Ort. {h2hSummary.avgTotalGoals} Gol / Maç</span>
+                    </div>
+
+                    <div className="h-4 w-full bg-slate-800 rounded-xl overflow-hidden flex text-[10px] font-black">
+                      {h2hSummary.homeWinPct > 0 && (
+                        <div
+                          style={{ width: `${h2hSummary.homeWinPct}%` }}
+                          className="bg-emerald-500 text-slate-950 flex items-center justify-center"
+                        >
+                          {h2hSummary.homeWinPct >= 14 && `%${h2hSummary.homeWinPct}`}
+                        </div>
+                      )}
+                      {h2hSummary.drawPct > 0 && (
+                        <div
+                          style={{ width: `${h2hSummary.drawPct}%` }}
+                          className="bg-amber-400 text-slate-950 flex items-center justify-center"
+                        >
+                          {h2hSummary.drawPct >= 14 && `%${h2hSummary.drawPct}`}
+                        </div>
+                      )}
+                      {h2hSummary.awayWinPct > 0 && (
+                        <div
+                          style={{ width: `${h2hSummary.awayWinPct}%` }}
+                          className="bg-purple-500 text-white flex items-center justify-center"
+                        >
+                          {h2hSummary.awayWinPct >= 14 && `%${h2hSummary.awayWinPct}`}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-emerald-500/30">
+                        <div className="text-[10px] text-slate-400 truncate">{homeTeam.name}</div>
+                        <div className="text-sm font-black text-emerald-400 font-mono">{h2hSummary.homeWins}G (%{h2hSummary.homeWinPct})</div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-amber-500/30">
+                        <div className="text-[10px] text-slate-400">Beraberlik</div>
+                        <div className="text-sm font-black text-amber-400 font-mono">{h2hSummary.draws}B (%{h2hSummary.drawPct})</div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-purple-500/30">
+                        <div className="text-[10px] text-slate-400 truncate">{awayTeam.name}</div>
+                        <div className="text-sm font-black text-purple-400 font-mono">{h2hSummary.awayWins}G (%{h2hSummary.awayWinPct})</div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-cyan-500/30">
+                        <div className="text-[10px] text-slate-400">KG Var Oranı</div>
+                        <div className="text-sm font-black text-cyan-300 font-mono">%{h2hSummary.bttsPct}</div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-amber-500/30 col-span-2 sm:col-span-1">
+                        <div className="text-[10px] text-slate-400">2.5 Üst Oranı</div>
+                        <div className="text-sm font-black text-amber-300 font-mono">%{h2hSummary.over25Pct}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Historical Match List */}
+                  <div className="rounded-2xl bg-slate-950/75 border border-slate-800 p-4 space-y-2.5">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                      Aralarındaki Son Karşılaşmalar ({h2hGames.length})
+                    </div>
+                    <div className="space-y-2">
+                      {h2hGames.map((g, idx) => {
+                        const dateLabel = g.date
+                          ? new Date(g.date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })
+                          : '-';
+                        const bttsHit = g.homeScore !== null && g.awayScore !== null && g.homeScore > 0 && g.awayScore > 0;
+                        const over25Hit = g.homeScore !== null && g.awayScore !== null && (g.homeScore + g.awayScore) >= 3;
+                        return (
+                          <div
+                            key={g.id || idx}
+                            className="p-2.5 sm:p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                          >
+                            <div className="flex items-center space-x-2 text-[10px] text-slate-400 shrink-0">
+                              <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded">{dateLabel}</span>
+                              <span className="truncate max-w-[170px] text-slate-500">{g.competition}</span>
+                            </div>
+
+                            <div className="flex items-center justify-between sm:justify-end gap-3 flex-1">
+                              <div className="flex items-center space-x-2 font-bold">
+                                <span className="text-slate-200">{g.homeTeam}</span>
+                                <span className="px-2 py-0.5 rounded-lg bg-slate-950 border border-cyan-500/40 text-cyan-300 font-mono font-black">
+                                  {g.homeScore !== null && g.awayScore !== null ? `${g.homeScore} - ${g.awayScore}` : 'VS'}
+                                </span>
+                                <span className="text-slate-200">{g.awayTeam}</span>
+                              </div>
+                              <div className="flex items-center space-x-1 shrink-0">
+                                {bttsHit && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                    KG
+                                  </span>
+                                )}
+                                {over25Hit && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                    2.5Ü
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-2xl bg-slate-950/75 border border-slate-800 p-4 space-y-4">
+                  <div className="flex items-start space-x-2.5 text-xs text-slate-300">
+                    <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold text-slate-100">Yakın Dönem Resmi H2H Serisi Bulunamadı</div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {isLoadingInsights
+                          ? 'Geçmiş ikili karşılaşma kayıtları sorgulanıyor...'
+                          : 'Bu iki takım arasında son dönem ESPN H2H kaydı yer almıyor. Aşağıda iki ekibin güncel son maç formları ve model beklentisi yan yana kıyaslanmıştır.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-900 border border-emerald-500/25 space-y-2">
+                      <div className="font-bold text-emerald-400 flex items-center justify-between">
+                        <span>{homeTeam.name} Son Maçları</span>
+                        <span className="font-mono text-[10px] text-slate-400">Ort. {homeTeam.avgGoalsScored} Gol</span>
+                      </div>
+                      {homeFormDetails.map((d, i) => (
+                        <div key={i} className="flex items-center justify-between text-[11px] py-1 border-b border-slate-800/60 last:border-none">
+                          <span className="text-slate-300 truncate pr-2">{d.opponent || `${homeTeam.shortName} Maçı`}</span>
+                          <div className="flex items-center space-x-2 shrink-0">
+                            <span className="font-mono text-slate-400">{d.score || '-'}</span>
+                            <span className={`px-1.5 py-0.2 rounded font-black text-[10px] ${
+                              d.result === 'W' ? 'bg-emerald-500/20 text-emerald-300' : d.result === 'D' ? 'bg-amber-500/20 text-amber-300' : 'bg-rose-500/20 text-rose-300'
+                            }`}>{d.result === 'W' ? 'G' : d.result === 'D' ? 'B' : 'M'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900 border border-purple-500/25 space-y-2">
+                      <div className="font-bold text-purple-400 flex items-center justify-between">
+                        <span>{awayTeam.name} Son Maçları</span>
+                        <span className="font-mono text-[10px] text-slate-400">Ort. {awayTeam.avgGoalsScored} Gol</span>
+                      </div>
+                      {awayFormDetails.map((d, i) => (
+                        <div key={i} className="flex items-center justify-between text-[11px] py-1 border-b border-slate-800/60 last:border-none">
+                          <span className="text-slate-300 truncate pr-2">{d.opponent || `${awayTeam.shortName} Maçı`}</span>
+                          <div className="flex items-center space-x-2 shrink-0">
+                            <span className="font-mono text-slate-400">{d.score || '-'}</span>
+                            <span className={`px-1.5 py-0.2 rounded font-black text-[10px] ${
+                              d.result === 'W' ? 'bg-emerald-500/20 text-emerald-300' : d.result === 'D' ? 'bg-amber-500/20 text-amber-300' : 'bg-rose-500/20 text-rose-300'
+                            }`}>{d.result === 'W' ? 'G' : d.result === 'D' ? 'B' : 'M'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: KADRO, REVİR & HAKEM KART/PENALTI ANALİZİ */}
+          {activeTab === 'squad-ref' && (
+            <div className="space-y-5 animate-fadeIn">
+              {/* 1. Hakem Kart & Penaltı Analizi */}
+              <div className="rounded-2xl bg-slate-950/80 border border-slate-800 p-4 sm:p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-extrabold text-slate-100 flex items-center space-x-2">
+                      <FileWarning className="w-4 h-4 text-amber-400" />
+                      <span>Hakem Kart & Penaltı Analizi</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">{refProfile.insightNote}</p>
+                  </div>
+                  <span className={`self-start sm:self-auto px-2.5 py-1 rounded-xl text-[11px] font-black border ${
+                    refProfile.strictnessColor === 'rose'
+                      ? 'bg-rose-500/15 text-rose-300 border-rose-500/40'
+                      : refProfile.strictnessColor === 'amber'
+                      ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
+                      : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+                  }`}>
+                    {refProfile.strictnessLabel}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                    <div className="text-[10px] text-slate-400">Orta Hakem</div>
+                    <div className="text-xs font-extrabold text-slate-100 mt-1 truncate">
+                      {refProfile.refereeName || 'Atama Bekleniyor'}
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      {refProfile.isOfficialAssigned ? 'Resmi Atama' : 'Lig & Maç Profili'}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-900 border border-amber-500/30">
+                    <div className="text-[10px] text-slate-400">Ort. Sarı Kart</div>
+                    <div className="text-lg font-black text-amber-400 font-mono mt-0.5">{refProfile.avgYellowCards}</div>
+                    <div className="text-[10px] text-slate-500">Maç Başı Beklenti</div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-900 border border-rose-500/30">
+                    <div className="text-[10px] text-slate-400">Kırmızı Kart İhtimali</div>
+                    <div className="text-lg font-black text-rose-400 font-mono mt-0.5">%{refProfile.redCardPct}</div>
+                    <div className="text-[10px] text-slate-500">Sertlik Endeksi</div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-900 border border-cyan-500/30">
+                    <div className="text-[10px] text-slate-400">Penaltı Çalınma İhtimali</div>
+                    <div className="text-lg font-black text-cyan-300 font-mono mt-0.5">%{refProfile.penaltyPct}</div>
+                    <div className="text-[10px] text-slate-500">Ceza Sahası Baskısı</div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs">
+                  <span className="text-amber-200 font-semibold">AI Disiplin & Kart Önerisi:</span>
+                  <span className="font-black text-amber-300 font-mono">{refProfile.cardPickLabel}</span>
+                </div>
+              </div>
+
+              {/* 2. Kadro & Revir Raporu + Eksiklik Etki Katsayısı Simülatörü */}
+              <div className="rounded-2xl bg-slate-950/80 border border-slate-800 p-4 sm:p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-extrabold text-slate-100 flex items-center space-x-2">
+                      <Stethoscope className="w-4 h-4 text-rose-400" />
+                      <span>Kadro, Revir Raporu & Eksiklik Etki Katsayısı</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Resmi sakat/cezalı bildirimleri ile kilit oyuncu eksikliklerinin xG (gol beklentisi) etkisini simüle eder.
+                    </p>
+                  </div>
+                  <span className="self-start sm:self-auto px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900 text-slate-200 border border-slate-700">
+                    {squadImpact.rotationRiskLabel}
+                  </span>
+                </div>
+
+                {/* Live Injuries List if provided by ESPN */}
+                {(squadImpact.homeInjuries.length > 0 || squadImpact.awayInjuries.length > 0) ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    {[
+                      { team: homeTeam.name, list: squadImpact.homeInjuries, color: 'emerald' },
+                      { team: awayTeam.name, list: squadImpact.awayInjuries, color: 'purple' }
+                    ].map((blk, i) => (
+                      <div key={i} className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                        <div className={`font-bold ${blk.color === 'emerald' ? 'text-emerald-400' : 'text-purple-400'}`}>
+                          {blk.team} Revir ({blk.list.length})
+                        </div>
+                        {blk.list.length === 0 ? (
+                          <div className="text-[11px] text-slate-500">Bildirilen sakat/cezalı bulunmuyor.</div>
+                        ) : (
+                          blk.list.map((inj, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-[11px] py-1 border-b border-slate-800/60 last:border-none">
+                              <div>
+                                <span className="font-bold text-slate-200">{inj.playerName}</span>
+                                {inj.position && <span className="ml-1.5 text-[10px] text-slate-500">({inj.position})</span>}
+                              </div>
+                              <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30 text-[10px] font-semibold">
+                                {inj.status}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] text-slate-300 flex items-start space-x-2">
+                    <Users className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    <span>
+                      Resmi ilk 11 ve kesinleşmiş sakat/cezalı raporu genellikle maç başlama saatinden 1–12 saat önce yayınlanır. Aşağıdaki <strong>Eksiklik Etki Katsayısı Simülatörü</strong> ile son dakika haberine göre gol beklentisini (xG) anlık güncelleyebilirsiniz:
+                    </span>
+                  </div>
+                )}
+
+                {/* Interactive Eksiklik Etki Katsayısı Simulator */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-slate-900 border border-emerald-500/25 space-y-2">
+                    <div className="font-bold text-emerald-400">{homeTeam.name} Eksik Senaryosu</div>
+                    <label className="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800 cursor-pointer hover:border-rose-500/40">
+                      <span className="text-[11px] text-slate-200">As Forvet / Gol Kralı Eksik</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[10px] font-mono text-rose-400">-0.40 xG</span>
+                        <input
+                          type="checkbox"
+                          checked={missingToggles.homeAttackerOut}
+                          onChange={e => setMissingToggles(p => ({ ...p, homeAttackerOut: e.target.checked }))}
+                          className="accent-rose-500 w-3.5 h-3.5"
+                        />
+                      </div>
+                    </label>
+                    <label className="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800 cursor-pointer hover:border-amber-500/40">
+                      <span className="text-[11px] text-slate-200">As Stoper / Kaleci Eksik</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[10px] font-mono text-amber-400">+0.35 Rakip xG</span>
+                        <input
+                          type="checkbox"
+                          checked={missingToggles.homeDefenderOut}
+                          onChange={e => setMissingToggles(p => ({ ...p, homeDefenderOut: e.target.checked }))}
+                          className="accent-amber-500 w-3.5 h-3.5"
+                        />
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-900 border border-purple-500/25 space-y-2">
+                    <div className="font-bold text-purple-400">{awayTeam.name} Eksik Senaryosu</div>
+                    <label className="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800 cursor-pointer hover:border-rose-500/40">
+                      <span className="text-[11px] text-slate-200">As Forvet / Gol Kralı Eksik</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[10px] font-mono text-rose-400">-0.40 xG</span>
+                        <input
+                          type="checkbox"
+                          checked={missingToggles.awayAttackerOut}
+                          onChange={e => setMissingToggles(p => ({ ...p, awayAttackerOut: e.target.checked }))}
+                          className="accent-rose-500 w-3.5 h-3.5"
+                        />
+                      </div>
+                    </label>
+                    <label className="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800 cursor-pointer hover:border-amber-500/40">
+                      <span className="text-[11px] text-slate-200">As Stoper / Kaleci Eksik</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[10px] font-mono text-amber-400">+0.35 Rakip xG</span>
+                        <input
+                          type="checkbox"
+                          checked={missingToggles.awayDefenderOut}
+                          onChange={e => setMissingToggles(p => ({ ...p, awayDefenderOut: e.target.checked }))}
+                          className="accent-amber-500 w-3.5 h-3.5"
+                        />
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Live Adjusted xG Output */}
+                <div className="grid grid-cols-3 gap-2.5 text-center pt-1">
+                  <div className="p-3 rounded-xl bg-slate-900 border border-emerald-500/30">
+                    <div className="text-[10px] text-slate-400">Güncel Ev xG</div>
+                    <div className="text-base font-black text-emerald-400 font-mono">{squadImpact.adjustedHomeXg}</div>
+                    {squadImpact.homeDelta !== 0 && (
+                      <div className="text-[10px] font-mono text-amber-300">
+                        ({squadImpact.homeDelta > 0 ? `+${squadImpact.homeDelta}` : squadImpact.homeDelta})
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-amber-500/30">
+                    <div className="text-[10px] text-slate-400">Güncel Toplam xG</div>
+                    <div className="text-base font-black text-amber-400 font-mono">{squadImpact.adjustedTotalXg}</div>
+                    <div className="text-[10px] text-slate-500">Baz: {expectedTotalGoals}</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-purple-500/30">
+                    <div className="text-[10px] text-slate-400">Güncel Dep xG</div>
+                    <div className="text-base font-black text-purple-400 font-mono">{squadImpact.adjustedAwayXg}</div>
+                    {squadImpact.awayDelta !== 0 && (
+                      <div className="text-[10px] font-mono text-amber-300">
+                        ({squadImpact.awayDelta > 0 ? `+${squadImpact.awayDelta}` : squadImpact.awayDelta})
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* TAB 0: TÜM BAHİS SEÇİMLERİ VE ORANLAR (KUPONA EKLE) */}
           {activeTab === 'markets' && (

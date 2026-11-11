@@ -5,6 +5,7 @@ import { FormBadgeTooltip } from './FormBadgeTooltip';
 import { getFormDetails } from '../utils/formDetails';
 import { formatDynamicMatchTime } from '../utils/dateHelper';
 import { getMatchLiveState } from '../utils/liveMatchHelper';
+import { computeRefereeCardProfile } from '../utils/matchInsightsHelper';
 
 interface MatchCardProps {
   match: Match;
@@ -27,6 +28,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   const homeFormDetails = getFormDetails(homeTeam, match.league);
   const awayFormDetails = getFormDetails(awayTeam, match.league);
   const liveState = getMatchLiveState(match);
+  const refProfile = computeRefereeCardProfile(match, analysis);
 
   // Badge glow styling
   const isBanko = primaryPrediction.confidence >= 72 || primaryPrediction.badgeType === 'banko';
@@ -277,15 +279,28 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           <span className="text-purple-400 font-semibold font-mono">2: %{ms2}</span>
         </div>
 
-        {/* 2.5 Over / BTTS */}
-        <div className="flex items-center space-x-3 text-slate-400">
+        {/* 2.5 Over / BTTS / Referee Card & Venue */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-slate-400">
           <span>2.5 Üst: <strong className="text-slate-200 font-mono">%{over25}</strong></span>
           <span>•</span>
           <span>KG Var: <strong className="text-slate-200 font-mono">%{bttsYes}</strong></span>
-          <span className="hidden sm:inline">•</span>
-          <span className="hidden sm:flex items-center space-x-1 text-slate-500">
+          <span>•</span>
+          <span
+            className={`px-1.5 py-0.5 rounded font-bold text-[10px] border ${
+              refProfile.strictnessColor === 'rose'
+                ? 'bg-rose-500/15 text-rose-300 border-rose-500/35'
+                : refProfile.strictnessColor === 'amber'
+                ? 'bg-amber-500/15 text-amber-300 border-amber-500/35'
+                : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35'
+            }`}
+            title={`${refProfile.strictnessLabel} • Penaltı İhtimali: %${refProfile.penaltyPct}`}
+          >
+            🟨 ~{refProfile.avgYellowCards} Kart • Pen: %{refProfile.penaltyPct}
+          </span>
+          <span className="hidden md:inline">•</span>
+          <span className="hidden md:flex items-center space-x-1 text-slate-500">
             <MapPin className="w-3 h-3" />
-            <span className="truncate max-w-[140px]">{match.stadium}</span>
+            <span className="truncate max-w-[130px]">{match.stadium}</span>
           </span>
         </div>
 

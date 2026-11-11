@@ -7,7 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
-import { fetchLiveBulletin, SUPPORTED_LEAGUES } from './bulletinService.js';
+import { fetchLiveBulletin, fetchMatchInsights, SUPPORTED_LEAGUES } from './bulletinService.js';
 import {
   startFormSyncScheduler,
   getAllRealForms,
@@ -173,6 +173,18 @@ app.get('/api/standings/:leagueCode', async (req, res) => {
   }
 });
 
+// 5b. On-demand real Match Insights (H2H, Officials, Injuries, Venue)
+app.get('/api/match-insights', async (req, res) => {
+  const eventId = String(req.query.eventId || '');
+  const league = String(req.query.league || '');
+  try {
+    const insights = await fetchMatchInsights(eventId, league);
+    res.json({ success: true, insights });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 6. Dynamic Real Team Forms endpoints (100% Real Match Results)
 app.get('/api/forms', (req, res) => {
   res.json(getAllRealForms());
@@ -213,7 +225,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.11.03';
+const APP_VERSION = '2026.11.11.04';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

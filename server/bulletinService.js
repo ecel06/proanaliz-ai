@@ -666,3 +666,124 @@ export async function fetchLiveBulletin() {
     matches: allMatches
   };
 }
+
+const matchInsightsCache = new Map();
+const INSIGHTS_CACHE_TTL_MS = 15 * 60 * 1000;
+
+/**
+ * Fetches rich on-demand match insights (Real H2H series, Officials, Venue, Injuries) from ESPN summary API
+ * with 15-minute memory cache.
+ */
+export async function fetchMatchInsights(eventId, leagueName = '') {
+  const id = String(eventId || '').trim();
+  if (!id || id.startsWith('iddaa-') || id.startsWith('curated-')) {
+    return {
+      source: 'none',
+      h2hSummary: '',
+      h2hGames: [],
+      officials: [],
+      injuries: [],
+      venue: null
+    };
+  }
+
+  const cached = matchInsightsCache.get(id);
+  if (cached && (Date.now() - cached.fetchedAt) < INSIGHTS_CACHE_TTL_MS) {
+    return cached.payload;
+  }
+
+  const normalizedLeague = String(leagueName || '').toLowerCase().trim();
+  const matchedLeague = SUPPORTED_LEAGUES.find(
+    l => l.name.toLowerCase() === normalizedLeague || l.code.toLowerCase() === normalizedLeague
+  );
+  const leagueSlug = matchedLeague?.code || 'all';
+
+  try {
+    const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueSlug}/summary?event=${encodeURIComponent(id)}`;
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      signal: AbortSignal.timeout(5500)
+    });
+
+    if (!res.ok) {
+      return { source: 'none', h2hSummary: '', h2hGames: [], officials: [], injuries: [], venue: null };
+    }
+
+    const data = await res.json();
+    const series = Array.isArray(data?.seasonseries) ? data.seasonseries[0] : null;
+    const rawEvents = Array.isArray(series?.events) ? series.events : [];
+
+    const h2hGames = rawEvents
+      .filter(ev => Array.isArray(ev?.competitors) && ev.competitors.length >= 2)
+      .slice(0, 10)
+      .map(ev => {
+        const home = ev.competitors.find(c => c.homeAway === 'home') || ev.competitors[0];
+        const away = ev.competitors.find(c => c.homeAway === 'away') || ev.competitors[1];
+        const homeScore = home?.score !== undefined && home?.score !== '' ? Number(home.score) : null;
+        const awayScore = away?.score !== undefined && away?.score !== '' ? Number(away.score) : null;
+        return {
+          id: String(ev.id || ''),
+          date: ev.date || '',
+          competition: ev.competitionName || ev.roundName || leagueName || 'Resmi Karşılaşma',
+          homeTeam: home?.team?.displayName || home?.team?.shortDisplayName || 'Ev Sahibi',
+          awayTeam: away?.team?.displayName || away?.team?.shortDisplayName || 'Deplasman',
+          homeScore: Number.isFinite(homeScore) ? homeScore : null,
+          awayScore: Number.isFinite(awayScore) ? awayScore : null,
+          completed: Boolean(ev?.statusType?.completed ?? (ev.status === 'post'))
+        };
+      });
+
+    const officials = Array.isArray(data?.gameInfo?.officials)
+      ? data.gameInfo.officials
+          .map(off => ({
+            name: off.fullName || off.displayName || '',
+            position: off.position?.displayName || off.position?.name || 'Orta Hakem'
+          }))
+          .filter(off => Boolean(off.name))
+      : [];
+
+    const venueObj = data?.gameInfo?.venue;
+    const venue = venueObj?.fullName
+      ? {
+          name: venueObj.fullName,
+          city: venueObj.address?.city || '',
+          country: venueObj.address?.country || ''
+        }
+      : null;
+
+    const injuries = [];
+    if (Array.isArray(data?.injuries)) {
+      for (const teamBlock of data.injuries) {
+        const tName = teamBlock?.team?.displayName || '';
+        const list = Array.isArray(teamBlock?.injuries) ? teamBlock.injuries : [];
+        for (const inj of list) {
+          const playerName = inj?.athlete?.displayName || inj?.athlete?.shortName || '';
+          if (!playerName) continue;
+          injuries.push({
+            teamName: tName,
+            playerName,
+            position: inj?.athlete?.position?.abbreviation || inj?.athlete?.position?.displayName || '',
+            status: inj?.status || inj?.type?.description || 'Şüpheli / Sakat',
+            detail: inj?.shortComment || inj?.longComment || inj?.details?.type || ''
+          });
+        }
+      }
+    }
+
+    const payload = {
+      source: h2hGames.length > 0 || officials.length > 0 || injuries.length > 0 ? 'espn' : 'partial',
+      h2hSummary: series?.summary || '',
+      h2hGames,
+      officials,
+      injuries,
+      venue
+    };
+
+    matchInsightsCache.set(id, { fetchedAt: Date.now(), payload });
+    return payload;
+  } catch (err) {
+    return { source: 'none', h2hSummary: '', h2hGames: [], officials: [], injuries: [], venue: null };
+  }
+}
