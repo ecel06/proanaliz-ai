@@ -203,7 +203,7 @@ export const LeagueTreeSelector: React.FC<LeagueTreeSelectorProps> = ({
   return (
     <>
       {/* Desktop Sticky Sidebar */}
-      <aside className="hidden lg:flex flex-col w-72 shrink-0 self-start sticky top-20 h-[calc(100vh-5.5rem)] max-h-[calc(100vh-5.5rem)]">
+      <aside className="hidden lg:flex flex-col w-72 shrink-0 self-start sticky top-[6.5rem] h-[calc(100vh-7.5rem)] max-h-[calc(100vh-7.5rem)]">
         {content}
       </aside>
 
