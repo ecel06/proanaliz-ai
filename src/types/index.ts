@@ -39,6 +39,28 @@ export interface TeamStats {
   primaryColor: string;
 }
 
+export interface MatchOdds {
+  ms1?: number;
+  msX?: number;
+  ms0?: number;
+  ms2?: number;
+  dc_1x?: number;
+  dc_12?: number;
+  dc_x2?: number;
+  over15?: number;
+  under15?: number;
+  over25?: number;
+  under25?: number;
+  over35?: number;
+  under35?: number;
+  bttsYes?: number;
+  bttsNo?: number;
+  ht_1?: number;
+  ht_X?: number;
+  ht_2?: number;
+  htft?: Record<string, number>;
+}
+
 export interface Match {
   id: string;
   iddaaCode?: string;
@@ -53,6 +75,7 @@ export interface Match {
   dayCategory?: 'today' | 'tomorrow' | 'sunday' | 'monday' | 'other' | string;
   stadium: string;
   referee?: string;
+  odds?: MatchOdds;
   homeTeam: TeamStats;
   awayTeam: TeamStats;
   status?: 'upcoming' | 'live' | 'finished' | 'postponed' | 'cancelled';
@@ -169,6 +192,8 @@ export interface MatchInsightsPayload {
   h2hGames: H2HGameItem[];
   officials: OfficialInfo[];
   injuries: InjuryReportItem[];
+  lastFiveHome?: FormMatchDetail[];
+  lastFiveAway?: FormMatchDetail[];
   venue?: {
     name: string;
     city?: string;

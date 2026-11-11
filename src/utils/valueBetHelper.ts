@@ -1,8 +1,8 @@
 // src/utils/valueBetHelper.ts
-// Mathematical Value Bet (Değer Bahsi) Detector based on Poisson vs Bookmaker Implied Odds
+// Mathematical Value Bet (Değer Bahsi) Detector comparing Poisson probabilities against live official İddaa odds.
 
 import { Match, MatchAnalysis } from '../types';
-import { calcMarketOdd } from './oddsHelper';
+import { resolveMarketOdd } from './oddsHelper';
 
 export interface ValueBetPick {
   marketKey: string;
@@ -10,9 +10,9 @@ export interface ValueBetPick {
   pickLabel: string;
   marketName: string;
   odd: number;
-  modelProb: number;       // Our Poisson model probability (e.g. 58%)
-  impliedProb: number;     // Bookmaker implied probability (e.g. 45%)
-  edgePercent: number;     // Value edge percentage (e.g. +13%)
+  modelProb: number;       // Poisson model probability (%)
+  impliedProb: number;     // Bookmaker implied probability (%)
+  edgePercent: number;     // Value edge (%)
   reason: string;
 }
 
@@ -23,119 +23,126 @@ export interface MatchValueSummary {
 }
 
 /**
- * Calculates bookmaker implied probability from decimal odd
+ * Calculates bookmaker implied probability from decimal odd.
  */
 export function getImpliedProbability(odd: number): number {
   if (!odd || odd <= 1.0) return 99;
   return Math.round((1 / odd) * 100);
 }
 
+interface ValueMarketSpec {
+  marketKey: string;
+  pickKey: string;
+  marketName: string;
+  minProb: number;
+  getLabel: (m: Match) => string;
+  getProb: (a: MatchAnalysis) => number;
+  buildReason: (edge: number, a: MatchAnalysis) => string;
+}
+
+const VALUE_MARKET_SPECS: ValueMarketSpec[] = [
+  {
+    marketKey: 'match_result',
+    pickKey: 'ms1',
+    marketName: 'Maç Sonucu',
+    minProb: 36,
+    getLabel: (m) => `MS 1 (${m.homeTeam.shortName || m.homeTeam.name})`,
+    getProb: (a) => a.ms1,
+    buildReason: (edge) => `İddaa oranı modelin Ev Sahibi galibiyet ihtimalinin +%${edge} altında fiyatlanmış.`
+  },
+  {
+    marketKey: 'match_result',
+    pickKey: 'msX',
+    marketName: 'Maç Sonucu',
+    minProb: 28,
+    getLabel: () => 'MS X (Beraberlik)',
+    getProb: (a) => a.msX,
+    buildReason: (edge) => `Beraberlik ihtimali piyasa beklentisinden +%${edge} daha yüksek (Değer Oran).`
+  },
+  {
+    marketKey: 'match_result',
+    pickKey: 'ms2',
+    marketName: 'Maç Sonucu',
+    minProb: 36,
+    getLabel: (m) => `MS 2 (${m.awayTeam.shortName || m.awayTeam.name})`,
+    getProb: (a) => a.ms2,
+    buildReason: (edge) => `Deplasman ekibinin form ve xG gücü piyasa oranına göre +%${edge} değer barındırıyor.`
+  },
+  {
+    marketKey: 'goals_25',
+    pickKey: 'over25',
+    marketName: '2.5 Gol',
+    minProb: 48,
+    getLabel: () => '2.5 Gol Üst',
+    getProb: (a) => a.over25,
+    buildReason: (edge, a) => `Beklenen gol (${a.expectedTotalGoals} xG) yüksek; 2.5 Üst oranı +%${edge} pozitif değer sunuyor.`
+  },
+  {
+    marketKey: 'goals_25',
+    pickKey: 'under25',
+    marketName: '2.5 Gol',
+    minProb: 48,
+    getLabel: () => '2.5 Gol Alt',
+    getProb: (a) => a.under25,
+    buildReason: (edge) => `Savunma dengesi düşük skor öngörüyor; 2.5 Alt oranı piyasadan +%${edge} avantajlı.`
+  },
+  {
+    marketKey: 'btts',
+    pickKey: 'bttsYes',
+    marketName: 'Karşılıklı Gol',
+    minProb: 50,
+    getLabel: () => 'KG Var',
+    getProb: (a) => a.bttsYes,
+    buildReason: (edge) => `İki ekibin skor üretkenliği İddaa KG Var oranına göre +%${edge} daha yüksek.`
+  },
+  {
+    marketKey: 'btts',
+    pickKey: 'bttsNo',
+    marketName: 'Karşılıklı Gol',
+    minProb: 50,
+    getLabel: () => 'KG Yok',
+    getProb: (a) => a.bttsNo,
+    buildReason: (edge) => `Takımlardan en az birinin gol bulamama ihtimali piyasa fiyatlamasından +%${edge} üstün.`
+  }
+];
+
 /**
- * Detects Value Bets across all major markets for a match
- * A value bet occurs when our Poisson model gives a significantly higher probability
- * than what the bookmaker odd implies (Edge >= 8% with model prob >= 38%)
+ * Detects genuine Value Bets strictly when live official İddaa odds are attached to the match
+ * and model probability exceeds bookmaker implied probability by >= 5%.
  */
 export function detectMatchValueBets(match: Match, analysis: MatchAnalysis): MatchValueSummary {
   const valuePicks: ValueBetPick[] = [];
 
-  // Markets to evaluate:
-  // 1. MS 1
-  const ms1Odd = calcMarketOdd(analysis.ms1);
-  const ms1Implied = getImpliedProbability(ms1Odd);
-  const ms1Edge = analysis.ms1 - ms1Implied;
-  if (ms1Edge >= 8 && analysis.ms1 >= 40) {
-    valuePicks.push({
-      marketKey: 'match_result',
-      pickKey: 'ms1',
-      pickLabel: `MS 1 (${match.homeTeam.shortName || match.homeTeam.name})`,
-      marketName: 'Maç Sonucu',
-      odd: ms1Odd,
-      modelProb: analysis.ms1,
-      impliedProb: ms1Implied,
-      edgePercent: ms1Edge,
-      reason: `Ev sahibi formu ve xG üstünlüğü piyasanın beklentisinden +%${ms1Edge} daha güçlü.`
-    });
+  for (const spec of VALUE_MARKET_SPECS) {
+    const modelProb = spec.getProb(analysis);
+    if (!modelProb || modelProb < spec.minProb) continue;
+
+    const resolved = resolveMarketOdd(match, spec.pickKey, modelProb);
+    if (!resolved.isOfficial) continue;
+
+    const impliedProb = getImpliedProbability(resolved.odd);
+    const edgePercent = modelProb - impliedProb;
+
+    if (edgePercent >= 5) {
+      valuePicks.push({
+        marketKey: spec.marketKey,
+        pickKey: spec.pickKey,
+        pickLabel: spec.getLabel(match),
+        marketName: spec.marketName,
+        odd: resolved.odd,
+        modelProb,
+        impliedProb,
+        edgePercent,
+        reason: spec.buildReason(edgePercent, analysis)
+      });
+    }
   }
 
-  // 2. MS 2
-  const ms2Odd = calcMarketOdd(analysis.ms2);
-  const ms2Implied = getImpliedProbability(ms2Odd);
-  const ms2Edge = analysis.ms2 - ms2Implied;
-  if (ms2Edge >= 8 && analysis.ms2 >= 38) {
-    valuePicks.push({
-      marketKey: 'match_result',
-      pickKey: 'ms2',
-      pickLabel: `MS 2 (${match.awayTeam.shortName || match.awayTeam.name})`,
-      marketName: 'Maç Sonucu',
-      odd: ms2Odd,
-      modelProb: analysis.ms2,
-      impliedProb: ms2Implied,
-      edgePercent: ms2Edge,
-      reason: `Deplasman ekibinin form grafiği piyasa oranına göre +%${ms2Edge} değer barındırıyor.`
-    });
-  }
-
-  // 3. 2.5 Gol Üst
-  const over25Odd = calcMarketOdd(analysis.over25);
-  const over25Implied = getImpliedProbability(over25Odd);
-  const over25Edge = analysis.over25 - over25Implied;
-  if (over25Edge >= 8 && analysis.over25 >= 50) {
-    valuePicks.push({
-      marketKey: 'goals_25',
-      pickKey: 'over25',
-      pickLabel: '2.5 Gol Üst',
-      marketName: '2.5 Gol',
-      odd: over25Odd,
-      modelProb: analysis.over25,
-      impliedProb: over25Implied,
-      edgePercent: over25Edge,
-      reason: `Beklenen gol sayısı (${analysis.expectedTotalGoals} xG) bol gole işaret ediyor; oran değerli (+%${over25Edge}).`
-    });
-  }
-
-  // 4. 2.5 Gol Alt
-  const under25Odd = calcMarketOdd(analysis.under25);
-  const under25Implied = getImpliedProbability(under25Odd);
-  const under25Edge = analysis.under25 - under25Implied;
-  if (under25Edge >= 8 && analysis.under25 >= 50) {
-    valuePicks.push({
-      marketKey: 'goals_25',
-      pickKey: 'under25',
-      pickLabel: '2.5 Gol Alt',
-      marketName: '2.5 Gol',
-      odd: under25Odd,
-      modelProb: analysis.under25,
-      impliedProb: under25Implied,
-      edgePercent: under25Edge,
-      reason: `İki ekibin savunma kurgusu kısır maçı destekliyor; piyasa oranından +%${under25Edge} avantajlı.`
-    });
-  }
-
-  // 5. KG Var
-  const bttsYesOdd = calcMarketOdd(analysis.bttsYes);
-  const bttsYesImplied = getImpliedProbability(bttsYesOdd);
-  const bttsYesEdge = analysis.bttsYes - bttsYesImplied;
-  if (bttsYesEdge >= 8 && analysis.bttsYes >= 52) {
-    valuePicks.push({
-      marketKey: 'btts',
-      pickKey: 'bttsYes',
-      pickLabel: 'KG Var',
-      marketName: 'Karşılıklı Gol',
-      odd: bttsYesOdd,
-      modelProb: analysis.bttsYes,
-      impliedProb: bttsYesImplied,
-      edgePercent: bttsYesEdge,
-      reason: `Karşılıklı gol ihtimali piyasa açılışının +%${bttsYesEdge} üzerinde seyrediyor.`
-    });
-  }
-
-  // Sort picks by edge percentage descending
   valuePicks.sort((a, b) => b.edgePercent - a.edgePercent);
 
   return {
     hasValue: valuePicks.length > 0,
-    bestValuePick: valuePicks[0] || undefined,
+    bestValuePick: valuePicks[0],
     allValuePicks: valuePicks
   };
 }
-

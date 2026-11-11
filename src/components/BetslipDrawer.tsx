@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Match, UserBetslipItem } from '../types';
 import { simulateBetslipMonteCarlo } from '../utils/monteCarloHelper';
-import { calculateSystemBet, getAvailableSystemNumbers } from '../utils/systemBetHelper';
+import { calculateSystemBet, getAvailableSystemNumbers, SavedSystemConfig } from '../utils/systemBetHelper';
 import { formatDynamicMatchTime } from '../utils/dateHelper';
 import { CouponShareModal } from './CouponShareModal';
 import {
@@ -34,7 +34,7 @@ interface BetslipDrawerProps {
   onRemoveItem: (id: string) => void;
   onClearAll: () => void;
   onConsultAI?: (couponSummary: string) => void;
-  onSaveToBankroll?: (items: UserBetslipItem[], stake: number, totalOdds: number) => void;
+  onSaveToBankroll?: (items: UserBetslipItem[], stake: number, totalOdds: number, systemConfig?: SavedSystemConfig) => void;
 }
 
 export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
@@ -160,7 +160,16 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
       const saveOdds = systemCalc.isSystemActive
         ? Number((systemCalc.maxWin / Math.max(1, totalBetCost)).toFixed(2))
         : totalOdds;
-      onSaveToBankroll(items, totalBetCost, saveOdds);
+      const sysConfig: SavedSystemConfig | undefined = systemCalc.isSystemActive
+        ? {
+            selectedSystems: systemCalc.selectedSystems,
+            bankoMatchIds,
+            columnStake: systemCalc.columnStake,
+            totalColumns: systemCalc.totalColumns,
+            systemLabel: systemCalc.systemLabel
+          }
+        : undefined;
+      onSaveToBankroll(items, totalBetCost, saveOdds, sysConfig);
       setSavedToBankroll(true);
       setTimeout(() => setSavedToBankroll(false), 2500);
     }

@@ -1,8 +1,10 @@
 // src/utils/aiPerformanceHelper.ts
-// Computes verifiable historical & live accuracy statistics for ProAnaliz AI.
+// Computes 100% live, verifiable accuracy statistics strictly from completed bulletin matches (no hardcoded metrics).
 
 import { Match, MatchAnalysis } from '../types';
 import { getMatchLiveState } from './liveMatchHelper';
+import { resolveMarketOdd } from './oddsHelper';
+import { detectMatchValueBets } from './valueBetHelper';
 
 export interface PerformanceCategoryStat {
   id: string;
@@ -42,25 +44,43 @@ export interface OverallPerformanceReport {
   }[];
 }
 
+function didLabelHit(label: string, home: number, away: number): boolean {
+  const norm = label.toLowerCase();
+  const total = home + away;
+  const btts = home > 0 && away > 0;
+  if (norm.includes('1x')) return home >= away;
+  if (norm.includes('x2')) return away >= home;
+  if (norm.includes('1-2') || norm.includes('12')) return home !== away;
+  if (norm.includes('ms 1') || norm.includes('ev')) return home > away;
+  if (norm.includes('ms 2') || norm.includes('dep')) return away > home;
+  if (norm.includes('ms x') || norm.includes('berab')) return home === away;
+  if (norm.includes('2.5') && (norm.includes('üst') || norm.includes('over'))) return total >= 3;
+  if (norm.includes('2.5') && (norm.includes('alt') || norm.includes('under'))) return total <= 2;
+  if (norm.includes('1.5') && (norm.includes('üst') || norm.includes('over'))) return total >= 2;
+  if (norm.includes('3.5') && (norm.includes('alt') || norm.includes('under'))) return total <= 3;
+  if (norm.includes('kg var')) return btts;
+  if (norm.includes('kg yok')) return !btts;
+  return home > away;
+}
+
 export function computeAIPerformance(
   matches: Match[],
   analysesMap: Map<string, MatchAnalysis>
 ): OverallPerformanceReport {
-  const finished = matches.filter(m => {
-    const live = getMatchLiveState(m);
-    return live.isFinished;
-  });
+  const finished = matches.filter(m => getMatchLiveState(m).isFinished);
 
-  let bankoTotal = 0, bankoWon = 0;
-  let over25Total = 0, over25Won = 0;
-  let bttsTotal = 0, bttsWon = 0;
-  let msTotal = 0, msWon = 0;
+  let bankoTotal = 0, bankoWon = 0, bankoOddSum = 0;
+  let over25Total = 0, over25Won = 0, over25OddSum = 0;
+  let bttsTotal = 0, bttsWon = 0, bttsOddSum = 0;
+  let valueTotal = 0, valueWon = 0, valueOddSum = 0;
+  let overallTotal = 0, overallWon = 0;
 
+  const leagueStatsMap = new Map<string, { total: number; won: number; over25Hits: number; ms1Hits: number }>();
   const recentPicks: OverallPerformanceReport['recentVerifiedPicks'] = [];
 
-  finished.forEach(m => {
+  for (const m of finished) {
     const a = analysesMap.get(m.id);
-    if (!a) return;
+    if (!a) continue;
 
     const live = getMatchLiveState(m);
     const h = live.displayScore.home;
@@ -68,134 +88,163 @@ export function computeAIPerformance(
     const totalGoals = h + aw;
     const isOver25 = totalGoals >= 3;
     const isBtts = h > 0 && aw > 0;
-    const actualOutcome = h > aw ? 'ms1' : h === aw ? 'msX' : 'ms2';
 
-    // 1. Primary Banko Predictions (Confidence >= 72%)
+    // Overall primary prediction tracking
+    const primaryHit = didLabelHit(a.primaryPrediction.label, h, aw);
+    overallTotal++;
+    if (primaryHit) overallWon++;
+
+    // Per-league real aggregation
+    const lgName = m.league || 'Diğer';
+    const lgAcc = leagueStatsMap.get(lgName) || { total: 0, won: 0, over25Hits: 0, ms1Hits: 0 };
+    lgAcc.total++;
+    if (primaryHit) lgAcc.won++;
+    if (isOver25) lgAcc.over25Hits++;
+    if (h > aw) lgAcc.ms1Hits++;
+    leagueStatsMap.set(lgName, lgAcc);
+
+    // 1. Banko predictions (Confidence >= 72%)
     if (a.primaryPrediction.confidence >= 72) {
       bankoTotal++;
-      let won = false;
-      if (a.primaryPrediction.label.includes('1') && actualOutcome === 'ms1') won = true;
-      else if (a.primaryPrediction.label.includes('2') && actualOutcome === 'ms2') won = true;
-      else if (a.primaryPrediction.label.includes('Üst') && isOver25) won = true;
-      else if (a.primaryPrediction.label.includes('Var') && isBtts) won = true;
-      else if (a.primaryPrediction.label.includes('1X') && (actualOutcome === 'ms1' || actualOutcome === 'msX')) won = true;
-      else if (a.primaryPrediction.label.includes('X2') && (actualOutcome === 'ms2' || actualOutcome === 'msX')) won = true;
+      if (primaryHit) bankoWon++;
+      const oddInfo = resolveMarketOdd(m, 'ms1', a.primaryPrediction.confidence);
+      bankoOddSum += oddInfo.odd;
 
-      if (won) bankoWon++;
-
-      if (recentPicks.length < 8) {
+      if (recentPicks.length < 12) {
         recentPicks.push({
           matchText: `${m.homeTeam.name} vs ${m.awayTeam.name}`,
           league: m.league,
           prediction: a.primaryPrediction.label,
           actualScore: `${h}-${aw}`,
-          odd: (a.primaryPrediction as any).odd || 1.65,
-          isWon: won
+          odd: oddInfo.odd,
+          isWon: primaryHit
         });
       }
     }
 
-    // 2. Over 2.5 Predictions
-    if (a.over25 >= 60) {
+    // 2. Over 2.5 Predictions (>= 58%)
+    if (a.over25 >= 58) {
       over25Total++;
       if (isOver25) over25Won++;
+      over25OddSum += resolveMarketOdd(m, 'over25', a.over25).odd;
     }
 
-    // 3. BTTS Predictions
-    if (a.bttsYes >= 60) {
+    // 3. BTTS Predictions (>= 58%)
+    if (a.bttsYes >= 58) {
       bttsTotal++;
       if (isBtts) bttsWon++;
+      bttsOddSum += resolveMarketOdd(m, 'bttsYes', a.bttsYes).odd;
     }
 
-    // 4. Match Outcome
-    if (a.ms1 >= 55 || a.ms2 >= 55) {
-      msTotal++;
-      if ((a.ms1 >= 55 && actualOutcome === 'ms1') || (a.ms2 >= 55 && actualOutcome === 'ms2')) {
-        msWon++;
-      }
+    // 4. Genuine Value Bets against real official odds
+    const val = detectMatchValueBets(m, a);
+    if (val.hasValue && val.bestValuePick) {
+      valueTotal++;
+      valueOddSum += val.bestValuePick.odd;
+      if (didLabelHit(val.bestValuePick.pickLabel, h, aw)) valueWon++;
     }
-  });
+  }
 
-  // Calculate live rates blended with verified baseline (minimum sample robustness)
-  const calcRate = (won: number, total: number, fallback: number) => {
-    if (total >= 5) return Math.round((won / total) * 100);
-    if (total > 0) return Math.round(((won + fallback * 0.1) / (total + 10)) * 100);
-    return fallback;
-  };
+  // If few high-confidence banko picks exist in recentPicks, append other verified completed picks cleanly
+  if (recentPicks.length < 6) {
+    for (const m of finished) {
+      const a = analysesMap.get(m.id);
+      if (!a) continue;
+      const labelTxt = `${m.homeTeam.name} vs ${m.awayTeam.name}`;
+      if (recentPicks.some(p => p.matchText === labelTxt)) continue;
+      const live = getMatchLiveState(m);
+      const h = live.displayScore.home;
+      const aw = live.displayScore.away;
+      recentPicks.push({
+        matchText: labelTxt,
+        league: m.league,
+        prediction: a.primaryPrediction.label,
+        actualScore: `${h}-${aw}`,
+        odd: resolveMarketOdd(m, 'ms1', a.primaryPrediction.confidence).odd,
+        isWon: didLabelHit(a.primaryPrediction.label, h, aw)
+      });
+      if (recentPicks.length >= 10) break;
+    }
+  }
 
-  const bankoRate = calcRate(bankoWon, bankoTotal, 84);
-  const overRate = calcRate(over25Won, over25Total, 73);
-  const bttsRate = calcRate(bttsWon, bttsTotal, 71);
-  const msRate = calcRate(msWon, msTotal, 76);
+  const pct = (won: number, total: number) => (total > 0 ? Math.round((won / total) * 100) : 0);
+  const avgOdd = (sum: number, total: number, fallback: number) =>
+    total > 0 ? Number((sum / total).toFixed(2)) : fallback;
+
+  const bankoRate = pct(bankoWon, bankoTotal);
+  const overRate = pct(over25Won, over25Total);
+  const bttsRate = pct(bttsWon, bttsTotal);
+  const valueRate = pct(valueWon, valueTotal);
+  const overallRate = pct(overallWon, overallTotal);
 
   const categories: PerformanceCategoryStat[] = [
     {
       id: 'banko',
-      label: 'Günün Bankoları (+%75 Güven)',
-      totalPicks: Math.max(bankoTotal, 68),
-      wonPicks: Math.max(bankoWon, Math.round(68 * (bankoRate / 100))),
+      label: 'Günün Bankoları (+%72 Güven)',
+      totalPicks: bankoTotal,
+      wonPicks: bankoWon,
       accuracyRate: bankoRate,
-      avgOdds: 1.62,
-      description: 'Poisson matematik modelinde kazanma olasılığı %75 üzeri hesaplanan en güvenli tercihler.',
+      avgOdds: avgOdd(bankoOddSum, bankoTotal, 1.55),
+      description: 'Tamamlanan bülten maçlarında yüksek güvenle işaretlenen canlı ana tahminlerin gerçek isabet oranı.',
       badgeColor: 'emerald'
     },
     {
       id: 'over25',
       label: '2.5 Gol Üst Trendi',
-      totalPicks: Math.max(over25Total, 54),
-      wonPicks: Math.max(over25Won, Math.round(54 * (overRate / 100))),
+      totalPicks: over25Total,
+      wonPicks: over25Won,
       accuracyRate: overRate,
-      avgOdds: 1.78,
-      description: 'Her iki takımın gol atma/yeme ortalaması ve xG beklentisi 2.70 üzerindeki maçlar.',
+      avgOdds: avgOdd(over25OddSum, over25Total, 1.75),
+      description: 'Modelde 2.5 Gol Üst olasılığı %58+ verilen tamamlanmış maçlardaki canlı sonuç performansı.',
       badgeColor: 'amber'
     },
     {
       id: 'btts',
       label: 'Karşılıklı Gol Var (KG Var)',
-      totalPicks: Math.max(bttsTotal, 62),
-      wonPicks: Math.max(bttsWon, Math.round(62 * (bttsRate / 100))),
+      totalPicks: bttsTotal,
+      wonPicks: bttsWon,
       accuracyRate: bttsRate,
-      avgOdds: 1.82,
-      description: 'İki tarafın da son 5 maçta %70+ oranla skor ürettiği tempolu karşılaşmalar.',
+      avgOdds: avgOdd(bttsOddSum, bttsTotal, 1.80),
+      description: 'Karşılıklı gol beklentisi %58+ öngörülen bitmiş karşılaşmaların canlı doğrulaması.',
       badgeColor: 'purple'
     },
     {
       id: 'value',
       label: 'Değer Bahisleri (Value Bets)',
-      totalPicks: 42,
-      wonPicks: 28,
-      accuracyRate: 67,
-      avgOdds: 2.15,
-      description: 'Büro oranının matematiksel olasılıktan daha yüksek verildiği pozitif beklenen değerli tercihler.',
+      totalPicks: valueTotal,
+      wonPicks: valueWon,
+      accuracyRate: valueRate,
+      avgOdds: avgOdd(valueOddSum, valueTotal, 2.05),
+      description: 'Resmi İddaa oranının model olasılığından düşük kaldığı bitmiş maçlardaki canlı isabet karnesi.',
       badgeColor: 'cyan'
     }
   ];
 
-  const leagueBreakdown: LeagueAccuracyStat[] = [
-    { league: 'İngiltere Premier Lig', totalMatches: 38, accuracyRate: 86, topTrend: 'MS 1 & 2.5 Üst' },
-    { league: 'İspanya La Liga', totalMatches: 34, accuracyRate: 83, topTrend: 'KG Var & MS 1' },
-    { league: 'Almanya Bundesliga', totalMatches: 28, accuracyRate: 88, topTrend: '2.5 Üst & KG Var' },
-    { league: 'İtalya Serie A', totalMatches: 32, accuracyRate: 79, topTrend: 'İY 0.5 Üst' },
-    { league: 'Türkiye Süper Lig', totalMatches: 36, accuracyRate: 81, topTrend: '2.5 Üst & MS 1' },
-    { league: 'UEFA Şampiyonlar Ligi', totalMatches: 24, accuracyRate: 89, topTrend: 'Banko Maç Sonucu' }
-  ];
+  const leagueBreakdown: LeagueAccuracyStat[] = Array.from(leagueStatsMap.entries())
+    .sort((a, b) => b[1].total - a[1].total)
+    .slice(0, 9)
+    .map(([league, st]) => {
+      const overPct = pct(st.over25Hits, st.total);
+      const ms1Pct = pct(st.ms1Hits, st.total);
+      const topTrend = overPct >= 55 ? `%${overPct} 2.5 Üst` : `%${ms1Pct} MS 1`;
+      return {
+        league,
+        totalMatches: st.total,
+        accuracyRate: pct(st.won, st.total),
+        topTrend
+      };
+    });
 
   return {
-    totalAnalyzed: Math.max(matches.length, 250),
-    overallAccuracyRate: Math.round((bankoRate * 0.4) + (overRate * 0.3) + (bttsRate * 0.3)),
+    totalAnalyzed: matches.length,
+    overallAccuracyRate: overallRate,
     bankoAccuracyRate: bankoRate,
     over25AccuracyRate: overRate,
     bttsAccuracyRate: bttsRate,
-    valueBetWinRate: 67,
-    totalWonCoupons: 142,
+    valueBetWinRate: valueRate,
+    totalWonCoupons: overallWon,
     categories,
     leagueBreakdown,
-    recentVerifiedPicks: recentPicks.length > 0 ? recentPicks : [
-      { matchText: 'Liverpool vs Aston Villa', league: 'İngiltere Premier Lig', prediction: 'MS 1', actualScore: '2-0', odd: 1.55, isWon: true },
-      { matchText: 'Real Madrid vs Osasuna', league: 'İspanya La Liga', prediction: '2.5 Üst', actualScore: '4-0', odd: 1.48, isWon: true },
-      { matchText: 'Bayern München vs Benfica', league: 'UEFA Şampiyonlar Ligi', prediction: 'MS 1', actualScore: '1-0', odd: 1.35, isWon: true },
-      { matchText: 'Galatasaray vs Tottenham', league: 'UEFA Avrupa Ligi', prediction: 'KG Var', actualScore: '3-2', odd: 1.52, isWon: true },
-      { matchText: 'Chelsea vs Arsenal', league: 'İngiltere Premier Lig', prediction: 'KG Var', actualScore: '1-1', odd: 1.70, isWon: true }
-    ]
+    recentVerifiedPicks: recentPicks
   };
 }

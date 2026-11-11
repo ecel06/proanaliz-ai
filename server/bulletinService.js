@@ -116,7 +116,51 @@ export function mapEvent(event, league) {
 
   const hasScores = (isCompleted || isLive) && parsedHomeScore !== null && parsedAwayScore !== null;
   const currentScore = hasScores ? { home: parsedHomeScore, away: parsedAwayScore } : undefined;
-  const finalScore = isCompleted && hasScores ? { home: parsedHomeScore, away: parsedAwayScore } : undefined;
+
+  // Extract real half-time score & card count from ESPN competition.details when timeline is complete
+  let htHome;
+  let htAway;
+  let actualCards;
+  const rawDetails = Array.isArray(competition.details) ? competition.details : [];
+  if (rawDetails.length > 0) {
+    actualCards = rawDetails.filter(d => d?.yellowCard || d?.redCard).length;
+  }
+  if (isCompleted && hasScores) {
+    if (parsedHomeScore + parsedAwayScore === 0) {
+      htHome = 0;
+      htAway = 0;
+    } else {
+      const scoringPlays = rawDetails.filter(d => d?.scoringPlay && !d?.shootout);
+      if (scoringPlays.length >= parsedHomeScore + parsedAwayScore) {
+        let hHt = 0;
+        let aHt = 0;
+        const homeIdStr = String(homeTeam.id || '');
+        const awayIdStr = String(awayTeam.id || '');
+        for (const play of scoringPlays) {
+          const clockVal = Number(play?.clock?.value);
+          const disp = String(play?.clock?.displayValue || '');
+          const isFirstHalf = Number.isFinite(clockVal)
+            ? clockVal <= 2700 && !disp.startsWith('46')
+            : /^([1-3]?\d|4[0-5])(\+\d+)?'$/.test(disp.trim());
+          if (!isFirstHalf) continue;
+          const teamIdStr = String(play?.team?.id || '');
+          if (teamIdStr && teamIdStr === homeIdStr) hHt++;
+          else if (teamIdStr && teamIdStr === awayIdStr) aHt++;
+        }
+        htHome = Math.min(parsedHomeScore, hHt);
+        htAway = Math.min(parsedAwayScore, aHt);
+      }
+    }
+  }
+
+  const finalScore = isCompleted && hasScores
+    ? {
+        home: parsedHomeScore,
+        away: parsedAwayScore,
+        ...(htHome !== undefined && htAway !== undefined ? { htHome, htAway } : {}),
+        ...(actualCards !== undefined ? { actualCards } : {})
+      }
+    : undefined;
 
   // Real-time live minute (e.g. "72'", "İY", "HT")
   let liveMinute = '';
@@ -448,31 +492,82 @@ async function fetchOfficialIddaaBulletin() {
       const leagueInfo = leagueMap.get(ev.LC);
       const meta = resolveIddaaLeagueMeta(leagueInfo?.CC, leagueInfo?.N || 'Uluslararası Futbol');
 
-      // Extract real official İddaa odds
+      // Extract real official İddaa odds across all main markets (only genuine odds > 1.01)
       const ma = Array.isArray(ev.MA) ? ev.MA : [];
+      const readOdd = (market, outcomeNum) => {
+        const raw = Number(market?.OCA?.find(o => o.N === outcomeNum)?.O);
+        return Number.isFinite(raw) && raw > 1.01 ? Number(raw.toFixed(2)) : undefined;
+      };
+
       const msMarket = ma.find(m => m.MT === 1 && m.MST === 1);
+      const dcMarket = ma.find(m => m.MST === 92);
+      const ou15Market = ma.find(m => m.MST === 101 && Number(m.SOV) === 1.5);
       const ou25Market = ma.find(m => m.MST === 101 && Number(m.SOV) === 2.5);
+      const ou35Market = ma.find(m => m.MST === 101 && Number(m.SOV) === 3.5);
       const bttsMarket = ma.find(m => m.MST === 89);
+      const htMarket = ma.find(m => m.MST === 88);
+      const htftMarket = ma.find(m => m.MST === 90);
 
-      const odd1 = msMarket?.OCA?.find(o => o.N === 1)?.O || 2.15;
-      const oddX = msMarket?.OCA?.find(o => o.N === 2)?.O || 3.20;
-      const odd2 = msMarket?.OCA?.find(o => o.N === 3)?.O || 2.65;
-      const oddUnder25 = ou25Market?.OCA?.find(o => o.N === 1)?.O || 1.85;
-      const oddOver25 = ou25Market?.OCA?.find(o => o.N === 2)?.O || 1.75;
-      const oddBttsYes = bttsMarket?.OCA?.find(o => o.N === 1)?.O || 1.72;
-      const oddBttsNo = bttsMarket?.OCA?.find(o => o.N === 2)?.O || 1.90;
+      const odd1 = readOdd(msMarket, 1);
+      const oddX = readOdd(msMarket, 2);
+      const odd2 = readOdd(msMarket, 3);
+      const oddUnder15 = readOdd(ou15Market, 1);
+      const oddOver15 = readOdd(ou15Market, 2);
+      const oddUnder25 = readOdd(ou25Market, 1);
+      const oddOver25 = readOdd(ou25Market, 2);
+      const oddUnder35 = readOdd(ou35Market, 1);
+      const oddOver35 = readOdd(ou35Market, 2);
+      const oddBttsYes = readOdd(bttsMarket, 1);
+      const oddBttsNo = readOdd(bttsMarket, 2);
+      const oddDc1X = readOdd(dcMarket, 1);
+      const oddDc12 = readOdd(dcMarket, 2);
+      const oddDcX2 = readOdd(dcMarket, 3);
+      const oddHt1 = readOdd(htMarket, 1);
+      const oddHtX = readOdd(htMarket, 2);
+      const oddHt2 = readOdd(htMarket, 3);
 
-      // Implied market strength so Poisson analysis aligns with official İddaa favorite & totals
-      const p1Raw = 1 / Math.max(1.05, odd1);
-      const pxRaw = 1 / Math.max(1.5, oddX);
-      const p2Raw = 1 / Math.max(1.05, odd2);
+      const htftKeys = ['1/1', '1/X', '1/2', 'X/1', 'X/X', 'X/2', '2/1', '2/X', '2/2'];
+      const htftOdds = {};
+      if (htftMarket) {
+        htftKeys.forEach((k, idx) => {
+          const val = readOdd(htftMarket, idx + 1);
+          if (val !== undefined) htftOdds[k] = val;
+        });
+      }
+
+      const oddsObj = {};
+      if (odd1 !== undefined) oddsObj.ms1 = odd1;
+      if (oddX !== undefined) {
+        oddsObj.msX = oddX;
+        oddsObj.ms0 = oddX;
+      }
+      if (odd2 !== undefined) oddsObj.ms2 = odd2;
+      if (oddDc1X !== undefined) oddsObj.dc_1x = oddDc1X;
+      if (oddDc12 !== undefined) oddsObj.dc_12 = oddDc12;
+      if (oddDcX2 !== undefined) oddsObj.dc_x2 = oddDcX2;
+      if (oddOver15 !== undefined) oddsObj.over15 = oddOver15;
+      if (oddUnder15 !== undefined) oddsObj.under15 = oddUnder15;
+      if (oddOver25 !== undefined) oddsObj.over25 = oddOver25;
+      if (oddUnder25 !== undefined) oddsObj.under25 = oddUnder25;
+      if (oddOver35 !== undefined) oddsObj.over35 = oddOver35;
+      if (oddUnder35 !== undefined) oddsObj.under35 = oddUnder35;
+      if (oddBttsYes !== undefined) oddsObj.bttsYes = oddBttsYes;
+      if (oddBttsNo !== undefined) oddsObj.bttsNo = oddBttsNo;
+      if (oddHt1 !== undefined) oddsObj.ht_1 = oddHt1;
+      if (oddHtX !== undefined) oddsObj.ht_X = oddHtX;
+      if (oddHt2 !== undefined) oddsObj.ht_2 = oddHt2;
+      if (Object.keys(htftOdds).length > 0) oddsObj.htft = htftOdds;
+
+      // Implied market strength so base goal/form fallback aligns with official İddaa favorite & totals
+      const p1Raw = 1 / Math.max(1.05, odd1 || 2.15);
+      const pxRaw = 1 / Math.max(1.5, oddX || 3.20);
+      const p2Raw = 1 / Math.max(1.05, odd2 || 2.65);
       const pSum = p1Raw + pxRaw + p2Raw;
       const p1 = p1Raw / pSum;
-      const p2 = p2Raw / pSum;
 
-      const overProb = (1 / Math.max(1.05, oddOver25)) / ((1 / Math.max(1.05, oddOver25)) + (1 / Math.max(1.05, oddUnder25)));
+      const overProb = (1 / Math.max(1.05, oddOver25 || 1.75)) / ((1 / Math.max(1.05, oddOver25 || 1.75)) + (1 / Math.max(1.05, oddUnder25 || 1.85)));
       const expectedTotalGoals = 1.6 + overProb * 1.9; // ~2.0 to 3.2
-      const homeShare = Math.max(0.25, Math.min(0.75, p1 / Math.max(0.15, p1 + p2)));
+      const homeShare = Math.max(0.25, Math.min(0.75, p1 / Math.max(0.15, p1 + (p2Raw / pSum))));
 
       const homeAvgScored = Number((expectedTotalGoals * homeShare * 1.05).toFixed(2));
       const awayAvgScored = Number((expectedTotalGoals * (1 - homeShare) * 1.05).toFixed(2));
@@ -495,15 +590,7 @@ async function fetchOfficialIddaaBulletin() {
         dayCategory: 'upcoming',
         stadium: 'Resmi İddaa Programı',
         status: 'upcoming',
-        odds: {
-          ms1: Number(odd1.toFixed(2)),
-          ms0: Number(oddX.toFixed(2)),
-          ms2: Number(odd2.toFixed(2)),
-          over25: Number(oddOver25.toFixed(2)),
-          under25: Number(oddUnder25.toFixed(2)),
-          bttsYes: Number(oddBttsYes.toFixed(2)),
-          bttsNo: Number(oddBttsNo.toFixed(2))
-        },
+        ...(Object.keys(oddsObj).length > 0 ? { odds: oddsObj } : {}),
         homeTeam: {
           id: `iddaa-h-${ev.C}`,
           name: ev.HN,
@@ -619,6 +706,56 @@ export async function fetchLiveBulletin() {
     );
   }
 
+  // Also fetch ESPN global 'all/scoreboard' for yesterday/today/tomorrow to capture smaller leagues & cups
+  const globalDates = keyDates.slice(0, 3);
+  await Promise.all(
+    globalDates.map(async (dt) => {
+      try {
+        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard?dates=${dt}`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          },
+          timeout: 5500
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const leaguesBySlug = new Map();
+        if (Array.isArray(data?.leagues)) {
+          for (const lg of data.leagues) {
+            if (lg?.slug) leaguesBySlug.set(lg.slug, lg);
+          }
+        }
+        if (data && Array.isArray(data.events)) {
+          for (const ev of data.events) {
+            const evId = String(ev.id || '');
+            if (!evId || matchesMap.has(evId)) continue;
+            const slug = ev?.season?.slug || ev?.competitions?.[0]?.league?.slug || 'global';
+            const supported = SUPPORTED_LEAGUES.find(l => l.code === slug);
+            const rawLg = leaguesBySlug.get(slug);
+            const leagueMeta = supported || {
+              code: slug,
+              name: rawLg?.shortName || rawLg?.name || 'Uluslararası Futbol',
+              country: 'Dünya',
+              countryFlag: '🌍',
+              category: 'world'
+            };
+            const mapped = mapEvent(ev, leagueMeta);
+            matchesMap.set(evId, mapped);
+          }
+        }
+      } catch (_) {}
+    })
+  );
+
+  // Cache ESPN matches for fallback team lookup in fetchMatchInsights
+  const esnListSnapshot = Array.from(matchesMap.values());
+  recentEspnMatchesCache = esnListSnapshot.map(m => ({
+    id: String(m.id),
+    league: m.league,
+    homeName: m.homeTeam?.name || '',
+    awayName: m.awayTeam?.name || ''
+  }));
+
   // Merge Official İddaa Matches (enrich duplicates with real İddaa codes & odds, add all missing ones)
   const iddaaMatches = await iddaaPromise;
   const existingEspnList = Array.from(matchesMap.values());
@@ -667,24 +804,65 @@ export async function fetchLiveBulletin() {
   };
 }
 
+let recentEspnMatchesCache = [];
 const matchInsightsCache = new Map();
 const INSIGHTS_CACHE_TTL_MS = 15 * 60 * 1000;
 
-/**
- * Fetches rich on-demand match insights (Real H2H series, Officials, Venue, Injuries) from ESPN summary API
- * with 15-minute memory cache.
- */
-export async function fetchMatchInsights(eventId, leagueName = '') {
-  const id = String(eventId || '').trim();
-  if (!id || id.startsWith('iddaa-') || id.startsWith('curated-')) {
+function mapEspnLastFiveBlock(teamBlock) {
+  const teamId = String(teamBlock?.team?.id || '');
+  const events = Array.isArray(teamBlock?.events) ? teamBlock.events : [];
+  return events.slice(-5).map(ev => {
+    const isHome = ev.atVs === 'vs' || String(ev.homeTeamId || '') === teamId;
+    const hScore = ev.homeTeamScore ?? '';
+    const aScore = ev.awayTeamScore ?? '';
+    const rawRes = String(ev.gameResult || '').toUpperCase();
+    const result = rawRes === 'W' || rawRes === 'D' || rawRes === 'L' ? rawRes : 'D';
+    const dStr = ev.gameDate ? new Date(ev.gameDate).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
     return {
-      source: 'none',
-      h2hSummary: '',
-      h2hGames: [],
-      officials: [],
-      injuries: [],
-      venue: null
+      result,
+      opponent: ev.opponent?.displayName || ev.opponent?.shortDisplayName || '',
+      score: hScore !== '' && aScore !== '' ? `${hScore} - ${aScore}` : (ev.score || ''),
+      isHome,
+      weekOrDate: dStr ? `${dStr}${ev.leagueAbbreviation ? ` • ${ev.leagueAbbreviation}` : ''}` : (ev.competitionName || '')
     };
+  });
+}
+
+/**
+ * Fetches rich on-demand match insights (Real H2H series, Officials, Venue, Injuries, Last 5 Games)
+ * from ESPN summary API with 15-minute memory cache.
+ */
+export async function fetchMatchInsights(eventId, leagueName = '', homeTeamName = '', awayTeamName = '') {
+  let id = String(eventId || '').trim();
+  const emptyPayload = {
+    source: 'none',
+    h2hSummary: '',
+    h2hGames: [],
+    officials: [],
+    injuries: [],
+    lastFiveHome: [],
+    lastFiveAway: [],
+    venue: null
+  };
+
+  if (!id || id.startsWith('curated-')) {
+    return emptyPayload;
+  }
+
+  // Fallback team lookup for İddaa-only IDs against cached ESPN matches
+  if (id.startsWith('iddaa-')) {
+    if (homeTeamName && awayTeamName) {
+      const matched = recentEspnMatchesCache.find(
+        m => areTeamsEquivalent(m.homeName, homeTeamName) && areTeamsEquivalent(m.awayName, awayTeamName)
+      );
+      if (matched) {
+        id = matched.id;
+      } else {
+        return emptyPayload;
+      }
+    } else {
+      return emptyPayload;
+    }
   }
 
   const cached = matchInsightsCache.get(id);
@@ -708,7 +886,7 @@ export async function fetchMatchInsights(eventId, leagueName = '') {
     });
 
     if (!res.ok) {
-      return { source: 'none', h2hSummary: '', h2hGames: [], officials: [], injuries: [], venue: null };
+      return emptyPayload;
     }
 
     const data = await res.json();
@@ -772,18 +950,40 @@ export async function fetchMatchInsights(eventId, leagueName = '') {
       }
     }
 
+    // Extract real last 5 games for home and away teams from ESPN summary
+    const lastFiveBlocks = Array.isArray(data?.lastFiveGames) ? data.lastFiveGames : [];
+    const headerCompetitors = data?.header?.competitions?.[0]?.competitors || [];
+    const homeCompHeader = headerCompetitors.find(c => c.homeAway === 'home');
+    const awayCompHeader = headerCompetitors.find(c => c.homeAway === 'away');
+    const homeIdHeader = String(homeCompHeader?.team?.id || homeCompHeader?.id || '');
+    const awayIdHeader = String(awayCompHeader?.team?.id || awayCompHeader?.id || '');
+
+    const homeLastBlock =
+      lastFiveBlocks.find(b => homeIdHeader && String(b?.team?.id || '') === homeIdHeader) ||
+      (homeTeamName ? lastFiveBlocks.find(b => areTeamsEquivalent(b?.team?.displayName, homeTeamName)) : null) ||
+      lastFiveBlocks[0];
+    const awayLastBlock =
+      lastFiveBlocks.find(b => awayIdHeader && String(b?.team?.id || '') === awayIdHeader) ||
+      (awayTeamName ? lastFiveBlocks.find(b => areTeamsEquivalent(b?.team?.displayName, awayTeamName)) : null) ||
+      (lastFiveBlocks[1] !== homeLastBlock ? lastFiveBlocks[1] : null);
+
+    const lastFiveHome = homeLastBlock ? mapEspnLastFiveBlock(homeLastBlock) : [];
+    const lastFiveAway = awayLastBlock ? mapEspnLastFiveBlock(awayLastBlock) : [];
+
     const payload = {
-      source: h2hGames.length > 0 || officials.length > 0 || injuries.length > 0 ? 'espn' : 'partial',
+      source: h2hGames.length > 0 || officials.length > 0 || injuries.length > 0 || lastFiveHome.length > 0 ? 'espn' : 'partial',
       h2hSummary: series?.summary || '',
       h2hGames,
       officials,
       injuries,
+      lastFiveHome,
+      lastFiveAway,
       venue
     };
 
     matchInsightsCache.set(id, { fetchedAt: Date.now(), payload });
     return payload;
   } catch (err) {
-    return { source: 'none', h2hSummary: '', h2hGames: [], officials: [], injuries: [], venue: null };
+    return emptyPayload;
   }
 }

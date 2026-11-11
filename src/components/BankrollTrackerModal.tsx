@@ -169,10 +169,15 @@ export const BankrollTrackerModal: React.FC<BankrollTrackerModalProps> = ({
                 >
                   {/* Slip Header */}
                   <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-800/60">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className="font-mono text-xs font-bold text-slate-300">
                         {slip.id}
                       </span>
+                      {slip.systemConfig && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-mono">
+                          {slip.systemConfig.systemLabel} • {slip.systemConfig.totalColumns}K
+                        </span>
+                      )}
                       <span className="text-[10px] text-slate-500">
                         {new Date(slip.createdAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </span>
@@ -182,7 +187,7 @@ export const BankrollTrackerModal: React.FC<BankrollTrackerModalProps> = ({
                       {isWon && (
                         <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
                           <CheckCircle2 className="w-3 h-3" />
-                          <span>KAZANDI (+{slip.potentialWin.toLocaleString('tr-TR')} ₺)</span>
+                          <span>KAZANDI (+{(slip.actualPayout ?? slip.potentialWin).toLocaleString('tr-TR')} ₺)</span>
                         </span>
                       )}
                       {isLost && (
@@ -210,26 +215,42 @@ export const BankrollTrackerModal: React.FC<BankrollTrackerModalProps> = ({
 
                   {/* Matches inside slip */}
                   <div className="space-y-1.5 mb-3">
-                    {slip.items.map((it, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-slate-900/80">
-                        <span className="font-bold text-slate-200 truncate max-w-[200px] sm:max-w-xs">
-                          {it.match.homeTeam.name} vs {it.match.awayTeam.name}
-                        </span>
-                        <div className="flex items-center space-x-2 shrink-0">
-                          <span className="text-emerald-400 font-semibold">{it.pickLabel}</span>
-                          <span className="font-mono font-bold text-slate-400">@{it.odd.toFixed(2)}</span>
+                    {slip.items.map((it, idx) => {
+                      const isBankoLeg = slip.systemConfig?.bankoMatchIds?.includes(String(it.matchId));
+                      const legStatus = slip.itemStatuses?.[String(it.matchId)] || 'pending';
+                      return (
+                        <div key={idx} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-slate-900/80 gap-2">
+                          <div className="flex items-center space-x-1.5 min-w-0">
+                            {legStatus === 'won' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
+                            {legStatus === 'lost' && <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />}
+                            {legStatus === 'pending' && <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />}
+                            {isBankoLeg && (
+                              <span className="px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-black shrink-0">
+                                B
+                              </span>
+                            )}
+                            <span className="font-bold text-slate-200 truncate max-w-[180px] sm:max-w-xs">
+                              {it.match.homeTeam.name} vs {it.match.awayTeam.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2 shrink-0">
+                            <span className="text-emerald-400 font-semibold">{it.pickLabel}</span>
+                            <span className="font-mono font-bold text-slate-400">@{it.odd.toFixed(2)}</span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Slip Summary Footer */}
                   <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800/40">
                     <div className="text-slate-400">
-                      Oran: <span className="font-mono font-bold text-white">{slip.totalOdds.toFixed(2)}</span> • Misli: <span className="font-mono font-bold text-white">{slip.stake} ₺</span>
+                      Oran: <span className="font-mono font-bold text-white">{slip.totalOdds.toFixed(2)}</span> • Toplam: <span className="font-mono font-bold text-white">{slip.stake.toLocaleString('tr-TR')} ₺</span>
                     </div>
                     <div className="font-mono font-black text-amber-400">
-                      Olası Kazanç: {slip.potentialWin.toLocaleString('tr-TR')} ₺
+                      {isWon && slip.actualPayout !== undefined
+                        ? `Ödenen: ${slip.actualPayout.toLocaleString('tr-TR')} ₺`
+                        : `Olası Kazanç: ${slip.potentialWin.toLocaleString('tr-TR')} ₺`}
                     </div>
                   </div>
                 </div>

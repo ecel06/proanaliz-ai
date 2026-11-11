@@ -173,12 +173,14 @@ app.get('/api/standings/:leagueCode', async (req, res) => {
   }
 });
 
-// 5b. On-demand real Match Insights (H2H, Officials, Injuries, Venue)
+// 5b. On-demand real Match Insights (H2H, Officials, Injuries, Venue, Last 5 Games)
 app.get('/api/match-insights', async (req, res) => {
   const eventId = String(req.query.eventId || '');
   const league = String(req.query.league || '');
+  const homeTeam = String(req.query.homeTeam || '');
+  const awayTeam = String(req.query.awayTeam || '');
   try {
-    const insights = await fetchMatchInsights(eventId, league);
+    const insights = await fetchMatchInsights(eventId, league, homeTeam, awayTeam);
     res.json({ success: true, insights });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -225,7 +227,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.11.07';
+const APP_VERSION = '2026.11.11.08';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

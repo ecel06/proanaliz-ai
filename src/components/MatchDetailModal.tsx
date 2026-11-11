@@ -99,8 +99,16 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   if (!match || !analysis) return null;
 
   const { homeTeam, awayTeam } = match;
-  const homeFormDetails = getFormDetails(homeTeam, match.league);
-  const awayFormDetails = getFormDetails(awayTeam, match.league);
+  const enrichedHomeTeam =
+    (!homeTeam.recentMatches || homeTeam.recentMatches.length === 0) && insights?.lastFiveHome?.length
+      ? { ...homeTeam, recentMatches: insights.lastFiveHome, form: insights.lastFiveHome.map(g => g.result) }
+      : homeTeam;
+  const enrichedAwayTeam =
+    (!awayTeam.recentMatches || awayTeam.recentMatches.length === 0) && insights?.lastFiveAway?.length
+      ? { ...awayTeam, recentMatches: insights.lastFiveAway, form: insights.lastFiveAway.map(g => g.result) }
+      : awayTeam;
+  const homeFormDetails = getFormDetails(enrichedHomeTeam, match.league);
+  const awayFormDetails = getFormDetails(enrichedAwayTeam, match.league);
   const marketGroups = useMemo(() => getMatchBettingMarkets(match, analysis), [match, analysis]);
   const selectedPickInMatch = betslipItems.find(it => it.matchId === match.id);
   const h2hGames = insights?.h2hGames || [];
@@ -921,7 +929,14 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                             </div>
 
                             <div className="flex items-baseline justify-between mt-2 pt-1.5 border-t border-slate-800/80 w-full">
-                              <span className="text-[10px] text-slate-400 font-mono">%{opt.probability}</span>
+                              <span className="text-[10px] text-slate-400 font-mono flex items-center space-x-1">
+                                <span>%{opt.probability}</span>
+                                {opt.isOfficial && (
+                                  <span className="px-1 py-0.2 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[8px] font-bold">
+                                    İddaa
+                                  </span>
+                                )}
+                              </span>
                               <span className={`text-sm font-black font-mono ${isSelected ? 'text-emerald-300 font-extrabold' : 'text-amber-400'}`}>
                                 {opt.odd.toFixed(2)}
                               </span>

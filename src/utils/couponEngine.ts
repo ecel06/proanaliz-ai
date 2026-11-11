@@ -5,6 +5,7 @@ import { Match, MatchAnalysis } from '../types';
 import { getMatchIddaaCode } from './iddaaHelper';
 import { formatDynamicMatchTime, isMatchOnDateFilter } from './dateHelper';
 import { getMatchLiveState } from './liveMatchHelper';
+import { resolveMarketOdd } from './oddsHelper';
 
 export type PickStatus = 'upcoming' | 'live' | 'won' | 'lost';
 export type CouponStatus = 'won' | 'lost' | 'pending';
@@ -205,8 +206,211 @@ export function evaluatePickStatus(
   };
 }
 
+interface DynamicPickCandidate {
+  match: Match;
+  pickLabel: string;
+  pickType: CouponMatchItem['pickType'];
+  odd: number;
+  confidence: number;
+  reasoning: string;
+  scoreRank: number;
+}
+
+function resolveBestCandidateForTier(
+  match: Match,
+  analysis: MatchAnalysis,
+  tier: 'banko' | 'ideal' | 'surpriz'
+): DynamicPickCandidate | null {
+  const candidates: Array<{
+    pickType: CouponMatchItem['pickType'];
+    oddKey: string;
+    pickLabel: string;
+    prob: number;
+    reasoning: string;
+  }> = [
+    {
+      pickType: 'ms1',
+      oddKey: 'ms1',
+      pickLabel: `MS 1 (${match.homeTeam.shortName || match.homeTeam.name})`,
+      prob: analysis.ms1,
+      reasoning: `${match.homeTeam.name} saha ve xG avantajıyla (%${analysis.ms1}) maçın favorisi.`
+    },
+    {
+      pickType: 'ms2',
+      oddKey: 'ms2',
+      pickLabel: `MS 2 (${match.awayTeam.shortName || match.awayTeam.name})`,
+      prob: analysis.ms2,
+      reasoning: `${match.awayTeam.name} deplasman formu ve hücum verimliliğiyle (%${analysis.ms2}) öne çıkıyor.`
+    },
+    {
+      pickType: 'msX',
+      oddKey: 'msX',
+      pickLabel: 'MS X (Beraberlik)',
+      prob: analysis.msX,
+      reasoning: `İki takımın güç dengesi ve düşük fark beklentisi beraberliği (%${analysis.msX}) öne çıkarıyor.`
+    },
+    {
+      pickType: 'over25',
+      oddKey: 'over25',
+      pickLabel: '2.5 Gol Üst',
+      prob: analysis.over25,
+      reasoning: `Beklenen toplam gol (${analysis.expectedTotalGoals} xG) yüksek; tempolu ve gollü maç beklentisi.`
+    },
+    {
+      pickType: 'under25',
+      oddKey: 'under25',
+      pickLabel: '2.5 Gol Alt',
+      prob: analysis.under25,
+      reasoning: `Savunma kurguları ve kontrollü tempo nedeniyle 2.5 Alt (%${analysis.under25}) güvenli görünüyor.`
+    },
+    {
+      pickType: 'btts',
+      oddKey: 'bttsYes',
+      pickLabel: 'KG Var (Karşılıklı Gol)',
+      prob: analysis.bttsYes,
+      reasoning: `Her iki takımın da gol bulma potansiyeli (%${analysis.bttsYes}) yüksek.`
+    },
+    {
+      pickType: 'over15',
+      oddKey: 'over15',
+      pickLabel: '1.5 Gol Üst',
+      prob: analysis.over15,
+      reasoning: `Maçta en az 2 gol çıkma olasılığı (%${analysis.over15}) kasa güvenliği sağlıyor.`
+    }
+  ];
+
+  const enriched = candidates.map(c => {
+    const resolved = resolveMarketOdd(match, c.oddKey, c.prob);
+    return { ...c, odd: resolved.odd, isOfficial: resolved.isOfficial };
+  });
+
+  if (tier === 'banko') {
+    const bankoMatches = enriched
+      .filter(c => c.prob >= 64 && c.odd >= 1.15 && c.odd <= 1.85)
+      .sort((a, b) => (b.prob + (b.isOfficial ? 4 : 0)) - (a.prob + (a.isOfficial ? 4 : 0)));
+    const pick = bankoMatches[0] || enriched.sort((a, b) => b.prob - a.prob)[0];
+    if (!pick) return null;
+    return {
+      match,
+      pickLabel: pick.pickLabel,
+      pickType: pick.pickType,
+      odd: pick.odd,
+      confidence: pick.prob,
+      reasoning: pick.reasoning,
+      scoreRank: pick.prob + (pick.isOfficial ? 5 : 0)
+    };
+  }
+
+  if (tier === 'ideal') {
+    const idealMatches = enriched
+      .filter(c => c.prob >= 52 && c.odd >= 1.48 && c.odd <= 2.35)
+      .sort((a, b) => (b.prob * 1.1 + b.odd * 10 + (b.isOfficial ? 5 : 0)) - (a.prob * 1.1 + a.odd * 10 + (a.isOfficial ? 5 : 0)));
+    const pick = idealMatches[0] || enriched.sort((a, b) => Math.abs(b.odd - 1.80) * -1 - Math.abs(a.odd - 1.80) * -1)[0];
+    if (!pick) return null;
+    return {
+      match,
+      pickLabel: pick.pickLabel,
+      pickType: pick.pickType,
+      odd: pick.odd,
+      confidence: pick.prob,
+      reasoning: pick.reasoning,
+      scoreRank: pick.prob + pick.odd * 8 + (pick.isOfficial ? 5 : 0)
+    };
+  }
+
+  // surpriz: High odd value picks (>= 2.30 odd with solid chance)
+  const surprizMatches = enriched
+    .filter(c => c.odd >= 2.30 && c.prob >= 28)
+    .sort((a, b) => (b.prob * b.odd) - (a.prob * a.odd));
+  const pick = surprizMatches[0] || enriched.sort((a, b) => b.odd - a.odd)[0];
+  if (!pick) return null;
+  return {
+    match,
+    pickLabel: pick.pickLabel,
+    pickType: pick.pickType,
+    odd: pick.odd,
+    confidence: pick.prob,
+    reasoning: pick.reasoning,
+    scoreRank: pick.prob * pick.odd + (pick.isOfficial ? 10 : 0)
+  };
+}
+
+function finalizeCoupon(
+  id: CuratedCoupon['id'],
+  title: string,
+  shortTitle: string,
+  badge: string,
+  riskRating: CuratedCoupon['riskRating'],
+  description: string,
+  accentColor: string,
+  borderColor: string,
+  badgeBg: string,
+  badgeText: string,
+  glowColor: string,
+  prefix: string,
+  rawPicks: DynamicPickCandidate[],
+  now: Date
+): CuratedCoupon {
+  const items: CouponMatchItem[] = rawPicks.map((raw, idx) => {
+    const outcome = evaluatePickStatus(raw.pickType, raw.match, now);
+    return {
+      id: `${prefix}_${idx + 1}`,
+      matchId: raw.match.id,
+      match: raw.match,
+      homeTeamName: raw.match.homeTeam.name,
+      awayTeamName: raw.match.awayTeam.name,
+      league: raw.match.league,
+      iddaaCode: raw.match.iddaaCode || getMatchIddaaCode(raw.match),
+      matchTimeText: formatDynamicMatchTime(raw.match, now),
+      pickLabel: raw.pickLabel,
+      pickType: raw.pickType,
+      odd: raw.odd,
+      confidence: raw.confidence,
+      reasoning: raw.reasoning,
+      matchStatus: outcome.matchStatus,
+      pickStatus: outcome.pickStatus,
+      currentScore: { home: outcome.score.home, away: outcome.score.away },
+      liveMinute: outcome.liveMinute
+    };
+  });
+
+  const totalOdds = Number(items.reduce((acc, item) => acc * item.odd, 1).toFixed(2));
+  const avgConfidence = Math.round(items.reduce((acc, item) => acc + item.confidence, 0) / (items.length || 1));
+  const wonCount = items.filter(p => p.pickStatus === 'won').length;
+  const lostCount = items.filter(p => p.pickStatus === 'lost').length;
+  const liveCount = items.filter(p => p.pickStatus === 'live').length;
+  const upcomingCount = items.filter(p => p.pickStatus === 'upcoming').length;
+
+  let status: CouponStatus = 'pending';
+  if (lostCount > 0) status = 'lost';
+  else if (wonCount === items.length && items.length > 0) status = 'won';
+
+  return {
+    id,
+    title,
+    shortTitle,
+    badge,
+    riskRating,
+    description,
+    accentColor,
+    borderColor,
+    badgeBg,
+    badgeText,
+    glowColor,
+    items,
+    totalOdds,
+    avgConfidence,
+    status,
+    wonCount,
+    lostCount,
+    liveCount,
+    upcomingCount,
+    totalCount: items.length
+  };
+}
+
 /**
- * Curates 3 high-probability AI coupons for a given day filter ('today' | 'yesterday' | 'all')
+ * Curates 3 live AI coupons dynamically from active bulletin matches + Poisson analyses + official İddaa odds.
  */
 export function generateCuratedCoupons(
   allMatches: Match[],
@@ -214,417 +418,90 @@ export function generateCuratedCoupons(
   now: Date = new Date(),
   selectedDay: CouponDayFilter = 'today'
 ): CuratedCoupon[] {
-  // 1. Filter match pool for the selected day
   let poolMatches = allMatches.filter(m => isMatchOnDateFilter(m, selectedDay, now));
-  // If pool has fewer than 8 matches (e.g. on early weekday), fall back to all matches
-  if (poolMatches.length < 8) {
+  if (poolMatches.length < 9) {
     poolMatches = allMatches;
   }
 
-  // Helper to find a match by keyword prioritizing the day pool
-  const findMatch = (keyword: string): Match | undefined => {
-    const kw = keyword.toLowerCase();
-    const matchInPool = poolMatches.find(
-      (m) =>
-        m.homeTeam.name.toLowerCase().includes(kw) ||
-        m.awayTeam.name.toLowerCase().includes(kw)
-    );
-    if (matchInPool) return matchInPool;
-    // Fall back to all matches if not in day pool
-    return allMatches.find(
-      (m) =>
-        m.homeTeam.name.toLowerCase().includes(kw) ||
-        m.awayTeam.name.toLowerCase().includes(kw)
-    );
+  // Prefer upcoming/live matches when viewing 'today' or 'all' so daily coupons are playable
+  const playablePool = selectedDay === 'yesterday'
+    ? poolMatches
+    : poolMatches.filter(m => {
+        const st = getMatchLiveState(m, now);
+        return st.isUpcoming || st.isLive;
+      });
+  const candidatePool = playablePool.length >= 9 ? playablePool : poolMatches;
+
+  const usedMatchIds = new Set<string>();
+  const pickTierMatches = (tier: 'banko' | 'ideal' | 'surpriz', count: number): DynamicPickCandidate[] => {
+    const scored: DynamicPickCandidate[] = [];
+    for (const m of candidatePool) {
+      if (usedMatchIds.has(m.id)) continue;
+      const a = analysesMap.get(m.id);
+      if (!a) continue;
+      const cand = resolveBestCandidateForTier(m, a, tier);
+      if (cand) scored.push(cand);
+    }
+    scored.sort((a, b) => b.scoreRank - a.scoreRank);
+    const chosen = scored.slice(0, count);
+    chosen.forEach(c => usedMatchIds.add(c.match.id));
+    return chosen;
   };
 
-  // -------------------------------------------------------------
-  // 1. BANKO KUPON (Günün En Güvenilir Maçları)
-  // -------------------------------------------------------------
-  const bankoRawPicks: Array<{
-    match: Match;
-    pickLabel: string;
-    pickType: CouponMatchItem['pickType'];
-    odd: number;
-    confidence: number;
-    reasoning: string;
-  }> = [];
-
-  // Match 1: Caykur Rizespor vs Erzurum BB (MS 1) -> 2-1 TUTTU!
-  const rizeMatch = findMatch('rizespor') || findMatch('erzurum') || poolMatches[0];
-  if (rizeMatch) {
-    bankoRawPicks.push({
-      match: rizeMatch,
-      pickLabel: 'MS 1 (Ev Sahibi)',
-      pickType: 'ms1',
-      odd: 1.48,
-      confidence: 86,
-      reasoning: 'Ev sahibi iç saha hücum verimliliğinde üstün; taraftar gücüyle maçı önde tamamlar.'
-    });
-  }
-
-  // Match 2: Crystal Palace vs Liverpool (MS 2) -> 1-3 TUTTU!
-  const livMatch = findMatch('liverpool') || poolMatches[1];
-  if (livMatch && livMatch.id !== rizeMatch?.id) {
-    bankoRawPicks.push({
-      match: livMatch,
-      pickLabel: 'MS 2 (Deplasman)',
-      pickType: 'ms2',
-      odd: 1.45,
-      confidence: 83,
-      reasoning: 'Liverpool hücum verimliliği ve xG üretiminde ligin zirvesinde, deplasmanda hata yapmaz.'
-    });
-  }
-
-  // Match 3: Çorum FK vs Fenerbahçe (2.5 Gol Üst) -> 0-5 TUTTU!
-  const fbMatch = findMatch('fenerbahce') || poolMatches[2];
-  if (fbMatch && !bankoRawPicks.some(p => p.match.id === fbMatch.id)) {
-    bankoRawPicks.push({
-      match: fbMatch,
-      pickLabel: '2.5 Gol Üst',
-      pickType: 'over25',
-      odd: 1.55,
-      confidence: 85,
-      reasoning: 'Fenerbahçe yüksek tempolu hücum gücüyle maç başına 2.6 gol ortalamasına sahip.'
-    });
-  }
-
-  // Fallback to fill 3 matches
-  if (bankoRawPicks.length < 3) {
-    for (const m of poolMatches) {
-      if (bankoRawPicks.some(p => p.match.id === m.id)) continue;
-      const analysis = analysesMap.get(m.id);
-      bankoRawPicks.push({
-        match: m,
-        pickLabel: analysis?.primaryPrediction.label || '1.5 Gol Üst',
-        pickType: 'over15',
-        odd: 1.42,
-        confidence: analysis?.primaryPrediction.confidence || 80,
-        reasoning: 'Model analizinde %75 üzeri kazanma olasılığı hesaplanan güvenilir tercih.'
-      });
-      if (bankoRawPicks.length >= 3) break;
-    }
-  }
-
-  const bankoPicks: CouponMatchItem[] = bankoRawPicks.map((raw, idx) => {
-    const outcome = evaluatePickStatus(raw.pickType, raw.match, now);
-    return {
-      id: `b_${idx + 1}`,
-      matchId: raw.match.id,
-      match: raw.match,
-      homeTeamName: raw.match.homeTeam.name,
-      awayTeamName: raw.match.awayTeam.name,
-      league: raw.match.league,
-      iddaaCode: raw.match.iddaaCode || getMatchIddaaCode(raw.match),
-      matchTimeText: formatDynamicMatchTime(raw.match, now),
-      pickLabel: raw.pickLabel,
-      pickType: raw.pickType,
-      odd: raw.odd,
-      confidence: raw.confidence,
-      reasoning: raw.reasoning,
-      matchStatus: outcome.matchStatus,
-      pickStatus: outcome.pickStatus,
-      currentScore: { home: outcome.score.home, away: outcome.score.away },
-      liveMinute: outcome.liveMinute
-    };
-  });
-
-  const bankoTotalOdds = Number(bankoPicks.reduce((acc, item) => acc * item.odd, 1).toFixed(2));
-  const bankoAvgConf = Math.round(bankoPicks.reduce((acc, item) => acc + item.confidence, 0) / (bankoPicks.length || 1));
-  const bankoWonCount = bankoPicks.filter(p => p.pickStatus === 'won').length;
-  const bankoLostCount = bankoPicks.filter(p => p.pickStatus === 'lost').length;
-  const bankoLiveCount = bankoPicks.filter(p => p.pickStatus === 'live').length;
-  const bankoUpcomingCount = bankoPicks.filter(p => p.pickStatus === 'upcoming').length;
-
-  let bankoStatus: CouponStatus = 'pending';
-  if (bankoLostCount > 0) {
-    bankoStatus = 'lost';
-  } else if (bankoWonCount === bankoPicks.length && bankoPicks.length > 0) {
-    bankoStatus = 'won';
-  }
-
-  // -------------------------------------------------------------
-  // 2. İDEAL KUPON (Dengeli Değer & Gol Kuponu)
-  // -------------------------------------------------------------
-  const idealRawPicks: Array<{
-    match: Match;
-    pickLabel: string;
-    pickType: CouponMatchItem['pickType'];
-    odd: number;
-    confidence: number;
-    reasoning: string;
-  }> = [];
-
-  // Match 1: Alanyaspor vs Trabzonspor (KG Var) -> 0-2 YATTI!
-  const trabzonMatch = findMatch('alanyaspor') || findMatch('trabzonspor');
-  if (trabzonMatch && !bankoPicks.some(p => p.matchId === trabzonMatch.id)) {
-    idealRawPicks.push({
-      match: trabzonMatch,
-      pickLabel: 'KG Var (Karşılıklı Gol)',
-      pickType: 'btts',
-      odd: 1.68,
-      confidence: 74,
-      reasoning: 'İki ekibin de hücum hattı etkili, savunmaları açık veriyor.'
-    });
-  }
-
-  // Match 2: FC Cologne vs Bayer Leverkusen (2.5 Gol Üst) -> 1-2 TUTTU!
-  const bayerMatch = findMatch('leverkusen') || findMatch('cologne');
-  if (bayerMatch && !bankoPicks.some(p => p.matchId === bayerMatch.id) && !idealRawPicks.some(p => p.match.id === bayerMatch.id)) {
-    idealRawPicks.push({
-      match: bayerMatch,
-      pickLabel: '2.5 Gol Üst',
-      pickType: 'over25',
-      odd: 1.62,
-      confidence: 76,
-      reasoning: 'Leverkusen yüksek presle oynuyor, bol pozisyonlu tempolu maç.'
-    });
-  }
-
-  // Match 3: Derby County vs Bolton Wanderers (MS 1) -> 3-1 TUTTU!
-  const derbyMatch = findMatch('derby') || findMatch('bolton');
-  if (derbyMatch && !bankoPicks.some(p => p.matchId === derbyMatch.id) && !idealRawPicks.some(p => p.match.id === derbyMatch.id)) {
-    idealRawPicks.push({
-      match: derbyMatch,
-      pickLabel: 'MS 1 (Ev Sahibi)',
-      pickType: 'ms1',
-      odd: 1.72,
-      confidence: 72,
-      reasoning: 'Derby County sahasında formda ve istikrarlı sonuçlar alıyor.'
-    });
-  }
-
-  // Fallback if needed
-  if (idealRawPicks.length < 3) {
-    for (const m of poolMatches) {
-      if (bankoPicks.some(p => p.matchId === m.id) || idealRawPicks.some(p => p.match.id === m.id)) continue;
-      idealRawPicks.push({
-        match: m,
-        pickLabel: '2.5 Gol Üst',
-        pickType: 'over25',
-        odd: 1.65,
-        confidence: 70,
-        reasoning: 'Tempolu oyun ve karşılıklı pozisyon beklentisiyle ideal oran.'
-      });
-      if (idealRawPicks.length >= 3) break;
-    }
-  }
-
-  const idealPicks: CouponMatchItem[] = idealRawPicks.map((raw, idx) => {
-    const outcome = evaluatePickStatus(raw.pickType, raw.match, now);
-    return {
-      id: `i_${idx + 1}`,
-      matchId: raw.match.id,
-      match: raw.match,
-      homeTeamName: raw.match.homeTeam.name,
-      awayTeamName: raw.match.awayTeam.name,
-      league: raw.match.league,
-      iddaaCode: raw.match.iddaaCode || getMatchIddaaCode(raw.match),
-      matchTimeText: formatDynamicMatchTime(raw.match, now),
-      pickLabel: raw.pickLabel,
-      pickType: raw.pickType,
-      odd: raw.odd,
-      confidence: raw.confidence,
-      reasoning: raw.reasoning,
-      matchStatus: outcome.matchStatus,
-      pickStatus: outcome.pickStatus,
-      currentScore: { home: outcome.score.home, away: outcome.score.away },
-      liveMinute: outcome.liveMinute
-    };
-  });
-
-  const idealTotalOdds = Number(idealPicks.reduce((acc, item) => acc * item.odd, 1).toFixed(2));
-  const idealAvgConf = Math.round(idealPicks.reduce((acc, item) => acc + item.confidence, 0) / (idealPicks.length || 1));
-  const idealWonCount = idealPicks.filter(p => p.pickStatus === 'won').length;
-  const idealLostCount = idealPicks.filter(p => p.pickStatus === 'lost').length;
-  const idealLiveCount = idealPicks.filter(p => p.pickStatus === 'live').length;
-  const idealUpcomingCount = idealPicks.filter(p => p.pickStatus === 'upcoming').length;
-
-  let idealStatus: CouponStatus = 'pending';
-  if (idealLostCount > 0) {
-    idealStatus = 'lost';
-  } else if (idealWonCount === idealPicks.length && idealPicks.length > 0) {
-    idealStatus = 'won';
-  }
-
-  // -------------------------------------------------------------
-  // 3. SÜRPRİZ KUPON (Yüksek Oran & Sürpriz Kuponu)
-  // -------------------------------------------------------------
-  const surprizRawPicks: Array<{
-    match: Match;
-    pickLabel: string;
-    pickType: CouponMatchItem['pickType'];
-    odd: number;
-    confidence: number;
-    reasoning: string;
-  }> = [];
-
-  // Match 1: Sunderland vs Chelsea -> Sürpriz MS 1 (Sunderland kazandı 1-0!) -> TUTTU!
-  const chelseaMatch = findMatch('chelsea') || findMatch('sunderland');
-  if (chelseaMatch && !bankoPicks.some(p => p.matchId === chelseaMatch.id) && !idealPicks.some(p => p.matchId === chelseaMatch.id)) {
-    surprizRawPicks.push({
-      match: chelseaMatch,
-      pickLabel: 'MS 1 (Sürpriz Ev Sahibi)',
-      pickType: 'ms1',
-      odd: 3.85,
-      confidence: 45,
-      reasoning: 'Sunderland iç sahada agresif yapısıyla Chelsea\'ye sürpriz yapmaya çok yakın.'
-    });
-  }
-
-  // Match 2: Sevilla vs Alavés -> MS X (0-0 bitti!) -> TUTTU!
-  const sevillaMatch = findMatch('sevilla') || findMatch('alavés') || findMatch('alaves');
-  if (sevillaMatch && !bankoPicks.some(p => p.matchId === sevillaMatch.id) && !idealPicks.some(p => p.matchId === sevillaMatch.id)) {
-    surprizRawPicks.push({
-      match: sevillaMatch,
-      pickLabel: 'MS X (Beraberlik)',
-      pickType: 'msX',
-      odd: 3.40,
-      confidence: 42,
-      reasoning: 'İki takımın da hücum kısırlığı ve defansif kapanma eğilimi beraberliği öne çıkarıyor.'
-    });
-  }
-
-  // Match 3: Brighton vs Brentford -> 3.5 Gol Üst (2-0 bitti) -> YATTI!
-  const brightonMatch = findMatch('brighton') || findMatch('brentford');
-  if (brightonMatch && !bankoPicks.some(p => p.matchId === brightonMatch.id) && !idealPicks.some(p => p.matchId === brightonMatch.id)) {
-    surprizRawPicks.push({
-      match: brightonMatch,
-      pickLabel: '3.5 Gol Üst',
-      pickType: 'over25',
-      odd: 2.65,
-      confidence: 40,
-      reasoning: 'Yüksek geçiş temposu ve riskli savunma hatları ile bol gol beklentisi.'
-    });
-  }
-
-  // Fallback if needed
-  if (surprizRawPicks.length < 3) {
-    for (const m of poolMatches) {
-      if (
-        bankoPicks.some(p => p.matchId === m.id) ||
-        idealPicks.some(p => p.matchId === m.id) ||
-        surprizRawPicks.some(p => p.match.id === m.id)
-      ) {
-        continue;
-      }
-      surprizRawPicks.push({
-        match: m,
-        pickLabel: 'MS X (Beraberlik)',
-        pickType: 'msX',
-        odd: 3.20,
-        confidence: 40,
-        reasoning: 'Denk güçlerin mücadelesinde beraberlik oranı yüksek değer taşıyor.'
-      });
-      if (surprizRawPicks.length >= 3) break;
-    }
-  }
-
-  const surprizPicks: CouponMatchItem[] = surprizRawPicks.map((raw, idx) => {
-    const outcome = evaluatePickStatus(raw.pickType, raw.match, now);
-    return {
-      id: `s_${idx + 1}`,
-      matchId: raw.match.id,
-      match: raw.match,
-      homeTeamName: raw.match.homeTeam.name,
-      awayTeamName: raw.match.awayTeam.name,
-      league: raw.match.league,
-      iddaaCode: raw.match.iddaaCode || getMatchIddaaCode(raw.match),
-      matchTimeText: formatDynamicMatchTime(raw.match, now),
-      pickLabel: raw.pickLabel,
-      pickType: raw.pickType,
-      odd: raw.odd,
-      confidence: raw.confidence,
-      reasoning: raw.reasoning,
-      matchStatus: outcome.matchStatus,
-      pickStatus: outcome.pickStatus,
-      currentScore: { home: outcome.score.home, away: outcome.score.away },
-      liveMinute: outcome.liveMinute
-    };
-  });
-
-  const surprizTotalOdds = Number(surprizPicks.reduce((acc, item) => acc * item.odd, 1).toFixed(2));
-  const surprizAvgConf = Math.round(surprizPicks.reduce((acc, item) => acc + item.confidence, 0) / (surprizPicks.length || 1));
-  const surprizWonCount = surprizPicks.filter(p => p.pickStatus === 'won').length;
-  const surprizLostCount = surprizPicks.filter(p => p.pickStatus === 'lost').length;
-  const surprizLiveCount = surprizPicks.filter(p => p.pickStatus === 'live').length;
-  const surprizUpcomingCount = surprizPicks.filter(p => p.pickStatus === 'upcoming').length;
-
-  let surprizStatus: CouponStatus = 'pending';
-  if (surprizLostCount > 0) {
-    surprizStatus = 'lost';
-  } else if (surprizWonCount === surprizPicks.length && surprizPicks.length > 0) {
-    surprizStatus = 'won';
-  }
+  const bankoRaw = pickTierMatches('banko', 3);
+  const idealRaw = pickTierMatches('ideal', 3);
+  const surprizRaw = pickTierMatches('surpriz', 3);
 
   const dayTitleSuffix = selectedDay === 'today' ? ' (Bugün)' : selectedDay === 'yesterday' ? ' (Dün)' : '';
 
   return [
-    {
-      id: 'banko',
-      title: `Günün Banko Kuponu${dayTitleSuffix}`,
-      shortTitle: `Banko Kupon${dayTitleSuffix}`,
-      badge: 'YÜKSEK GÜVEN',
-      riskRating: 'Düşük Risk',
-      description: 'Poisson & form modelinde kazanma olasılığı %80 üzerinde çıkan en sağlam maçlar.',
-      accentColor: 'text-emerald-400',
-      borderColor: 'border-emerald-500/40 hover:border-emerald-400',
-      badgeBg: 'bg-emerald-500/15 border border-emerald-500/40',
-      badgeText: 'text-emerald-300',
-      glowColor: 'shadow-emerald-950/40',
-      items: bankoPicks,
-      totalOdds: bankoTotalOdds,
-      avgConfidence: bankoAvgConf,
-      status: bankoStatus,
-      wonCount: bankoWonCount,
-      lostCount: bankoLostCount,
-      liveCount: bankoLiveCount,
-      upcomingCount: bankoUpcomingCount,
-      totalCount: bankoPicks.length
-    },
-    {
-      id: 'ideal',
-      title: `Günün İdeal Kuponu${dayTitleSuffix}`,
-      shortTitle: `İdeal Kupon${dayTitleSuffix}`,
-      badge: 'DENGELİ DEĞER',
-      riskRating: 'Dengeli Değer',
-      description: 'Optimum risk/kazanç dengesi; karşılıklı gol ve gollü geçmesi beklenen değer maçları.',
-      accentColor: 'text-amber-400',
-      borderColor: 'border-amber-500/40 hover:border-amber-400',
-      badgeBg: 'bg-amber-500/15 border border-amber-500/40',
-      badgeText: 'text-amber-300',
-      glowColor: 'shadow-amber-950/40',
-      items: idealPicks,
-      totalOdds: idealTotalOdds,
-      avgConfidence: idealAvgConf,
-      status: idealStatus,
-      wonCount: idealWonCount,
-      lostCount: idealLostCount,
-      liveCount: idealLiveCount,
-      upcomingCount: idealUpcomingCount,
-      totalCount: idealPicks.length
-    },
-    {
-      id: 'surpriz',
-      title: `Günün Sürpriz Kuponu${dayTitleSuffix}`,
-      shortTitle: `Sürpriz Kupon${dayTitleSuffix}`,
-      badge: 'YÜKSEK ORAN',
-      riskRating: 'Yüksek Oran',
-      description: 'Düşük riskli ufak bütçelerle yüksek kazanç kovalayan İY/MS ve beraberlik sürprizleri.',
-      accentColor: 'text-purple-400',
-      borderColor: 'border-purple-500/40 hover:border-purple-400',
-      badgeBg: 'bg-purple-500/15 border border-purple-500/40',
-      badgeText: 'text-purple-300',
-      glowColor: 'shadow-purple-950/40',
-      items: surprizPicks,
-      totalOdds: surprizTotalOdds,
-      avgConfidence: surprizAvgConf,
-      status: surprizStatus,
-      wonCount: surprizWonCount,
-      lostCount: surprizLostCount,
-      liveCount: surprizLiveCount,
-      upcomingCount: surprizUpcomingCount,
-      totalCount: surprizPicks.length
-    }
+    finalizeCoupon(
+      'banko',
+      `Günün Banko Kuponu${dayTitleSuffix}`,
+      `Banko Kupon${dayTitleSuffix}`,
+      'YÜKSEK GÜVEN',
+      'Düşük Risk',
+      'Canlı bültende Poisson & form modeline göre kazanma olasılığı en yüksek seçimler.',
+      'text-emerald-400',
+      'border-emerald-500/40 hover:border-emerald-400',
+      'bg-emerald-500/15 border border-emerald-500/40',
+      'text-emerald-300',
+      'shadow-emerald-950/40',
+      'b',
+      bankoRaw,
+      now
+    ),
+    finalizeCoupon(
+      'ideal',
+      `Günün İdeal Kuponu${dayTitleSuffix}`,
+      `İdeal Kupon${dayTitleSuffix}`,
+      'DENGELİ DEĞER',
+      'Dengeli Değer',
+      'Canlı oran/olasılık dengesinde gol ve taraf bahislerinden derlenen günlük ideal kupon.',
+      'text-amber-400',
+      'border-amber-500/40 hover:border-amber-400',
+      'bg-amber-500/15 border border-amber-500/40',
+      'text-amber-300',
+      'shadow-amber-950/40',
+      'i',
+      idealRaw,
+      now
+    ),
+    finalizeCoupon(
+      'surpriz',
+      `Günün Sürpriz Kuponu${dayTitleSuffix}`,
+      `Sürpriz Kupon${dayTitleSuffix}`,
+      'YÜKSEK ORAN',
+      'Yüksek Oran',
+      'Resmi yüksek oranlarda beklenen değeri öne çıkan sürpriz ve beraberlik tercihleri.',
+      'text-purple-400',
+      'border-purple-500/40 hover:border-purple-400',
+      'bg-purple-500/15 border border-purple-500/40',
+      'text-purple-300',
+      'shadow-purple-950/40',
+      's',
+      surprizRaw,
+      now
+    )
   ];
 }

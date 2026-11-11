@@ -63,7 +63,7 @@ function isSameTeam(a: string, b: string): boolean {
 }
 
 export async function fetchMatchInsightsFromApi(match: Match): Promise<MatchInsightsPayload | null> {
-  if (!match?.id || String(match.id).startsWith('iddaa-') || String(match.id).startsWith('curated-')) {
+  if (!match?.id || String(match.id).startsWith('curated-')) {
     return null;
   }
 
@@ -71,7 +71,11 @@ export async function fetchMatchInsightsFromApi(match: Match): Promise<MatchInsi
     typeof window !== 'undefined' &&
     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-  const query = `eventId=${encodeURIComponent(match.id)}&league=${encodeURIComponent(match.league || '')}`;
+  const query =
+    `eventId=${encodeURIComponent(match.id)}` +
+    `&league=${encodeURIComponent(match.league || '')}` +
+    `&homeTeam=${encodeURIComponent(match.homeTeam?.name || '')}` +
+    `&awayTeam=${encodeURIComponent(match.awayTeam?.name || '')}`;
   const urls = isLocalHost
     ? [`/api/match-insights?${query}`, `http://localhost:3001/api/match-insights?${query}`]
     : [`/api/match-insights?${query}`];

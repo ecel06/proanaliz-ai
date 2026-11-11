@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Match, MatchAnalysis, UserBetslipItem } from '../types';
-import { BettingPickOption, calcMarketOdd } from '../utils/oddsHelper';
+import { BettingPickOption, resolveMarketOdd } from '../utils/oddsHelper';
 import { getMatchParsedDate, TURKISH_MONTHS } from '../utils/dateHelper';
 import { getMatchLiveState, parseMatchKickoffEpoch } from '../utils/liveMatchHelper';
 import { detectMatchValueBets } from '../utils/valueBetHelper';
@@ -22,7 +22,7 @@ interface QuickOddDef {
   shortLabel: string;
   marketName: string;
   getFullLabel: (match: Match) => string;
-  getProbAndOdd: (analysis: MatchAnalysis) => { prob: number; odd: number };
+  getProbAndOdd: (match: Match, analysis: MatchAnalysis) => { prob: number; odd: number; isOfficial: boolean };
 }
 
 const QUICK_ODDS_DEFS: QuickOddDef[] = [
@@ -31,49 +31,49 @@ const QUICK_ODDS_DEFS: QuickOddDef[] = [
     shortLabel: '1',
     marketName: 'Maç Sonucu',
     getFullLabel: (m) => `MS 1 (${m.homeTeam.shortName || m.homeTeam.name})`,
-    getProbAndOdd: (a) => ({ prob: a.ms1, odd: calcMarketOdd(a.ms1) })
+    getProbAndOdd: (m, a) => ({ prob: a.ms1, ...resolveMarketOdd(m, 'ms1', a.ms1) })
   },
   {
     key: 'msX',
     shortLabel: 'X',
     marketName: 'Maç Sonucu',
     getFullLabel: () => 'MS X (Beraberlik)',
-    getProbAndOdd: (a) => ({ prob: a.msX, odd: calcMarketOdd(a.msX, 0.91) })
+    getProbAndOdd: (m, a) => ({ prob: a.msX, ...resolveMarketOdd(m, 'msX', a.msX, 0.91) })
   },
   {
     key: 'ms2',
     shortLabel: '2',
     marketName: 'Maç Sonucu',
     getFullLabel: (m) => `MS 2 (${m.awayTeam.shortName || m.awayTeam.name})`,
-    getProbAndOdd: (a) => ({ prob: a.ms2, odd: calcMarketOdd(a.ms2) })
+    getProbAndOdd: (m, a) => ({ prob: a.ms2, ...resolveMarketOdd(m, 'ms2', a.ms2) })
   },
   {
     key: 'under25',
     shortLabel: '2.5 Alt',
     marketName: '2.5 Gol',
     getFullLabel: () => '2.5 Gol Alt',
-    getProbAndOdd: (a) => ({ prob: a.under25, odd: calcMarketOdd(a.under25) })
+    getProbAndOdd: (m, a) => ({ prob: a.under25, ...resolveMarketOdd(m, 'under25', a.under25) })
   },
   {
     key: 'over25',
     shortLabel: '2.5 Üst',
     marketName: '2.5 Gol',
     getFullLabel: () => '2.5 Gol Üst',
-    getProbAndOdd: (a) => ({ prob: a.over25, odd: calcMarketOdd(a.over25) })
+    getProbAndOdd: (m, a) => ({ prob: a.over25, ...resolveMarketOdd(m, 'over25', a.over25) })
   },
   {
     key: 'bttsYes',
     shortLabel: 'KG Var',
     marketName: 'Karşılıklı Gol',
     getFullLabel: () => 'KG Var',
-    getProbAndOdd: (a) => ({ prob: a.bttsYes, odd: calcMarketOdd(a.bttsYes) })
+    getProbAndOdd: (m, a) => ({ prob: a.bttsYes, ...resolveMarketOdd(m, 'bttsYes', a.bttsYes) })
   },
   {
     key: 'bttsNo',
     shortLabel: 'KG Yok',
     marketName: 'Karşılıklı Gol',
     getFullLabel: () => 'KG Yok',
-    getProbAndOdd: (a) => ({ prob: a.bttsNo, odd: calcMarketOdd(a.bttsNo) })
+    getProbAndOdd: (m, a) => ({ prob: a.bttsNo, ...resolveMarketOdd(m, 'bttsNo', a.bttsNo) })
   }
 ];
 
@@ -420,7 +420,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                     <div className="flex items-center space-x-2 shrink-0">
                       <div className="grid grid-cols-7 gap-1 sm:gap-1.5 w-[360px]">
                         {QUICK_ODDS_DEFS.map((def) => {
-                          const { prob, odd } = def.getProbAndOdd(analysis);
+                          const { prob, odd } = def.getProbAndOdd(match, analysis);
                           const isSelected = betslipItems.some(
                             (item) => item.matchId === match.id && item.pickKey === def.key
                           );
@@ -593,7 +593,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                     {/* Row 3: Quick Odds Bar (8 columns: 7 odds + 1 detail button) */}
                     <div className="grid grid-cols-8 gap-1 pt-1">
                       {QUICK_ODDS_DEFS.map((def) => {
-                        const { prob, odd } = def.getProbAndOdd(analysis);
+                        const { prob, odd } = def.getProbAndOdd(match, analysis);
                         const isSelected = betslipItems.some(
                           (item) => item.matchId === match.id && item.pickKey === def.key
                         );

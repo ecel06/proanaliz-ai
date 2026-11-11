@@ -141,3 +141,62 @@ export function calculateSystemBet(
     systemLabel
   };
 }
+
+export interface SavedSystemConfig {
+  selectedSystems: number[];
+  bankoMatchIds: string[];
+  columnStake: number;
+  totalColumns: number;
+  systemLabel: string;
+}
+
+/**
+ * Settles a Sistem coupon against per-match outcomes using exact Nesine/İddaa rules:
+ * - If any Banko leg loses => immediately lost (0 payout).
+ * - If any non-banko leg is still pending => remains pending.
+ * - Once settled, sums all winning k-combination columns (times banko product * columnStake).
+ */
+export function calculateSettledSystemPayout(
+  items: UserBetslipItem[],
+  config: SavedSystemConfig,
+  outcomesByMatchId: Record<string, 'won' | 'lost' | 'pending'>
+): { status: 'pending' | 'won' | 'lost'; payout: number } {
+  const bankoSet = new Set(config.bankoMatchIds || []);
+  const bankoItems = items.filter(it => bankoSet.has(String(it.matchId)));
+  const normalItems = items.filter(it => !bankoSet.has(String(it.matchId)));
+
+  for (const b of bankoItems) {
+    if (outcomesByMatchId[String(b.matchId)] === 'lost') {
+      return { status: 'lost', payout: 0 };
+    }
+  }
+
+  for (const it of items) {
+    const st = outcomesByMatchId[String(it.matchId)] || 'pending';
+    if (st === 'pending') {
+      return { status: 'pending', payout: 0 };
+    }
+  }
+
+  const bankoProduct = bankoItems.reduce((acc, it) => acc * it.odd, 1);
+  const wonNormalOdds = normalItems
+    .filter(it => outcomesByMatchId[String(it.matchId)] === 'won')
+    .map(it => it.odd);
+
+  let totalMultiplier = 0;
+  if (normalItems.length === 0 && bankoItems.length > 0) {
+    totalMultiplier = bankoProduct;
+  } else {
+    for (const k of config.selectedSystems) {
+      const reqNormal = k - bankoItems.length;
+      if (reqNormal >= 0 && wonNormalOdds.length >= reqNormal) {
+        totalMultiplier += bankoProduct * sumOfKProducts(wonNormalOdds, reqNormal);
+      }
+    }
+  }
+
+  const payout = Number((Math.max(1, config.columnStake) * totalMultiplier).toFixed(2));
+  return payout > 0
+    ? { status: 'won', payout }
+    : { status: 'lost', payout: 0 };
+}

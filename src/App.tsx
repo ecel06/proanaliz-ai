@@ -272,7 +272,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.11.07';
+  const CLIENT_BUILD_VERSION = '2026.11.11.08';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -1640,8 +1640,8 @@ export const App: React.FC = () => {
         onRemoveItem={handleRemoveBetslipItem}
         onClearAll={handleClearBetslip}
         onConsultAI={handleConsultAIFromSlip}
-        onSaveToBankroll={(items, stake, totalOdds) => {
-          saveNewSlip(items, stake, totalOdds);
+        onSaveToBankroll={(items, stake, totalOdds, systemConfig) => {
+          saveNewSlip(items, stake, totalOdds, systemConfig);
           setSavedSlips(getSavedSlips());
         }}
       />
