@@ -276,7 +276,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.11.13';
+  const CLIENT_BUILD_VERSION = '2026.11.11.14';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -417,6 +417,13 @@ export const App: React.FC = () => {
   // 3. Pre-calculate Poisson analyses for all matches in bulletin
   const allMatches: Match[] = weeklyMatches;
 
+  // Clear football goal toast when user leaves Football section
+  useEffect(() => {
+    if (activeSection !== 'football' && activeGoalToast) {
+      setActiveGoalToast(null);
+    }
+  }, [activeSection, activeGoalToast]);
+
   // Track previous scores and notified goals for live goal chime & toast notification
   const prevScoresRef = useRef<Map<string, { home: number; away: number }>>(new Map());
   const notifiedGoalsRef = useRef<Set<string>>(new Set());
@@ -452,32 +459,35 @@ export const App: React.FC = () => {
 
           if (!notifiedGoalsRef.current.has(goalKey)) {
             notifiedGoalsRef.current.add(goalKey);
-            playGoalChime();
-            setActiveGoalToast({
-              id: `goal-${match.id}-${Date.now()}`,
-              matchId: String(match.id),
-              scoringTeamName: scoringTeam,
-              homeTeamName: match.homeTeam.name,
-              awayTeamName: match.awayTeam.name,
-              scoreHome: currentH,
-              scoreAway: currentA,
-              league: match.league,
-              minute: live.liveMinute || undefined,
-              timestamp: Date.now()
-            });
+            // ONLY trigger sound, goal toast, and push notification inside the Football section
+            if (activeSection === 'football') {
+              playGoalChime();
+              setActiveGoalToast({
+                id: `goal-${match.id}-${Date.now()}`,
+                matchId: String(match.id),
+                scoringTeamName: scoringTeam,
+                homeTeamName: match.homeTeam.name,
+                awayTeamName: match.awayTeam.name,
+                scoreHome: currentH,
+                scoreAway: currentA,
+                league: match.league,
+                minute: live.liveMinute || undefined,
+                timestamp: Date.now()
+              });
 
-            // Send native lockscreen / browser push notification
-            sendNativePushNotification(`⚽ GOOOL! ${scoringTeam}`, {
-              body: `${match.homeTeam.name} ${currentH} - ${currentA} ${match.awayTeam.name} (${live.liveMinute || 'Canlı'})`,
-              tag: `goal-${match.id}`
-            });
+              // Send native lockscreen / browser push notification
+              sendNativePushNotification(`⚽ GOOOL! ${scoringTeam}`, {
+                body: `${match.homeTeam.name} ${currentH} - ${currentA} ${match.awayTeam.name} (${live.liveMinute || 'Canlı'})`,
+                tag: `goal-${match.id}`
+              });
+            }
           }
-          break;
+          if (activeSection === 'football') break;
         }
       }
       prevScores.set(String(match.id), { home: currentH, away: currentA });
     }
-  }, [allMatches, currentTime]);
+  }, [allMatches, currentTime, activeSection]);
 
   // Virtual Bankroll auto-settle & statistics
   const settledSlips = useMemo(() => {
@@ -1708,13 +1718,15 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* Canlı Gol Sesi & Bildirim Kartı */}
-      <GoalNotificationToast
-        goal={activeGoalToast}
-        onClose={() => setActiveGoalToast(null)}
-        isMuted={isMuted}
-        onToggleMute={handleToggleMute}
-      />
+      {/* Canlı Gol Sesi & Bildirim Kartı - Sadece Futbol Bölümünde */}
+      {activeSection === 'football' && (
+        <GoalNotificationToast
+          goal={activeGoalToast}
+          onClose={() => setActiveGoalToast(null)}
+          isMuted={isMuted}
+          onToggleMute={handleToggleMute}
+        />
+      )}
 
       {/* Modal 8: Takım & Renk Teması Seçici */}
       <ThemeSelectorModal

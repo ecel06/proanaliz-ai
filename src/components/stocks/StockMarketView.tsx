@@ -395,6 +395,46 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
           </div>
         </div>
 
+        {/* Live Session Status & Feed Transparency Strip */}
+        {(() => {
+          const trNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Istanbul' }));
+          const day = trNow.getDay();
+          const mins = trNow.getHours() * 60 + trNow.getMinutes();
+          const isWeekday = day >= 1 && day <= 5;
+          const bistOpen = isWeekday && mins >= 10 * 60 && mins <= 18 * 60 + 10;
+          const usOpen = isWeekday && mins >= 16 * 60 + 30 && mins <= 23 * 60;
+          const isOpen = market === 'crypto' ? true : market === 'bist' ? bistOpen : usOpen;
+          const label =
+            market === 'crypto'
+              ? '7/24 Kesintisiz Canlı Piyasa (Anlık)'
+              : market === 'bist'
+              ? bistOpen
+                ? 'BIST Seansı Açık (10:00–18:10) • Gün Boyu Canlı Akış'
+                : 'BIST Seansı Kapalı (10:00–18:10 arası canlı güncellenir)'
+              : usOpen
+              ? 'ABD Borsaları Açık (16:30–23:00 TRT) • Anlık Akış'
+              : 'ABD Borsaları Kapalı (16:30–23:00 TRT)';
+          const latencyNote =
+            market === 'bist'
+              ? '15 dk BIST yasal akış • 45sn otomatik tarama'
+              : 'Anlık fiyat • 45sn otomatik tarama';
+          return (
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-slate-950/75 border border-slate-800/80 text-[10px]">
+              <div className="flex items-center space-x-2">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                  }`}
+                />
+                <span className={isOpen ? 'font-bold text-emerald-300' : 'font-bold text-amber-300'}>
+                  {label}
+                </span>
+              </div>
+              <span className="text-slate-400 font-mono">{latencyNote}</span>
+            </div>
+          );
+        })()}
+
         {/* Quant Presets + Live Counts + Sort */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
           <div className="flex flex-wrap gap-1.5">
