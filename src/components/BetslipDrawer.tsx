@@ -1,9 +1,10 @@
 // src/components/BetslipDrawer.tsx
 // Interactive Kupon Hesaplayıcı & Betslip Drawer for ProAnaliz AI
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Match, UserBetslipItem } from '../types';
 import { simulateBetslipMonteCarlo } from '../utils/monteCarloHelper';
+import { calculateSystemBet, getAvailableSystemNumbers } from '../utils/systemBetHelper';
 import { CouponShareModal } from './CouponShareModal';
 import {
   Ticket,
@@ -49,9 +50,66 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
   const [copied, setCopied] = useState(false);
   const [savedToBankroll, setSavedToBankroll] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSystemMode, setIsSystemMode] = useState(false);
+  const [selectedSystems, setSelectedSystems] = useState<number[]>([]);
+  const [bankoMatchIds, setBankoMatchIds] = useState<string[]>([]);
+
+  // Clean up banko ids if matches are removed & reset system mode if < 2 matches
+  useEffect(() => {
+    const validIds = new Set(items.map(it => it.matchId));
+    setBankoMatchIds(prev => prev.filter(id => validIds.has(id)));
+    if (items.length < 2) {
+      setIsSystemMode(false);
+      setSelectedSystems([]);
+    }
+  }, [items]);
 
   // Monte Carlo Simulation Engine (Runs 5,000 runs)
   const monteCarlo = useMemo(() => simulateBetslipMonteCarlo(items), [items]);
+
+  const normalCount = useMemo(
+    () => items.filter(it => !bankoMatchIds.includes(it.matchId)).length,
+    [items, bankoMatchIds]
+  );
+
+  const availableSystems = useMemo(
+    () => getAvailableSystemNumbers(normalCount),
+    [normalCount]
+  );
+
+  const effectiveSystems = useMemo(() => {
+    if (!isSystemMode || items.length < 2) {
+      return normalCount > 0 ? [normalCount] : [];
+    }
+    const valid = selectedSystems.filter(s => s >= 1 && s <= normalCount);
+    if (valid.length > 0) return valid;
+    // Sensible default when user switches to Sistem tab: n-1 (e.g. Sistem 2 for 3 matches, Sistem 3 for 4)
+    return normalCount >= 2 ? [normalCount - 1] : normalCount === 1 ? [1] : [];
+  }, [isSystemMode, selectedSystems, normalCount, items.length]);
+
+  const systemCalc = useMemo(
+    () => calculateSystemBet(items, bankoMatchIds, effectiveSystems, stake),
+    [items, bankoMatchIds, effectiveSystems, stake]
+  );
+
+  const toggleBanko = (matchId: string) => {
+    setIsSystemMode(true);
+    setBankoMatchIds(prev =>
+      prev.includes(matchId) ? prev.filter(id => id !== matchId) : [...prev, matchId]
+    );
+  };
+
+  const toggleSystemNumber = (s: number) => {
+    setIsSystemMode(true);
+    setSelectedSystems(prev => {
+      const base = prev.length > 0 ? prev : effectiveSystems;
+      if (base.includes(s)) {
+        const next = base.filter(x => x !== s);
+        return next.length > 0 ? next : [s];
+      }
+      return [...base, s].sort((a, b) => a - b);
+    });
+  };
 
   // Calculate totals
   const totalOdds = Number(
@@ -61,24 +119,33 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
     ? Math.round(items.reduce((acc, it) => acc + it.probability, 0) / items.length)
     : 0;
 
-  const estimatedWin = (stake * totalOdds);
-  const netProfit = Math.max(0, estimatedWin - stake);
+  const estimatedWin = systemCalc.isSystemActive ? systemCalc.maxWin : (stake * totalOdds);
+  const totalBetCost = systemCalc.isSystemActive ? systemCalc.totalCost : stake;
+  const netProfit = Math.max(0, estimatedWin - totalBetCost);
 
-  const quickStakes = [50, 100, 200, 500, 1000];
+  const quickStakes = [20, 50, 100, 200, 500];
 
   const handleCopySlip = () => {
-    let text = `🎫 ProAnaliz AI - Özel Kuponum (${items.length} Maç)\n`;
+    let text = `🎫 ProAnaliz AI - Özel Kuponum (${items.length} Maç • ${systemCalc.systemLabel})\n`;
     text += `━━━━━━━━━━━━━━━━━━━━━━━\n`;
     items.forEach((it, idx) => {
-      text += `${idx + 1}️⃣ ${it.match.homeTeam.name} vs ${it.match.awayTeam.name}\n`;
+      const isB = bankoMatchIds.includes(it.matchId);
+      text += `${idx + 1}️⃣ ${it.match.homeTeam.name} vs ${it.match.awayTeam.name}${isB ? ' [BANKO]' : ''}\n`;
       text += `   🏆 Tercih: ${it.pickLabel} (${it.marketName})\n`;
       text += `   📈 Oran: ${it.odd.toFixed(2)} (%${it.probability} Güven)\n`;
       text += `   ⏰ ${it.match.date} ${it.match.time} • ${it.match.league}\n\n`;
     });
     text += `━━━━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `💰 Toplam Oran: ${totalOdds.toFixed(2)}\n`;
-    text += `💵 Yatırılan Misli: ${stake} ₺\n`;
-    text += `🎯 Tahmini Kazanç: ${estimatedWin.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} ₺\n`;
+    if (systemCalc.isSystemActive) {
+      text += `⚙️ Kupon Türü: ${systemCalc.systemLabel} (${systemCalc.totalColumns} Kolon)\n`;
+      text += `💵 Kolon Misli: ${stake} ₺ | Toplam Bedel: ${totalBetCost.toLocaleString('tr-TR')} ₺\n`;
+      text += `📉 Min Kazanç: ${systemCalc.minWin.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} ₺\n`;
+      text += `🎯 Max Kazanç: ${systemCalc.maxWin.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} ₺\n`;
+    } else {
+      text += `💰 Toplam Oran: ${totalOdds.toFixed(2)}\n`;
+      text += `💵 Yatırılan Misli: ${stake} ₺\n`;
+      text += `🎯 Tahmini Kazanç: ${estimatedWin.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} ₺\n`;
+    }
     text += `📊 Ortalama Güven: %${avgConfidence}\n`;
 
     if (navigator.clipboard) {
@@ -90,8 +157,8 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
 
   const handleAskAI = () => {
     if (!onConsultAI) return;
-    const summary = `Benim hazırladığım ${items.length} maçlık kuponum şöyle:\n` +
-      items.map(it => `• ${it.match.homeTeam.name} - ${it.match.awayTeam.name}: ${it.pickLabel} (Oran: ${it.odd})`).join('\n') +
+    const summary = `Benim hazırladığım ${items.length} maçlık kuponum (${systemCalc.systemLabel}) şöyle:\n` +
+      items.map(it => `• ${it.match.homeTeam.name} - ${it.match.awayTeam.name}: ${it.pickLabel} (Oran: ${it.odd})${bankoMatchIds.includes(it.matchId) ? ' [Banko]' : ''}`).join('\n') +
       `\nToplam Oran: ${totalOdds.toFixed(2)}. Bu kupon tutar mı, riskleri ve analizi nedir?`;
     onClose();
     onConsultAI(summary);
@@ -99,7 +166,10 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
 
   const handleSaveToBankroll = () => {
     if (onSaveToBankroll) {
-      onSaveToBankroll(items, stake, totalOdds);
+      const saveOdds = systemCalc.isSystemActive
+        ? Number((systemCalc.maxWin / Math.max(1, totalBetCost)).toFixed(2))
+        : totalOdds;
+      onSaveToBankroll(items, totalBetCost, saveOdds);
       setSavedToBankroll(true);
       setTimeout(() => setSavedToBankroll(false), 2500);
     }
@@ -128,11 +198,13 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
               <div className="flex items-center space-x-1.5">
                 <span className="tracking-tight font-extrabold">Kuponum ({items.length})</span>
                 <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-950/40 text-emerald-200 font-mono">
-                  {totalOdds.toFixed(2)} Oran
+                  {systemCalc.isSystemActive ? `${systemCalc.systemLabel} • ${systemCalc.totalColumns}K` : `${totalOdds.toFixed(2)} Oran`}
                 </span>
               </div>
               <div className="text-[11px] text-emerald-200 font-semibold font-mono">
-                {estimatedWin.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺ Olası Kazanç
+                {systemCalc.isSystemActive
+                  ? `Max ${estimatedWin.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺ (Bedel: ${totalBetCost.toLocaleString('tr-TR')} ₺)`
+                  : `${estimatedWin.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺ Olası Kazanç`}
               </div>
             </div>
 
@@ -222,7 +294,22 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3 shrink-0">
+                  <div className="flex items-center space-x-2 shrink-0">
+                    {items.length >= 2 && (
+                      <button
+                        type="button"
+                        onClick={() => toggleBanko(item.matchId)}
+                        className={`w-7 h-7 rounded-lg text-[11px] font-black border transition-all cursor-pointer flex items-center justify-center ${
+                          bankoMatchIds.includes(item.matchId)
+                            ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-sm'
+                            : 'bg-slate-900 hover:bg-slate-800 text-slate-400 border-slate-700'
+                        }`}
+                        title={bankoMatchIds.includes(item.matchId) ? 'Bankoyu Kaldır' : 'Sistemde Banko Yap (B)'}
+                      >
+                        B
+                      </button>
+                    )}
+
                     <div className="text-right">
                       <div className="text-[10px] text-slate-500 font-semibold uppercase">Oran</div>
                       <div className="text-base sm:text-lg font-black text-amber-400 font-mono">
@@ -243,21 +330,101 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
             </div>
 
             {/* Calculations & Stake Box */}
-            <div className="p-4 sm:p-5 bg-slate-950 border-t border-slate-800 shrink-0 space-y-3.5">
-              
+            <div className="p-4 sm:p-5 bg-slate-950 border-t border-slate-800 shrink-0 space-y-3">
+
+              {/* Kupon Türü: Kombine vs Sistem Selector */}
+              {items.length >= 2 && (
+                <div className="p-2.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center space-x-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsSystemMode(false);
+                          setBankoMatchIds([]);
+                          setSelectedSystems([]);
+                        }}
+                        className={`px-3 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                          !isSystemMode
+                            ? 'bg-emerald-500 text-slate-950 shadow-xs'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        Kombine
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsSystemMode(true)}
+                        className={`px-3 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer flex items-center space-x-1 ${
+                          isSystemMode
+                            ? 'bg-amber-400 text-slate-950 shadow-xs'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        <span>Sistem</span>
+                        {systemCalc.isSystemActive && (
+                          <span className="px-1 rounded bg-slate-950/20 font-mono text-[10px]">
+                            {systemCalc.totalColumns}K
+                          </span>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="text-[11px] font-bold text-slate-300 font-mono">
+                      {systemCalc.totalColumns} Kolon • Bedel:{' '}
+                      <span className="text-amber-300">{totalBetCost.toLocaleString('tr-TR')} ₺</span>
+                    </div>
+                  </div>
+
+                  {isSystemMode && availableSystems.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-800/80">
+                      <span className="text-[10px] text-slate-400 font-semibold mr-1">
+                        {bankoMatchIds.length > 0 ? `${bankoMatchIds.length} Banko + Sistem:` : 'Sistem Seç:'}
+                      </span>
+                      {availableSystems.map(s => {
+                        const isPicked = systemCalc.selectedSystems.includes(s);
+                        const label = s === normalCount && bankoMatchIds.length === 0 ? `${s} (Kombine)` : `${s}`;
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => toggleSystemNumber(s)}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-black font-mono border transition-all cursor-pointer ${
+                              isPicked
+                                ? 'bg-amber-400/20 text-amber-300 border-amber-400/60'
+                                : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Summary Stats Row */}
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                  <div className="text-[10px] text-slate-400 font-semibold uppercase">Maç Sayısı</div>
-                  <div className="text-sm font-black text-white font-mono mt-0.5">{items.length}</div>
+                <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="text-[10px] text-slate-400 font-semibold uppercase">
+                    {systemCalc.isSystemActive ? 'Kolon / Maç' : 'Maç Sayısı'}
+                  </div>
+                  <div className="text-sm font-black text-white font-mono mt-0.5">
+                    {systemCalc.isSystemActive ? `${systemCalc.totalColumns}K / ${items.length}M` : items.length}
+                  </div>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-slate-900 border border-emerald-500/30">
-                  <div className="text-[10px] text-emerald-400 font-semibold uppercase">Toplam Oran</div>
-                  <div className="text-base font-black text-emerald-400 font-mono mt-0.5">{totalOdds.toFixed(2)}</div>
+                <div className="p-2 rounded-xl bg-slate-900 border border-emerald-500/30">
+                  <div className="text-[10px] text-emerald-400 font-semibold uppercase">
+                    {systemCalc.isSystemActive ? 'Max Çarpan' : 'Toplam Oran'}
+                  </div>
+                  <div className="text-base font-black text-emerald-400 font-mono mt-0.5">
+                    {systemCalc.isSystemActive ? `${systemCalc.effectiveMaxMultiplier}x` : totalOdds.toFixed(2)}
+                  </div>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-slate-900 border border-purple-500/30">
+                <div className="p-2 rounded-xl bg-slate-900 border border-purple-500/30">
                   <div className="text-[10px] text-purple-400 font-semibold uppercase">Ortalama Güven</div>
                   <div className="text-sm font-black text-purple-300 font-mono mt-0.5">%{avgConfidence}</div>
                 </div>
@@ -268,9 +435,13 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                 <div className="flex items-center justify-between text-xs font-bold text-slate-300 px-1">
                   <span className="flex items-center space-x-1">
                     <Coins className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Bahis Tutarı (Misli ₺):</span>
+                    <span>{systemCalc.isSystemActive ? 'Kolon Başı Misli (₺):' : 'Bahis Tutarı (Misli ₺):'}</span>
                   </span>
-                  <span className="text-[11px] text-slate-500 font-normal">Hesaplama simülasyonu</span>
+                  <span className="text-[11px] text-slate-500 font-normal">
+                    {systemCalc.isSystemActive
+                      ? `Toplam Kupon Bedeli: ${totalBetCost.toLocaleString('tr-TR')} ₺`
+                      : 'Hesaplama simülasyonu'}
+                  </span>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -306,19 +477,25 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                 </div>
               </div>
 
-              {/* Estimated Total Payout (Big Green Highlight) */}
+              {/* Estimated Total Payout (Big Green Highlight + System Min/Max) */}
               <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-teal-950/60 border border-emerald-500/40 flex items-center justify-between shadow-lg">
                 <div>
-                  <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Tahmini Kazanç</div>
+                  <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
+                    {systemCalc.isSystemActive ? 'Maksimum Kazanç' : 'Tahmini Kazanç'}
+                  </div>
                   <div className="text-xl sm:text-2xl font-black text-emerald-300 font-mono">
                     {estimatedWin.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <div className="text-[10px] text-slate-400 font-semibold">Net Kâr</div>
+                  <div className="text-[10px] text-slate-400 font-semibold">
+                    {systemCalc.isSystemActive ? 'Minimum Kazanç' : 'Net Kâr'}
+                  </div>
                   <div className="text-sm font-bold text-amber-400 font-mono">
-                    +{netProfit.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺
+                    {systemCalc.isSystemActive
+                      ? `${systemCalc.minWin.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺`
+                      : `+${netProfit.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺`}
                   </div>
                 </div>
               </div>
@@ -349,7 +526,7 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                   className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5 shadow-md shadow-amber-500/25 active:scale-95"
                 >
                   <Wallet className="w-4 h-4 text-slate-950" />
-                  <span>{savedToBankroll ? 'Kupon Kasaya Kaydedildi! 💼' : `Sanal Kasaya Oyna (${stake} ₺)`}</span>
+                  <span>{savedToBankroll ? 'Kupon Kasaya Kaydedildi! 💼' : `Sanal Kasaya Oyna (${totalBetCost.toLocaleString('tr-TR')} ₺)`}</span>
                 </button>
               )}
 

@@ -6,6 +6,7 @@ import { Match, MatchAnalysis } from '../types';
 import {
   AIChatMessage,
   AIChatCoupon,
+  AICouponItem,
   AICouponType,
   handleAIChatQuery,
   formatCouponForClipboard
@@ -27,7 +28,9 @@ import {
   XCircle,
   Activity,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Ticket,
+  Plus
 } from 'lucide-react';
 
 interface AIChatModalProps {
@@ -37,6 +40,9 @@ interface AIChatModalProps {
   analysesMap: Map<string, MatchAnalysis>;
   currentTime?: Date;
   onSelectMatch?: (match: Match) => void;
+  betslipMatchIds?: string[];
+  onAddCouponToBetslip?: (coupon: AIChatCoupon) => void;
+  onAddItemToBetslip?: (item: AICouponItem) => void;
 }
 
 export const AIChatModal: React.FC<AIChatModalProps> = ({
@@ -45,7 +51,10 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({
   allMatches,
   analysesMap,
   currentTime = new Date(),
-  onSelectMatch
+  onSelectMatch,
+  betslipMatchIds = [],
+  onAddCouponToBetslip,
+  onAddItemToBetslip
 }) => {
   const [messages, setMessages] = useState<AIChatMessage[]>(() => [
     {
@@ -74,6 +83,7 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [copiedCouponId, setCopiedCouponId] = useState<string | null>(null);
+  const [addedCouponId, setAddedCouponId] = useState<string | null>(null);
 
   // 3 Açılır Menü (Kupon Sihirbazı) State:
   // 1. Menü: banko | ideal | surpriz
@@ -372,19 +382,48 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({
                             </div>
                           </div>
 
-                          {/* Row 3: The Pick Badge, Odds, Confidence */}
-                          <div className="flex items-center justify-between bg-slate-950/80 px-2.5 py-1.5 rounded-lg border border-slate-800">
-                            <div className="flex items-center space-x-2">
-                              <span className="font-extrabold text-xs text-emerald-400">
+                          {/* Row 3: The Pick Badge, Odds, Confidence & Single Add Button */}
+                          <div className="flex items-center justify-between bg-slate-950/80 px-2.5 py-1.5 rounded-lg border border-slate-800 gap-2">
+                            <div className="flex items-center space-x-2 min-w-0">
+                              <span className="font-extrabold text-xs text-emerald-400 truncate">
                                 {item.pickLabel}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-semibold">
+                              <span className="text-[10px] text-slate-400 font-semibold shrink-0">
                                 %{item.confidence} Güven
                               </span>
                             </div>
-                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 font-mono font-black text-xs border border-emerald-500/30">
-                              {item.odd.toFixed(2)}
-                            </span>
+                            <div className="flex items-center space-x-1.5 shrink-0">
+                              <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 font-mono font-black text-xs border border-emerald-500/30">
+                                {item.odd.toFixed(2)}
+                              </span>
+                              {onAddItemToBetslip && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAddItemToBetslip(item);
+                                  }}
+                                  className={`px-2 py-0.5 rounded text-[10px] font-black border transition-all cursor-pointer flex items-center space-x-0.5 ${
+                                    betslipMatchIds.includes(String(item.matchId))
+                                      ? 'bg-emerald-500 text-slate-950 border-emerald-400'
+                                      : 'bg-slate-800 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                  }`}
+                                  title="Bu maçı kuponuma ekle"
+                                >
+                                  {betslipMatchIds.includes(String(item.matchId)) ? (
+                                    <>
+                                      <Check className="w-3 h-3" />
+                                      <span>Kuponda</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Plus className="w-3 h-3" />
+                                      <span>Ekle</span>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
                           </div>
 
                           {/* Row 4: AI Analysis Reason */}
@@ -396,13 +435,37 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({
                     </div>
 
                     {/* Coupon Card Action Footer */}
-                    <div className="p-3 bg-slate-900/90 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                    <div className="p-3 bg-slate-900/90 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
                       <div className="text-[11px] text-slate-400 flex items-center space-x-1">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Ort. Güven: <strong className="text-emerald-300">%{msg.coupon.avgConfidence}</strong></span>
                       </div>
 
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {onAddCouponToBetslip && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onAddCouponToBetslip(msg.coupon!);
+                              setAddedCouponId(msg.coupon!.id);
+                              setTimeout(() => setAddedCouponId(null), 2500);
+                            }}
+                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95"
+                          >
+                            {addedCouponId === msg.coupon.id ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                <span>Kupona Aktarıldı!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Ticket className="w-3.5 h-3.5 stroke-[2.5]" />
+                                <span>Kuponuma Aktar ({msg.coupon.items.length})</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+
                         <button
                           onClick={() => handleCopyCoupon(msg.coupon!)}
                           className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs transition-colors cursor-pointer border border-slate-700"

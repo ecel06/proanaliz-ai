@@ -15,6 +15,7 @@ import { CustomMatchAnalyzer } from './components/CustomMatchAnalyzer';
 import { StandingsModal } from './components/StandingsModal';
 import { InstallAppModal } from './components/InstallAppModal';
 import { AIChatModal } from './components/AIChatModal';
+import { AIChatCoupon, AICouponItem } from './utils/aiChatEngine';
 import { BetslipDrawer } from './components/BetslipDrawer';
 import { NesineBulletinView } from './components/NesineBulletinView';
 import { MatchOfTheDayBanner } from './components/MatchOfTheDayBanner';
@@ -175,6 +176,47 @@ export const App: React.FC = () => {
     }
   };
 
+  const resolveAIMarketName = (pickType: AICouponItem['pickType']): string => {
+    if (pickType === 'ms1' || pickType === 'msX' || pickType === 'ms2') return 'Maç Sonucu';
+    if (pickType === 'btts') return 'Karşılıklı Gol';
+    if (pickType === 'htft') return 'İlk Yarı / Maç Sonucu';
+    return 'Toplam Gol';
+  };
+
+  const handleAddAICouponToBetslip = (aiCoupon: AIChatCoupon) => {
+    const newItems: UserBetslipItem[] = aiCoupon.items.map((item) => ({
+      id: `${item.match.id}_${item.pickType}`,
+      matchId: item.match.id,
+      match: item.match,
+      marketName: resolveAIMarketName(item.pickType),
+      pickKey: item.pickType,
+      pickLabel: item.pickLabel,
+      odd: item.odd,
+      probability: item.confidence
+    }));
+
+    if (newItems.length > 0) {
+      setBetslipItems(newItems);
+      setIsAIChatOpen(false);
+      setIsBetslipOpen(true);
+      setRefreshToast(`🤖 ${aiCoupon.title} (${newItems.length} Maç) Kupona Aktarıldı!`);
+      setTimeout(() => setRefreshToast(null), 3000);
+    }
+  };
+
+  const handleAddAIItemToBetslip = (item: AICouponItem) => {
+    handleToggleBetslip(item.match, {
+      key: item.pickType,
+      label: item.pickLabel,
+      marketKey: item.pickType,
+      marketName: resolveAIMarketName(item.pickType),
+      odd: item.odd,
+      probability: item.confidence
+    });
+    setRefreshToast(`✅ ${item.homeTeam} - ${item.awayTeam} (${item.pickLabel}) kuponda güncellendi`);
+    setTimeout(() => setRefreshToast(null), 2200);
+  };
+
   // Virtual Bankroll & Saved Slips State
   const [isBankrollModalOpen, setIsBankrollModalOpen] = useState(false);
   const [savedSlips, setSavedSlips] = useState<SavedSlip[]>(() => getSavedSlips());
@@ -230,7 +272,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.11.05';
+  const CLIENT_BUILD_VERSION = '2026.11.11.06';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -1584,6 +1626,9 @@ export const App: React.FC = () => {
         analysesMap={matchAnalysesMap}
         currentTime={currentTime}
         onSelectMatch={(m) => setSelectedMatch(m)}
+        betslipMatchIds={betslipItems.map(it => String(it.matchId))}
+        onAddCouponToBetslip={handleAddAICouponToBetslip}
+        onAddItemToBetslip={handleAddAIItemToBetslip}
       />
 
       {/* Modal 6: Kupon Hesaplayıcı & Betslip Drawer */}
