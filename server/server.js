@@ -29,14 +29,30 @@ let cachedBulletin = null;
 let lastFetchTime = null;
 let isFetching = false;
 
-// Load pre-existing cached file if available
+// Load pre-existing cached file if available (pick freshest/largest between public/data/bulletin.json & src/data/liveBulletin.json)
 function loadLocalCache() {
   try {
-    const filePath = path.resolve(__dirname, '../public/data/bulletin.json');
-    if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, 'utf8');
-      cachedBulletin = JSON.parse(raw);
-      lastFetchTime = cachedBulletin.updatedAt;
+    const candidates = [
+      path.resolve(__dirname, '../public/data/bulletin.json'),
+      path.resolve(__dirname, '../src/data/liveBulletin.json')
+    ];
+    let bestData = null;
+    for (const filePath of candidates) {
+      if (!fs.existsSync(filePath)) continue;
+      try {
+        const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        const count = Array.isArray(parsed?.matches) ? parsed.matches.length : 0;
+        const bestCount = Array.isArray(bestData?.matches) ? bestData.matches.length : 0;
+        const parsedTs = parsed?.updatedAt ? new Date(parsed.updatedAt).getTime() : 0;
+        const bestTs = bestData?.updatedAt ? new Date(bestData.updatedAt).getTime() : 0;
+        if (count > 0 && (parsedTs > bestTs || (parsedTs === bestTs && count > bestCount))) {
+          bestData = parsed;
+        }
+      } catch {}
+    }
+    if (bestData) {
+      cachedBulletin = bestData;
+      lastFetchTime = bestData.updatedAt;
       console.log(`📁 [Server] Yerel bülten önbellekten yüklendi (${cachedBulletin.matches?.length || 0} maç).`);
     }
   } catch (err) {
@@ -197,7 +213,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.11.01';
+const APP_VERSION = '2026.11.11.02';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -256,8 +272,8 @@ app.listen(PORT, '0.0.0.0', () => {
   // Start background periodic real forms sync (every 10 minutes)
   startFormSyncScheduler(10);
 
-  // Start background periodic live score & bulletin sync (every 30 seconds)
-  setInterval(async () => {
+  // Trigger immediate startup live bulletin sync
+  const runBulletinSync = async () => {
     if (isFetching) return;
     try {
       isFetching = true;
@@ -271,6 +287,11 @@ app.listen(PORT, '0.0.0.0', () => {
     } catch (err) {
       isFetching = false;
     }
-  }, 30 * 1000);
+  };
+
+  runBulletinSync();
+
+  // Start background periodic live score & bulletin sync (every 30 seconds)
+  setInterval(runBulletinSync, 30 * 1000);
 });
 

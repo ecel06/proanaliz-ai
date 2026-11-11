@@ -378,17 +378,30 @@ const TR_TO_EN_TEAM_MAP = {
 function normalizeTeamName(name) {
   let s = String(name || '')
     .toLowerCase()
+    .replace(/\u0307/g, '')
     .replace(/ç/g, 'c')
     .replace(/ğ/g, 'g')
     .replace(/ı/g, 'i')
     .replace(/ö/g, 'o')
     .replace(/ş/g, 's')
     .replace(/ü/g, 'u')
+    .replace(/ø/g, 'o')
+    .replace(/æ/g, 'ae')
+    .replace(/å/g, 'a')
+    .replace(/[áàâãä]/g, 'a')
+    .replace(/[éèêë]/g, 'e')
+    .replace(/[íìîï]/g, 'i')
+    .replace(/[óòôõ]/g, 'o')
+    .replace(/[úùû]/g, 'u')
+    .replace(/ñ/g, 'n')
     .replace(/\(k\)|\(w\)/g, '')
-    .replace(/\b(fc|fk|sc|sk|ac|cd|cf|ca|afc|utd|united|city)\b/g, '')
+    .replace(/\b(fc|fk|sc|sk|ac|cd|cf|ca|afc|utd|united|city|pr|pe|mg|rj|sp)\b/g, '')
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+  if (s === 's wednesday') s = 'sheffield wednesday';
+  if (s === 'ol lyonnes' || s === 'o lyon') s = 'lyon';
+  if (s === 'hb koge' || s === 'hb koege') s = 'hb koge';
   return TR_TO_EN_TEAM_MAP[s] || s;
 }
 
@@ -625,6 +638,13 @@ export async function fetchLiveBulletin() {
 
     if (matchedEspn) {
       // Enrich existing ESPN match with official İddaa code & odds while preserving live score tracking
+      const origHome = matchedEspn.homeTeam?.name || '';
+      const origAway = matchedEspn.awayTeam?.name || '';
+      matchedEspn.searchAlias = `${origHome} ${origAway} ${idd.homeTeam?.name || ''} ${idd.awayTeam?.name || ''}`.trim();
+      if (idd.country === 'Milli Takımlar') {
+        if (matchedEspn.homeTeam && idd.homeTeam?.name) matchedEspn.homeTeam.name = idd.homeTeam.name;
+        if (matchedEspn.awayTeam && idd.awayTeam?.name) matchedEspn.awayTeam.name = idd.awayTeam.name;
+      }
       matchedEspn.iddaaCode = idd.iddaaCode;
       matchedEspn.odds = idd.odds;
     } else {

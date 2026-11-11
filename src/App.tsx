@@ -230,7 +230,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.11.01';
+  const CLIENT_BUILD_VERSION = '2026.11.11.02';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -546,21 +546,91 @@ export const App: React.FC = () => {
   }, [dynamicDateOptions, selectedDate]);
 
   // 6. Filter function for any match
+  const normalizeSearchStr = (val: string): string =>
+    String(val || '')
+      .replace(/İ/g, 'i')
+      .replace(/I/g, 'ı')
+      .toLowerCase()
+      .replace(/\u0307/g, '')
+      .replace(/ç/g, 'c')
+      .replace(/ğ/g, 'g')
+      .replace(/ı/g, 'i')
+      .replace(/ö/g, 'o')
+      .replace(/ş/g, 's')
+      .replace(/ü/g, 'u')
+      .replace(/ø/g, 'o')
+      .replace(/æ/g, 'ae')
+      .replace(/å/g, 'a')
+      .replace(/[áàâãä]/g, 'a')
+      .replace(/[éèêë]/g, 'e')
+      .replace(/[íìîï]/g, 'i')
+      .replace(/[óòôõ]/g, 'o')
+      .replace(/[úùû]/g, 'u')
+      .replace(/ñ/g, 'n')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const SEARCH_ALIASES: Record<string, string[]> = {
+    turkiye: ['turkey', 'turkiye'],
+    turkey: ['turkiye', 'turkey'],
+    belcika: ['belgium', 'belcika'],
+    belgium: ['belcika', 'belgium'],
+    fransa: ['france', 'fransa'],
+    france: ['fransa', 'france'],
+    almanya: ['germany', 'almanya'],
+    germany: ['almanya', 'germany'],
+    ispanya: ['spain', 'ispanya'],
+    spain: ['ispanya', 'spain'],
+    italya: ['italy', 'italya'],
+    italy: ['italya', 'italy'],
+    ingiltere: ['england', 'ingiltere'],
+    england: ['ingiltere', 'england'],
+    hollanda: ['netherlands', 'holland', 'hollanda'],
+    portekiz: ['portugal', 'portekiz'],
+    hirvatistan: ['croatia', 'hirvatistan'],
+    isvicre: ['switzerland', 'isvicre'],
+    avusturya: ['austria', 'avusturya'],
+    polonya: ['poland', 'polonya'],
+    ukrayna: ['ukraine', 'ukrayna'],
+    danimarka: ['denmark', 'danimarka'],
+    norvec: ['norway', 'norvec'],
+    isvec: ['sweden', 'isvec'],
+    iskocya: ['scotland', 'iskocya'],
+    galler: ['wales', 'galler'],
+    irlanda: ['ireland', 'irlanda'],
+    yunanistan: ['greece', 'yunanistan'],
+    macaristan: ['hungary', 'macaristan'],
+    cekya: ['czechia', 'czech republic', 'cekya'],
+    sirbistan: ['serbia', 'sirbistan'],
+    romanya: ['romania', 'romanya'],
+    brezilya: ['brazil', 'brezilya'],
+    arjantin: ['argentina', 'arjantin'],
+    fas: ['morocco', 'fas'],
+    misir: ['egypt', 'misir'],
+    japonya: ['japan', 'japonya'],
+    abd: ['usa', 'united states', 'abd']
+  };
+
   const filterMatchItem = (match: Match): boolean => {
     const a = matchAnalysesMap.get(match.id);
     if (!a) return false;
 
-    // A. Search Query
+    // A. Search Query (Global search: bypasses league/date/category filters so any match in the bulletin is found)
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const matchesText =
-        match.homeTeam.name.toLowerCase().includes(q) ||
-        match.awayTeam.name.toLowerCase().includes(q) ||
-        match.league.toLowerCase().includes(q) ||
-        (match.country && match.country.toLowerCase().includes(q)) ||
-        match.stadium.toLowerCase().includes(q) ||
-        (match.iddaaCode && match.iddaaCode.includes(q));
-      if (!matchesText) return false;
+      const q = normalizeSearchStr(searchQuery);
+      const qVariants = SEARCH_ALIASES[q] ? [q, ...SEARCH_ALIASES[q]] : [q];
+      const searchableText = normalizeSearchStr(
+        [
+          match.homeTeam.name,
+          match.awayTeam.name,
+          (match as any).searchAlias || '',
+          match.league,
+          match.country || '',
+          match.stadium,
+          match.iddaaCode || ''
+        ].join(' ')
+      );
+      return qVariants.some(variant => searchableText.includes(variant));
     }
 
     // B. League Filter (matches either league name or league category using robust helper)

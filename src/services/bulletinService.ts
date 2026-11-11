@@ -144,17 +144,20 @@ export function groupMatchesByCountry(matches: any[]): LeagueGroup[] {
 export async function getWeeklyMatches(): Promise<Record<string, Match[]>> {
   let matches: any[] = [];
 
-  // 1. Try candidates: relative endpoint, direct port 3001, static public json
-  const candidateUrls = [
-    "/api/bulletin",
-    "http://localhost:3001/api/bulletin",
-    "/data/bulletin.json"
-  ];
+  // 1. Try candidates: relative endpoint, local dev port 3001 (only on localhost), static public json
+  const isLocalHost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  const candidateUrls = isLocalHost
+    ? ['/api/bulletin', 'http://localhost:3001/api/bulletin', '/data/bulletin.json']
+    : ['/api/bulletin', '/data/bulletin.json'];
 
   for (const url of candidateUrls) {
     if (matches.length > 0) break;
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(2000) });
+      const timeoutMs = url.includes('/api/') ? 12000 : 5000;
+      const response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
       if (response.ok) {
         const data = await response.json();
         if (Array.isArray(data.matches) && data.matches.length > 0) {
