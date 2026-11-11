@@ -198,7 +198,9 @@ function parseBetLegs(races) {
     } else if (startIdx !== -1 && startClause.includes("5'Lİ GANYAN") && !markers.besliStart) {
       markers.besliStart = num;
     }
-    if (startIdx !== -1 && startClause.includes("4'LÜ GANYAN") && !markers.dortluStart) {
+    if (startIdx !== -1 && startClause.includes("2. 4'LÜ GANYAN")) {
+      markers.dortlu2Start = num;
+    } else if (startIdx !== -1 && startClause.includes("4'LÜ GANYAN") && !markers.dortluStart) {
       markers.dortluStart = num;
     }
     if (startIdx !== -1 && startClause.includes("1. 3'LÜ GANYAN")) {

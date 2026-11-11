@@ -47,20 +47,40 @@ export function getAvailableGames(detail: ProgramDetail | null): GameConfig[] {
   if (markers.besliStart && markers.besliStart + 4 <= totalRaces) {
     games.push({
       id: 'BESLI',
-      label: "5'li Ganyan",
-      shortLabel: "5'li",
+      label: markers.besli2Start ? "1. 5'li Ganyan" : "5'li Ganyan",
+      shortLabel: markers.besli2Start ? "1.5'li" : "5'li",
       legCount: 5,
       startRace: markers.besliStart,
+      defaultUnitPrice: 1.0,
+    });
+  }
+  if (markers.besli2Start && markers.besli2Start + 4 <= totalRaces) {
+    games.push({
+      id: 'BESLI_2',
+      label: "2. 5'li Ganyan",
+      shortLabel: "2.5'li",
+      legCount: 5,
+      startRace: markers.besli2Start,
       defaultUnitPrice: 1.0,
     });
   }
   if (markers.dortluStart && markers.dortluStart + 3 <= totalRaces) {
     games.push({
       id: 'DORTLU',
-      label: "4'lü Ganyan",
-      shortLabel: "4'lü",
+      label: markers.dortlu2Start ? "1. 4'lü Ganyan" : "4'lü Ganyan",
+      shortLabel: markers.dortlu2Start ? "1.4'lü" : "4'lü",
       legCount: 4,
       startRace: markers.dortluStart,
+      defaultUnitPrice: 1.0,
+    });
+  }
+  if (markers.dortlu2Start && markers.dortlu2Start + 3 <= totalRaces) {
+    games.push({
+      id: 'DORTLU_2',
+      label: "2. 4'lü Ganyan",
+      shortLabel: "2.4'lü",
+      legCount: 4,
+      startRace: markers.dortlu2Start,
       defaultUnitPrice: 1.0,
     });
   }

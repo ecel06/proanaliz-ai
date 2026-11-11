@@ -25,6 +25,7 @@ import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { AIPerformanceModal } from './components/AIPerformanceModal';
 import { ShareSlipModal } from './components/ShareSlipModal';
 import { HorseRacingView } from './components/horse/HorseRacingView';
+import { HomeHub } from './components/HomeHub';
 import { computeAIPerformance } from './utils/aiPerformanceHelper';
 import {
   isPushNotificationSupported,
@@ -269,12 +270,12 @@ export const App: React.FC = () => {
     }
   };
 
-  const [activeSection, setActiveSection] = useState<'football' | 'horseRacing'>('football');
+  const [activeSection, setActiveSection] = useState<'home' | 'football' | 'horseRacing'>('home');
   const [newVersionAvailable, setNewVersionAvailable] = useState(false);
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.11.09';
+  const CLIENT_BUILD_VERSION = '2026.11.11.10';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -864,6 +865,28 @@ export const App: React.FC = () => {
     }
   }, [lastUpdatedAt]);
 
+  if (activeSection === 'home') {
+    return (
+      <>
+        {newVersionAvailable && (
+          <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs shadow-xl flex items-center space-x-2">
+            <span>Yeni Güncelleme Hazır</span>
+            <button onClick={handleUpdateApp} className="px-2.5 py-1 rounded-lg bg-slate-950 text-emerald-300 cursor-pointer">
+              Yenile
+            </button>
+          </div>
+        )}
+        <HomeHub
+          onSelectFootball={() => {
+            setActiveSection('football');
+            setActiveTabMode('upcoming');
+          }}
+          onSelectHorseRacing={() => setActiveSection('horseRacing')}
+        />
+      </>
+    );
+  }
+
   return (
     <div
       className="min-h-screen text-slate-100 flex flex-col pb-20 md:pb-12 transition-colors duration-300 w-full overflow-x-clip max-w-[100vw]"
@@ -881,10 +904,7 @@ export const App: React.FC = () => {
       {/* Top Header with Live Refresh Trigger & Mobile Install */}
       <Header
         onGoHome={() => {
-          setActiveSection('football');
-          setActiveTabMode('upcoming');
-          setSelectedCategory('all');
-          setSearchQuery('');
+          setActiveSection('home');
         }}
         activeSection={activeSection}
         onSelectSection={(sec) => {

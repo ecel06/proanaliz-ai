@@ -141,6 +141,7 @@ export interface BetLegMarkers {
   besliStart?: number;
   besli2Start?: number;
   dortluStart?: number;
+  dortlu2Start?: number;
   uclu1Start?: number;
   uclu2Start?: number;
   yediliStart?: number;
@@ -201,7 +202,9 @@ export type HorseBetGameType =
   | 'ALTILI_1'
   | 'ALTILI_2'
   | 'BESLI'
+  | 'BESLI_2'
   | 'DORTLU'
+  | 'DORTLU_2'
   | 'UCLU_1'
   | 'UCLU_2'
   | 'YEDILI_PLASE'

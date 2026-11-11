@@ -20,7 +20,8 @@ import {
   Palette,
   Trophy,
   Bell,
-  BellOff
+  BellOff,
+  Home
 } from 'lucide-react';
 import { TeamTheme } from '../utils/themeHelper';
 
@@ -50,8 +51,8 @@ interface HeaderProps {
   onTogglePush?: () => void;
   activeTheme?: TeamTheme;
   onOpenThemeModal?: () => void;
-  activeSection?: 'football' | 'horseRacing';
-  onSelectSection?: (section: 'football' | 'horseRacing') => void;
+  activeSection?: 'home' | 'football' | 'horseRacing';
+  onSelectSection?: (section: 'home' | 'football' | 'horseRacing') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -118,12 +119,20 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Primary Category Switcher: Futbol | At Yarışı */}
+          {/* Primary Category Switcher: Ana Sayfa | Futbol | At Yarışı */}
           {onSelectSection && (
             <nav
               aria-label="Ana Spor Kategorisi"
-              className="flex items-center p-0.5 sm:p-1 rounded-xl bg-slate-900/95 border border-slate-700/80 shadow-inner shrink-0"
+              className="flex items-center p-0.5 sm:p-1 rounded-xl bg-slate-900/95 border border-slate-700/80 shadow-inner shrink-0 gap-0.5"
             >
+              <button
+                onClick={() => onSelectSection('home')}
+                className="flex items-center space-x-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg font-extrabold text-[11px] sm:text-xs text-slate-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
+                title="Ana Sayfaya Dön"
+              >
+                <Home className="w-3.5 h-3.5 text-slate-300" />
+                <span className="hidden md:inline">Ana Sayfa</span>
+              </button>
               <button
                 onClick={() => onSelectSection('football')}
                 className={`flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-[11px] sm:text-xs transition-all cursor-pointer ${
@@ -184,8 +193,8 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Standings Button (Visible on sm and up to prevent mobile clutter) */}
-            {onOpenStandings && (
+            {/* Standings Button (Football only) */}
+            {activeSection === 'football' && onOpenStandings && (
               <button
                 onClick={onOpenStandings}
                 className="hidden sm:flex items-center space-x-1.5 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs"
@@ -196,8 +205,8 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* AI Performance Scorecard Button */}
-            {onOpenAIPerformance && (
+            {/* AI Performance Scorecard Button (Football only) */}
+            {activeSection === 'football' && onOpenAIPerformance && (
               <button
                 onClick={onOpenAIPerformance}
                 className="hidden sm:flex items-center space-x-1.5 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs"
@@ -208,16 +217,16 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* AI Curated Coupons Button (Visible on sm and up; on mobile user has the main tab switch) */}
-            {onOpenCoupons && (
+            {/* AI Curated Coupons Button (Football only) */}
+            {activeSection === 'football' && onOpenCoupons && (
               <button
-                onClick={activeTabMode === 'coupons' ? onGoHome : onOpenCoupons}
+                onClick={activeTabMode === 'coupons' ? () => onSelectSection?.('football') : onOpenCoupons}
                 className={`hidden sm:flex items-center space-x-1.5 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl font-bold text-xs border transition-all cursor-pointer shadow-xs shrink-0 ${
                   activeTabMode === 'coupons'
                     ? 'bg-amber-400 text-slate-950 border-amber-300 font-extrabold shadow-amber-500/20'
                     : 'bg-slate-900/90 hover:bg-slate-800 text-white border-slate-700/80'
                 }`}
-                title={activeTabMode === 'coupons' ? "Ana Sayfaya / Maç Bültenine Dön" : "Günün Kuponları (Banko, İdeal, Sürpriz)"}
+                title={activeTabMode === 'coupons' ? "Maç Bültenine Dön" : "Günün Kuponları (Banko, İdeal, Sürpriz)"}
               >
                 <Flame className={`w-3.5 h-3.5 ${activeTabMode === 'coupons' ? 'text-slate-950 fill-current' : 'text-amber-400 animate-pulse'}`} />
                 <span className="hidden md:inline">{activeTabMode === 'coupons' ? 'Maçlar' : 'Kuponlar'}</span>
@@ -313,16 +322,18 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Custom Match Analyzer Button */}
-            <button
-              onClick={onOpenCustomAnalyzer}
-              className="flex items-center space-x-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
-              title="Kendi Maçını Analiz Et"
-            >
-              <Calculator className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span className="hidden md:inline">Kendi Maçını Analiz Et</span>
-              <span className="md:hidden text-[11px]">Analiz</span>
-            </button>
+            {/* Custom Match Analyzer Button (Football only) */}
+            {activeSection === 'football' && (
+              <button
+                onClick={onOpenCustomAnalyzer}
+                className="flex items-center space-x-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
+                title="Kendi Maçını Analiz Et"
+              >
+                <Calculator className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span className="hidden md:inline">Kendi Maçını Analiz Et</span>
+                <span className="md:hidden text-[11px]">Analiz</span>
+              </button>
+            )}
           </div>
         </div>
 
