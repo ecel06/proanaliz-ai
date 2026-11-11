@@ -1,6 +1,7 @@
 // src/utils/stockAnalysisEngine.ts
 import {
   IndicatorSignalRow,
+  StockDeepAnalysis,
   StockItem,
   StockQuantAnalysis,
   StockSignalType,
@@ -344,6 +345,134 @@ export function analyzeStockQuant(stock: StockItem): StockQuantAnalysis {
     bullReasons,
     bearReasons,
     summaryText,
+  };
+}
+
+export interface AIResearchMemo {
+  headline: string;
+  convictionBadge: string;
+  sections: { title: string; body: string }[];
+  actionCallout: string;
+}
+
+export function buildInstitutionalAIMemo(
+  stock: StockItem,
+  quant: StockQuantAnalysis,
+  deep: StockDeepAnalysis | null
+): AIResearchMemo {
+  const cur = stock.currency;
+  const tp1Str = formatStockPrice(quant.tradePlan.tp1, cur);
+  const tp2Str = formatStockPrice(quant.tradePlan.tp2, cur);
+  const slStr = formatStockPrice(quant.tradePlan.stopLoss, cur);
+  const entryStr = `${formatStockPrice(quant.tradePlan.entryLow, '')}–${formatStockPrice(
+    quant.tradePlan.entryHigh,
+    cur
+  )}`;
+
+  const sections: { title: string; body: string }[] = [];
+
+  // 1. MTF & Price Action Structure
+  if (deep) {
+    const tfSummary = deep.mtf
+      .map((m) => `${m.timeframe.split(' ')[0]}: ${m.signal} (RSI ${m.rsi ?? '-'})`)
+      .join(' | ');
+    const patternTxt =
+      deep.patterns.length > 0
+        ? `Son mumlarda ${deep.patterns.map((p) => p.name).join(', ')} tespit edildi.`
+        : 'Mum yapısında ani ters dönüş formasyonu yok.';
+    const volTxt =
+      deep.volumeRatio >= 1.5
+        ? `İşlem hacmi 20 günlük ortalamanın ${deep.volumeRatio}x katına çıkarak kurumsal katılımı doğruluyor.`
+        : deep.volumeRatio <= 0.65
+        ? `Hacim ortalamanın altında (${deep.volumeRatio}x); kırılım öncesi enerji birikimi izleniyor.`
+        : `Hacim 20 günlük normal seyrinde (${deep.volumeRatio}x).`;
+    sections.push({
+      title: '1. Çoklu Zaman Dilimi (MTF) & Hacim Akışı',
+      body: `${deep.mtfSummary.alignment} (${tfSummary}). ${patternTxt} ${volTxt}`,
+    });
+  } else {
+    sections.push({
+      title: '1. Teknik Yapı & Momentum',
+      body: `${stock.symbol} günlük bazda %${quant.trendScore} trend ve %${quant.momentumScore} momentum skoru üretiyor (RSI: ${
+        stock.rsi?.toFixed(1) ?? '-'
+      }, ADX: ${stock.adx?.toFixed(1) ?? '-'}).`,
+    });
+  }
+
+  // 2. Analyst Valuation & Backtest Edge
+  const valParts: string[] = [];
+  if (deep?.financials?.targetMeanPrice) {
+    const targetStr = formatStockPrice(deep.financials.targetMeanPrice, cur);
+    const up = deep.financials.upsidePct ?? 0;
+    valParts.push(
+      `${deep.financials.numberOfAnalystOpinions ?? 'Piyasa'} analist konsensüsü ortalama ${targetStr} (%${
+        up >= 0 ? '+' : ''
+      }${up} potansiyel) hedefliyor.`
+    );
+  }
+  if (stock.pe && stock.pe > 0) {
+    valParts.push(
+      `Cari F/K ${stock.pe.toFixed(2)}x ve PD/DD ${stock.pb?.toFixed(2) ?? '-'}x çarpanlarıyla işlem görüyor.`
+    );
+  }
+  if (deep?.backtest && deep.backtest.totalTrades > 0) {
+    valParts.push(
+      `Son 1 yıllık gerçek strateji backtestinde ${deep.backtest.totalTrades} işlemde %${deep.backtest.winRate} kazanma oranı ve %${
+        deep.backtest.strategyReturnPct >= 0 ? '+' : ''
+      }${deep.backtest.strategyReturnPct} bileşik getiri elde edildi (Profit Factor: ${deep.backtest.profitFactor}).`
+    );
+  }
+  if (valParts.length > 0) {
+    sections.push({
+      title: '2. Değerleme, Analist Hedefi & Backtest Kanıtı',
+      body: valParts.join(' '),
+    });
+  }
+
+  // 3. News Catalyst
+  if (deep && deep.news.length > 0) {
+    const pos = deep.news.filter((n) => n.sentiment === 'Pozitif').length;
+    const neg = deep.news.filter((n) => n.sentiment === 'Negatif').length;
+    const topHeadline = deep.news[0].title;
+    sections.push({
+      title: '3. Güncel Haber & Duygu Analizi',
+      body: `Son ${deep.news.length} haberde ${pos} Pozitif / ${neg} Negatif başlık öne çıkıyor. Gündemdeki başlık: "${topHeadline}"`,
+    });
+  }
+
+  // Actionable Verdict
+  const strongMtfBull = deep ? deep.mtfSummary.bullCount >= 2 : quant.score >= 62;
+  const convictionBadge =
+    quant.signal === 'GÜÇLÜ AL' && strongMtfBull
+      ? 'Yüksek İnançlı Boğa Kurulumu'
+      : quant.signal === 'GÜÇLÜ SAT' || quant.signal === 'SAT'
+      ? 'Defansif / Satış Baskısı'
+      : quant.signal === 'AL'
+      ? 'Kademeli Toplama Uygun'
+      : 'Teyit Bekleyen Yatay Bölge';
+
+  const headline = `${stock.symbol} Kurumsal AI Raporu: ${quant.signal} (${quant.score}/100)`;
+  const actionCallout =
+    quant.tradePlan.bias === 'LONG (AL)'
+      ? `Uygulama Planı: ${entryStr} bandından kademeli giriş, ${slStr} altı kapanışta kesin Stop-Loss (%${quant.tradePlan.stopLossPct}), hedefler ${tp1Str} (TP1) ve ${tp2Str} (TP2). Risk/Ödül 1:${quant.tradePlan.riskReward}.`
+      : quant.tradePlan.bias === 'SHORT / KAR AL'
+      ? `Risk Yönetimi: Mevcut momentum zayıf. ${formatStockPrice(
+          quant.pivots.s1,
+          cur
+        )} desteği korunamazsa aşağı yönlü baskı derinleşebilir; tepki alımları için ${formatStockPrice(
+          quant.pivots.r1,
+          cur
+        )} üstü hacimli kapanış beklenmeli.`
+      : `Bekle-Gör Stratejisi: Net kırılım için ${formatStockPrice(
+          quant.pivots.r1,
+          cur
+        )} direncinin aşılması veya ${formatStockPrice(quant.pivots.s1, cur)} desteğine geri çekilme takip edilmelidir.`;
+
+  return {
+    headline,
+    convictionBadge,
+    sections,
+    actionCallout,
   };
 }
 

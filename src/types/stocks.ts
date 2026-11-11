@@ -129,3 +129,89 @@ export interface StockQuantAnalysis {
   summaryText: string;
 }
 
+export interface TimeframeSnapshot {
+  timeframe: string;
+  signal: 'GÜÇLÜ AL' | 'AL' | 'NÖTR' | 'SAT' | 'GÜÇLÜ SAT';
+  trend: 'YÜKSELİŞ' | 'YATAY' | 'DÜŞÜŞ';
+  score: number;
+  rsi: number | null;
+  macd: number | null;
+  macdSignal: number | null;
+  ema20: number | null;
+  ema50: number | null;
+  adx: number | null;
+}
+
+export interface CandlePatternItem {
+  name: string;
+  bias: 'bull' | 'bear' | 'neutral';
+  description: string;
+}
+
+export interface BacktestTradeRecord {
+  entryDate: string;
+  exitDate: string;
+  entryPrice: number;
+  exitPrice: number;
+  returnPct: number;
+  reason: string;
+}
+
+export interface StockBacktestResult {
+  strategyName: string;
+  totalTrades: number;
+  wins: number;
+  winRate: number;
+  avgReturnPct: number;
+  profitFactor: number;
+  strategyReturnPct: number;
+  buyHoldReturnPct: number;
+  maxDrawdownPct: number;
+  recentTrades: BacktestTradeRecord[];
+}
+
+export interface StockDeepFinancials {
+  targetLowPrice: number | null;
+  targetMeanPrice: number | null;
+  targetHighPrice: number | null;
+  upsidePct: number | null;
+  recommendationKey: string | null;
+  numberOfAnalystOpinions: number | null;
+  returnOnEquityPct: number | null;
+  profitMarginsPct: number | null;
+  operatingMarginsPct: number | null;
+  revenueGrowthPct: number | null;
+  earningsGrowthPct: number | null;
+  debtToEquity: number | null;
+  currentRatio: number | null;
+  forwardPE: number | null;
+  beta: number | null;
+}
+
+export interface StockNewsItem {
+  title: string;
+  link: string;
+  publisher: string;
+  publishedAt: string;
+  sentiment: 'Pozitif' | 'Negatif' | 'Nötr';
+}
+
+export interface StockDeepAnalysis {
+  symbol: string;
+  market: StockMarketType;
+  yfSymbol: string;
+  mtf: TimeframeSnapshot[];
+  mtfSummary: {
+    bullCount: number;
+    bearCount: number;
+    mtfScore: number;
+    alignment: string;
+  };
+  volumeRatio: number;
+  patterns: CandlePatternItem[];
+  backtest: StockBacktestResult | null;
+  financials: StockDeepFinancials | null;
+  news: StockNewsItem[];
+  updatedAt: string;
+}
+

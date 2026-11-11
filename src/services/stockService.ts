@@ -1,5 +1,10 @@
 // src/services/stockService.ts
-import { StockChartResponse, StockMarketType, StockScreenerResponse } from '../types/stocks';
+import {
+  StockChartResponse,
+  StockDeepAnalysis,
+  StockMarketType,
+  StockScreenerResponse,
+} from '../types/stocks';
 
 export async function fetchStockScreener(
   market: StockMarketType,
@@ -28,6 +33,21 @@ export async function fetchStockChart(
     if (!res.ok) return null;
     const data = await res.json();
     return data?.chart || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchStockDeepAnalysis(
+  symbol: string,
+  market: StockMarketType
+): Promise<StockDeepAnalysis | null> {
+  try {
+    const params = new URLSearchParams({ market });
+    const res = await fetch(`/api/stocks/deep/${encodeURIComponent(symbol)}?${params.toString()}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.deep || null;
   } catch {
     return null;
   }

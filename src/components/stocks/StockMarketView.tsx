@@ -7,9 +7,14 @@ import {
   ArrowUpRight,
   BarChart3,
   Bot,
+  Calculator,
+  CandlestickChart,
   CheckCircle2,
+  ExternalLink,
   Flame,
   Globe,
+  Layers,
+  Newspaper,
   RefreshCw,
   Search,
   ShieldAlert,
@@ -21,13 +26,19 @@ import {
 import {
   MacroTicker,
   StockChartResponse,
+  StockDeepAnalysis,
   StockItem,
   StockMarketType,
   StockQuantAnalysis,
 } from '../../types/stocks';
-import { fetchStockChart, fetchStockScreener } from '../../services/stockService';
+import {
+  fetchStockChart,
+  fetchStockDeepAnalysis,
+  fetchStockScreener,
+} from '../../services/stockService';
 import {
   analyzeStockQuant,
+  buildInstitutionalAIMemo,
   formatLargeNumber,
   formatStockPrice,
 } from '../../utils/stockAnalysisEngine';
@@ -58,6 +69,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
   const [chartRange, setChartRange] = useState<'1mo' | '3mo' | '6mo' | '1y'>('6mo');
   const [chartData, setChartData] = useState<StockChartResponse | null>(null);
   const [chartLoading, setChartLoading] = useState<boolean>(false);
+  const [deepData, setDeepData] = useState<StockDeepAnalysis | null>(null);
+  const [deepLoading, setDeepLoading] = useState<boolean>(false);
+  const [capitalInput, setCapitalInput] = useState<string>('100000');
+  const [riskPctInput, setRiskPctInput] = useState<string>('2');
   const [isAIChatOpen, setIsAIChatOpen] = useState<boolean>(false);
 
   const [watchlist, setWatchlist] = useState<string[]>(() => {
@@ -152,6 +167,66 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
       cancelled = true;
     };
   }, [selectedStock?.symbol, selectedStock?.market, chartRange]);
+
+  // Fetch Deep Research (MTF 1h/1d/1wk, Candle Patterns, Backtest, Analyst Targets, Live News)
+  useEffect(() => {
+    if (!selectedStock) return;
+    let cancelled = false;
+    setDeepLoading(true);
+    setDeepData(null);
+    fetchStockDeepAnalysis(selectedStock.symbol, selectedStock.market)
+      .then((res) => {
+        if (!cancelled) setDeepData(res);
+      })
+      .finally(() => {
+        if (!cancelled) setDeepLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStock?.symbol, selectedStock?.market]);
+
+  const aiMemo = useMemo(() => {
+    if (!selectedStock || !selectedAnalysis) return null;
+    return buildInstitutionalAIMemo(selectedStock, selectedAnalysis, deepData);
+  }, [selectedStock, selectedAnalysis, deepData]);
+
+  const alphaHighlights = useMemo(() => {
+    if (stocks.length === 0) return null;
+    const byScore = [...stocks].sort(
+      (a, b) => (analysesMap.get(b.symbol)?.score || 0) - (analysesMap.get(a.symbol)?.score || 0)
+    );
+    const byChange = [...stocks].sort((a, b) => b.changePct - a.changePct);
+    const byOversold = [...stocks]
+      .filter((s) => s.rsi !== null && s.rsi <= 40)
+      .sort((a, b) => (a.rsi ?? 99) - (b.rsi ?? 99));
+    const byVol = [...stocks].sort((a, b) => (b.valueTraded || 0) - (a.valueTraded || 0));
+    return {
+      topQuant: byScore[0] || null,
+      topGainer: byChange[0] || null,
+      topDip: byOversold[0] || null,
+      topVol: byVol[0] || null,
+    };
+  }, [stocks, analysesMap]);
+
+  const positionCalc = useMemo(() => {
+    if (!selectedStock || !selectedAnalysis) return null;
+    const cap = Math.max(0, Number(capitalInput) || 0);
+    const rPct = Math.max(0.1, Math.min(20, Number(riskPctInput) || 2));
+    const entry = selectedStock.close;
+    const sl = selectedAnalysis.tradePlan.stopLoss;
+    const riskPerShare = Math.abs(entry - sl);
+    if (!entry || !riskPerShare) return null;
+    const maxRiskMoney = cap * (rPct / 100);
+    const maxAffordUnits = Math.floor(cap / entry);
+    const riskBasedUnits = Math.floor(maxRiskMoney / riskPerShare);
+    const units = Math.max(0, Math.min(maxAffordUnits, riskBasedUnits));
+    const totalCost = units * entry;
+    const slLoss = units * riskPerShare;
+    const tp1Profit = units * Math.max(0, selectedAnalysis.tradePlan.tp1 - entry);
+    const tp2Profit = units * Math.max(0, selectedAnalysis.tradePlan.tp2 - entry);
+    return { units, totalCost, slLoss, tp1Profit, tp2Profit };
+  }, [capitalInput, riskPctInput, selectedStock, selectedAnalysis]);
 
   const filteredStocks = useMemo(() => {
     let list = [...stocks];
@@ -369,6 +444,54 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
             </select>
           </div>
         </div>
+
+        {/* Live Alpha Radar Quick Jumps */}
+        {alphaHighlights && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 pt-2 border-t border-slate-800/80">
+            {[
+              alphaHighlights.topQuant && {
+                tag: 'En Güçlü AI Sinyali',
+                sym: alphaHighlights.topQuant.symbol,
+                meta: `Skor ${analysesMap.get(alphaHighlights.topQuant.symbol)?.score}/100`,
+                tone: 'border-emerald-500/30 bg-emerald-500/5 text-emerald-300',
+              },
+              alphaHighlights.topGainer && {
+                tag: 'Günün Lideri',
+                sym: alphaHighlights.topGainer.symbol,
+                meta: `${alphaHighlights.topGainer.changePct >= 0 ? '+' : ''}${alphaHighlights.topGainer.changePct.toFixed(2)}%`,
+                tone: 'border-cyan-500/30 bg-cyan-500/5 text-cyan-300',
+              },
+              alphaHighlights.topDip && {
+                tag: 'RSI Dip Fırsatı',
+                sym: alphaHighlights.topDip.symbol,
+                meta: `RSI ${alphaHighlights.topDip.rsi?.toFixed(1)}`,
+                tone: 'border-amber-500/30 bg-amber-500/5 text-amber-300',
+              },
+              alphaHighlights.topVol && {
+                tag: 'Hacim Kralı',
+                sym: alphaHighlights.topVol.symbol,
+                meta: formatLargeNumber(alphaHighlights.topVol.valueTraded, alphaHighlights.topVol.currency),
+                tone: 'border-indigo-500/30 bg-indigo-500/5 text-indigo-300',
+              },
+            ]
+              .filter(Boolean)
+              .map((card: any) => (
+                <button
+                  key={card.tag}
+                  onClick={() => setSelectedSymbol(card.sym)}
+                  className={`px-3 py-2 rounded-xl border text-left transition-all hover:brightness-125 cursor-pointer flex items-center justify-between gap-2 ${card.tone}`}
+                >
+                  <div className="min-w-0">
+                    <div className="text-[9px] font-bold uppercase tracking-wider opacity-80">
+                      {card.tag}
+                    </div>
+                    <div className="text-xs font-black text-white">{card.sym}</div>
+                  </div>
+                  <span className="text-[11px] font-mono font-black shrink-0">{card.meta}</span>
+                </button>
+              ))}
+          </div>
+        )}
       </section>
 
       {errorMsg && stocks.length === 0 ? (
@@ -561,22 +684,133 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
                   ))}
                 </div>
 
-                {/* Interactive Candlestick / EMA Chart */}
+                {/* Interactive Candlestick / EMA / BB / RSI Chart */}
                 <StockChart
                   candles={chartData?.candles || []}
                   currency={selectedStock.currency}
                   stopLoss={selectedAnalysis.tradePlan.stopLoss}
                   tp1={selectedAnalysis.tradePlan.tp1}
+                  analystTarget={deepData?.financials?.targetMeanPrice ?? null}
                   range={chartRange}
                   onChangeRange={setChartRange}
                   loading={chartLoading}
                 />
 
-                {/* Quant Analyst Summary */}
-                <div className="p-3.5 rounded-xl bg-slate-950/75 border border-cyan-500/25 text-xs text-slate-200 leading-relaxed flex items-start space-x-2.5">
-                  <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                  <span>{selectedAnalysis.summaryText}</span>
+                {/* MULTI-TIMEFRAME CONFLUENCE STRIP (1S / 1G / 1H) */}
+                <div className="rounded-xl bg-slate-950/75 border border-slate-800 p-3 space-y-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-[11px] font-black uppercase tracking-wider text-cyan-300 flex items-center space-x-1.5">
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>Çoklu Zaman Dilimi Uyum Radarı (MTF)</span>
+                    </div>
+                    {deepLoading ? (
+                      <span className="text-[10px] text-slate-400 animate-pulse">
+                        1S / 1G / 1H taranıyor...
+                      </span>
+                    ) : deepData ? (
+                      <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-[10px] font-black text-cyan-200">
+                        {deepData.mtfSummary.alignment} &bull; MTF Skor: {deepData.mtfSummary.mtfScore}/100
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {deepData && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {deepData.mtf.map((tf) => {
+                        const isBull = tf.signal === 'GÜÇLÜ AL' || tf.signal === 'AL';
+                        const isBear = tf.signal === 'GÜÇLÜ SAT' || tf.signal === 'SAT';
+                        return (
+                          <div
+                            key={tf.timeframe}
+                            className="px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between"
+                          >
+                            <div>
+                              <div className="text-[10px] font-bold text-slate-400">{tf.timeframe}</div>
+                              <div className="text-[11px] font-mono text-slate-300">
+                                RSI: <strong>{tf.rsi ?? '-'}</strong> &bull; Trend:{' '}
+                                <strong
+                                  className={
+                                    tf.trend === 'YÜKSELİŞ'
+                                      ? 'text-emerald-400'
+                                      : tf.trend === 'DÜŞÜŞ'
+                                      ? 'text-rose-400'
+                                      : 'text-slate-300'
+                                  }
+                                >
+                                  {tf.trend}
+                                </strong>
+                              </div>
+                            </div>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-black border ${
+                                isBull
+                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                  : isBear
+                                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                                  : 'bg-slate-800 text-slate-300 border-slate-700'
+                              }`}
+                            >
+                              {tf.signal}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Candlestick Patterns & Volume Ratio */}
+                  {deepData && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-800/80">
+                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono text-slate-300">
+                        <CandlestickChart className="w-3 h-3 text-cyan-400" />
+                        <span>
+                          Hacim Oranı: <strong className="text-white">{deepData.volumeRatio}x</strong>
+                        </span>
+                      </span>
+                      {deepData.patterns.map((p, idx) => (
+                        <span
+                          key={idx}
+                          title={p.description}
+                          className={`px-2 py-0.5 rounded border text-[10px] font-bold ${
+                            p.bias === 'bull'
+                              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                              : p.bias === 'bear'
+                              ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                              : 'bg-slate-800 text-slate-300 border-slate-700'
+                          }`}
+                        >
+                          {p.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
+                {/* Institutional AI Research Memo */}
+                {aiMemo && (
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/25 border border-cyan-500/30 space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+                        <span className="text-xs font-black text-white">{aiMemo.headline}</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-[10px] font-bold text-cyan-200">
+                        {aiMemo.convictionBadge}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {aiMemo.sections.map((sec) => (
+                        <div key={sec.title} className="text-xs leading-relaxed">
+                          <div className="font-bold text-cyan-300">{sec.title}</div>
+                          <div className="text-slate-300">{sec.body}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950/90 border border-emerald-500/30 text-[11px] font-bold text-emerald-200">
+                      {aiMemo.actionCallout}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* TRADE PLAN + PIVOTS GRID */}
@@ -628,6 +862,67 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
                         </span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Position Size & Risk Calculator */}
+                  <div className="pt-2 border-t border-slate-800 space-y-2">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-cyan-300 flex items-center space-x-1">
+                      <Calculator className="w-3.5 h-3.5" />
+                      <span>Pozisyon &amp; Lot Mühendisi (Stop-Loss Riskine Göre)</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[9px] text-slate-400 mb-0.5">
+                          Sermaye ({selectedStock.currency})
+                        </label>
+                        <input
+                          type="number"
+                          value={capitalInput}
+                          onChange={(e) => setCapitalInput(e.target.value)}
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] text-slate-400 mb-0.5">
+                          Maks Risk (%)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          value={riskPctInput}
+                          onChange={(e) => setRiskPctInput(e.target.value)}
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-white"
+                        />
+                      </div>
+                    </div>
+                    {positionCalc && (
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px] bg-slate-950/80 p-2 rounded-xl border border-slate-800">
+                        <div>
+                          <div className="text-slate-400">Önerilen Adet</div>
+                          <div className="font-mono font-black text-white">
+                            {positionCalc.units.toLocaleString('tr-TR')} Lot
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-slate-400">İşlem Tutarı</div>
+                          <div className="font-mono font-black text-cyan-300">
+                            {formatStockPrice(positionCalc.totalCost, selectedStock.currency)}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-slate-400">TP1 Kâr / Stop</div>
+                          <div className="font-mono font-black">
+                            <span className="text-emerald-400">
+                              +{formatStockPrice(positionCalc.tp1Profit, '')}
+                            </span>{' '}
+                            /{' '}
+                            <span className="text-rose-400">
+                              -{formatStockPrice(positionCalc.slLoss, '')}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -801,6 +1096,261 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
                     ))}
                   </ul>
                 </div>
+              </div>
+
+              {/* ANALYST CONSENSUS + 1Y REAL BACKTEST LAB */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Wall Street / Institutional Analyst Consensus */}
+                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center space-x-1.5">
+                      <Target className="w-4 h-4" />
+                      <span>Kurumsal Analist Hedefleri &amp; Bilanço</span>
+                    </h3>
+                    {deepData?.financials?.recommendationKey && (
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-black uppercase text-emerald-300">
+                        {deepData.financials.recommendationKey.replace(/_/g, ' ')} (
+                        {deepData.financials.numberOfAnalystOpinions ?? '-'} Kurum)
+                      </span>
+                    )}
+                  </div>
+
+                  {deepData?.financials?.targetMeanPrice ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">Ortalama Analist Hedefi</span>
+                        <span className="font-mono font-black text-white">
+                          {formatStockPrice(deepData.financials.targetMeanPrice, selectedStock.currency)}{' '}
+                          {deepData.financials.upsidePct !== null && (
+                            <span
+                              className={
+                                deepData.financials.upsidePct >= 0
+                                  ? 'text-emerald-400'
+                                  : 'text-rose-400'
+                              }
+                            >
+                              ({deepData.financials.upsidePct >= 0 ? '+' : ''}
+                              {deepData.financials.upsidePct}%)
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-center text-[10px]">
+                        <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
+                          <div className="text-slate-500">En Düşük</div>
+                          <div className="font-mono font-bold text-slate-300">
+                            {formatStockPrice(deepData.financials.targetLowPrice ?? 0, '')}
+                          </div>
+                        </div>
+                        <div className="p-2 rounded-lg bg-cyan-950/30 border border-cyan-500/30">
+                          <div className="text-cyan-400">Mevcut</div>
+                          <div className="font-mono font-black text-white">
+                            {formatStockPrice(selectedStock.close, '')}
+                          </div>
+                        </div>
+                        <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
+                          <div className="text-slate-500">En Yüksek</div>
+                          <div className="font-mono font-bold text-emerald-300">
+                            {formatStockPrice(deepData.financials.targetHighPrice ?? 0, '')}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-400">
+                      {deepLoading
+                        ? 'Kurumsal analist hedefleri sorgulanıyor...'
+                        : 'Bu varlık için analist konsensüsü bulunmuyor (veya kripto varlık).'}
+                    </div>
+                  )}
+
+                  {deepData?.financials && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-[11px]">
+                      {[
+                        {
+                          k: 'ROE',
+                          v:
+                            deepData.financials.returnOnEquityPct !== null
+                              ? `%${deepData.financials.returnOnEquityPct}`
+                              : '-',
+                        },
+                        {
+                          k: 'Net Kâr Marjı',
+                          v:
+                            deepData.financials.profitMarginsPct !== null
+                              ? `%${deepData.financials.profitMarginsPct}`
+                              : '-',
+                        },
+                        {
+                          k: 'Gelir Büyümesi',
+                          v:
+                            deepData.financials.revenueGrowthPct !== null
+                              ? `%${deepData.financials.revenueGrowthPct}`
+                              : '-',
+                        },
+                        {
+                          k: 'İleri F/K',
+                          v: deepData.financials.forwardPE ? `${deepData.financials.forwardPE}x` : '-',
+                        },
+                        {
+                          k: 'Borç / Özkaynak',
+                          v:
+                            deepData.financials.debtToEquity !== null
+                              ? `%${deepData.financials.debtToEquity}`
+                              : '-',
+                        },
+                        {
+                          k: 'Beta',
+                          v: deepData.financials.beta !== null ? `${deepData.financials.beta}` : '-',
+                        },
+                      ].map((item) => (
+                        <div
+                          key={item.k}
+                          className="p-2 rounded-lg bg-slate-950/70 border border-slate-800 flex justify-between"
+                        >
+                          <span className="text-slate-400">{item.k}</span>
+                          <strong className="font-mono text-white">{item.v}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Real 1-Year Strategy Backtest Lab */}
+                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
+                      <Activity className="w-4 h-4" />
+                      <span>1 Yıllık Gerçek Backtest Laboratuvarı</span>
+                    </h3>
+                    {deepData?.backtest && (
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {deepData.backtest.totalTrades} İşlem Test Edildi
+                      </span>
+                    )}
+                  </div>
+
+                  {deepData?.backtest ? (
+                    <>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                          <div className="text-[9px] text-slate-400">Kazanma Oranı</div>
+                          <div className="font-mono font-black text-sm text-emerald-400">
+                            %{deepData.backtest.winRate}
+                          </div>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                          <div className="text-[9px] text-slate-400">Strateji Getiri</div>
+                          <div
+                            className={`font-mono font-black text-sm ${
+                              deepData.backtest.strategyReturnPct >= 0
+                                ? 'text-emerald-400'
+                                : 'text-rose-400'
+                            }`}
+                          >
+                            {deepData.backtest.strategyReturnPct >= 0 ? '+' : ''}
+                            {deepData.backtest.strategyReturnPct}%
+                          </div>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                          <div className="text-[9px] text-slate-400">Al-Tut Kıyas</div>
+                          <div className="font-mono font-black text-sm text-slate-200">
+                            {deepData.backtest.buyHoldReturnPct >= 0 ? '+' : ''}
+                            {deepData.backtest.buyHoldReturnPct}%
+                          </div>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                          <div className="text-[9px] text-slate-400">Profit Factor</div>
+                          <div className="font-mono font-black text-sm text-cyan-300">
+                            {deepData.backtest.profitFactor}
+                          </div>
+                        </div>
+                      </div>
+
+                      {deepData.backtest.recentTrades.length > 0 && (
+                        <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                          {deepData.backtest.recentTrades.map((tr, i) => (
+                            <div
+                              key={i}
+                              className="px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-slate-800 flex items-center justify-between text-[10px] font-mono"
+                            >
+                              <div className="text-slate-300">
+                                {tr.entryDate} &rarr; {tr.exitDate}{' '}
+                                <span className="text-slate-500">({tr.reason})</span>
+                              </div>
+                              <span
+                                className={`font-black ${
+                                  tr.returnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                                }`}
+                              >
+                                {tr.returnPct >= 0 ? '+' : ''}
+                                {tr.returnPct}%
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-xs text-slate-400">
+                      {deepLoading
+                        ? 'Son 1 yıllık tarihsel sinyaller test ediliyor...'
+                        : 'Backtest için yeterli tarihsel mum bulunamadı.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* LIVE FINANCIAL NEWS & SENTIMENT */}
+              <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center space-x-1.5">
+                    <Newspaper className="w-4 h-4" />
+                    <span>Canlı Piyasa Haberleri &amp; Duygu Analizi</span>
+                  </h3>
+                  <span className="text-[10px] text-slate-500">Otomatik Başlık Taraması</span>
+                </div>
+                {deepLoading && !deepData ? (
+                  <div className="text-xs text-slate-400 animate-pulse">Haber akışı çekiliyor...</div>
+                ) : deepData && deepData.news.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {deepData.news.map((n, idx) => (
+                      <a
+                        key={idx}
+                        href={n.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-3 rounded-xl bg-slate-950/75 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col justify-between gap-2 group"
+                      >
+                        <div className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 leading-snug line-clamp-2">
+                          {n.title}
+                        </div>
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-slate-500 truncate max-w-[160px]">
+                            {n.publisher} &bull;{' '}
+                            {new Date(n.publishedAt).toLocaleDateString('tr-TR')}
+                          </span>
+                          <div className="flex items-center space-x-1.5 shrink-0">
+                            <span
+                              className={`px-1.5 py-0.5 rounded font-black ${
+                                n.sentiment === 'Pozitif'
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : n.sentiment === 'Negatif'
+                                  ? 'bg-rose-500/20 text-rose-300'
+                                  : 'bg-slate-800 text-slate-400'
+                              }`}
+                            >
+                              {n.sentiment}
+                            </span>
+                            <ExternalLink className="w-3 h-3 text-slate-500 group-hover:text-cyan-400" />
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-400">Güncel haber başlığı bulunamadı.</div>
+                )}
               </div>
             </div>
           )}

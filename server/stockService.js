@@ -7,7 +7,9 @@ import https from 'https';
 
 const SCREENER_CACHE = new Map(); // key -> { data, expiresAt }
 const CHART_CACHE = new Map(); // key -> { data, expiresAt }
+const DEEP_CACHE = new Map(); // key -> { data, expiresAt }
 let macroCache = { data: null, expiresAt: 0 };
+let yahooSessionCache = { cookie: '', crumb: '', expiresAt: 0 };
 
 const TV_COLUMNS = [
   'name',
@@ -201,6 +203,105 @@ function httpRequestJson(url, method = 'GET', body = null, timeoutMs = 12000, ex
     if (payloadStr !== null) req.write(payloadStr);
     req.end();
   });
+}
+
+function httpRequestRaw(url, timeoutMs = 10000, extraHeaders = {}) {
+  return new Promise((resolve) => {
+    const req = https.request(
+      url,
+      {
+        method: 'GET',
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+          Accept: '*/*',
+          ...extraHeaders,
+        },
+      },
+      (res) => {
+        let raw = '';
+        res.on('data', (c) => {
+          raw += c;
+        });
+        res.on('end', () => {
+          resolve({ status: res.statusCode, headers: res.headers, body: raw });
+        });
+      }
+    );
+    req.on('error', () => resolve({ status: 0, headers: {}, body: '' }));
+    req.setTimeout(timeoutMs, () => {
+      req.destroy();
+      resolve({ status: 0, headers: {}, body: '' });
+    });
+    req.end();
+  });
+}
+
+async function getYahooSession() {
+  const now = Date.now();
+  if (yahooSessionCache.crumb && now < yahooSessionCache.expiresAt) {
+    return yahooSessionCache;
+  }
+  try {
+    const r1 = await httpRequestRaw('https://fc.yahoo.com', 7000);
+    const cookie = (r1.headers?.['set-cookie'] || [])
+      .map((c) => c.split(';')[0])
+      .filter(Boolean)
+      .join('; ');
+    if (!cookie) return null;
+    const r2 = await httpRequestRaw('https://query1.finance.yahoo.com/v1/test/getcrumb', 7000, {
+      Cookie: cookie,
+    });
+    if (r2.status === 200 && r2.body && !r2.body.includes('<')) {
+      yahooSessionCache = {
+        cookie,
+        crumb: r2.body.trim(),
+        expiresAt: now + 15 * 60 * 1000,
+      };
+      return yahooSessionCache;
+    }
+  } catch {}
+  return null;
+}
+
+async function enrichWithYahooQuotes(stocks, market) {
+  if (!Array.isArray(stocks) || stocks.length === 0 || market === 'crypto') return stocks;
+  const sess = await getYahooSession();
+  if (!sess) return stocks;
+
+  const symbols = stocks.map((s) => s.ticker).filter(Boolean);
+  if (symbols.length === 0) return stocks;
+
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(
+    symbols.join(',')
+  )}&crumb=${encodeURIComponent(sess.crumb)}`;
+  const r = await httpRequestRaw(url, 9000, { Cookie: sess.cookie });
+  if (r.status !== 200 || !r.body) return stocks;
+
+  try {
+    const parsed = JSON.parse(r.body);
+    const rows = parsed?.quoteResponse?.result || [];
+    const bySym = new Map(rows.map((row) => [row.symbol, row]));
+    return stocks.map((st) => {
+      const q = bySym.get(st.ticker);
+      if (!q) return st;
+      return {
+        ...st,
+        marketCap: st.marketCap ?? (typeof q.marketCap === 'number' ? q.marketCap : null),
+        pe: st.pe ?? (typeof q.trailingPE === 'number' ? q.trailingPE : typeof q.forwardPE === 'number' ? q.forwardPE : null),
+        pb: st.pb ?? (typeof q.priceToBook === 'number' ? q.priceToBook : null),
+        dividendYield:
+          st.dividendYield ??
+          (typeof q.trailingAnnualDividendYield === 'number' && q.trailingAnnualDividendYield > 0
+            ? Number((q.trailingAnnualDividendYield * 100).toFixed(2))
+            : typeof q.dividendYield === 'number' && q.dividendYield > 0
+            ? Number(q.dividendYield.toFixed(2))
+            : null),
+      };
+    });
+  } catch {
+    return stocks;
+  }
 }
 
 // --- QUANTITATIVE INDICATOR MATH FROM OHLCV ---
@@ -553,7 +654,7 @@ async function fetchYahooScreenerFallback(market, cleanSearch) {
 
   // Sort by Value Traded descending
   results.sort((a, b) => (b.valueTraded || 0) - (a.valueTraded || 0));
-  return results;
+  return enrichWithYahooQuotes(results, market);
 }
 
 function mapTvRow(item, market) {
@@ -847,4 +948,538 @@ export async function fetchStockChart(symbol, market = 'bist', range = '6mo', in
   });
 
   return result;
+}
+
+// --- DEEP INSTITUTIONAL RESEARCH ENGINE ---
+// Multi-Timeframe Confluence, Candle Patterns, Volume Anomaly, Real 1Y Backtest, Analyst Consensus, Live News
+
+function evaluateTimeframeSnapshot(candles, timeframeLabel) {
+  if (!candles || candles.length < 25) {
+    return {
+      timeframe: timeframeLabel,
+      signal: 'NÖTR',
+      trend: 'YATAY',
+      score: 50,
+      rsi: null,
+      macd: null,
+      macdSignal: null,
+      ema20: null,
+      ema50: null,
+      adx: null,
+    };
+  }
+  const closes = candles.map((c) => c.close);
+  const highs = candles.map((c) => c.high);
+  const lows = candles.map((c) => c.low);
+  const lastClose = closes[closes.length - 1];
+
+  const rsi = calcRSI(closes, 14);
+  const { macd, signal: macdSignal } = calcMACD(closes);
+  const adx = calcADX(highs, lows, closes, 14);
+  const ema20Arr = calcEMASeries(closes, 20);
+  const ema50Arr = calcEMASeries(closes, 50);
+  const ema20 = ema20Arr.length ? ema20Arr[ema20Arr.length - 1] : null;
+  const ema50 = ema50Arr.length ? ema50Arr[ema50Arr.length - 1] : null;
+
+  let score = 50;
+  if (ema20 !== null) score += lastClose > ema20 ? 12 : -12;
+  if (ema50 !== null) score += lastClose > ema50 ? 12 : -12;
+  if (ema20 !== null && ema50 !== null) score += ema20 > ema50 ? 6 : -6;
+  if (macd !== null && macdSignal !== null) score += macd > macdSignal ? 10 : -10;
+  if (rsi !== null) {
+    if (rsi <= 33) score += 10;
+    else if (rsi >= 48 && rsi <= 68) score += 6;
+    else if (rsi > 75) score -= 8;
+  }
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  let signal = 'NÖTR';
+  if (score >= 76) signal = 'GÜÇLÜ AL';
+  else if (score >= 60) signal = 'AL';
+  else if (score <= 26) signal = 'GÜÇLÜ SAT';
+  else if (score <= 42) signal = 'SAT';
+
+  const trend =
+    ema20 !== null && lastClose > ema20 && (ema50 === null || ema20 >= ema50)
+      ? 'YÜKSELİŞ'
+      : ema20 !== null && lastClose < ema20 && (ema50 === null || ema20 <= ema50)
+      ? 'DÜŞÜŞ'
+      : 'YATAY';
+
+  return {
+    timeframe: timeframeLabel,
+    signal,
+    trend,
+    score,
+    rsi: rsi !== null ? Number(rsi.toFixed(1)) : null,
+    macd: macd !== null ? Number(macd.toFixed(3)) : null,
+    macdSignal: macdSignal !== null ? Number(macdSignal.toFixed(3)) : null,
+    ema20: ema20 !== null ? Number(ema20.toFixed(3)) : null,
+    ema50: ema50 !== null ? Number(ema50.toFixed(3)) : null,
+    adx: adx !== null ? Number(adx.toFixed(1)) : null,
+  };
+}
+
+function detectPatternsAndVolume(candles) {
+  const patterns = [];
+  if (!candles || candles.length < 22) {
+    return { volumeRatio: 1, patterns };
+  }
+
+  const len = candles.length;
+  const last = candles[len - 1];
+  const prev = candles[len - 2];
+
+  // 20-day average volume (excluding last partial/current bar to avoid skew)
+  const prev20Vols = candles.slice(len - 21, len - 1).map((c) => c.volume || 0);
+  const avgVol20 = prev20Vols.reduce((s, v) => s + v, 0) / Math.max(1, prev20Vols.length);
+  const volumeRatio = avgVol20 > 0 ? Number((last.volume / avgVol20).toFixed(2)) : 1;
+
+  if (volumeRatio >= 1.75) {
+    patterns.push({
+      name: `Hacim Patlaması (${volumeRatio}x Ortalama)`,
+      bias: last.close >= last.open ? 'bull' : 'bear',
+      description:
+        last.close >= last.open
+          ? '20 günlük ortalamanın üzerinde güçlü alıcı hacmiyle kırılım teyidi.'
+          : 'Ortalamanın çok üzerinde satıcı ağırlıklı hacim baskısı tespit edildi.',
+    });
+  } else if (volumeRatio <= 0.55) {
+    patterns.push({
+      name: `Hacim Daralması (${volumeRatio}x Ortalama)`,
+      bias: 'neutral',
+      description: 'Düşük hacimle sıkışma; yön kırılımı öncesi bekle-gör evresi.',
+    });
+  }
+
+  const body = Math.abs(last.close - last.open);
+  const range = Math.max(0.0001, last.high - last.low);
+  const upperWick = last.high - Math.max(last.open, last.close);
+  const lowerWick = Math.min(last.open, last.close) - last.low;
+  const prevBody = Math.abs(prev.close - prev.open);
+
+  // Bullish Engulfing
+  if (
+    prev.close < prev.open &&
+    last.close > last.open &&
+    last.open <= prev.close &&
+    last.close >= prev.open &&
+    body > prevBody * 0.9
+  ) {
+    patterns.push({
+      name: 'Yutan Boğa (Bullish Engulfing)',
+      bias: 'bull',
+      description: 'Son yeşil mum önceki düşüş mumunu tamamen yutarak alıcı dönüşü veriyor.',
+    });
+  }
+
+  // Bearish Engulfing
+  if (
+    prev.close > prev.open &&
+    last.close < last.open &&
+    last.open >= prev.close &&
+    last.close <= prev.open &&
+    body > prevBody * 0.9
+  ) {
+    patterns.push({
+      name: 'Yutan Ayı (Bearish Engulfing)',
+      bias: 'bear',
+      description: 'Satış mumu önceki alım mumunu örttü; kısa vadeli kâr realizasyonu riski.',
+    });
+  }
+
+  // Hammer
+  if (lowerWick > body * 2 && upperWick < body * 0.6 && body > 0) {
+    patterns.push({
+      name: 'Çekiç Formasyonu (Hammer)',
+      bias: 'bull',
+      description: 'Gün içi dip seviyelerden gelen alımlarla alt fitil uzadı, destek savunuluyor.',
+    });
+  }
+
+  // Shooting Star
+  if (upperWick > body * 2 && lowerWick < body * 0.6 && body > 0) {
+    patterns.push({
+      name: 'Kayan Yıldız (Shooting Star)',
+      bias: 'bear',
+      description: 'Yukarı denemede dirençten satış geldi ve üst fitil uzun kaldı.',
+    });
+  }
+
+  // Doji
+  if (body / range < 0.12) {
+    patterns.push({
+      name: 'Kararsızlık Doji Mumu',
+      bias: 'neutral',
+      description: 'Alıcı ve satıcı dengede; sıradaki mum yönü belirleyecek.',
+    });
+  }
+
+  // 3 White Soldiers / Momentum Streak
+  if (len >= 4) {
+    const c1 = candles[len - 3];
+    const c2 = candles[len - 2];
+    const c3 = candles[len - 1];
+    if (c1.close > c1.open && c2.close > c2.open && c3.close > c3.open && c3.close > c2.close && c2.close > c1.close) {
+      patterns.push({
+        name: '3 Beyaz Asker (Momentum Serisi)',
+        bias: 'bull',
+        description: 'Üst üste 3 gün artan kapanışla kurumsal alım ivmesi sürüyor.',
+      });
+    } else if (c1.close < c1.open && c2.close < c2.open && c3.close < c3.open && c3.close < c2.close && c2.close < c1.close) {
+      patterns.push({
+        name: '3 Siyah Karga (Satış Baskısı)',
+        bias: 'bear',
+        description: 'Üst üste 3 gün düşen kapanışla kısa vade satıcı hâkimiyeti.',
+      });
+    }
+  }
+
+  return { volumeRatio, patterns };
+}
+
+function runHistoricalBacktest(candles) {
+  if (!candles || candles.length < 80) {
+    return null;
+  }
+
+  const closes = candles.map((c) => c.close);
+  const ema20Arr = calcEMASeries(closes, 20);
+  const ema50Arr = calcEMASeries(closes, 50);
+
+  // Precompute rolling RSI & MACD step-by-step without lookahead
+  let inPos = false;
+  let entryIdx = -1;
+  let entryPrice = 0;
+
+  let equity = 100;
+  let peakEquity = 100;
+  let maxDrawdown = 0;
+  const trades = [];
+
+  for (let i = 55; i < candles.length - 1; i++) {
+    const c = candles[i];
+    const slice = closes.slice(0, i + 1);
+    const rsiVal = calcRSI(slice, 14);
+    const { macd, signal } = calcMACD(slice);
+    const ema20 = ema20Arr[i];
+    const ema50 = ema50Arr[i];
+
+    if (!inPos) {
+      const trendUp = ema20 !== null && c.close > ema20 && (ema50 === null || ema20 >= ema50 * 0.99);
+      const macdBull = macd !== null && signal !== null ? macd > signal : true;
+      const rsiHealthy = rsiVal !== null ? rsiVal >= 42 && rsiVal <= 68 : false;
+      const rsiBounce = rsiVal !== null && rsiVal <= 34;
+
+      if ((trendUp && macdBull && rsiHealthy) || rsiBounce) {
+        inPos = true;
+        entryIdx = i;
+        entryPrice = c.close;
+      }
+    } else {
+      const barsHeld = i - entryIdx;
+      const pct = ((c.close - entryPrice) / entryPrice) * 100;
+      let exitReason = null;
+
+      if (pct >= 10) exitReason = 'Hedef Kâr (+10%)';
+      else if (pct <= -5) exitReason = 'Stop-Loss (-5%)';
+      else if (ema20 !== null && c.close < ema20 && barsHeld >= 3) exitReason = 'EMA20 Altı Kırılım';
+      else if (barsHeld >= 20) exitReason = 'Süre Sonu (20 Bar)';
+
+      if (exitReason || i === candles.length - 2) {
+        const netPct = Number(pct.toFixed(2));
+        equity = equity * (1 + netPct / 100);
+        if (equity > peakEquity) peakEquity = equity;
+        const dd = ((peakEquity - equity) / peakEquity) * 100;
+        if (dd > maxDrawdown) maxDrawdown = dd;
+
+        trades.push({
+          entryDate: new Date(candles[entryIdx].time * 1000).toISOString().slice(0, 10),
+          exitDate: new Date(c.time * 1000).toISOString().slice(0, 10),
+          entryPrice: Number(entryPrice.toFixed(2)),
+          exitPrice: Number(c.close.toFixed(2)),
+          returnPct: netPct,
+          reason: exitReason || 'Açık Pozisyon Simülasyonu',
+        });
+        inPos = false;
+      }
+    }
+  }
+
+  const wins = trades.filter((t) => t.returnPct > 0);
+  const losses = trades.filter((t) => t.returnPct <= 0);
+  const grossWin = wins.reduce((s, t) => s + t.returnPct, 0);
+  const grossLoss = Math.abs(losses.reduce((s, t) => s + t.returnPct, 0));
+
+  const firstBar = candles[55].close;
+  const lastBar = candles[candles.length - 1].close;
+  const buyHoldPct = firstBar > 0 ? ((lastBar - firstBar) / firstBar) * 100 : 0;
+
+  return {
+    strategyName: 'Quant Trend + RSI Geri Çekilme (Son 1 Yıl)',
+    totalTrades: trades.length,
+    wins: wins.length,
+    winRate: trades.length > 0 ? Number(((wins.length / trades.length) * 100).toFixed(1)) : 0,
+    avgReturnPct:
+      trades.length > 0
+        ? Number((trades.reduce((s, t) => s + t.returnPct, 0) / trades.length).toFixed(2))
+        : 0,
+    profitFactor: grossLoss > 0 ? Number((grossWin / grossLoss).toFixed(2)) : grossWin > 0 ? 9.9 : 1,
+    strategyReturnPct: Number((equity - 100).toFixed(2)),
+    buyHoldReturnPct: Number(buyHoldPct.toFixed(2)),
+    maxDrawdownPct: Number(maxDrawdown.toFixed(2)),
+    recentTrades: trades.slice(-6).reverse(),
+  };
+}
+
+function classifyNewsSentiment(title) {
+  const t = String(title || '').toLowerCase();
+  const bullWords = [
+    'rekor',
+    'artış',
+    'yükseliş',
+    'büyüme',
+    'kâr',
+    'karını',
+    'ihale',
+    'anlaşma',
+    'temettü',
+    'hedef fiyat',
+    'al önerisi',
+    'endeks üzeri',
+    'onay',
+    'yatırım',
+    'rally',
+    'surge',
+    'beat',
+    'upgrade',
+    'record',
+    'growth',
+    'bullish',
+    'breakout',
+  ];
+  const bearWords = [
+    'zarar',
+    'düşüş',
+    'gerileme',
+    'ceza',
+    'soruşturma',
+    'dava',
+    'borç',
+    'iflas',
+    'satış baskısı',
+    'hedef düşür',
+    'sat tavsiyesi',
+    'risk',
+    'drop',
+    'plunge',
+    'miss',
+    'downgrade',
+    'lawsuit',
+    'cut',
+    'bearish',
+    'selloff',
+  ];
+  let score = 0;
+  for (const w of bullWords) if (t.includes(w)) score += 1;
+  for (const w of bearWords) if (t.includes(w)) score -= 1;
+  if (score > 0) return 'Pozitif';
+  if (score < 0) return 'Negatif';
+  return 'Nötr';
+}
+
+function decodeXmlEntities(str) {
+  return String(str || '')
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .trim();
+}
+
+async function fetchStockNews(cleanSym, yfSymbol, market) {
+  const items = [];
+
+  // 1. Yahoo Search News (great for US & Crypto)
+  if (market !== 'bist') {
+    try {
+      const yUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(
+        yfSymbol
+      )}&quotesCount=1&newsCount=6`;
+      const yResp = await httpRequestJson(yUrl, 'GET', null, 7000);
+      const yNews = yResp?.news || [];
+      for (const n of yNews) {
+        if (!n?.title || !n?.link) continue;
+        items.push({
+          title: n.title,
+          link: n.link,
+          publisher: n.publisher || 'Yahoo Finance',
+          publishedAt: n.providerPublishTime
+            ? new Date(n.providerPublishTime * 1000).toISOString()
+            : new Date().toISOString(),
+          sentiment: classifyNewsSentiment(n.title),
+        });
+      }
+    } catch {}
+  }
+
+  // 2. Google News Turkish RSS (essential for BIST & Turkish macro/crypto news)
+  if (items.length < 4) {
+    try {
+      const query =
+        market === 'bist'
+          ? `${cleanSym} hisse borsa`
+          : market === 'crypto'
+          ? `${cleanSym.replace(/USDT$/, '')} kripto`
+          : `${cleanSym} stock`;
+      const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(
+        query
+      )}&hl=tr&gl=TR&ceid=TR:tr`;
+      const r = await httpRequestRaw(rssUrl, 8000);
+      if (r.status === 200 && r.body) {
+        const matches = [...r.body.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 6);
+        for (const m of matches) {
+          const block = m[1];
+          const titleRaw = block.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '';
+          const linkRaw = block.match(/<link>([\s\S]*?)<\/link>/)?.[1] || '';
+          const pubRaw = block.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] || '';
+          const srcRaw = block.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1] || 'Piyasa Haberleri';
+          const title = decodeXmlEntities(titleRaw);
+          if (!title) continue;
+          items.push({
+            title,
+            link: decodeXmlEntities(linkRaw),
+            publisher: decodeXmlEntities(srcRaw),
+            publishedAt: pubRaw ? new Date(pubRaw).toISOString() : new Date().toISOString(),
+            sentiment: classifyNewsSentiment(title),
+          });
+        }
+      }
+    } catch {}
+  }
+
+  return items.slice(0, 6);
+}
+
+async function fetchYahooDeepFinancials(yfSymbol, currentPrice) {
+  try {
+    const sess = await getYahooSession();
+    if (!sess) return null;
+    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(
+      yfSymbol
+    )}?modules=financialData,defaultKeyStatistics&crumb=${encodeURIComponent(sess.crumb)}`;
+    const r = await httpRequestRaw(url, 8000, { Cookie: sess.cookie });
+    if (r.status !== 200 || !r.body) return null;
+    const res = JSON.parse(r.body)?.quoteSummary?.result?.[0];
+    if (!res) return null;
+
+    const fd = res.financialData || {};
+    const ks = res.defaultKeyStatistics || {};
+    const numRaw = (obj) => (typeof obj?.raw === 'number' && Number.isFinite(obj.raw) ? obj.raw : null);
+
+    const targetMean = numRaw(fd.targetMeanPrice);
+    const upsidePct =
+      targetMean && currentPrice > 0
+        ? Number((((targetMean - currentPrice) / currentPrice) * 100).toFixed(1))
+        : null;
+
+    return {
+      targetLowPrice: numRaw(fd.targetLowPrice),
+      targetMeanPrice: targetMean,
+      targetHighPrice: numRaw(fd.targetHighPrice),
+      upsidePct,
+      recommendationKey: fd.recommendationKey || null,
+      numberOfAnalystOpinions: numRaw(fd.numberOfAnalystOpinions),
+      returnOnEquityPct: numRaw(fd.returnOnEquity) !== null ? Number((numRaw(fd.returnOnEquity) * 100).toFixed(1)) : null,
+      profitMarginsPct: numRaw(fd.profitMargins) !== null ? Number((numRaw(fd.profitMargins) * 100).toFixed(1)) : null,
+      operatingMarginsPct: numRaw(fd.operatingMargins) !== null ? Number((numRaw(fd.operatingMargins) * 100).toFixed(1)) : null,
+      revenueGrowthPct: numRaw(fd.revenueGrowth) !== null ? Number((numRaw(fd.revenueGrowth) * 100).toFixed(1)) : null,
+      earningsGrowthPct: numRaw(fd.earningsGrowth) !== null ? Number((numRaw(fd.earningsGrowth) * 100).toFixed(1)) : null,
+      debtToEquity: numRaw(fd.debtToEquity) !== null ? Number(numRaw(fd.debtToEquity).toFixed(1)) : null,
+      currentRatio: numRaw(fd.currentRatio) !== null ? Number(numRaw(fd.currentRatio).toFixed(2)) : null,
+      forwardPE: numRaw(ks.forwardPE) !== null ? Number(numRaw(ks.forwardPE).toFixed(2)) : null,
+      beta: numRaw(ks.beta) !== null ? Number(numRaw(ks.beta).toFixed(2)) : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchStockDeepAnalysis(symbol, market = 'bist') {
+  const cleanSym = String(symbol || '').trim().toUpperCase();
+  if (!cleanSym) return null;
+
+  const cacheKey = `${cleanSym}::${market}`;
+  const now = Date.now();
+  const cached = DEEP_CACHE.get(cacheKey);
+  if (cached && now < cached.expiresAt) {
+    return cached.data;
+  }
+
+  let yfSymbol = cleanSym;
+  if (market === 'bist' && !cleanSym.endsWith('.IS') && !cleanSym.includes('=')) {
+    yfSymbol = `${cleanSym}.IS`;
+  } else if (market === 'crypto') {
+    yfSymbol = cleanSym.replace(/USDT$/, '-USD');
+  }
+
+  const [chart1h, chart1d, chart1wk, news] = await Promise.all([
+    fetchStockChart(cleanSym, market, '1mo', '1h'),
+    fetchStockChart(cleanSym, market, '1y', '1d'),
+    fetchStockChart(cleanSym, market, '2y', '1wk'),
+    fetchStockNews(cleanSym, yfSymbol, market),
+  ]);
+
+  const currentPrice = chart1d?.regularMarketPrice || chart1h?.regularMarketPrice || 0;
+  const financials = market === 'crypto' ? null : await fetchYahooDeepFinancials(yfSymbol, currentPrice);
+
+  const mtf = [
+    evaluateTimeframeSnapshot(chart1h?.candles, '1 Saatlik (Kısa)'),
+    evaluateTimeframeSnapshot(chart1d?.candles, 'Günlük (Ana)'),
+    evaluateTimeframeSnapshot(chart1wk?.candles, 'Haftalık (Uzun)'),
+  ];
+
+  const bullCount = mtf.filter((m) => m.signal === 'AL' || m.signal === 'GÜÇLÜ AL').length;
+  const bearCount = mtf.filter((m) => m.signal === 'SAT' || m.signal === 'GÜÇLÜ SAT').length;
+  const mtfScore = Math.round(mtf.reduce((s, m) => s + m.score, 0) / mtf.length);
+
+  const patternAnalysis = detectPatternsAndVolume(chart1d?.candles);
+  const backtest = runHistoricalBacktest(chart1d?.candles);
+
+  const deepData = {
+    symbol: cleanSym,
+    market,
+    yfSymbol,
+    mtf,
+    mtfSummary: {
+      bullCount,
+      bearCount,
+      mtfScore,
+      alignment:
+        bullCount === 3
+          ? '3/3 Tam Boğa Uyumu'
+          : bullCount === 2
+          ? '2/3 Yukarı Eğilim'
+          : bearCount === 3
+          ? '3/3 Tam Ayı Uyumu'
+          : bearCount === 2
+          ? '2/3 Aşağı Baskı'
+          : 'Karışık / Konsolidasyon',
+    },
+    volumeRatio: patternAnalysis.volumeRatio,
+    patterns: patternAnalysis.patterns,
+    backtest,
+    financials,
+    news,
+    updatedAt: new Date().toISOString(),
+  };
+
+  DEEP_CACHE.set(cacheKey, {
+    data: deepData,
+    expiresAt: now + 60 * 1000,
+  });
+
+  return deepData;
 }

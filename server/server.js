@@ -21,7 +21,8 @@ import {
 } from './horseRacingService.js';
 import {
   fetchStockScreener,
-  fetchStockChart
+  fetchStockChart,
+  fetchStockDeepAnalysis
 } from './stockService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -267,6 +268,19 @@ app.get('/api/stocks/chart/:symbol', async (req, res) => {
   }
 });
 
+app.get('/api/stocks/deep/:symbol', async (req, res) => {
+  try {
+    const market = String(req.query.market || 'bist');
+    const deep = await fetchStockDeepAnalysis(req.params.symbol, market);
+    if (!deep) {
+      return res.status(404).json({ success: false, message: 'Deep research data not found' });
+    }
+    res.json({ success: true, deep });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 6. Dynamic Real Team Forms endpoints (100% Real Match Results)
 app.get('/api/forms', (req, res) => {
   res.json(getAllRealForms());
@@ -307,7 +321,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.11.12';
+const APP_VERSION = '2026.11.11.13';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

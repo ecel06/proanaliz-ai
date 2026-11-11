@@ -14,7 +14,8 @@ import {
   StockMarketType,
   StockQuantAnalysis,
 } from '../../types/stocks';
-import { formatStockPrice } from '../../utils/stockAnalysisEngine';
+import { fetchStockDeepAnalysis } from '../../services/stockService';
+import { buildInstitutionalAIMemo, formatStockPrice } from '../../utils/stockAnalysisEngine';
 
 interface StockChatMessage {
   id: string;
@@ -96,10 +97,10 @@ export const StockAIChatModal: React.FC<StockAIChatModalProps> = ({
 
   if (!isOpen) return null;
 
-  const processQuery = (
+  const processQuery = async (
     queryText: string,
     override?: { strat?: 'strong_buy' | 'value' | 'dip_bounce' | 'dividend'; count?: number }
-  ): StockChatMessage => {
+  ): Promise<StockChatMessage> => {
     const q = queryText.toLowerCase();
     const nowTime = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
@@ -107,27 +108,53 @@ export const StockAIChatModal: React.FC<StockAIChatModalProps> = ({
       .map((s) => ({ stock: s, analysis: analysesMap.get(s.symbol) }))
       .filter((x): x is { stock: StockItem; analysis: StockQuantAnalysis } => Boolean(x.analysis));
 
-    // 1. Check specific stock inquiry
+    // 1. Check specific stock inquiry -> fetch live Deep MTF + Backtest + Analyst Consensus + News!
     if (!override) {
       const matched = enriched.find(
         (x) =>
           q.includes(x.stock.symbol.toLowerCase()) ||
-          x.stock.name.toLowerCase().split(' ')[0].length >= 4 &&
-            q.includes(x.stock.name.toLowerCase().split(' ')[0])
+          (x.stock.name.toLowerCase().split(' ')[0].length >= 4 &&
+            q.includes(x.stock.name.toLowerCase().split(' ')[0]))
       );
       if (matched && !q.includes('portföy') && !q.includes('liste')) {
         const { stock, analysis } = matched;
+        const deep = await fetchStockDeepAnalysis(stock.symbol, stock.market);
+        const memo = buildInstitutionalAIMemo(stock, analysis, deep);
+        const mtfLine = deep
+          ? `\n• **Çoklu Zaman Dilimi (MTF):** ${deep.mtfSummary.alignment} (${deep.mtf
+              .map((m) => `${m.timeframe.split(' ')[0]}: ${m.signal}`)
+              .join(' | ')})`
+          : '';
+        const analystLine = deep?.financials?.targetMeanPrice
+          ? `\n• **Kurumsal Analist Hedefi:** Ort. **${formatStockPrice(
+              deep.financials.targetMeanPrice,
+              stock.currency
+            )}** (%${deep.financials.upsidePct ?? 0} potansiyel • ${
+              deep.financials.numberOfAnalystOpinions ?? '-'
+            } kurum)`
+          : '';
+        const btLine =
+          deep?.backtest && deep.backtest.totalTrades > 0
+            ? `\n• **1Y Backtest Kanıtı:** ${deep.backtest.totalTrades} işlemde **%${deep.backtest.winRate}** kazanma, bileşik **%${deep.backtest.strategyReturnPct}** (Profit Factor: ${deep.backtest.profitFactor})`
+            : '';
+        const newsLine =
+          deep?.news && deep.news.length > 0
+            ? `\n• **Güncel Haber (${deep.news[0].sentiment}):** "${deep.news[0].title}"`
+            : '';
+
         return {
           id: `st_${Date.now()}`,
           sender: 'assistant',
           timestamp: nowTime,
           text:
-            `📊 **${stock.symbol} — ${stock.name}**\n` +
+            `📊 **${stock.symbol} — ${stock.name}** [${memo.convictionBadge}]\n` +
             `• Güncel Fiyat: **${formatStockPrice(stock.close, stock.currency)}** (${stock.changePct >= 0 ? '+' : ''}%${stock.changePct.toFixed(2)})\n` +
-            `• Quant Sinyal: **${analysis.signal}** (AI Skor: **${analysis.score}/100** | Trend: %${analysis.trendScore} | Momentum: %${analysis.momentumScore} | Temel: %${analysis.fundamentalScore})\n` +
-            `• **İşlem Planı:** Stop-Loss **${formatStockPrice(analysis.tradePlan.stopLoss, stock.currency)}** (${analysis.tradePlan.stopLossPct}%) → Hedef 1 **${formatStockPrice(analysis.tradePlan.tp1, stock.currency)}** (+${Math.abs(analysis.tradePlan.tp1Pct)}%) → Hedef 2 **${formatStockPrice(analysis.tradePlan.tp2, stock.currency)}** (R/R: 1:${analysis.tradePlan.riskReward})\n` +
-            `• Artılar: ${analysis.bullReasons.slice(0, 2).join('; ')}\n` +
-            `• Riskler: ${analysis.bearReasons.slice(0, 1).join('; ')}`,
+            `• Quant Sinyal: **${analysis.signal}** (AI Skor: **${analysis.score}/100** | Trend: %${analysis.trendScore} | Momentum: %${analysis.momentumScore} | Temel: %${analysis.fundamentalScore})` +
+            mtfLine +
+            analystLine +
+            btLine +
+            `\n• **İşlem Planı:** Stop-Loss **${formatStockPrice(analysis.tradePlan.stopLoss, stock.currency)}** (${analysis.tradePlan.stopLossPct}%) → Hedef 1 **${formatStockPrice(analysis.tradePlan.tp1, stock.currency)}** → Hedef 2 **${formatStockPrice(analysis.tradePlan.tp2, stock.currency)}** (R/R: 1:${analysis.tradePlan.riskReward})` +
+            newsLine,
           picks: [matched],
           quickSuggestions: ['🔥 5 Güçlü AL Portföyü Kur', '⚠️ Riskli / SAT Sinyalleri'],
         };
@@ -206,7 +233,7 @@ export const StockAIChatModal: React.FC<StockAIChatModalProps> = ({
     };
   };
 
-  const handleSend = (
+  const handleSend = async (
     argText?: string,
     override?: { strat?: 'strong_buy' | 'value' | 'dip_bounce' | 'dividend'; count?: number }
   ) => {
@@ -223,11 +250,12 @@ export const StockAIChatModal: React.FC<StockAIChatModalProps> = ({
     ]);
     setInputText('');
     setIsTyping(true);
-    setTimeout(() => {
-      const reply = processQuery(msg, override);
+    try {
+      const reply = await processQuery(msg, override);
       setMessages((prev) => [...prev, reply]);
+    } finally {
       setIsTyping(false);
-    }, 300);
+    }
   };
 
   const handleWizardGenerate = () => {
