@@ -275,7 +275,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.11.10';
+  const CLIENT_BUILD_VERSION = '2026.11.11.11';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -1657,18 +1657,20 @@ export const App: React.FC = () => {
         onDirectInstall={handleDirectInstall}
       />
 
-      {/* Modal 5: Interactive AI Chatbot & Smart Coupon Generator */}
-      <AIChatModal
-        isOpen={isAIChatOpen}
-        onClose={() => setIsAIChatOpen(false)}
-        allMatches={weeklyMatches}
-        analysesMap={matchAnalysesMap}
-        currentTime={currentTime}
-        onSelectMatch={(m) => setSelectedMatch(m)}
-        betslipMatchIds={betslipItems.map(it => String(it.matchId))}
-        onAddCouponToBetslip={handleAddAICouponToBetslip}
-        onAddItemToBetslip={handleAddAIItemToBetslip}
-      />
+      {/* Modal 5: Interactive AI Chatbot & Smart Coupon Generator (Football Only) */}
+      {activeSection === 'football' && (
+        <AIChatModal
+          isOpen={isAIChatOpen}
+          onClose={() => setIsAIChatOpen(false)}
+          allMatches={weeklyMatches}
+          analysesMap={matchAnalysesMap}
+          currentTime={currentTime}
+          onSelectMatch={(m) => setSelectedMatch(m)}
+          betslipMatchIds={betslipItems.map(it => String(it.matchId))}
+          onAddCouponToBetslip={handleAddAICouponToBetslip}
+          onAddItemToBetslip={handleAddAIItemToBetslip}
+        />
+      )}
 
       {/* Modal 6: Kupon Hesaplayıcı & Betslip Drawer */}
       <BetslipDrawer
@@ -1727,22 +1729,24 @@ export const App: React.FC = () => {
         coupon={shareSlipCoupon}
       />
 
-      {/* Floating AI Kupon Robotu FAB Button (Always Accessible on Mobile & Desktop) */}
-      <button
-        onClick={() => setIsAIChatOpen(true)}
-        className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-600 text-white font-black text-xs sm:text-sm shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/70 border-2 border-purple-300/50 active:scale-95 transition-all cursor-pointer group hover:scale-105"
-        title="Yapay Zeka Sohbet & Kupon Robotu"
-      >
-        <div className="relative">
-          <Bot className="w-5 h-5 text-amber-300 animate-pulse group-hover:scale-110 transition-transform" />
-          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
-          </span>
-        </div>
-        <span className="font-extrabold tracking-tight">AI Kupon Robotu</span>
-        <Sparkles className="w-4 h-4 text-amber-300 fill-current opacity-80 hidden sm:inline" />
-      </button>
+      {/* Floating AI Kupon Robotu FAB Button (Football Only) */}
+      {activeSection === 'football' && (
+        <button
+          onClick={() => setIsAIChatOpen(true)}
+          className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-600 text-white font-black text-xs sm:text-sm shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/70 border-2 border-purple-300/50 active:scale-95 transition-all cursor-pointer group hover:scale-105"
+          title="Yapay Zeka Sohbet & Kupon Robotu"
+        >
+          <div className="relative">
+            <Bot className="w-5 h-5 text-amber-300 animate-pulse group-hover:scale-110 transition-transform" />
+            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+            </span>
+          </div>
+          <span className="font-extrabold tracking-tight">AI Kupon Robotu</span>
+          <Sparkles className="w-4 h-4 text-amber-300 fill-current opacity-80 hidden sm:inline" />
+        </button>
+      )}
 
 
 

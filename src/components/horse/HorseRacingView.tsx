@@ -16,14 +16,17 @@ import {
   Zap,
   Globe,
   Flag,
+  Bot,
 } from 'lucide-react';
 import {
+  GeneratedAltiliCoupon,
   HippodromeProgram,
   HorseAIAnalysis,
   HorseRunner,
   ProgramDetail,
   RaceCard,
 } from '../../types/horseRacing';
+import { HorseAIChatModal } from './HorseAIChatModal';
 import {
   fetchHorseRacingBulletin,
   fetchHorseRacingProgram,
@@ -58,6 +61,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
   const [programLoading, setProgramLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [expandedHorse, setExpandedHorse] = useState<number | null>(null);
+  const [isHorseAIChatOpen, setIsHorseAIChatOpen] = useState<boolean>(false);
 
   // Kupon state: programId -> { raceNo -> horseNumbers[] }
   const [selectionsByProgram, setSelectionsByProgram] = useState<
@@ -268,18 +272,26 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
     [detail, activeGame]
   );
 
-  const loadAICouponToSlip = (couponId: string) => {
-    const found = aiCoupons.find((c) => c.id === couponId);
-    if (!found || !selectedProgramId) return;
+  const applyGeneratedCoupon = (coupon: GeneratedAltiliCoupon) => {
+    if (!selectedProgramId) return;
+    setSelectedGameId(coupon.gameType);
     setSelectionsByProgram((prev) => {
       const progMap: Record<number, number[]> = { ...(prev[selectedProgramId] || {}) };
-      found.legs.forEach((leg) => {
+      coupon.legs.forEach((leg) => {
         progMap[leg.raceNumber] = [...leg.horses].sort((a, b) => a - b);
       });
       return { ...prev, [selectedProgramId]: progMap };
     });
     setSubTab('bulletin');
-    onShowToast?.(`${found.title} kupona yüklendi!`, 'success');
+    if (coupon.legs[0]) {
+      setSelectedRaceNo(coupon.legs[0].raceNumber);
+    }
+    onShowToast?.(`${coupon.title} kupona yüklendi!`, 'success');
+  };
+
+  const loadAICouponToSlip = (couponId: string) => {
+    const found = aiCoupons.find((c) => c.id === couponId);
+    if (found) applyGeneratedCoupon(found);
   };
 
   const legRaceNumbers = useMemo(
@@ -1562,6 +1574,33 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
           )}
         </>
       )}
+
+      {/* Horse Racing Dedicated AI Altılı Robotu Modal */}
+      <HorseAIChatModal
+        isOpen={isHorseAIChatOpen}
+        onClose={() => setIsHorseAIChatOpen(false)}
+        detail={detail}
+        availableGames={availableGames}
+        activeGame={activeGame}
+        onApplyCoupon={applyGeneratedCoupon}
+      />
+
+      {/* Floating AI Altılı Robotu FAB (Horse Racing Only) */}
+      <button
+        onClick={() => setIsHorseAIChatOpen(true)}
+        className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-black text-xs sm:text-sm shadow-2xl shadow-amber-500/40 hover:shadow-amber-500/70 border-2 border-amber-200/70 active:scale-95 transition-all cursor-pointer group hover:scale-105"
+        title="AI At Yarışı & Altılı Ganyan Robotu"
+      >
+        <div className="relative">
+          <Bot className="w-5 h-5 text-slate-950 group-hover:scale-110 transition-transform" />
+          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-600 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
+          </span>
+        </div>
+        <span className="font-black tracking-tight">AI Altılı Robotu</span>
+        <Sparkles className="w-4 h-4 text-slate-950 fill-current opacity-85 hidden sm:inline" />
+      </button>
     </div>
   );
 };

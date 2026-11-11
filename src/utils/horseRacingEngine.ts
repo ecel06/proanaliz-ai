@@ -413,3 +413,135 @@ export function generateAICoupons(
   return [ekonomik, ideal, genis];
 }
 
+export function generateBudgetHorseCoupon(
+  detail: ProgramDetail | null,
+  game: GameConfig | null,
+  maxBudgetTL = 100,
+  riskMode: 'ekonomik' | 'ideal' | 'surpriz' = 'ideal'
+): GeneratedAltiliCoupon | null {
+  if (!detail || !game) return null;
+  const legRaceNums = getLegRaceNumbers(game);
+  const legRaces = legRaceNums
+    .map((no) => detail.races.find((r) => r.number === no))
+    .filter((r): r is RaceCard => Boolean(r));
+  if (legRaces.length !== game.legCount) return null;
+
+  const legData = legRaces.map((race, idx) => {
+    const map = analyzeRaceHorses(race);
+    const ranked = Array.from(map.values()).sort((a, b) => b.score - a.score);
+    const gap = (ranked[0]?.score || 0) - (ranked[1]?.score || 0);
+    // Start with 1 horse for clearest leg or 2 for normal legs
+    return {
+      legIndex: idx + 1,
+      raceNumber: race.number,
+      ranked,
+      confidence: (ranked[0]?.score || 50) + gap,
+      count: 1,
+    };
+  });
+
+  // Sort copy by competitiveness (most competitive / tightest gap gets extra horses first)
+  const expansionOrder = [...legData].sort((a, b) => a.confidence - b.confidence);
+
+  // Determine target ceiling per leg based on riskMode
+  const maxPerLeg = riskMode === 'ekonomik' ? 3 : riskMode === 'ideal' ? 4 : 6;
+  const minBankos = riskMode === 'ekonomik' ? 2 : 1;
+  const lockedBankoRaces = new Set(
+    [...legData]
+      .sort((a, b) => b.confidence - a.confidence)
+      .slice(0, minBankos)
+      .map((x) => x.raceNumber)
+  );
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const item of expansionOrder) {
+      if (lockedBankoRaces.has(item.raceNumber)) continue;
+      if (item.count >= maxPerLeg || item.count >= item.ranked.length) continue;
+
+      const nextCombos = legData.reduce(
+        (acc, l) => acc * (l.raceNumber === item.raceNumber ? l.count + 1 : l.count),
+        1
+      );
+      if (nextCombos * game.defaultUnitPrice <= maxBudgetTL) {
+        item.count += 1;
+        changed = true;
+      }
+    }
+  }
+
+  // If surprise mode, swap last slot of tightest leg to highest ganyan bomber if not already picked
+  const legs = legData.map((l) => {
+    let picks = l.ranked.slice(0, l.count).map((x) => x.horseNumber);
+    if (riskMode === 'surpriz' && l.count >= 3 && l.ranked.length > l.count) {
+      const bomber = l.ranked.slice(l.count).find((x) => x.tag === 'BOMBA' || x.tag === 'SÜRPRİZ');
+      if (bomber) {
+        picks = [...l.ranked.slice(0, l.count - 1).map((x) => x.horseNumber), bomber.horseNumber];
+      }
+    }
+    picks.sort((a, b) => a - b);
+    return {
+      legIndex: l.legIndex,
+      raceNumber: l.raceNumber,
+      horses: picks,
+      banko: picks.length === 1 ? picks[0] : undefined,
+    };
+  });
+
+  const totalCombinations = legs.reduce((acc, l) => acc * Math.max(1, l.horses.length), 1);
+  const avgConfidence = Math.round(
+    legData.reduce((acc, l) => acc + (l.ranked[0]?.score || 60), 0) / legData.length
+  );
+
+  const strategyLabel: GeneratedAltiliCoupon['strategy'] =
+    riskMode === 'ekonomik' ? 'EKONOMİK' : riskMode === 'surpriz' ? 'BANKOLU SÜRPRİZ' : 'İDEAL';
+
+  return {
+    id: `hr-ai-${Date.now()}`,
+    title: `${detail.program.place} ${game.label} (${maxBudgetTL >= 9999 ? 'Limitsiz' : `${maxBudgetTL} ₺ Bütçe`})`,
+    subtitle: `${strategyLabel} strateji • En net ayaklarda tek, zorlu ayaklarda geniş kurgu`,
+    strategy: strategyLabel,
+    gameType: game.id,
+    startRace: game.startRace,
+    legs,
+    totalCombinations,
+    estimatedCost: Number((totalCombinations * game.defaultUnitPrice).toFixed(2)),
+    avgConfidence,
+  };
+}
+
+export function getProgramHighlights(detail: ProgramDetail | null) {
+  if (!detail) return null;
+  const raceInsights = detail.races.map((race) => {
+    const map = analyzeRaceHorses(race);
+    const ranked = Array.from(map.values()).sort((a, b) => b.score - a.score);
+    const top = ranked[0];
+    const second = ranked[1];
+    const gap = (top?.score || 0) - (second?.score || 0);
+    const topHorse = race.horses.find((h) => h.number === top?.horseNumber);
+    const sleeper = ranked.find((x) => x.tag === 'BOMBA' || x.tag === 'SÜRPRİZ');
+    const sleeperHorse = race.horses.find((h) => h.number === sleeper?.horseNumber);
+    return {
+      race,
+      ranked,
+      gap,
+      top,
+      topHorse,
+      sleeper,
+      sleeperHorse,
+    };
+  });
+
+  const bestBanko = [...raceInsights]
+    .filter((r) => !r.race.isFinished && r.top)
+    .sort((a, b) => (b.top!.score + b.gap) - (a.top!.score + a.gap))[0] || raceInsights[0];
+
+  const surpriseRace = [...raceInsights]
+    .filter((r) => !r.race.isFinished && r.sleeper)
+    .sort((a, b) => a.gap - b.gap)[0] || raceInsights[0];
+
+  return { raceInsights, bestBanko, surpriseRace };
+}
+
+
