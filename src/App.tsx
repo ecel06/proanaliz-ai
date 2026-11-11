@@ -24,6 +24,7 @@ import { BankrollTrackerModal } from './components/BankrollTrackerModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { AIPerformanceModal } from './components/AIPerformanceModal';
 import { ShareSlipModal } from './components/ShareSlipModal';
+import { HorseRacingView } from './components/horse/HorseRacingView';
 import { computeAIPerformance } from './utils/aiPerformanceHelper';
 import {
   isPushNotificationSupported,
@@ -268,11 +269,12 @@ export const App: React.FC = () => {
     }
   };
 
+  const [activeSection, setActiveSection] = useState<'football' | 'horseRacing'>('football');
   const [newVersionAvailable, setNewVersionAvailable] = useState(false);
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.11.08';
+  const CLIENT_BUILD_VERSION = '2026.11.11.09';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -879,9 +881,17 @@ export const App: React.FC = () => {
       {/* Top Header with Live Refresh Trigger & Mobile Install */}
       <Header
         onGoHome={() => {
+          setActiveSection('football');
           setActiveTabMode('upcoming');
           setSelectedCategory('all');
           setSearchQuery('');
+        }}
+        activeSection={activeSection}
+        onSelectSection={(sec) => {
+          setActiveSection(sec);
+          if (sec === 'football') {
+            setActiveTabMode('upcoming');
+          }
         }}
         onOpenCustomAnalyzer={() => setIsCustomAnalyzerOpen(true)}
         onOpenStandings={() => setIsStandingsOpen(true)}
@@ -953,6 +963,14 @@ export const App: React.FC = () => {
       {/* Main Container with Two Column Responsive Grid */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
 
+        {activeSection === 'horseRacing' ? (
+          <HorseRacingView
+            onShowToast={(msg) => {
+              setRefreshToast(msg);
+              setTimeout(() => setRefreshToast(null), 3500);
+            }}
+          />
+        ) : (
         <div className="flex flex-col lg:flex-row gap-6 items-start">
 
           {/* LEFT COLUMN: League Tree & Bulletin Sidebar */}
@@ -1571,6 +1589,7 @@ export const App: React.FC = () => {
           </div>
 
         </div>
+        )}
 
       </main>
 

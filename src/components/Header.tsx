@@ -50,6 +50,8 @@ interface HeaderProps {
   onTogglePush?: () => void;
   activeTheme?: TeamTheme;
   onOpenThemeModal?: () => void;
+  activeSection?: 'football' | 'horseRacing';
+  onSelectSection?: (section: 'football' | 'horseRacing') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -77,7 +79,9 @@ export const Header: React.FC<HeaderProps> = ({
   isPushEnabled = false,
   onTogglePush,
   activeTheme,
-  onOpenThemeModal
+  onOpenThemeModal,
+  activeSection = 'football',
+  onSelectSection
 }) => {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl w-full overflow-hidden">
@@ -113,6 +117,37 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Primary Category Switcher: Futbol | At Yarışı */}
+          {onSelectSection && (
+            <nav
+              aria-label="Ana Spor Kategorisi"
+              className="flex items-center p-0.5 sm:p-1 rounded-xl bg-slate-900/95 border border-slate-700/80 shadow-inner shrink-0"
+            >
+              <button
+                onClick={() => onSelectSection('football')}
+                className={`flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-[11px] sm:text-xs transition-all cursor-pointer ${
+                  activeSection === 'football'
+                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/25'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <span>⚽</span>
+                <span>Futbol</span>
+              </button>
+              <button
+                onClick={() => onSelectSection('horseRacing')}
+                className={`flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-[11px] sm:text-xs transition-all cursor-pointer ${
+                  activeSection === 'horseRacing'
+                    ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/25'
+                    : 'text-slate-300 hover:text-amber-300'
+                }`}
+              >
+                <span>🏇</span>
+                <span>At Yarışı</span>
+              </button>
+            </nav>
+          )}
 
           {/* Right Action Buttons & Badges - Mobile Responsive, Zero Overflow */}
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
@@ -296,12 +331,22 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 truncate">
             <span className="flex items-center space-x-1 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <strong className="text-slate-200">{totalMatches} Maç</strong>
-              <span className="hidden sm:inline text-slate-400">Canlı Yayında</span>
+              {activeSection === 'horseRacing' ? (
+                <strong className="text-amber-300">TJK &amp; Nesine Canlı At Yarışı</strong>
+              ) : (
+                <>
+                  <strong className="text-slate-200">{totalMatches} Maç</strong>
+                  <span className="hidden sm:inline text-slate-400">Canlı Yayında</span>
+                </>
+              )}
             </span>
             <span className="text-slate-700">•</span>
             <span className="truncate text-slate-400">
-              Poisson: <strong className="text-amber-300 font-bold">%99.4</strong>
+              {activeSection === 'horseRacing' ? (
+                <>AGF &amp; Form Motoru: <strong className="text-emerald-300 font-bold">Aktif</strong></>
+              ) : (
+                <>Poisson: <strong className="text-amber-300 font-bold">%99.4</strong></>
+              )}
             </span>
             <span className="hidden sm:inline text-slate-700">•</span>
             <span className="hidden sm:inline text-slate-400">Bahis İçermez • Saf Olasılık Simülasyonu</span>

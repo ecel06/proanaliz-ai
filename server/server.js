@@ -14,6 +14,11 @@ import {
   getRealFormForTeam,
   syncAllRealForms
 } from './realFormService.js';
+import {
+  fetchFullHorseRacingBulletin,
+  fetchProgramDetail,
+  fetchProgramList
+} from './horseRacingService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -187,6 +192,49 @@ app.get('/api/match-insights', async (req, res) => {
   }
 });
 
+// 5c. Live Horse Racing (TJK / Nesine) Bulletin, Program Details & Results
+app.get('/api/horse-racing/bulletin', async (req, res) => {
+  try {
+    const programId = req.query.programId ? Number(req.query.programId) : null;
+    const force = req.query.force === '1' || req.query.force === 'true';
+    const data = await fetchFullHorseRacingBulletin(programId, force);
+    res.json({ success: true, ...data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/horse-racing/program/:programId', async (req, res) => {
+  try {
+    const force = req.query.force === '1' || req.query.force === 'true';
+    const detail = await fetchProgramDetail(req.params.programId, force);
+    if (!detail) {
+      return res.status(404).json({ success: false, message: 'Program not found' });
+    }
+    res.json({ success: true, detail });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/horse-racing/results', async (req, res) => {
+  try {
+    const listData = await fetchProgramList(req.query.force === '1');
+    const targetId = req.query.programId ? Number(req.query.programId) : listData.selectedProgramId;
+    const detail = targetId ? await fetchProgramDetail(targetId, req.query.force === '1') : null;
+    res.json({
+      success: true,
+      programs: listData.programs,
+      selectedProgramId: targetId,
+      summary: detail?.summary || null,
+      races: detail?.races || [],
+      updatedAt: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 6. Dynamic Real Team Forms endpoints (100% Real Match Results)
 app.get('/api/forms', (req, res) => {
   res.json(getAllRealForms());
@@ -227,7 +275,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.11.08';
+const APP_VERSION = '2026.11.11.09';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
