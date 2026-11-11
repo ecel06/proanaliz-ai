@@ -19,6 +19,10 @@ import {
   fetchProgramDetail,
   fetchProgramList
 } from './horseRacingService.js';
+import {
+  fetchStockScreener,
+  fetchStockChart
+} from './stockService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -235,6 +239,34 @@ app.get('/api/horse-racing/results', async (req, res) => {
   }
 });
 
+// 5d. Live Stock Market Screener & Historical OHLCV Chart (BIST / NASDAQ / NYSE / Crypto)
+app.get('/api/stocks/screener', async (req, res) => {
+  try {
+    const market = String(req.query.market || 'bist');
+    const search = String(req.query.search || '');
+    const force = req.query.force === '1' || req.query.force === 'true';
+    const data = await fetchStockScreener(market, search, force);
+    res.json({ success: true, ...data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/stocks/chart/:symbol', async (req, res) => {
+  try {
+    const market = String(req.query.market || 'bist');
+    const range = String(req.query.range || '6mo');
+    const interval = String(req.query.interval || '1d');
+    const chart = await fetchStockChart(req.params.symbol, market, range, interval);
+    if (!chart) {
+      return res.status(404).json({ success: false, message: 'Chart data not found' });
+    }
+    res.json({ success: true, chart });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 6. Dynamic Real Team Forms endpoints (100% Real Match Results)
 app.get('/api/forms', (req, res) => {
   res.json(getAllRealForms());
@@ -275,7 +307,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.11.11';
+const APP_VERSION = '2026.11.11.12';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

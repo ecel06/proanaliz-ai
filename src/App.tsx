@@ -25,6 +25,7 @@ import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { AIPerformanceModal } from './components/AIPerformanceModal';
 import { ShareSlipModal } from './components/ShareSlipModal';
 import { HorseRacingView } from './components/horse/HorseRacingView';
+import { StockMarketView } from './components/stocks/StockMarketView';
 import { HomeHub } from './components/HomeHub';
 import { computeAIPerformance } from './utils/aiPerformanceHelper';
 import {
@@ -270,12 +271,12 @@ export const App: React.FC = () => {
     }
   };
 
-  const [activeSection, setActiveSection] = useState<'home' | 'football' | 'horseRacing'>('home');
+  const [activeSection, setActiveSection] = useState<'home' | 'football' | 'horseRacing' | 'stocks'>('home');
   const [newVersionAvailable, setNewVersionAvailable] = useState(false);
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.11.11';
+  const CLIENT_BUILD_VERSION = '2026.11.11.12';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -882,6 +883,7 @@ export const App: React.FC = () => {
             setActiveTabMode('upcoming');
           }}
           onSelectHorseRacing={() => setActiveSection('horseRacing')}
+          onSelectStocks={() => setActiveSection('stocks')}
         />
       </>
     );
@@ -985,6 +987,13 @@ export const App: React.FC = () => {
 
         {activeSection === 'horseRacing' ? (
           <HorseRacingView
+            onShowToast={(msg) => {
+              setRefreshToast(msg);
+              setTimeout(() => setRefreshToast(null), 3500);
+            }}
+          />
+        ) : activeSection === 'stocks' ? (
+          <StockMarketView
             onShowToast={(msg) => {
               setRefreshToast(msg);
               setTimeout(() => setRefreshToast(null), 3500);

@@ -51,8 +51,8 @@ interface HeaderProps {
   onTogglePush?: () => void;
   activeTheme?: TeamTheme;
   onOpenThemeModal?: () => void;
-  activeSection?: 'home' | 'football' | 'horseRacing';
-  onSelectSection?: (section: 'home' | 'football' | 'horseRacing') => void;
+  activeSection?: 'home' | 'football' | 'horseRacing' | 'stocks';
+  onSelectSection?: (section: 'home' | 'football' | 'horseRacing' | 'stocks') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -154,6 +154,17 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <span>🏇</span>
                 <span>At Yarışı</span>
+              </button>
+              <button
+                onClick={() => onSelectSection('stocks')}
+                className={`flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-[11px] sm:text-xs transition-all cursor-pointer ${
+                  activeSection === 'stocks'
+                    ? 'bg-cyan-400 text-slate-950 shadow-md shadow-cyan-500/25'
+                    : 'text-slate-300 hover:text-cyan-300'
+                }`}
+              >
+                <span>📈</span>
+                <span>Borsa</span>
               </button>
             </nav>
           )}
@@ -344,6 +355,8 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               {activeSection === 'horseRacing' ? (
                 <strong className="text-amber-300">TJK &amp; Nesine Canlı At Yarışı</strong>
+              ) : activeSection === 'stocks' ? (
+                <strong className="text-cyan-300">BIST / NASDAQ / Kripto Canlı Borsa Terminali</strong>
               ) : (
                 <>
                   <strong className="text-slate-200">{totalMatches} Maç</strong>
@@ -355,12 +368,18 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="truncate text-slate-400">
               {activeSection === 'horseRacing' ? (
                 <>AGF &amp; Form Motoru: <strong className="text-emerald-300 font-bold">Aktif</strong></>
+              ) : activeSection === 'stocks' ? (
+                <>Quant AL/SAT Sinyal Motoru: <strong className="text-cyan-300 font-bold">Aktif</strong></>
               ) : (
                 <>Poisson: <strong className="text-amber-300 font-bold">%99.4</strong></>
               )}
             </span>
             <span className="hidden sm:inline text-slate-700">•</span>
-            <span className="hidden sm:inline text-slate-400">Bahis İçermez • Saf Olasılık Simülasyonu</span>
+            <span className="hidden sm:inline text-slate-400">
+              {activeSection === 'stocks'
+                ? 'Piyasa Verileri • Yatırım Tavsiyesi Değildir'
+                : 'Bahis İçermez • Saf Olasılık Simülasyonu'}
+            </span>
           </div>
 
           <div className="text-[10px] text-slate-500 shrink-0 flex items-center space-x-1">
