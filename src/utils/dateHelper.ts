@@ -244,8 +244,11 @@ export function getDynamicDateOptions(
  */
 export function formatDynamicMatchTime(match: Match, now: Date = new Date()): string {
   const d = getMatchParsedDate(match);
-  const timeStr = match.time || '';
-  if (!d) return `${match.date || ''} ${timeStr}`.trim();
+  if (!d) return `${match.date || ''} ${match.time || ''}`.trim();
+
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const timeStr = `${hh}:${mm}`;
 
   const matchKey = toLocalDateKey(d);
   const todayKey = toLocalDateKey(now);

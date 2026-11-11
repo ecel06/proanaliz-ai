@@ -39,8 +39,9 @@ export const LeagueTreeSelector: React.FC<LeagueTreeSelectorProps> = ({
   isOpenMobile = false,
   onCloseMobile
 }) => {
-  // Store expanded countries, default top 4 expanded
+  // Store expanded countries, default top 5 expanded
   const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({
+    'Milli Takımlar': true,
     'Türkiye': true,
     'İngiltere': true,
     'İspanya': true,

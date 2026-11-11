@@ -92,7 +92,20 @@ export function groupMatchesByCountry(matches: any[]): LeagueGroup[] {
     lEntry.matches.push(m);
   }
 
-  return Array.from(countryMap.values()).map(c => {
+  const PRIORITY_COUNTRIES = [
+    'Milli Takımlar',
+    'Türkiye',
+    'Avrupa',
+    'İngiltere',
+    'İspanya',
+    'İtalya',
+    'Almanya',
+    'Fransa',
+    'Hollanda',
+    'Portekiz'
+  ];
+
+  const groups = Array.from(countryMap.values()).map(c => {
     const leagues = Array.from(c.leaguesMap.values()).map(l => {
       // Lig içerisindeki maçları başlama saatine göre erkenden geçe sırala
       l.matches.sort((a: any, b: any) => {
@@ -111,6 +124,17 @@ export function groupMatchesByCountry(matches: any[]): LeagueGroup[] {
       leagues
     };
   });
+
+  groups.sort((a, b) => {
+    const ia = PRIORITY_COUNTRIES.indexOf(a.country);
+    const ib = PRIORITY_COUNTRIES.indexOf(b.country);
+    if (ia !== -1 && ib !== -1) return ia - ib;
+    if (ia !== -1) return -1;
+    if (ib !== -1) return 1;
+    return b.totalCountryMatches - a.totalCountryMatches;
+  });
+
+  return groups;
 }
 
 /**

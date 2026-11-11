@@ -12,6 +12,7 @@ export interface LeagueTabOption {
 
 export const POPULAR_LEAGUES: LeagueTabOption[] = [
   { id: 'all', name: 'Tüm Ligler', flag: '🌐', country: 'Dünya' },
+  { id: 'nations-league', name: 'Milli Takımlar', flag: '🌍', country: 'Milli Takımlar' },
   { id: 'super-lig', name: 'Süper Lig', flag: '🇹🇷', country: 'Türkiye' },
   { id: '1-lig', name: 'TFF 1. Lig', flag: '🇹🇷', country: 'Türkiye' },
   { id: 'premier-league', name: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', country: 'İngiltere' },
@@ -87,6 +88,29 @@ export function isMatchInLeague(match: Match, targetLeague: string): boolean {
 
   // 1. Direct equality
   if (mLeague === target || mCat === target) return true;
+
+  // 1.5 Milli Takımlar / Uluslararası
+  if (
+    target === 'nations-league' ||
+    target === 'milli takımlar' ||
+    target === 'uefa.nations'
+  ) {
+    return (
+      mCat === 'nations-league' ||
+      mCat === 'world-cup-q' ||
+      mCat === 'friendly' ||
+      mCat === 'afcon' ||
+      (match.country || '').toLowerCase().includes('milli') ||
+      mLeague.includes('uluslar') ||
+      mLeague.includes('dünya kupası') ||
+      mLeague.includes('hazırlık') ||
+      mLeague.includes('milli') ||
+      mLeague.includes('afrika') ||
+      mLeague.includes('u19') ||
+      mLeague.includes('u20') ||
+      mLeague.includes('u21')
+    );
+  }
 
   // 2. Süper Lig
   if (
