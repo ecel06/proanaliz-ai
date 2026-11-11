@@ -4,7 +4,7 @@ export interface SystemBetCalculation {
   isSystemActive: boolean;
   bankoCount: number;
   normalCount: number;
-  selectedSystems: number[];
+  selectedSystems: number[]; // Total matches per column (e.g. 2, 3, 4 like Nesine/İddaa)
   totalColumns: number;
   columnStake: number;
   totalCost: number;
@@ -27,7 +27,7 @@ function nChooseK(n: number, k: number): number {
 
 /**
  * Sum of products of all k-sized subsets from odds array.
- * Uses elementary symmetric polynomial DP in O(n * k) time — instant even for large slips.
+ * Uses elementary symmetric polynomial DP in O(n * k) time.
  */
 function sumOfKProducts(odds: number[], k: number): number {
   if (k === 0) return 1;
@@ -42,11 +42,19 @@ function sumOfKProducts(odds: number[], k: number): number {
   return dp[k];
 }
 
-export function getAvailableSystemNumbers(normalCount: number): number[] {
-  if (normalCount <= 1) return normalCount === 1 ? [1] : [];
+/**
+ * Exact Nesine / İddaa system numbers (representing total matches per column).
+ * - 0 Banko on 4 matches => [1, 2, 3, 4]
+ * - 1 Banko on 4 matches => [2, 3, 4] (1 Banko + 1/2/3 others)
+ * - N Banko on N matches => [N]
+ */
+export function getAvailableSystemNumbers(totalMatches: number, bankoCount: number): number[] {
+  if (totalMatches <= 0) return [];
+  if (totalMatches === 1) return [1];
+  const minK = bankoCount > 0 ? Math.min(totalMatches, bankoCount + 1) : 1;
   const nums: number[] = [];
-  for (let i = 1; i <= normalCount; i++) {
-    nums.push(i);
+  for (let k = minK; k <= totalMatches; k++) {
+    nums.push(k);
   }
   return nums;
 }
@@ -60,18 +68,19 @@ export function calculateSystemBet(
   const bankoItems = items.filter(it => bankoMatchIds.includes(it.matchId));
   const normalItems = items.filter(it => !bankoMatchIds.includes(it.matchId));
 
+  const totalMatches = items.length;
   const bankoCount = bankoItems.length;
   const normalCount = normalItems.length;
   const stake = Math.max(1, columnStake || 0);
 
-  // Sanitize selected system numbers to valid [1..normalCount] or default to [normalCount] (Kombine)
+  const validChoices = getAvailableSystemNumbers(totalMatches, bankoCount);
   let selectedSystems = rawSelectedSystems
-    .filter(s => s >= 1 && s <= normalCount)
-    .filter((s, idx, arr) => arr.indexOf(s) === idx)
+    .filter(k => validChoices.includes(k))
+    .filter((k, idx, arr) => arr.indexOf(k) === idx)
     .sort((a, b) => a - b);
 
   if (selectedSystems.length === 0) {
-    selectedSystems = normalCount > 0 ? [normalCount] : [];
+    selectedSystems = totalMatches > 0 ? [totalMatches] : [];
   }
 
   const bankoProduct = bankoItems.reduce((acc, it) => acc * it.odd, 1);
@@ -85,38 +94,37 @@ export function calculateSystemBet(
     totalColumns = 1;
     totalMaxMultiplier = bankoProduct;
   } else {
-    for (const s of selectedSystems) {
-      totalColumns += nChooseK(normalCount, s);
-      totalMaxMultiplier += bankoProduct * sumOfKProducts(normalOdds, s);
+    for (const k of selectedSystems) {
+      const nonBankoPickCount = k - bankoCount;
+      totalColumns += nChooseK(normalCount, nonBankoPickCount);
+      totalMaxMultiplier += bankoProduct * sumOfKProducts(normalOdds, nonBankoPickCount);
     }
   }
 
-  // Minimum win occurs when all bankos hit and only the smallest k_min normal matches hit
   let minWinMultiplier = 0;
   if (normalCount === 0 && bankoCount > 0) {
     minWinMultiplier = bankoProduct;
   } else if (selectedSystems.length > 0) {
-    const minS = selectedSystems[0];
+    const minNonBankoCount = Math.max(0, selectedSystems[0] - bankoCount);
     const smallestSubsetProduct = sortedNormalAsc
-      .slice(0, minS)
+      .slice(0, minNonBankoCount)
       .reduce((acc, o) => acc * o, 1);
     minWinMultiplier = bankoProduct * smallestSubsetProduct;
   }
 
   const isKombineOnly =
-    bankoCount === 0 &&
     selectedSystems.length === 1 &&
-    selectedSystems[0] === normalCount;
+    selectedSystems[0] === totalMatches;
 
-  const isSystemActive = !isKombineOnly && items.length >= 2;
+  const isSystemActive = !isKombineOnly && totalMatches >= 2;
   const totalCost = Number((totalColumns * stake).toFixed(2));
   const minWin = Number((stake * minWinMultiplier).toFixed(2));
   const maxWin = Number((stake * totalMaxMultiplier).toFixed(2));
 
   const systemLabel = isKombineOnly
-    ? 'Kombine (Tek Kolon)'
+    ? 'Kombine'
     : bankoCount > 0
-    ? `${bankoCount} Banko + Sistem ${selectedSystems.join('-')}`
+    ? `Sistem ${selectedSystems.join('-')} (${bankoCount}B)`
     : `Sistem ${selectedSystems.join('-')}`;
 
   return {
@@ -133,4 +141,3 @@ export function calculateSystemBet(
     systemLabel
   };
 }
-
