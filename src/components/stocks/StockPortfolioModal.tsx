@@ -576,3 +576,4 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
     </div>
   );
 };
+

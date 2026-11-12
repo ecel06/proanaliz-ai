@@ -584,3 +584,4 @@ export const StockPerformanceModal: React.FC<StockPerformanceModalProps> = ({ is
     </div>
   );
 };
+

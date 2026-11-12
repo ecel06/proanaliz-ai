@@ -4,11 +4,13 @@ import {
   Award,
   CheckCircle2,
   ChevronRight,
+  Clock,
   CloudSun,
   Info,
   RefreshCw,
   Sparkles,
   Ticket,
+  Timer,
   Trash2,
   Trophy,
   AlertTriangle,
@@ -231,6 +233,59 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
       .map((x) => x.horseNumber);
     setRacePicks(activeRace.number, ranked);
   };
+
+  // Real-time race countdown ticker
+  const [currentTimeMs, setCurrentTimeMs] = useState<number>(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTimeMs(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const raceCountdown = useMemo(() => {
+    if (!activeRace) return null;
+    if (activeRace.isFinished) {
+      return { text: 'Koşu Tamamlandı', status: 'finished' };
+    }
+    const hourStr = String(activeRace.hour || '').trim();
+    if (!hourStr || !hourStr.includes(':')) {
+      return null;
+    }
+    const [h, m] = hourStr.split(':').map((x) => parseInt(x, 10));
+    if (isNaN(h) || isNaN(m)) return null;
+
+    // Current Istanbul Date & Time
+    const trNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Istanbul' }));
+    const target = new Date(trNow);
+    target.setHours(h, m, 0, 0);
+
+    const diffMs = target.getTime() - trNow.getTime();
+    if (diffMs <= 0) {
+      if (diffMs > -10 * 60 * 1000) {
+        return { text: 'Koşu Başladı / Canlı', status: 'live' };
+      }
+      return { text: 'Koşu Tamamlandı', status: 'finished' };
+    }
+
+    const totalSec = Math.floor(diffMs / 1000);
+    const hrs = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = totalSec % 60;
+
+    let timeFormatted = '';
+    if (hrs > 0) {
+      timeFormatted = `${hrs} sa ${mins} dk`;
+    } else {
+      timeFormatted = `${mins} dk ${secs < 10 ? '0' : ''}${secs} sn`;
+    }
+
+    return {
+      text: timeFormatted,
+      status: totalSec <= 600 ? 'urgent' : 'upcoming',
+      totalSec,
+    };
+  }, [activeRace, currentTimeMs]);
 
   const sortedHorses: HorseRunner[] = useMemo(() => {
     if (!activeRace) return [];
@@ -994,6 +1049,26 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
                             <span className="text-xs font-bold text-slate-300">
                               {activeRace.distance}m {activeRace.raceCourseType}
                             </span>
+                            {raceCountdown && (
+                              <span
+                                className={`px-2 py-0.5 rounded text-xs font-black flex items-center gap-1.5 ${
+                                  raceCountdown.status === 'urgent'
+                                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse'
+                                    : raceCountdown.status === 'live'
+                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
+                                    : raceCountdown.status === 'finished'
+                                    ? 'bg-slate-800 text-slate-400 border border-slate-700'
+                                    : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+                                }`}
+                              >
+                                <Clock className="w-3 h-3" />
+                                <span>
+                                  {raceCountdown.status === 'upcoming' || raceCountdown.status === 'urgent'
+                                    ? `⏱️ Başlamasına: ${raceCountdown.text}`
+                                    : raceCountdown.text}
+                                </span>
+                              </span>
+                            )}
                           </div>
                           <h3 className="text-sm sm:text-base font-black text-white mt-1">
                             {activeRace.name || activeRace.typeDescription}

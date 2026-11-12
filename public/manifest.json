@@ -1,16 +1,16 @@
 {
   "short_name": "ProAnaliz AI",
-  "name": "ProAnaliz AI - Futbol İstatistik & Olasılık Motoru",
-  "description": "Poisson dağılımı, form durumu ve yapay zeka analizleriyle profesyonel futbol olasılık simülatörü.",
+  "name": "ProAnaliz AI - Futbol, At Yarışı & Borsa Platformu",
+  "description": "Futbol, TJK At Yarışı ve Borsa & Kripto için yapay zeka destekli profesyonel quant analiz, tahmin ve simülasyon terminali.",
   "id": "/?source=pwa",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#030712",
-  "theme_color": "#030712",
-  "categories": ["sports", "utilities"],
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "categories": ["sports", "finance", "utilities"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -33,17 +33,24 @@
   ],
   "shortcuts": [
     {
-      "name": "Günün Maçları",
-      "short_name": "Bugün",
-      "description": "Günün maç bülteni ve istatistikleri",
-      "url": "/?filter=today",
+      "name": "Futbol Analizleri",
+      "short_name": "Futbol",
+      "description": "Canlı maçlar, oranlar ve yapay zeka kuponları",
+      "url": "/?section=football",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Süper Lig Maçları",
-      "short_name": "Süper Lig",
-      "description": "Süper Lig maçları ve puan tablosu",
-      "url": "/?league=super-lig",
+      "name": "At Yarışı & Altılı Ganyan",
+      "short_name": "At Yarışı",
+      "description": "TJK bülteni, AGF oranları ve AI robot kuponları",
+      "url": "/?section=horseRacing",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Borsa & Kripto Terminali",
+      "short_name": "Borsa",
+      "description": "BIST, ABD ve Kripto canlı al-sat sinyalleri",
+      "url": "/?section=stocks",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]

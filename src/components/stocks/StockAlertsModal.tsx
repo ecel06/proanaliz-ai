@@ -376,3 +376,4 @@ export const StockAlertsModal: React.FC<StockAlertsModalProps> = ({
     </div>
   );
 };
+
