@@ -88,8 +88,8 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl w-full max-w-full overflow-x-clip">
       <div className="w-full max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 min-w-0">
         
-        {/* Top Navbar Row */}
-        <div className="flex items-center justify-between h-12 sm:h-16 gap-1 sm:gap-2 min-w-0 w-full">
+        {/* ROW 1: Brand Logo & Top Action Tools (Clean, Spacious, Zero Overflow) */}
+        <div className="flex items-center justify-between h-12 sm:h-13 gap-2 min-w-0 w-full py-1">
           
           {/* Logo & Brand Title - Clickable Home Trigger */}
           <div 
@@ -97,9 +97,9 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center space-x-1.5 sm:space-x-2 shrink-0 min-w-0 cursor-pointer group"
             title="Ana Sayfaya & Canlı Bültene Dön"
           >
-            <div className="relative flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-400 via-teal-500 to-indigo-600 p-[1.5px] shadow-lg shadow-emerald-500/20 shrink-0 group-hover:scale-105 transition-transform">
-              <div className="w-full h-full bg-slate-950 rounded-[6px] sm:rounded-[10px] flex items-center justify-center">
-                <BrainCircuit className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-emerald-400 animate-pulse" />
+            <div className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-emerald-400 via-teal-500 to-indigo-600 p-[1.5px] shadow-lg shadow-emerald-500/20 shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-full h-full bg-slate-950 rounded-[6px] flex items-center justify-center">
+                <BrainCircuit className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 animate-pulse" />
               </div>
               <span className="absolute -top-1 -right-1 flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -108,72 +108,18 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             <div className="min-w-0">
-              <div className="flex items-center space-x-1 sm:space-x-1.5">
-                <span className="text-sm sm:text-lg lg:text-xl font-black tracking-tight text-white whitespace-nowrap group-hover:text-emerald-300 transition-colors">
+              <div className="flex items-center space-x-1.5">
+                <span className="text-sm sm:text-base lg:text-lg font-black tracking-tight text-white whitespace-nowrap group-hover:text-emerald-300 transition-colors">
                   ProAnaliz <span className="text-emerald-400">AI</span>
                 </span>
-                <span className="hidden lg:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   Canlı Bülten
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Primary Category Switcher - WIDE DESKTOP ONLY (xl and up) */}
-          {onSelectSection && (
-            <nav
-              aria-label="Ana Spor Kategorisi"
-              className="hidden xl:flex items-center p-1 rounded-xl bg-slate-900/95 border border-slate-700/80 shadow-inner shrink-0 gap-1"
-            >
-              <button
-                onClick={() => onSelectSection('home')}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-extrabold text-xs transition-all cursor-pointer ${
-                  activeSection === 'home'
-                    ? 'bg-slate-800 text-white shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                }`}
-                title="Ana Sayfaya Dön"
-              >
-                <Home className="w-3.5 h-3.5 text-slate-300" />
-                <span>Ana Sayfa</span>
-              </button>
-              <button
-                onClick={() => onSelectSection('football')}
-                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg font-black text-xs transition-all cursor-pointer ${
-                  activeSection === 'football'
-                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/25'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                }`}
-              >
-                <span>⚽</span>
-                <span>Futbol</span>
-              </button>
-              <button
-                onClick={() => onSelectSection('horseRacing')}
-                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg font-black text-xs transition-all cursor-pointer ${
-                  activeSection === 'horseRacing'
-                    ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/25'
-                    : 'text-slate-300 hover:text-amber-300 hover:bg-slate-800'
-                }`}
-              >
-                <span>🏇</span>
-                <span>At Yarışı</span>
-              </button>
-              <button
-                onClick={() => onSelectSection('stocks')}
-                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg font-black text-xs transition-all cursor-pointer ${
-                  activeSection === 'stocks'
-                    ? 'bg-cyan-400 text-slate-950 shadow-md shadow-cyan-500/25'
-                    : 'text-slate-300 hover:text-cyan-300 hover:bg-slate-800'
-                }`}
-              >
-                <span>📈</span>
-                <span>Borsa</span>
-              </button>
-            </nav>
-          )}
-
-          {/* Right Action Buttons & Badges - 100% Fluid Responsive, Zero Overflow */}
+          {/* Right Action Tools - Complete Suite with Zero Horizontal Overflow */}
           <div className="flex items-center gap-1 sm:gap-1.5 shrink min-w-0 overflow-x-auto no-scrollbar py-0.5">
             
             {/* Direct Update Trigger in Header */}
@@ -194,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={onRefreshLiveBulletin}
                 disabled={isRefreshing}
-                className={`p-1.5 sm:px-2 sm:py-1.5 rounded-xl border transition-all cursor-pointer shrink-0 flex items-center space-x-1 ${
+                className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border transition-all cursor-pointer shrink-0 flex items-center space-x-1.5 ${
                   isRefreshing
                     ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed'
                     : 'bg-slate-900/90 hover:bg-slate-800 text-white border-slate-700/80 shadow-xs'
@@ -202,17 +148,17 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Tüm Liglerin Bültenini Canlı Senkronize Et"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-400' : 'text-emerald-400'}`} />
-                <span className="hidden 2xl:inline font-bold text-xs text-white">
+                <span className="hidden md:inline font-bold text-xs text-white">
                   {isRefreshing ? 'Çekiliyor...' : 'Yenile'}
                 </span>
               </button>
             )}
 
-            {/* Team Theme & Color Selector Button (Football only - Prominent & Compact) */}
+            {/* Team Theme & Color Selector Button (Football only) */}
             {activeSection === 'football' && onOpenThemeModal && (
               <button
                 onClick={onOpenThemeModal}
-                className="flex items-center space-x-1 px-1.5 py-1.5 sm:px-2 sm:py-1.5 rounded-xl border font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
+                className="flex items-center space-x-1 px-1.5 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
                 style={{
                   backgroundColor: activeTheme?.badgeBg || 'rgba(16, 185, 129, 0.15)',
                   borderColor: activeTheme?.cardBorder || 'rgba(16, 185, 129, 0.35)',
@@ -222,39 +168,39 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Palette className="w-3.5 h-3.5 group-hover:rotate-45 transition-transform shrink-0" />
                 <span className="font-black text-[11px] sm:text-xs">{activeTheme?.emoji || '🎨'}</span>
-                <span className="hidden xl:inline font-bold text-xs">{activeTheme?.shortName || 'Renk'}</span>
+                <span className="hidden sm:inline font-bold text-xs">{activeTheme?.shortName || 'Renk'}</span>
               </button>
             )}
 
-            {/* Standings Button (Football only - xl screen and up) */}
+            {/* Standings Button (Football only) */}
             {activeSection === 'football' && onOpenStandings && (
               <button
                 onClick={onOpenStandings}
-                className="hidden xl:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs"
+                className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs"
                 title="Güncel Puan Durumu"
               >
                 <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Puan Durumu</span>
+                <span className="hidden lg:inline">Puan Durumu</span>
               </button>
             )}
 
-            {/* AI Performance Scorecard Button (Football only - xl screen and up) */}
+            {/* AI Performance Scorecard Button (Football only) */}
             {activeSection === 'football' && onOpenAIPerformance && (
               <button
                 onClick={onOpenAIPerformance}
-                className="hidden xl:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs"
+                className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs"
                 title="Yapay Zeka Başarı Karnesi & Şeffaf İstatistikler"
               >
                 <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                <span>Başarı Karnesi</span>
+                <span className="hidden lg:inline">Başarı Karnesi</span>
               </button>
             )}
 
-            {/* AI Curated Coupons Button (Football only - xl screen and up) */}
+            {/* AI Curated Coupons Button (Football only) */}
             {activeSection === 'football' && onOpenCoupons && (
               <button
                 onClick={activeTabMode === 'coupons' ? () => onSelectSection?.('football') : onOpenCoupons}
-                className={`hidden xl:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl font-bold text-xs border transition-all cursor-pointer shadow-xs shrink-0 ${
+                className={`hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl font-bold text-xs border transition-all cursor-pointer shadow-xs shrink-0 ${
                   activeTabMode === 'coupons'
                     ? 'bg-amber-400 text-slate-950 border-amber-300 font-extrabold shadow-amber-500/20'
                     : 'bg-slate-900/90 hover:bg-slate-800 text-white border-slate-700/80'
@@ -262,22 +208,10 @@ export const Header: React.FC<HeaderProps> = ({
                 title={activeTabMode === 'coupons' ? "Maç Bültenine Dön" : "Günün Kuponları (Banko, İdeal, Sürpriz)"}
               >
                 <Flame className={`w-3.5 h-3.5 ${activeTabMode === 'coupons' ? 'text-slate-950 fill-current' : 'text-amber-400 animate-pulse'}`} />
-                <span>{activeTabMode === 'coupons' ? 'Maçlar' : 'Kuponlar'}</span>
+                <span className="hidden md:inline">{activeTabMode === 'coupons' ? 'Maçlar' : 'Kuponlar'}</span>
                 {activeTabMode !== 'coupons' && (
                   <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 font-black">3</span>
                 )}
-              </button>
-            )}
-
-            {/* Mobile / PWA Download & Install Button (Visible on 2xl screens) */}
-            {onOpenInstallApp && (
-              <button
-                onClick={onOpenInstallApp}
-                className="hidden 2xl:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-white border border-slate-700/80 font-bold text-xs transition-all cursor-pointer shadow-xs group relative shrink-0"
-                title="ProAnaliz AI Uygulamasını Cep Telefonuna İndir & Kur"
-              >
-                <Smartphone className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
-                <span>Telefona İndir</span>
               </button>
             )}
 
@@ -285,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
             {activeSection === 'football' && betslipCount > 0 && onOpenBetslip && (
               <button
                 onClick={onOpenBetslip}
-                className="flex items-center space-x-1 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-extrabold text-[11px] sm:text-xs border border-emerald-500/40 transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95 animate-pulse shrink-0"
+                className="flex items-center space-x-1 px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-extrabold text-[11px] sm:text-xs border border-emerald-500/40 transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95 animate-pulse shrink-0"
                 title="Kuponumu Aç & Hesapla"
               >
                 <Ticket className="w-3.5 h-3.5 text-emerald-400" />
@@ -296,11 +230,11 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Virtual Bankroll Button - Football only (Hidden on small mobile to save space) */}
+            {/* Virtual Bankroll Button - Football only */}
             {activeSection === 'football' && onOpenBankroll && (
               <button
                 onClick={onOpenBankroll}
-                className="hidden sm:flex items-center space-x-1 px-2 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0"
+                className="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0"
                 title="Sanal Kasa & Kupon Takibi"
               >
                 <Wallet className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -340,7 +274,7 @@ export const Header: React.FC<HeaderProps> = ({
             {activeSection === 'football' && (
               <button
                 onClick={onOpenCustomAnalyzer}
-                className="flex items-center space-x-1 px-1.5 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
+                className="flex items-center space-x-1 px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
                 title="Kendi Maçını Analiz Et"
               >
                 <Calculator className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -351,19 +285,19 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Row 2: Universal Dedicated 4-Section Segmented Bar for all screens under XL (< 1280px) */}
+        {/* ROW 2: Primary 4 Core Categories Bar - DEDICATED FULL ROW ON ALL SCREENS (Zero Overflow) */}
         {onSelectSection && (
           <nav
             aria-label="Ana Spor Kategorisi Menüsü"
-            className="xl:hidden w-full my-1 sm:my-1.5"
+            className="w-full pb-2 pt-0.5"
           >
-            <div className="grid grid-cols-4 gap-1 sm:gap-2 p-1 rounded-xl bg-slate-900/95 border border-slate-800 shadow-inner w-full sm:max-w-xl sm:mx-auto">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5 p-1 rounded-xl bg-slate-900/90 border border-slate-800 shadow-inner w-full sm:max-w-2xl sm:mx-auto">
               <button
                 onClick={() => onSelectSection('home')}
-                className={`flex items-center justify-center space-x-1 sm:space-x-1.5 py-1.5 sm:py-2 px-1 rounded-lg font-black text-[11px] sm:text-xs transition-all cursor-pointer min-w-0 ${
+                className={`flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-2 px-1 rounded-lg font-black text-xs sm:text-sm transition-all cursor-pointer min-w-0 ${
                   activeSection === 'home'
                     ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                 }`}
                 title="Ana Sayfaya Dön"
               >
@@ -372,10 +306,10 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
               <button
                 onClick={() => onSelectSection('football')}
-                className={`flex items-center justify-center space-x-1 sm:space-x-1.5 py-1.5 sm:py-2 px-1 rounded-lg font-black text-[11px] sm:text-xs transition-all cursor-pointer min-w-0 ${
+                className={`flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-2 px-1 rounded-lg font-black text-xs sm:text-sm transition-all cursor-pointer min-w-0 ${
                   activeSection === 'football'
                     ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/25'
-                    : 'text-slate-300 hover:text-white'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
                 }`}
               >
                 <span>⚽</span>
@@ -383,10 +317,10 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
               <button
                 onClick={() => onSelectSection('horseRacing')}
-                className={`flex items-center justify-center space-x-1 sm:space-x-1.5 py-1.5 sm:py-2 px-1 rounded-lg font-black text-[11px] sm:text-xs transition-all cursor-pointer min-w-0 ${
+                className={`flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-2 px-1 rounded-lg font-black text-xs sm:text-sm transition-all cursor-pointer min-w-0 ${
                   activeSection === 'horseRacing'
                     ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/25'
-                    : 'text-slate-300 hover:text-amber-300'
+                    : 'text-slate-300 hover:text-amber-300 hover:bg-slate-800/50'
                 }`}
               >
                 <span>🏇</span>
@@ -394,10 +328,10 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
               <button
                 onClick={() => onSelectSection('stocks')}
-                className={`flex items-center justify-center space-x-1 sm:space-x-1.5 py-1.5 sm:py-2 px-1 rounded-lg font-black text-[11px] sm:text-xs transition-all cursor-pointer min-w-0 ${
+                className={`flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-2 px-1 rounded-lg font-black text-xs sm:text-sm transition-all cursor-pointer min-w-0 ${
                   activeSection === 'stocks'
                     ? 'bg-cyan-400 text-slate-950 shadow-md shadow-cyan-500/25'
-                    : 'text-slate-300 hover:text-cyan-300'
+                    : 'text-slate-300 hover:text-cyan-300 hover:bg-slate-800/50'
                 }`}
               >
                 <span>📈</span>
