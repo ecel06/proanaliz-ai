@@ -1,12 +1,33 @@
 // src/utils/soundHelper.ts
 // Authentic Soccer Goal Celebration Sound Engine:
-// 1. Primary: Real, passionate, iconic Turkish match announcer "GOOOOLLLL!" cheer audio (/sounds/goal.mp3)
-// 2. Fallback: Electronic double-tone sports chime (Web Audio API)
+// 1. Primary: Real, passionate match announcer "Ve top ağlarda GOOOL!" audio (/sounds/goal.mp3)
+// 2. Variants: Ercan Taner "Allah'ım GOOOL!" (/sounds/ercan.mp3), "Kafa ve GOOOL!" (/sounds/kafa.mp3)
+// 3. Fallback: Electronic double-tone sports chime (Web Audio API)
 // Features preloading, automatic gesture unlocking (iOS/Android compatible), and zero latency.
 
+export type GoalSoundVariant = 'spiker' | 'ercan' | 'kafa';
+
 let audioCtx: AudioContext | null = null;
-let goalAudio: HTMLAudioElement | null = null;
+const audioInstances: Partial<Record<GoalSoundVariant, HTMLAudioElement>> = {};
 let isAudioUnlocked = false;
+
+export function getGoalSoundVariant(): GoalSoundVariant {
+  if (typeof window === 'undefined') return 'spiker';
+  try {
+    const saved = localStorage.getItem('proanaliz_goal_sound_variant');
+    if (saved === 'ercan' || saved === 'kafa' || saved === 'spiker') {
+      return saved;
+    }
+  } catch {}
+  return 'spiker';
+}
+
+export function setGoalSoundVariant(variant: GoalSoundVariant): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('proanaliz_goal_sound_variant', variant);
+  } catch {}
+}
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
@@ -22,19 +43,21 @@ function getAudioContext(): AudioContext | null {
   return audioCtx;
 }
 
-function getGoalAudio(): HTMLAudioElement | null {
+function getGoalAudio(variant?: GoalSoundVariant): HTMLAudioElement | null {
   if (typeof window === 'undefined') return null;
-  if (!goalAudio) {
-    // Resolve relative to host origin or base path
-    const audioUrl = typeof window !== 'undefined' && window.location?.origin
-      ? `${window.location.origin}/sounds/goal.mp3`
-      : '/sounds/goal.mp3';
+  const activeVar = variant || getGoalSoundVariant();
+  
+  if (!audioInstances[activeVar]) {
+    const fileName = activeVar === 'ercan' ? 'ercan.mp3' : activeVar === 'kafa' ? 'kafa.mp3' : 'goal.mp3';
+    const origin = window.location?.origin || '';
+    const audioUrl = `${origin}/sounds/${fileName}?v=20261112_09`;
     
-    goalAudio = new Audio(audioUrl);
-    goalAudio.preload = 'auto';
-    goalAudio.volume = 0.95;
+    const audio = new Audio(audioUrl);
+    audio.preload = 'auto';
+    audio.volume = 0.98;
+    audioInstances[activeVar] = audio;
   }
-  return goalAudio;
+  return audioInstances[activeVar] || null;
 }
 
 /**
@@ -47,14 +70,13 @@ export function unlockAudio(): void {
   try {
     const audio = getGoalAudio();
     if (audio) {
-      // Play and immediately pause at 0 volume to unlock Audio element
       audio.volume = 0;
       const p = audio.play();
       if (p !== undefined) {
         p.then(() => {
           audio.pause();
           audio.currentTime = 0;
-          audio.volume = 0.95;
+          audio.volume = 0.98;
           isAudioUnlocked = true;
         }).catch(() => {});
       }
@@ -144,17 +166,17 @@ function playFallbackSynthChime(): void {
 }
 
 /**
- * Plays the authentic, electrifying "GOOOOLLLL!" celebration voice.
+ * Plays the authentic, electrifying Turkish commentator "GOOOOLLLL!" celebration voice.
  * If audio file or playback is restricted by browser sandbox, falls back to crisp synth chime.
  */
-export function playGoalChime(): void {
+export function playGoalChime(variant?: GoalSoundVariant): void {
   if (!isSoundEnabled()) return;
 
   try {
-    const audio = getGoalAudio();
+    const audio = getGoalAudio(variant);
     if (audio) {
       audio.currentTime = 0;
-      audio.volume = 0.95;
+      audio.volume = 0.98;
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
