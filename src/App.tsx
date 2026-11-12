@@ -285,7 +285,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.12.04';
+  const CLIENT_BUILD_VERSION = '2026.11.12.05';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -903,6 +903,15 @@ export const App: React.FC = () => {
           }}
           onSelectHorseRacing={() => setActiveSection('horseRacing')}
           onSelectStocks={() => setActiveSection('stocks')}
+          onOpenInstallModal={() => setIsInstallModalOpen(true)}
+        />
+
+        {/* Mobile & PWA Install Guide Modal (Telefona İndir & Kur) */}
+        <InstallAppModal
+          isOpen={isInstallModalOpen}
+          onClose={() => setIsInstallModalOpen(false)}
+          deferredPrompt={deferredPrompt}
+          onDirectInstall={handleDirectInstall}
         />
       </>
     );

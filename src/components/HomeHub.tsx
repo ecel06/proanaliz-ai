@@ -10,18 +10,22 @@ import {
   Zap,
   CheckCircle2,
   TrendingUp,
+  Smartphone,
+  QrCode,
 } from 'lucide-react';
 
 interface HomeHubProps {
   onSelectFootball: () => void;
   onSelectHorseRacing: () => void;
   onSelectStocks: () => void;
+  onOpenInstallModal?: () => void;
 }
 
 export const HomeHub: React.FC<HomeHubProps> = ({
   onSelectFootball,
   onSelectHorseRacing,
   onSelectStocks,
+  onOpenInstallModal,
 }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
@@ -43,7 +47,10 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   }, []);
 
   const handleInstallApp = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      if (onOpenInstallModal) onOpenInstallModal();
+      return;
+    }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
@@ -59,13 +66,25 @@ export const HomeHub: React.FC<HomeHubProps> = ({
       <div className="pointer-events-none absolute -bottom-32 right-1/4 w-[450px] h-[450px] rounded-full bg-amber-500/10 blur-[130px]" />
 
       <div className="w-full max-w-5xl relative z-10 flex flex-col items-center space-y-8 sm:space-y-10">
-        {/* Brand & PWA Install Button */}
+        {/* Brand & Quick Actions */}
         <div className="text-center space-y-3">
           <div className="flex flex-wrap items-center justify-center gap-2">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-extrabold tracking-widest uppercase text-slate-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>ProAnaliz AI • Küresel Analiz Terminali</span>
             </div>
+
+            {onOpenInstallModal && (
+              <button
+                onClick={onOpenInstallModal}
+                className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 text-[11px] font-bold text-slate-300 hover:text-white transition-all shadow cursor-pointer group"
+                title="Telefona İndir, Karekod ve Kurulum Rehberi"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span>Telefona İndir</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              </button>
+            )}
 
             {deferredPrompt && !isInstalled && (
               <button
@@ -147,6 +166,66 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </button>
+        </div>
+
+        {/* 📱 TELEFONA İNDİR & PWA KURULUM BANNERI (Ana Sayfa Öne Çıkan) */}
+        <div className="w-full rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 border border-slate-800 hover:border-emerald-500/40 p-5 sm:p-6 transition-all shadow-xl flex flex-col md:flex-row items-center justify-between gap-5 relative overflow-hidden group">
+          {/* Ambient Glow */}
+          <div className="pointer-events-none absolute -right-12 -bottom-12 w-48 h-48 rounded-full bg-emerald-500/10 blur-[60px] group-hover:bg-emerald-500/15 transition-all" />
+
+          <div className="flex items-start sm:items-center gap-4 text-left w-full md:w-auto relative z-10">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0 text-emerald-400 shadow-lg shadow-emerald-500/10">
+              <Smartphone className="w-6 h-6 sm:w-7 sm:h-7" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                  <span>ProAnaliz AI Cebinizde</span>
+                  <span className="text-emerald-400 text-xs font-mono">📱</span>
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
+                  ÜCRETSİZ PWA UYGULAMA
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
+                Uygulamayı telefonunuza indirin; internet bağlantınız zayıf olsa dahi anında açılsın, canlı gol bildirimleri ve anlık borsa al-sat alarmları ekranınıza doğrudan düşsün.
+              </p>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-slate-400 font-medium">
+                <span className="flex items-center gap-1 text-emerald-400/90">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" /> iOS Safari (Ana Ekrana Ekle)
+                </span>
+                <span className="hidden sm:inline text-slate-600">•</span>
+                <span className="flex items-center gap-1 text-emerald-400/90">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" /> Android Chrome (Uygulamayı Yükle)
+                </span>
+                <span className="hidden sm:inline text-slate-600">•</span>
+                <span className="flex items-center gap-1 text-amber-300/90">
+                  <Zap className="w-3 h-3 text-amber-400 shrink-0" /> Mağazasız &bull; Tek Tıkla Kurulum
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full md:w-auto shrink-0 justify-end relative z-10">
+            {deferredPrompt && !isInstalled && (
+              <button
+                onClick={handleInstallApp}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-xs sm:text-sm transition-all shadow-lg shadow-emerald-500/30 cursor-pointer animate-pulse"
+              >
+                <Download className="w-4 h-4 stroke-[2.5]" />
+                <span>Hemen Kur</span>
+              </button>
+            )}
+            <button
+              onClick={() => {
+                if (onOpenInstallModal) onOpenInstallModal();
+              }}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-2 px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 hover:border-emerald-400/60 border border-slate-700 active:scale-95 text-white font-black text-xs sm:text-sm transition-all shadow-md cursor-pointer group"
+            >
+              <QrCode className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+              <span>Telefona İndir &amp; Karekod</span>
+            </button>
+          </div>
         </div>
 
         {/* 🌟 GÜNÜN ALTIN FIRSATLARI & AI RADAR CARD */}
