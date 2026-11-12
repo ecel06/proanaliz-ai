@@ -306,7 +306,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.12.14';
+  const CLIENT_BUILD_VERSION = '2026.11.12.15';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -926,7 +926,9 @@ export const App: React.FC = () => {
           onSelectStocks={() => setActiveSection('stocks')}
           onOpenInstallModal={() => setIsInstallModalOpen(true)}
           onOpenVIP={() => setIsVipModalOpen(true)}
+          onOpenAuth={() => setIsAuthModalOpen(true)}
           onOpenAdmin={() => setIsAdminModalOpen(true)}
+          onLogout={handleLogout}
           user={currentUser}
           allMatches={weeklyMatches}
           analysesMap={matchAnalysesMap}
@@ -938,6 +940,38 @@ export const App: React.FC = () => {
           onClose={() => setIsInstallModalOpen(false)}
           deferredPrompt={deferredPrompt}
           onDirectInstall={handleDirectInstall}
+        />
+
+        {/* Modal: Kullanıcı Giriş & Kayıt Penceresi (Ana Sayfa İçin) */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onSuccess={(u) => {
+            setCurrentUser(u);
+            setIsAuthModalOpen(false);
+          }}
+        />
+
+        {/* Modal: VIP Üyelik & Paketler Penceresi (Ana Sayfa İçin) */}
+        <VIPModal
+          isOpen={isVipModalOpen}
+          onClose={() => setIsVipModalOpen(false)}
+          user={currentUser}
+          onOpenAuth={() => {
+            setIsVipModalOpen(false);
+            setIsAuthModalOpen(true);
+          }}
+          onUserUpdated={(u) => {
+            setCurrentUser(u);
+          }}
+        />
+
+        {/* Modal: 🛡️ Yönetici (Admin) Paneli (Ana Sayfa İçin) */}
+        <AdminModal
+          isOpen={isAdminModalOpen}
+          onClose={() => setIsAdminModalOpen(false)}
+          currentUser={currentUser}
+          onRefreshBulletin={handleRefreshBulletin}
         />
       </>
     );

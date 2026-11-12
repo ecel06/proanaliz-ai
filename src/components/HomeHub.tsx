@@ -15,6 +15,8 @@ import {
   Coins,
   Crown,
   ShieldCheck,
+  User as UserIcon,
+  LogOut,
 } from 'lucide-react';
 import { Match, MatchAnalysis } from '../types';
 import { User } from '../utils/authHelper';
@@ -25,7 +27,9 @@ interface HomeHubProps {
   onSelectStocks: () => void;
   onOpenInstallModal?: () => void;
   onOpenVIP?: () => void;
+  onOpenAuth?: () => void;
   onOpenAdmin?: () => void;
+  onLogout?: () => void;
   user?: User | null;
   allMatches?: Match[];
   analysesMap?: Map<string | number, MatchAnalysis> | Record<string | number, MatchAnalysis>;
@@ -37,7 +41,9 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   onSelectStocks,
   onOpenInstallModal,
   onOpenVIP,
+  onOpenAuth,
   onOpenAdmin,
+  onLogout,
   user,
   allMatches = [],
   analysesMap,
@@ -346,6 +352,35 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 <Crown className="w-3 h-3 text-slate-950" />
                 <span>{user?.isVip ? '👑 VIP Üyeliğim' : '👑 VIP Üye Ol'}</span>
               </button>
+            )}
+
+            {!user ? (
+              onOpenAuth && (
+                <button
+                  onClick={onOpenAuth}
+                  className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-bold text-[10px] transition-all shadow cursor-pointer"
+                  title="Giriş Yap veya Ücretsiz Üye Ol"
+                >
+                  <UserIcon className="w-3 h-3 text-amber-400" />
+                  <span>Giriş / Üye Ol</span>
+                </button>
+              )
+            ) : (
+              <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-slate-900/90 border border-slate-800 text-[10px]">
+                <span className="font-bold text-slate-300">{user.name.split(' ')[0]}</span>
+                {user.isVip && (
+                  <span className="text-[9px] px-1 py-0.2 rounded bg-amber-400 text-slate-950 font-black">VIP</span>
+                )}
+                {onLogout && (
+                  <button
+                    onClick={onLogout}
+                    className="text-slate-500 hover:text-rose-400 cursor-pointer transition-colors"
+                    title="Çıkış Yap"
+                  >
+                    <LogOut className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             )}
 
             {user?.role === 'admin' && onOpenAdmin && (
