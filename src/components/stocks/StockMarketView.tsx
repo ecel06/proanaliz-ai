@@ -6,14 +6,19 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   BarChart3,
+  Bell,
   Bot,
+  Briefcase,
+  Calendar,
   Calculator,
   CandlestickChart,
   CheckCircle2,
+  DollarSign,
   ExternalLink,
   Flame,
   Globe,
   Layers,
+  Megaphone,
   Newspaper,
   RefreshCw,
   Search,
@@ -22,13 +27,16 @@ import {
   Star,
   Target,
   TrendingUp,
+  Trophy,
 } from 'lucide-react';
 import {
   MacroTicker,
+  StockAlertItem,
   StockChartResponse,
   StockDeepAnalysis,
   StockItem,
   StockMarketType,
+  StockPortfolioPosition,
   StockQuantAnalysis,
 } from '../../types/stocks';
 import {
@@ -44,6 +52,9 @@ import {
 } from '../../utils/stockAnalysisEngine';
 import { StockChart } from './StockChart';
 import { StockAIChatModal } from './StockAIChatModal';
+import { StockPerformanceModal } from './StockPerformanceModal';
+import { StockAlertsModal, playAlertSound } from './StockAlertsModal';
+import { StockPortfolioModal } from './StockPortfolioModal';
 
 type PresetFilter = 'all' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
 type StockSort = 'ai_desc' | 'change_desc' | 'volume_desc' | 'rsi_asc' | 'pe_asc';
@@ -74,6 +85,46 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
   const [capitalInput, setCapitalInput] = useState<string>('100000');
   const [riskPctInput, setRiskPctInput] = useState<string>('2');
   const [isAIChatOpen, setIsAIChatOpen] = useState<boolean>(false);
+
+  // Elite Extension Modals: Karnesi, Alarmlar, Sanal Portföy
+  const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState<boolean>(false);
+  const [isAlertsModalOpen, setIsAlertsModalOpen] = useState<boolean>(false);
+  const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState<boolean>(false);
+
+  const [alerts, setAlerts] = useState<StockAlertItem[]>(() => {
+    try {
+      const raw = localStorage.getItem('proanaliz_stock_alerts_v1');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [portfolio, setPortfolio] = useState<StockPortfolioPosition[]>(() => {
+    try {
+      const raw = localStorage.getItem('proanaliz_stock_portfolio_v1');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const saveAlerts = (next: StockAlertItem[]) => {
+    setAlerts(next);
+    try {
+      localStorage.setItem('proanaliz_stock_alerts_v1', JSON.stringify(next));
+    } catch {}
+  };
+
+  const savePortfolio = (next: StockPortfolioPosition[]) => {
+    setPortfolio(next);
+    try {
+      localStorage.setItem('proanaliz_stock_portfolio_v1', JSON.stringify(next));
+    } catch {}
+  };
+
+  const activeAlertsCount = alerts.filter((a) => !a.triggered).length;
+  const openPositionsCount = portfolio.filter((p) => p.status === 'open').length;
 
   const [watchlist, setWatchlist] = useState<string[]>(() => {
     try {
@@ -133,6 +184,54 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [market, activeSearch]);
+
+  // Check active alerts whenever live stock data updates
+  useEffect(() => {
+    if (!stocks || stocks.length === 0 || alerts.length === 0) return;
+    let anyTriggered = false;
+    const nowStr = new Date().toISOString();
+    const nextAlerts = alerts.map((a) => {
+      if (a.triggered) return a;
+      const s = stocks.find((item) => item.symbol === a.symbol);
+      if (!s) return a;
+
+      let triggered = false;
+      if (a.condition === 'price_above' && s.close >= a.targetValue) triggered = true;
+      else if (a.condition === 'price_below' && s.close <= a.targetValue) triggered = true;
+      else if (a.condition === 'rsi_below' && typeof s.rsi === 'number' && s.rsi <= a.targetValue) triggered = true;
+      else if (a.condition === 'rsi_above' && typeof s.rsi === 'number' && s.rsi >= a.targetValue) triggered = true;
+
+      if (triggered) {
+        anyTriggered = true;
+        playAlertSound();
+        onShowToast?.(`🔔 ALARM TETİKLENDİ: ${a.symbol} (${s.close.toFixed(2)}) hedefe ulaştı!`);
+        return { ...a, triggered: true, triggeredAt: nowStr };
+      }
+      return a;
+    });
+
+    if (anyTriggered) {
+      saveAlerts(nextAlerts);
+    }
+  }, [stocks]);
+
+  // Update open portfolio position current prices from live stock feed
+  useEffect(() => {
+    if (!stocks || stocks.length === 0 || portfolio.length === 0) return;
+    let changed = false;
+    const nextPortfolio = portfolio.map((pos) => {
+      if (pos.status !== 'open') return pos;
+      const s = stocks.find((item) => item.symbol === pos.symbol);
+      if (s && s.close > 0 && s.close !== pos.currentPrice) {
+        changed = true;
+        return { ...pos, currentPrice: s.close };
+      }
+      return pos;
+    });
+    if (changed) {
+      savePortfolio(nextPortfolio);
+    }
+  }, [stocks]);
 
   const analysesMap = useMemo(() => {
     const map = new Map<string, StockQuantAnalysis>();
@@ -364,9 +463,9 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
             })}
           </div>
 
-          {/* Live Search & Refresh */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 sm:w-64">
+          {/* Live Search & Toolbar Actions */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 sm:w-60 min-w-[180px]">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -374,14 +473,55 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder={
                   market === 'bist'
-                    ? 'Hisse ara (THYAO, ASELS, MIATK...)'
+                    ? 'Hisse ara (THYAO, ASELS...)'
                     : market === 'us'
-                    ? 'Ticker ara (NVDA, AAPL, PLTR...)'
-                    : 'Coin ara (BTC, ETH, SOL...)'
+                    ? 'Ticker ara (NVDA, AAPL...)'
+                    : 'Coin ara (BTC, SOL...)'
                 }
                 className="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
               />
             </div>
+
+            {/* 🏆 Başarı Karnesi */}
+            <button
+              onClick={() => setIsPerformanceModalOpen(true)}
+              className="px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-emerald-500/30 text-emerald-300 text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-sm"
+              title="Doğrulanmış Model Başarı Karnesi ve Sinyal İstatistikleri"
+            >
+              <Trophy className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Başarı Karnesi</span>
+            </button>
+
+            {/* 🔔 Alarmlar */}
+            <button
+              onClick={() => setIsAlertsModalOpen(true)}
+              className="px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-amber-500/30 text-amber-300 text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-sm"
+              title="Akıllı Fiyat & RSI Alarmları"
+            >
+              <Bell className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Alarmlar</span>
+              {activeAlertsCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black flex items-center justify-center">
+                  {activeAlertsCount}
+                </span>
+              )}
+            </button>
+
+            {/* 💼 Sanal Portföy */}
+            <button
+              onClick={() => setIsPortfolioModalOpen(true)}
+              className="px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-sky-500/30 text-sky-300 text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-sm"
+              title="Sanal Portföy & İşlem Defteri (Paper Trading)"
+            >
+              <Briefcase className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden sm:inline">Sanal Portföy</span>
+              {openPositionsCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-sky-500 text-slate-950 text-[10px] font-black flex items-center justify-center">
+                  {openPositionsCount}
+                </span>
+              )}
+            </button>
+
             <button
               onClick={() => {
                 loadMarketData(market, activeSearch, true);
@@ -675,6 +815,46 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
                     <h2 className="text-xs sm:text-sm text-slate-400 font-semibold mt-0.5">
                       {selectedStock.name}
                     </h2>
+
+                    {/* Quick Stock Actions: Alarm Kur, Takip Et, AI Raporu */}
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <button
+                        onClick={() => setIsAlertsModalOpen(true)}
+                        className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                        title="Bu hisse için fiyat / RSI alarmı kur"
+                      >
+                        <Bell className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Alarm Kur</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => toggleWatchlist(selectedStock.symbol, e)}
+                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
+                          watchlist.includes(selectedStock.symbol)
+                            ? 'bg-amber-500/20 border-amber-400/40 text-amber-300'
+                            : 'bg-slate-800/90 border-slate-700 text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        <Star
+                          className={`w-3.5 h-3.5 ${
+                            watchlist.includes(selectedStock.symbol)
+                              ? 'fill-amber-400 text-amber-400'
+                              : ''
+                          }`}
+                        />
+                        <span>
+                          {watchlist.includes(selectedStock.symbol) ? 'Takipte' : 'Takibe Al'}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => setIsAIChatOpen(true)}
+                        className="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                      >
+                        <Bot className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Kurumsal AI Raporu</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center space-x-3">
@@ -936,31 +1116,60 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
                       </div>
                     </div>
                     {positionCalc && (
-                      <div className="grid grid-cols-3 gap-1.5 text-[10px] bg-slate-950/80 p-2 rounded-xl border border-slate-800">
-                        <div>
-                          <div className="text-slate-400">Önerilen Adet</div>
-                          <div className="font-mono font-black text-white">
-                            {positionCalc.units.toLocaleString('tr-TR')} Lot
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-1.5 text-[10px] bg-slate-950/80 p-2 rounded-xl border border-slate-800">
+                          <div>
+                            <div className="text-slate-400">Önerilen Adet</div>
+                            <div className="font-mono font-black text-white">
+                              {positionCalc.units.toLocaleString('tr-TR')} Lot
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-slate-400">İşlem Tutarı</div>
+                            <div className="font-mono font-black text-cyan-300">
+                              {formatStockPrice(positionCalc.totalCost, selectedStock.currency)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-slate-400">TP1 Kâr / Stop</div>
+                            <div className="font-mono font-black">
+                              <span className="text-emerald-400">
+                                +{formatStockPrice(positionCalc.tp1Profit, '')}
+                              </span>{' '}
+                              /{' '}
+                              <span className="text-rose-400">
+                                -{formatStockPrice(positionCalc.slLoss, '')}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                        <div>
-                          <div className="text-slate-400">İşlem Tutarı</div>
-                          <div className="font-mono font-black text-cyan-300">
-                            {formatStockPrice(positionCalc.totalCost, selectedStock.currency)}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-slate-400">TP1 Kâr / Stop</div>
-                          <div className="font-mono font-black">
-                            <span className="text-emerald-400">
-                              +{formatStockPrice(positionCalc.tp1Profit, '')}
-                            </span>{' '}
-                            /{' '}
-                            <span className="text-rose-400">
-                              -{formatStockPrice(positionCalc.slLoss, '')}
-                            </span>
-                          </div>
-                        </div>
+
+                        {/* Add to Virtual Portfolio Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newPos: StockPortfolioPosition = {
+                              id: `pos-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                              symbol: selectedStock.symbol,
+                              name: selectedStock.name,
+                              market: selectedStock.market,
+                              units: positionCalc.units,
+                              entryPrice: selectedStock.close,
+                              currentPrice: selectedStock.close,
+                              stopLoss: selectedAnalysis?.tradePlan.stopLoss || null,
+                              targetPrice: selectedAnalysis?.tradePlan.tp1 || null,
+                              entryDate: new Date().toISOString(),
+                              status: 'open',
+                              notes: `${selectedAnalysis?.signal} sinyaliyle Lot Mühendisinden eklendi`,
+                            };
+                            savePortfolio([newPos, ...portfolio]);
+                            onShowToast?.(`💼 ${selectedStock.symbol} (${positionCalc.units} lot) Sanal Portföye Eklendi!`);
+                          }}
+                          className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-sky-600 via-sky-500 to-cyan-500 hover:brightness-110 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-sky-600/20 transition-all cursor-pointer"
+                        >
+                          <Briefcase className="w-3.5 h-3.5" />
+                          <span>💼 Sanal Portföye Ekle ({positionCalc.units.toLocaleString('tr-TR')} Lot)</span>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1392,10 +1601,167 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast })
                   <div className="text-xs text-slate-400">Güncel haber başlığı bulunamadı.</div>
                 )}
               </div>
+
+              {/* LIVE KAP PUBLIC DISCLOSURES & CORPORATE CALENDAR */}
+              <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                      <Megaphone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                        <span>📢 Canlı KAP Bildirimleri &amp; Kurumsal Takvim</span>
+                        <span className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-emerald-500/20 text-emerald-300">
+                          RESMİ AKIŞ
+                        </span>
+                      </h3>
+                      <p className="text-[10px] text-slate-400">
+                        {selectedStock.symbol} için Kamuyu Aydınlatma Platformu bildirimleri ve bilanço/temettü takvimi
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Calendar Badges: Next Earnings Date & Ex-Dividend Date */}
+                  <div className="flex items-center gap-2">
+                    {deepData?.calendar?.nextEarningsDate && (
+                      <div className="px-2.5 py-1 rounded-xl bg-slate-950 border border-cyan-500/30 flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                        <div className="text-[10px]">
+                          <span className="text-slate-400 block text-[9px]">Sonraki Bilanço</span>
+                          <span className="font-bold text-white font-mono">
+                            {deepData.calendar.nextEarningsDate}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {deepData?.calendar?.exDividendDate && (
+                      <div className="px-2.5 py-1 rounded-xl bg-slate-950 border border-emerald-500/30 flex items-center gap-1.5">
+                        <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                        <div className="text-[10px]">
+                          <span className="text-slate-400 block text-[9px]">Temettü Tarihi</span>
+                          <span className="font-bold text-emerald-300 font-mono">
+                            {deepData.calendar.exDividendDate}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {deepLoading && !deepData ? (
+                  <div className="text-xs text-slate-400 animate-pulse">KAP bildirimleri ve kurumsal takvim taranıyor...</div>
+                ) : deepData?.kap && deepData.kap.length > 0 ? (
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {deepData.kap.map((item) => {
+                      const catBadge =
+                        item.category === 'Özel Durum'
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                          : item.category === 'Finansal Rapor'
+                          ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                          : item.category === 'Temettü / Sermaye'
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                          : item.category === 'Genel Kurul'
+                          ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                          : 'bg-slate-800 text-slate-300 border-slate-700';
+
+                      return (
+                        <a
+                          key={item.id}
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2.5 rounded-xl bg-slate-950/70 hover:bg-slate-850 border border-slate-800/80 hover:border-emerald-500/40 transition-all flex items-start justify-between gap-3 group"
+                        >
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${catBadge}`}>
+                                {item.category}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-medium truncate">
+                                {item.publisher}
+                              </span>
+                            </div>
+                            <div className="text-xs font-semibold text-slate-200 group-hover:text-emerald-300 transition-colors leading-snug">
+                              {item.title}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0 text-slate-500 group-hover:text-emerald-400 text-[10px]">
+                            <span>{new Date(item.publishedAt).toLocaleDateString('tr-TR')}</span>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center rounded-xl bg-slate-950/50 border border-slate-800/60 text-xs text-slate-400">
+                    Son 30 güne ait özel KAP bildirimi veya şirket açıklaması bulunamadı.
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
       )}
+
+      {/* 🏆 Borsa AI Başarı Karnesi Modal */}
+      <StockPerformanceModal
+        isOpen={isPerformanceModalOpen}
+        onClose={() => setIsPerformanceModalOpen(false)}
+      />
+
+      {/* 🔔 Akıllı Fiyat & RSI Alarm Merkezi Modal */}
+      <StockAlertsModal
+        isOpen={isAlertsModalOpen}
+        onClose={() => setIsAlertsModalOpen(false)}
+        currentStock={selectedStock}
+        alerts={alerts}
+        onSaveAlert={(newAlert) => {
+          saveAlerts([newAlert, ...alerts]);
+          onShowToast?.(`🔔 ${newAlert.symbol} için alarm kaydedildi!`);
+        }}
+        onDeleteAlert={(id) => {
+          saveAlerts(alerts.filter((a) => a.id !== id));
+        }}
+        onClearTriggered={() => {
+          saveAlerts(alerts.filter((a) => !a.triggered));
+          onShowToast?.('Tetiklenen alarmlar temizlendi');
+        }}
+      />
+
+      {/* 💼 Sanal Portföy & İşlem Defteri Modal */}
+      <StockPortfolioModal
+        isOpen={isPortfolioModalOpen}
+        onClose={() => setIsPortfolioModalOpen(false)}
+        positions={portfolio}
+        onAddPosition={(pos) => {
+          savePortfolio([pos, ...portfolio]);
+          onShowToast?.(`💼 ${pos.symbol} pozisyonu sanal portföye eklendi!`);
+        }}
+        onClosePosition={(id, exitPrice) => {
+          savePortfolio(
+            portfolio.map((p) =>
+              p.id === id
+                ? {
+                    ...p,
+                    status: 'closed',
+                    exitPrice,
+                    exitDate: new Date().toISOString(),
+                  }
+                : p
+            )
+          );
+          onShowToast?.('Pozisyon kapatıldı ve işlem geçmişine kaydedildi');
+        }}
+        onDeletePosition={(id) => {
+          savePortfolio(portfolio.filter((p) => p.id !== id));
+        }}
+        onResetPortfolio={() => {
+          savePortfolio([]);
+          onShowToast?.('Sanal portföy sıfırlandı');
+        }}
+      />
 
       {/* Borsa Dedicated AI Sinyal Robotu Modal */}
       <StockAIChatModal

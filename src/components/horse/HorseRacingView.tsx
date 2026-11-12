@@ -1047,6 +1047,63 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
                         </div>
                       )}
 
+                      {/* AGF Sürpriz Radarı (Value Bet) Banner */}
+                      {(() => {
+                        const raceValueBets = activeRace.horses.filter((h) => {
+                          const agf = getHorsePrimaryAgf(h);
+                          const ai = aiAnalysisMap.get(h.number);
+                          return (
+                            h.status !== false &&
+                            ai &&
+                            ai.score >= 68 &&
+                            agf.percentage <= 12 &&
+                            agf.percentage > 0
+                          );
+                        });
+
+                        if (raceValueBets.length === 0) return null;
+
+                        return (
+                          <div className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center justify-center shrink-0">
+                                🎯
+                              </div>
+                              <div className="text-xs">
+                                <span className="font-extrabold text-purple-200">
+                                  AGF Sürpriz &amp; Cazip Değer Radarı:{' '}
+                                </span>
+                                <span className="text-purple-300">
+                                  Kamuoyunun düşük gördüğü ancak AI modelinin yüksek puanladığı cazip at(lar):{' '}
+                                  {raceValueBets.map((vb) => {
+                                    const ai = aiAnalysisMap.get(vb.number);
+                                    const agf = getHorsePrimaryAgf(vb);
+                                    return (
+                                      <strong key={vb.number} className="text-white ml-1">
+                                        #{vb.number} {vb.name} (AI: {ai?.score} | AGF: %{agf.percentage.toFixed(1)})
+                                      </strong>
+                                    );
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                raceValueBets.forEach((vb) => {
+                                  if (!currentSelections[activeRace.number]?.includes(vb.number)) {
+                                    toggleHorsePick(activeRace.number, vb.number);
+                                  }
+                                });
+                                onShowToast?.('Sürpriz radar atı kupona eklendi!', 'success');
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-400 text-slate-950 font-black text-[11px] shrink-0 transition-colors shadow-md shadow-purple-500/20 cursor-pointer self-start sm:self-auto"
+                            >
+                              Sürprizi Kupona Ekle
+                            </button>
+                          </div>
+                        );
+                      })()}
+
                       {activeRace.raceMoneys && activeRace.raceMoneys.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 pt-1">
                           {activeRace.raceMoneys.slice(0, 6).map((rm) => (
@@ -1287,13 +1344,23 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
                                   )}
                                 </div>
                                 {ai && !isScratched && (
-                                  <span
-                                    className={`px-1.5 py-0.2 rounded border text-[9px] ${getTagBadgeClass(
-                                      ai.tag
-                                    )}`}
-                                  >
-                                    {ai.score} • {ai.tag}
-                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    <span
+                                      className={`px-1.5 py-0.2 rounded border text-[9px] ${getTagBadgeClass(
+                                        ai.tag
+                                      )}`}
+                                    >
+                                      {ai.score} • {ai.tag}
+                                    </span>
+                                    {ai.score >= 68 && agf.percentage <= 12 && agf.percentage > 0 && (
+                                      <span
+                                        className="px-1 py-0.2 rounded bg-purple-500/25 border border-purple-400/40 text-purple-300 text-[9px] font-black animate-pulse"
+                                        title={`Değer Atı: AI ${ai.score} puan verdi, AGF sadece %${agf.percentage.toFixed(1)}`}
+                                      >
+                                        🎯 RADAR
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </div>

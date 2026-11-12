@@ -196,6 +196,65 @@ export interface StockNewsItem {
   sentiment: 'Pozitif' | 'Negatif' | 'Nötr';
 }
 
+export interface StockKapItem {
+  id: string;
+  title: string;
+  link: string;
+  publisher: string;
+  publishedAt: string;
+  category:
+    | 'Özel Durum'
+    | 'Finansal Rapor'
+    | 'Temettü / Sermaye'
+    | 'Genel Kurul'
+    | 'Kredi / Not'
+    | 'Piyasa Duyurusu'
+    | 'KAP Bildirimi';
+}
+
+export interface StockCorporateCalendar {
+  nextEarningsDate: string | null;
+  earningsAverage: number | null;
+  earningsLow: number | null;
+  earningsHigh: number | null;
+  revenueAverage: number | null;
+  exDividendDate: string | null;
+  dividendDate: string | null;
+}
+
+export type AlertConditionType = 'price_above' | 'price_below' | 'rsi_below' | 'rsi_above';
+
+export interface StockAlertItem {
+  id: string;
+  symbol: string;
+  name: string;
+  market: StockMarketType;
+  condition: AlertConditionType;
+  targetValue: number;
+  initialValue?: number;
+  note?: string;
+  createdAt: string;
+  triggered: boolean;
+  triggeredAt?: string;
+}
+
+export interface StockPortfolioPosition {
+  id: string;
+  symbol: string;
+  name: string;
+  market: StockMarketType;
+  units: number;
+  entryPrice: number;
+  currentPrice: number;
+  stopLoss?: number | null;
+  targetPrice?: number | null;
+  entryDate: string;
+  exitPrice?: number | null;
+  exitDate?: string | null;
+  status: 'open' | 'closed';
+  notes?: string;
+}
+
 export interface StockDeepAnalysis {
   symbol: string;
   market: StockMarketType;
@@ -211,7 +270,9 @@ export interface StockDeepAnalysis {
   patterns: CandlePatternItem[];
   backtest: StockBacktestResult | null;
   financials: StockDeepFinancials | null;
+  calendar?: StockCorporateCalendar | null;
   news: StockNewsItem[];
+  kap?: StockKapItem[];
   updatedAt: string;
 }
 

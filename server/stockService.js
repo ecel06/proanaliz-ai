@@ -1363,20 +1363,104 @@ async function fetchStockNews(cleanSym, yfSymbol, market) {
   return items.slice(0, 6);
 }
 
+async function fetchStockKapAnnouncements(cleanSym, market) {
+  const items = [];
+  try {
+    let query = '';
+    if (market === 'bist') {
+      query = `KAP ${cleanSym} OR "Kamuyu Aydınlatma" ${cleanSym}`;
+    } else if (market === 'us') {
+      query = `SEC filing OR "earnings report" OR "press release" ${cleanSym}`;
+    } else {
+      query = `upgrade OR protocol OR announcement ${cleanSym.replace(/USDT$/, '')}`;
+    }
+
+    const hl = market === 'bist' ? 'tr' : 'en';
+    const gl = market === 'bist' ? 'TR' : 'US';
+    const ceid = market === 'bist' ? 'TR:tr' : 'US:en';
+    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(
+      query
+    )}&hl=${hl}&gl=${gl}&ceid=${ceid}`;
+
+    const r = await httpRequestRaw(rssUrl, 7000);
+    if (r.status === 200 && r.body) {
+      const matches = [...r.body.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 8);
+      let idx = 0;
+      for (const m of matches) {
+        idx++;
+        const block = m[1];
+        const titleRaw = block.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '';
+        const linkRaw = block.match(/<link>([\s\S]*?)<\/link>/)?.[1] || '';
+        const pubRaw = block.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] || '';
+        const srcRaw = block.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1] || 'KAP Duyurusu';
+        let title = decodeXmlEntities(titleRaw);
+        if (!title) continue;
+
+        title = title.replace(/\s*-\s*[^-]+$/, '').trim();
+
+        let category = 'KAP Bildirimi';
+        const low = title.toLowerCase();
+        if (low.includes('özel durum') || low.includes('ozel durum')) {
+          category = 'Özel Durum';
+        } else if (
+          low.includes('finansal rapor') ||
+          low.includes('bilanço') ||
+          low.includes('bilanco') ||
+          low.includes('kar') ||
+          low.includes('zarar')
+        ) {
+          category = 'Finansal Rapor';
+        } else if (
+          low.includes('temettü') ||
+          low.includes('temettu') ||
+          low.includes('pay') ||
+          low.includes('sermaye') ||
+          low.includes('bedelsiz') ||
+          low.includes('dividend')
+        ) {
+          category = 'Temettü / Sermaye';
+        } else if (low.includes('genel kurul')) {
+          category = 'Genel Kurul';
+        } else if (low.includes('kredi') || low.includes('derecelendirme') || low.includes('not')) {
+          category = 'Kredi / Not';
+        } else if (
+          low.includes('viop') ||
+          low.includes('işlem iptali') ||
+          low.includes('pay alım') ||
+          low.includes('geri alım')
+        ) {
+          category = 'Piyasa Duyurusu';
+        }
+
+        items.push({
+          id: `kap-${cleanSym}-${idx}`,
+          title,
+          link: decodeXmlEntities(linkRaw),
+          publisher: decodeXmlEntities(srcRaw),
+          publishedAt: pubRaw ? new Date(pubRaw).toISOString() : new Date().toISOString(),
+          category,
+        });
+      }
+    }
+  } catch {}
+  return items;
+}
+
 async function fetchYahooDeepFinancials(yfSymbol, currentPrice) {
   try {
     const sess = await getYahooSession();
-    if (!sess) return null;
+    if (!sess) return { financials: null, calendar: null };
     const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(
       yfSymbol
-    )}?modules=financialData,defaultKeyStatistics&crumb=${encodeURIComponent(sess.crumb)}`;
+    )}?modules=financialData,defaultKeyStatistics,calendarEvents&crumb=${encodeURIComponent(sess.crumb)}`;
     const r = await httpRequestRaw(url, 8000, { Cookie: sess.cookie });
-    if (r.status !== 200 || !r.body) return null;
+    if (r.status !== 200 || !r.body) return { financials: null, calendar: null };
     const res = JSON.parse(r.body)?.quoteSummary?.result?.[0];
-    if (!res) return null;
+    if (!res) return { financials: null, calendar: null };
 
     const fd = res.financialData || {};
     const ks = res.defaultKeyStatistics || {};
+    const ce = res.calendarEvents || {};
     const numRaw = (obj) => (typeof obj?.raw === 'number' && Number.isFinite(obj.raw) ? obj.raw : null);
 
     const targetMean = numRaw(fd.targetMeanPrice);
@@ -1385,7 +1469,21 @@ async function fetchYahooDeepFinancials(yfSymbol, currentPrice) {
         ? Number((((targetMean - currentPrice) / currentPrice) * 100).toFixed(1))
         : null;
 
-    return {
+    const earningsDateFmt = ce.earnings?.earningsDate?.[0]?.fmt || null;
+    const exDividendDateFmt = ce.exDividendDate?.fmt || null;
+    const dividendDateFmt = ce.dividendDate?.fmt || null;
+
+    const calendar = {
+      nextEarningsDate: earningsDateFmt,
+      earningsAverage: numRaw(ce.earnings?.earningsAverage),
+      earningsLow: numRaw(ce.earnings?.earningsLow),
+      earningsHigh: numRaw(ce.earnings?.earningsHigh),
+      revenueAverage: numRaw(ce.earnings?.revenueAverage),
+      exDividendDate: exDividendDateFmt,
+      dividendDate: dividendDateFmt,
+    };
+
+    const financials = {
       targetLowPrice: numRaw(fd.targetLowPrice),
       targetMeanPrice: targetMean,
       targetHighPrice: numRaw(fd.targetHighPrice),
@@ -1402,8 +1500,10 @@ async function fetchYahooDeepFinancials(yfSymbol, currentPrice) {
       forwardPE: numRaw(ks.forwardPE) !== null ? Number(numRaw(ks.forwardPE).toFixed(2)) : null,
       beta: numRaw(ks.beta) !== null ? Number(numRaw(ks.beta).toFixed(2)) : null,
     };
+
+    return { financials, calendar };
   } catch {
-    return null;
+    return { financials: null, calendar: null };
   }
 }
 
@@ -1425,15 +1525,16 @@ export async function fetchStockDeepAnalysis(symbol, market = 'bist') {
     yfSymbol = cleanSym.replace(/USDT$/, '-USD');
   }
 
-  const [chart1h, chart1d, chart1wk, news] = await Promise.all([
+  const [chart1h, chart1d, chart1wk, news, kap] = await Promise.all([
     fetchStockChart(cleanSym, market, '1mo', '1h'),
     fetchStockChart(cleanSym, market, '1y', '1d'),
     fetchStockChart(cleanSym, market, '2y', '1wk'),
     fetchStockNews(cleanSym, yfSymbol, market),
+    fetchStockKapAnnouncements(cleanSym, market),
   ]);
 
   const currentPrice = chart1d?.regularMarketPrice || chart1h?.regularMarketPrice || 0;
-  const financials = market === 'crypto' ? null : await fetchYahooDeepFinancials(yfSymbol, currentPrice);
+  const finObj = market === 'crypto' ? null : await fetchYahooDeepFinancials(yfSymbol, currentPrice);
 
   const mtf = [
     evaluateTimeframeSnapshot(chart1h?.candles, '1 Saatlik (Kısa)'),
@@ -1471,8 +1572,10 @@ export async function fetchStockDeepAnalysis(symbol, market = 'bist') {
     volumeRatio: patternAnalysis.volumeRatio,
     patterns: patternAnalysis.patterns,
     backtest,
-    financials,
+    financials: finObj?.financials || null,
+    calendar: finObj?.calendar || null,
     news,
+    kap: kap || [],
     updatedAt: new Date().toISOString(),
   };
 
