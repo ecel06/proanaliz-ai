@@ -720,8 +720,9 @@ export async function fetchMacroOverview(force = false) {
 
   const macroSymbols = [
     { symbol: 'XU100.IS', label: 'BIST 100', unit: '' },
-    { symbol: 'USDTRY=X', label: 'USD/TRY', unit: '₺' },
-    { symbol: 'EURTRY=X', label: 'EUR/TRY', unit: '₺' },
+    { symbol: 'USDTRY=X', label: 'Dolar (USD/TRY)', unit: '₺' },
+    { symbol: 'EURTRY=X', label: 'Euro (EUR/TRY)', unit: '₺' },
+    { symbol: 'GBPTRY=X', label: 'Sterlin (GBP/TRY)', unit: '₺' },
     { symbol: 'GC=F', label: 'Altın (Ons)', unit: '$' },
     { symbol: '^GSPC', label: 'S&P 500', unit: '' },
     { symbol: 'BTC-USD', label: 'Bitcoin', unit: '$' },
@@ -748,6 +749,33 @@ export async function fetchMacroOverview(force = false) {
   );
 
   const filtered = results.filter(Boolean);
+
+  // Compute Live Gram Altın and Çeyrek Altın based on real-time ONS Gold & USD/TRY
+  const usdObj = filtered.find(r => r.symbol === 'USDTRY=X');
+  const onsObj = filtered.find(r => r.symbol === 'GC=F');
+  if (usdObj && onsObj && usdObj.price > 0 && onsObj.price > 0) {
+    const gramPrice = (onsObj.price / 31.1034768) * usdObj.price;
+    const gramChange = Number((onsObj.changePct + usdObj.changePct).toFixed(2));
+    const ceyrekPrice = gramPrice * 1.635;
+
+    // Insert Gram and Çeyrek right after Euro
+    filtered.splice(3, 0, 
+      {
+        symbol: 'GRAM_ALTIN',
+        label: 'Gram Altın',
+        unit: '₺',
+        price: Number(gramPrice.toFixed(2)),
+        changePct: gramChange,
+      },
+      {
+        symbol: 'CEYREK_ALTIN',
+        label: 'Çeyrek Altın',
+        unit: '₺',
+        price: Number(Math.round(ceyrekPrice)),
+        changePct: gramChange,
+      }
+    );
+  }
   macroCache = {
     data: filtered,
     expiresAt: now + 45 * 1000,

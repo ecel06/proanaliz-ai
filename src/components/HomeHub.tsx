@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Smartphone,
   QrCode,
+  Coins,
 } from 'lucide-react';
 import { Match, MatchAnalysis } from '../types';
 
@@ -54,6 +55,15 @@ export const HomeHub: React.FC<HomeHubProps> = ({
     recommendation: string;
     badge: string;
   } | null>(null);
+
+  // Real live Gold & Currency macro rates (Dolar, Euro, Gram Altın, Çeyrek Altın, Ons, vb.)
+  const [macroRates, setMacroRates] = useState<Array<{
+    symbol: string;
+    label: string;
+    unit: string;
+    price: number;
+    changePct: number;
+  }>>([]);
 
   // PWA Install prompt listener
   useEffect(() => {
@@ -147,6 +157,22 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         }
       })
       .catch(() => {});
+
+    // 3. Fetch real live Gold & Foreign Currency Macro overview (Dolar, Euro, Gram Altın, Çeyrek Altın, vb.)
+    const fetchMacro = () => {
+      fetch('/api/macro/live')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data?.items && Array.isArray(data.items)) {
+            setMacroRates(data.items);
+          }
+        })
+        .catch(() => {});
+    };
+    fetchMacro();
+    const macroTimer = setInterval(fetchMacro, 30000);
+
+    return () => clearInterval(macroTimer);
   }, []);
 
   // Compute the single best match playing TODAY (or LIVE right now)
@@ -319,6 +345,83 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           <p className="text-[11px] sm:text-xs text-slate-400 max-w-md mx-auto">
             Yapay zeka modelleri ve canlı verilerle donatılmış bağımsız profesyonel analiz platformu
           </p>
+        </div>
+
+        {/* 🪙 CANLI ALTIN & DÖVİZ PİYASALARI TİCKER (Compact & Live Dynamic) */}
+        <div 
+          onClick={onSelectStocks}
+          className="w-full rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 px-2 py-1.5 sm:px-3 sm:py-1.5 transition-all shadow-md flex items-center justify-between gap-2 overflow-hidden cursor-pointer group"
+          title="Borsa, Altın ve Döviz Terminaline Git"
+        >
+          <div className="flex items-center gap-1.5 shrink-0 pr-2 border-r border-slate-800/80">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-[10px] sm:text-xs font-black tracking-wider uppercase text-amber-300 whitespace-nowrap flex items-center gap-1">
+              <span>🪙 Canlı Piyasa:</span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-0.5 min-w-0 flex-1">
+            {macroRates.length > 0 ? (
+              macroRates.map((item) => {
+                const isGold = item.symbol.includes('ALTIN') || item.symbol === 'GC=F';
+                const isUsd = item.symbol === 'USDTRY=X';
+                const isEur = item.symbol === 'EURTRY=X';
+                const isGbp = item.symbol === 'GBPTRY=X';
+                const isBtc = item.symbol === 'BTC-USD';
+                const isBist = item.symbol === 'XU100.IS';
+
+                let icon = '📊';
+                if (item.symbol === 'GRAM_ALTIN') icon = '🪙';
+                else if (item.symbol === 'CEYREK_ALTIN') icon = '👑';
+                else if (item.symbol === 'GC=F') icon = '🟡';
+                else if (isUsd) icon = '💵';
+                else if (isEur) icon = '💶';
+                else if (isGbp) icon = '💷';
+                else if (isBtc) icon = '₿';
+                else if (isBist) icon = '📈';
+
+                const isPos = item.changePct >= 0;
+                const formattedPrice = item.price >= 1000
+                  ? item.price.toLocaleString('tr-TR', { maximumFractionDigits: item.price >= 10000 ? 0 : 2 })
+                  : item.price.toFixed(2);
+
+                return (
+                  <div
+                    key={item.symbol}
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] sm:text-[11px] whitespace-nowrap shrink-0 transition-transform group-hover:scale-[1.02] ${
+                      isGold
+                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                        : isUsd || isEur || isGbp
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
+                        : 'bg-slate-800/80 border-slate-700/60 text-slate-200'
+                    }`}
+                  >
+                    <span className="text-[11px] sm:text-xs">{icon}</span>
+                    <span className="font-bold text-slate-300">{item.label}:</span>
+                    <span className="font-mono font-black text-white">
+                      {formattedPrice} {item.unit}
+                    </span>
+                    <span
+                      className={`font-mono text-[9px] sm:text-[10px] font-extrabold ${
+                        isPos ? 'text-emerald-400' : 'text-rose-400'
+                      }`}
+                    >
+                      {isPos ? '+' : ''}{item.changePct}%
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="flex items-center space-x-2 text-[10px] sm:text-[11px] text-slate-400 animate-pulse">
+                <span>Canlı altın ve döviz kurları yükleniyor...</span>
+              </div>
+            )}
+          </div>
+
+          <div className="hidden sm:flex items-center gap-1 text-[10px] font-bold text-slate-400 group-hover:text-cyan-300 transition-colors shrink-0 pl-1.5 border-l border-slate-800/80">
+            <span>Terminal</span>
+            <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </div>
         </div>
 
         {/* Clean Portal Cards: Futbol, At Yarışı & Borsa (Proportioned to fit screen) */}

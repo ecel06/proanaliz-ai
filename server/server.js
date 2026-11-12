@@ -22,7 +22,8 @@ import {
 import {
   fetchStockScreener,
   fetchStockChart,
-  fetchStockDeepAnalysis
+  fetchStockDeepAnalysis,
+  fetchMacroOverview
 } from './stockService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -281,6 +282,17 @@ app.get('/api/stocks/deep/:symbol', async (req, res) => {
   }
 });
 
+// Live Macro (Dolar, Euro, Altın, Gümüş, Borsa, Kripto) endpoint
+app.get('/api/macro/live', async (req, res) => {
+  try {
+    const force = req.query.force === 'true';
+    const items = await fetchMacroOverview(force);
+    res.json({ success: true, timestamp: Date.now(), items });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 6. Dynamic Real Team Forms endpoints (100% Real Match Results)
 app.get('/api/forms', (req, res) => {
   res.json(getAllRealForms());
@@ -321,7 +333,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.12.09';
+const APP_VERSION = '2026.11.12.10';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
