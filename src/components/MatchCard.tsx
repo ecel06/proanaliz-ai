@@ -64,9 +64,19 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 
         <div className="flex items-center space-x-3 text-[11px] text-slate-400">
           {liveState.isLive ? (
-            <span className="flex items-center space-x-1.5 text-rose-300 font-extrabold bg-rose-500/20 px-2 py-0.5 rounded-md border border-rose-500/40 animate-pulse">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping inline-block" />
-              <span>CANLI {liveState.liveMinute} ({liveState.displayScore.home} - {liveState.displayScore.away})</span>
+            <span className={`flex items-center space-x-1.5 font-extrabold px-2 py-0.5 rounded-md border animate-pulse ${
+              liveState.liveMinute === 'Devre Arası'
+                ? 'text-amber-300 bg-amber-500/20 border-amber-500/40'
+                : 'text-rose-300 bg-rose-500/20 border-rose-500/40'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full animate-ping inline-block ${
+                liveState.liveMinute === 'Devre Arası' ? 'bg-amber-400' : 'bg-rose-500'
+              }`} />
+              <span>
+                {liveState.liveMinute === 'Devre Arası'
+                  ? `DEVRE ARASI (${liveState.displayScore.home} - ${liveState.displayScore.away})`
+                  : `CANLI ${liveState.liveMinute} (${liveState.displayScore.home} - ${liveState.displayScore.away})`}
+              </span>
             </span>
           ) : (
             <span className="flex items-center space-x-1 text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
@@ -109,9 +119,19 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             </span>
           )}
           {liveState.isLive ? (
-            <span className="flex items-center space-x-1.5 text-rose-300 font-extrabold bg-rose-500/20 px-2 py-0.5 rounded text-xs border border-rose-500/40 animate-pulse">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping inline-block" />
-              <span>CANLI {liveState.liveMinute} • {liveState.displayScore.home} - {liveState.displayScore.away}</span>
+            <span className={`flex items-center space-x-1.5 font-extrabold px-2 py-0.5 rounded text-xs border animate-pulse ${
+              liveState.liveMinute === 'Devre Arası'
+                ? 'text-amber-300 bg-amber-500/20 border-amber-500/40'
+                : 'text-rose-300 bg-rose-500/20 border-rose-500/40'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full animate-ping inline-block ${
+                liveState.liveMinute === 'Devre Arası' ? 'bg-amber-400' : 'bg-rose-500'
+              }`} />
+              <span>
+                {liveState.liveMinute === 'Devre Arası'
+                  ? `DEVRE ARASI • ${liveState.displayScore.home} - ${liveState.displayScore.away}`
+                  : `CANLI ${liveState.liveMinute} • ${liveState.displayScore.home} - ${liveState.displayScore.away}`}
+              </span>
             </span>
           ) : (
             <>

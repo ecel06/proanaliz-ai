@@ -87,6 +87,30 @@ export function getKickoffTimestamp(match: Match): number {
 }
 
 /**
+ * Normalizes live minute strings from APIs (ESPN, Nesine) into standardized format.
+ * Specifically converts HT, Halftime, İY, and D.A. variants into clean "Devre Arası".
+ */
+export function normalizeLiveMinute(rawMinute?: string): string {
+  if (!rawMinute) return 'Canlı';
+  const trimmed = rawMinute.trim();
+  const lower = trimmed.toLowerCase();
+  if (
+    lower === 'ht' ||
+    lower === 'iy' ||
+    lower === 'd.a' ||
+    lower === 'da' ||
+    lower.includes('half') ||
+    lower.includes('devre') ||
+    lower.includes('iy (devre') ||
+    lower === '45+' ||
+    lower === '45+’'
+  ) {
+    return 'Devre Arası';
+  }
+  return trimmed;
+}
+
+/**
  * Determines current live/finished status and real-time score.
  * If match kickoff has passed and the match is not marked finished,
  * it is treated as LIVE with real-time minute calculation and live score display.
@@ -144,12 +168,13 @@ export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLi
       home: (match as any).homeScore ?? 0,
       away: (match as any).awayScore ?? 0
     };
+    const normMin = normalizeLiveMinute(match.liveMinute);
     return {
       status: 'live',
       isLive: true,
       isFinished: false,
       isUpcoming: false,
-      liveMinute: match.liveMinute || 'Canlı',
+      liveMinute: normMin,
       displayScore: {
         home: score.home ?? 0,
         away: score.away ?? 0,
@@ -173,7 +198,7 @@ export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLi
         if (elapsedMins <= 45) {
           liveMinute = `${Math.max(1, elapsedMins)}'`;
         } else if (elapsedMins <= 60) {
-          liveMinute = 'İY (Devre Arası)';
+          liveMinute = 'Devre Arası';
         } else if (elapsedMins <= 105) {
           liveMinute = `${Math.min(90, elapsedMins - 15)}'`;
         } else {
@@ -200,12 +225,14 @@ export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLi
           }
         }
 
+        const resolvedMinute = match.liveMinute ? normalizeLiveMinute(match.liveMinute) : liveMinute;
+
         return {
           status: 'live',
           isLive: true,
           isFinished: false,
           isUpcoming: false,
-          liveMinute: match.liveMinute || liveMinute,
+          liveMinute: resolvedMinute,
           displayScore: {
             home: homeScore ?? 0,
             away: awayScore ?? 0,

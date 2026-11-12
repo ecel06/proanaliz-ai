@@ -162,12 +162,21 @@ export function mapEvent(event, league) {
       }
     : undefined;
 
-  // Real-time live minute (e.g. "72'", "İY", "HT")
+  // Real-time live minute (e.g. "72'", "Devre Arası")
   let liveMinute = '';
   if (isLive) {
-    const rawClock = statusObj.displayClock || statusObj.type?.shortDetail || statusObj.type?.detail || '';
-    if (rawClock === 'HT' || rawClock.toLowerCase().includes('half') || rawClock.toLowerCase().includes('devre')) {
-      liveMinute = 'İY (Devre Arası)';
+    const rawClock = String(statusObj.displayClock || statusObj.type?.shortDetail || statusObj.type?.detail || '').trim();
+    const isHalftime = 
+      typeName === 'STATUS_HALFTIME' ||
+      desc.includes('halftime') ||
+      desc.includes('devre') ||
+      rawClock === 'HT' ||
+      rawClock.toLowerCase().includes('half') ||
+      rawClock.toLowerCase().includes('devre') ||
+      (statusObj.period === 1 && (statusObj.clock === 0 || statusObj.clock === 2700) && !statusObj.displayClock);
+
+    if (isHalftime) {
+      liveMinute = 'Devre Arası';
     } else if (rawClock) {
       liveMinute = rawClock.includes("'") ? rawClock : `${rawClock}'`;
     } else {

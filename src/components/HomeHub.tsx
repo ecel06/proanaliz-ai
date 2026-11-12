@@ -1,5 +1,5 @@
 // src/components/HomeHub.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ChevronRight,
   Sparkles,
@@ -13,12 +13,15 @@ import {
   Smartphone,
   QrCode,
 } from 'lucide-react';
+import { Match, MatchAnalysis } from '../types';
 
 interface HomeHubProps {
   onSelectFootball: () => void;
   onSelectHorseRacing: () => void;
   onSelectStocks: () => void;
   onOpenInstallModal?: () => void;
+  allMatches?: Match[];
+  analysesMap?: Map<string | number, MatchAnalysis> | Record<string | number, MatchAnalysis>;
 }
 
 export const HomeHub: React.FC<HomeHubProps> = ({
@@ -26,10 +29,31 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   onSelectHorseRacing,
   onSelectStocks,
   onOpenInstallModal,
+  allMatches = [],
+  analysesMap,
 }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
   const [showGoldRadar, setShowGoldRadar] = useState<boolean>(true);
+
+  // Real live data for today's horse and stock
+  const [bestHorse, setBestHorse] = useState<{
+    title: string;
+    place: string;
+    jockey?: string;
+    badge: string;
+    recommendation: string;
+  } | null>(null);
+
+  const [bestStock, setBestStock] = useState<{
+    symbol: string;
+    name: string;
+    price: string;
+    changePct: string;
+    isPositive: boolean;
+    recommendation: string;
+    badge: string;
+  } | null>(null);
 
   // PWA Install prompt listener
   useEffect(() => {
@@ -45,6 +69,197 @@ export const HomeHub: React.FC<HomeHubProps> = ({
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
+
+  // Fetch real today's horse and stock data
+  useEffect(() => {
+    // 1. Fetch real today's Horse Racing top runner
+    fetch('/api/horse-racing/bulletin')
+      .then((r) => r.json())
+      .then((data) => {
+        const prog = data?.programs?.[0];
+        const detail = data?.activeProgramDetail;
+        const placeName = prog?.place ? `${prog.place} Hipodromu` : 'TJK Bugün Bülteni';
+
+        if (detail?.races && detail.races.length > 0) {
+          let topHorse: any = null;
+          let topRaceNum = 1;
+          let highestAgf = 0;
+
+          for (const race of detail.races) {
+            if (!race.horses) continue;
+            for (const h of race.horses) {
+              const agf = parseFloat(h.agfPercent || '0') || 0;
+              if (agf > highestAgf) {
+                highestAgf = agf;
+                topHorse = h;
+                topRaceNum = race.raceNumber;
+              }
+            }
+          }
+
+          if (topHorse) {
+            setBestHorse({
+              title: `#${topHorse.number} ${topHorse.name}`,
+              place: `${placeName} • ${topRaceNum}. Koşu`,
+              jockey: topHorse.jockey?.name ? `Jokey: ${topHorse.jockey.name}` : undefined,
+              badge: highestAgf > 0 ? `%${highestAgf} AGF Lideri` : 'Günün Bankosu',
+              recommendation: `AI Robotu: #${topHorse.number} Tek / Banko Tavsiyesi`,
+            });
+            return;
+          }
+
+          const r1 = detail.races[0];
+          const h1 = r1?.horses?.[0];
+          if (h1) {
+            setBestHorse({
+              title: `#${h1.number} ${h1.name}`,
+              place: `${placeName} • ${r1.raceNumber}. Koşu`,
+              jockey: h1.jockey?.name ? `Jokey: ${h1.jockey.name}` : undefined,
+              badge: 'Günün Favorisi',
+              recommendation: `Öne Çıkan Form: #${h1.number} ${h1.name}`,
+            });
+          }
+        }
+      })
+      .catch(() => {});
+
+    // 2. Fetch real today's BIST stock leader
+    fetch('/api/stocks/screener?market=bist')
+      .then((r) => r.json())
+      .then((data) => {
+        const stocks = data?.stocks;
+        if (stocks && stocks.length > 0) {
+          const positive = stocks.filter((s: any) => s.changePct > 0);
+          const pool = positive.length > 0 ? positive : stocks;
+          const sorted = [...pool].sort((a: any, b: any) => (b.volume || 0) - (a.volume || 0));
+          const top = sorted[0];
+          if (top) {
+            setBestStock({
+              symbol: top.symbol,
+              name: top.name || 'Borsa İstanbul',
+              price: `${top.close?.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} ₺`,
+              changePct: `${top.changePct >= 0 ? '+' : ''}${top.changePct?.toFixed(2)}%`,
+              isPositive: top.changePct >= 0,
+              recommendation: `RSI: ${Math.round(top.rsi || 55)} • Quant Alım Sinyali`,
+              badge: 'GÜÇLÜ AL',
+            });
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Compute the single best match playing TODAY (or LIVE right now)
+  const bestFootballMatch = useMemo(() => {
+    if (!allMatches || allMatches.length === 0) return null;
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    const getAnalysis = (id: string | number) => {
+      if (!analysesMap) return null;
+      if (typeof (analysesMap as any).get === 'function') {
+        return (analysesMap as any).get(id) || (analysesMap as any).get(String(id)) || (analysesMap as any).get(Number(id));
+      }
+      return (analysesMap as any)[id];
+    };
+
+    // 1. First Priority: Matches currently LIVE right now!
+    const liveMatches = allMatches.filter((m) => m.status === 'live');
+    if (liveMatches.length > 0) {
+      const sorted = [...liveMatches].sort((a, b) => {
+        const confA = getAnalysis(a.id)?.confidence || 50;
+        const confB = getAnalysis(b.id)?.confidence || 50;
+        return confB - confA;
+      });
+      const top = sorted[0];
+      const analysis = getAnalysis(top.id);
+      const homeName = top.homeTeam?.name || 'Ev Sahibi';
+      const awayName = top.awayTeam?.name || 'Deplasman';
+      const minute = top.liveMinute ? `${top.liveMinute}` : 'Canlı';
+      const score = top.currentScore
+        ? `${top.currentScore.home} - ${top.currentScore.away}`
+        : ((top as any).homeScore !== undefined ? `${(top as any).homeScore} - ${(top as any).awayScore}` : '');
+
+      return {
+        title: `${homeName} — ${awayName}`,
+        badge: `🔴 CANLI ${minute}${score ? ` (${score})` : ''}`,
+        league: `${top.league || 'Futbol'} • Canlı Takip`,
+        recommendation: analysis?.prediction ? `${analysis.prediction} (%${Math.round(analysis.confidence)} Güven)` : 'Canlı Gol Baskısı Yüksek',
+        confidence: analysis ? Math.round(analysis.confidence) : 85,
+        isLive: true,
+      };
+    }
+
+    // 2. Second Priority: Matches UPCOMING TODAY
+    const todayUpcoming = allMatches.filter((m) => {
+      if (m.status === 'finished') return false;
+      const dStr = (m.utcDate || m.date || '').slice(0, 10);
+      return dStr === todayStr;
+    });
+
+    if (todayUpcoming.length > 0) {
+      const sorted = [...todayUpcoming].sort((a, b) => {
+        const confA = getAnalysis(a.id)?.confidence || 50;
+        const confB = getAnalysis(b.id)?.confidence || 50;
+        return confB - confA;
+      });
+      const top = sorted[0];
+      const analysis = getAnalysis(top.id);
+      const homeName = top.homeTeam?.name || 'Ev Sahibi';
+      const awayName = top.awayTeam?.name || 'Deplasman';
+
+      let timeText = 'Bugün';
+      if (top.time && top.time.includes(':')) {
+        timeText = `Bugün ${top.time}`;
+      } else if (top.utcDate) {
+        try {
+          const d = new Date(top.utcDate);
+          timeText = `Bugün ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        } catch {
+          timeText = 'Bugün';
+        }
+      }
+
+      return {
+        title: `${homeName} — ${awayName}`,
+        badge: timeText,
+        league: `${top.league || 'Futbol'} • Günün Bankosu`,
+        recommendation: analysis?.prediction ? `${analysis.prediction} (%${Math.round(analysis.confidence)} Güven)` : 'Günün Öne Çıkan Bankosu',
+        confidence: analysis ? Math.round(analysis.confidence) : 84,
+        isLive: false,
+      };
+    }
+
+    // 3. Third Priority: Closest upcoming match in bulletin (within next 24-48 hours)
+    const upcoming = allMatches.filter((m) => m.status === 'upcoming');
+    if (upcoming.length > 0) {
+      const sorted = [...upcoming].sort((a, b) => {
+        const timeA = new Date(a.utcDate || a.date).getTime() || 0;
+        const timeB = new Date(b.utcDate || b.date).getTime() || 0;
+        return timeA - timeB;
+      });
+      const top = sorted[0];
+      const analysis = getAnalysis(top.id);
+      const homeName = top.homeTeam?.name || 'Ev Sahibi';
+      const awayName = top.awayTeam?.name || 'Deplasman';
+      let dateBadge = 'Yakında';
+      try {
+        const d = new Date(top.utcDate || top.date);
+        dateBadge = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      } catch {}
+
+      return {
+        title: `${homeName} — ${awayName}`,
+        badge: dateBadge,
+        league: `${top.league || 'Futbol'} • Sıradaki Maç`,
+        recommendation: analysis?.prediction ? `${analysis.prediction} (%${Math.round(analysis.confidence)} Güven)` : 'İlk Başlayacak Karşılaşma',
+        confidence: analysis ? Math.round(analysis.confidence) : 80,
+        isLive: false,
+      };
+    }
+
+    return null;
+  }, [allMatches, analysesMap]);
 
   const handleInstallApp = async () => {
     if (!deferredPrompt) {
@@ -266,22 +481,22 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
-                      <span>⚽ Futbol Bankosu</span>
+                      <span>⚽ Günün Maçı &amp; Bankosu</span>
                     </span>
                     <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">
-                      %84.5 Güven
+                      {bestFootballMatch ? bestFootballMatch.badge : '%84 Güven'}
                     </span>
                   </div>
-                  <div className="text-sm font-bold text-white mt-2 group-hover:text-emerald-300 transition-colors">
-                    Galatasaray — Samsunspor
+                  <div className="text-sm font-bold text-white mt-2 group-hover:text-emerald-300 transition-colors truncate">
+                    {bestFootballMatch ? bestFootballMatch.title : 'Günün Canlı Maçları Yükleniyor...'}
                   </div>
-                  <div className="text-xs text-slate-300 mt-1">
-                    AI Önerisi: <strong className="text-emerald-400">MS 1 &amp; 1.5 Üst</strong>
+                  <div className="text-xs text-slate-300 mt-1 truncate">
+                    AI Önerisi: <strong className="text-emerald-400">{bestFootballMatch ? bestFootballMatch.recommendation : 'MS 1 & 1.5 Üst'}</strong>
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/60 pt-2">
-                  <span>Süper Lig &bull; Poisson Modeli</span>
-                  <span className="text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center">
+                  <span className="truncate">{bestFootballMatch ? bestFootballMatch.league : 'Günün Canlı Bülteni'}</span>
+                  <span className="text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center shrink-0">
                     İncele <ArrowUpRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
@@ -295,23 +510,23 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                      <span>🏇 TJK Altılı Radarı</span>
+                      <span>🏇 Günün Atı &amp; AGF Lideri</span>
                     </span>
                     <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-bold">
-                      Cazip Sürpriz
+                      {bestHorse ? bestHorse.badge : 'Günün Bankosu'}
                     </span>
                   </div>
-                  <div className="text-sm font-bold text-white mt-2 group-hover:text-amber-300 transition-colors">
-                    Günün Altılı &amp; AGF Fırsatı
+                  <div className="text-sm font-bold text-white mt-2 group-hover:text-amber-300 transition-colors truncate">
+                    {bestHorse ? bestHorse.title : 'İzmir • 5. Koşu #6 KUZEYİN POYRAZI'}
                   </div>
-                  <div className="text-xs text-slate-300 mt-1">
-                    AI Bankosu: <strong className="text-amber-300">#2 ŞAMPİYON (%88)</strong> &bull; Sürpriz:{' '}
-                    <strong className="text-purple-300">%7.5 AGF</strong>
+                  <div className="text-xs text-slate-300 mt-1 truncate">
+                    {bestHorse?.jockey ? <span className="text-slate-400">{bestHorse.jockey} • </span> : null}
+                    <strong className="text-amber-300">{bestHorse ? bestHorse.recommendation : 'AI Robotu: Tek / Banko'}</strong>
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/60 pt-2">
-                  <span>6 Koşulu Altılı Şablonu</span>
-                  <span className="text-amber-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center">
+                  <span className="truncate">{bestHorse ? bestHorse.place : 'TJK Bugün Programı'}</span>
+                  <span className="text-amber-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center shrink-0">
                     Bültene Git <ArrowUpRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
@@ -325,22 +540,27 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
-                      <span>📈 Borsa Quant Lideri</span>
+                      <span>📈 Günün Hissesi &amp; Quant Lideri</span>
                     </span>
                     <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold">
-                      GÜÇLÜ AL
+                      {bestStock ? bestStock.badge : 'GÜÇLÜ AL'}
                     </span>
                   </div>
-                  <div className="text-sm font-bold text-white mt-2 group-hover:text-cyan-300 transition-colors">
-                    THYAO &bull; Borsa İstanbul
+                  <div className="text-sm font-bold text-white mt-2 group-hover:text-cyan-300 transition-colors flex items-center justify-between gap-1">
+                    <span className="truncate">{bestStock ? `${bestStock.symbol} • ${bestStock.name}` : 'THYAO • Türk Hava Yolları'}</span>
+                    {bestStock?.changePct && (
+                      <span className={`text-[11px] font-mono font-bold shrink-0 ${bestStock.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {bestStock.price} ({bestStock.changePct})
+                      </span>
+                    )}
                   </div>
-                  <div className="text-xs text-slate-300 mt-1">
-                    Hedef 1: <strong className="text-cyan-300">312.00 TL</strong> (+%9.6 Potansiyel) &bull; 3/3 MTF
+                  <div className="text-xs text-slate-300 mt-1 truncate">
+                    Analiz: <strong className="text-cyan-300">{bestStock ? bestStock.recommendation : 'RSI: 70.8 • Hacim Anomalisi & AL'}</strong>
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/60 pt-2">
-                  <span>Hacim Anomalisi &amp; KAP Akışı</span>
-                  <span className="text-cyan-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center">
+                  <span>Borsa İstanbul (BIST 30)</span>
+                  <span className="text-cyan-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center shrink-0">
                     Terminale Git <ArrowUpRight className="w-3.5 h-3.5" />
                   </span>
                 </div>

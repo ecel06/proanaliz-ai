@@ -68,10 +68,18 @@ export const FinishedMatchCard: React.FC<FinishedMatchCardProps> = ({ match, now
 
         <div className="flex items-center space-x-2 text-[11px]">
           {isLive ? (
-            <span className="flex items-center space-x-1.5 text-rose-300 font-extrabold bg-rose-500/20 px-2.5 py-0.5 rounded-md border border-rose-500/40 animate-pulse">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping inline-block" />
-              <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-              <span>CANLI {liveMinute ? `• ${liveMinute}` : ''}</span>
+            <span className={`flex items-center space-x-1.5 font-extrabold px-2.5 py-0.5 rounded-md border animate-pulse ${
+              liveMinute === 'Devre Arası'
+                ? 'text-amber-300 bg-amber-500/20 border-amber-500/40'
+                : 'text-rose-300 bg-rose-500/20 border-rose-500/40'
+            }`}>
+              <span className={`w-2 h-2 rounded-full animate-ping inline-block ${
+                liveMinute === 'Devre Arası' ? 'bg-amber-400' : 'bg-rose-500'
+              }`} />
+              <Radio className={`w-3.5 h-3.5 animate-pulse ${
+                liveMinute === 'Devre Arası' ? 'text-amber-400' : 'text-rose-400'
+              }`} />
+              <span>{liveMinute === 'Devre Arası' ? 'DEVRE ARASI' : `CANLI • ${liveMinute || 'Oynanıyor'}`}</span>
             </span>
           ) : (
             <span className="flex items-center space-x-1 text-slate-300 font-bold bg-slate-800 px-2.5 py-0.5 rounded-md border border-slate-700">

@@ -325,8 +325,10 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
 
                       <div className="flex flex-col min-w-0">
                         {liveState.isLive ? (
-                          <span className="flex items-center space-x-1 text-rose-400 font-extrabold text-xs animate-pulse">
-                            <Radio className="w-3 h-3 text-rose-400" />
+                          <span className={`flex items-center space-x-1 font-extrabold text-xs animate-pulse ${
+                            liveState.liveMinute === 'Devre Arası' ? 'text-amber-400' : 'text-rose-400'
+                          }`}>
+                            <Radio className={`w-3 h-3 ${liveState.liveMinute === 'Devre Arası' ? 'text-amber-400' : 'text-rose-400'}`} />
                             <span>{liveState.liveMinute}</span>
                           </span>
                         ) : (match.status === 'postponed' || (match as any).isPostponed) ? (
@@ -539,9 +541,13 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                         )}
 
                         {liveState.isLive ? (
-                          <span className="flex items-center space-x-1 text-rose-400 font-black text-[11px] bg-rose-500/15 border border-rose-500/30 px-2 py-0.5 rounded-md animate-pulse">
-                            <Radio className="w-3 h-3 text-rose-400" />
-                            <span>CANLI {liveState.liveMinute}</span>
+                          <span className={`flex items-center space-x-1 font-black text-[11px] px-2 py-0.5 rounded-md animate-pulse border ${
+                            liveState.liveMinute === 'Devre Arası'
+                              ? 'text-amber-300 bg-amber-500/15 border-amber-500/30'
+                              : 'text-rose-400 bg-rose-500/15 border-rose-500/30'
+                          }`}>
+                            <Radio className={`w-3 h-3 ${liveState.liveMinute === 'Devre Arası' ? 'text-amber-400' : 'text-rose-400'}`} />
+                            <span>{liveState.liveMinute === 'Devre Arası' ? 'DEVRE ARASI' : `CANLI ${liveState.liveMinute}`}</span>
                           </span>
                         ) : (match.status === 'postponed' || (match as any).isPostponed) ? (
                           <span className="flex items-center space-x-1 text-amber-400 font-bold text-[11px] bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
