@@ -32,8 +32,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
 
     try {
+      const cleanEmail = email.trim();
+      const cleanPass = password.trim();
+
       if (mode === 'login') {
-        const res = await loginUserApi(email, password);
+        const res = await loginUserApi(cleanEmail, cleanPass);
         if (res.success && res.user) {
           onSuccess(res.user);
           onClose();
@@ -41,7 +44,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setError(res.error || 'Giriş yapılamadı.');
         }
       } else {
-        const res = await registerUserApi(name, email, password);
+        const res = await registerUserApi(name.trim(), cleanEmail, cleanPass);
         if (res.success && res.user) {
           onSuccess(res.user);
           onClose();
@@ -187,6 +190,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {loading ? 'İşleniyor...' : mode === 'login' ? 'Giriş Yap' : 'Hesap Oluştur'}
           </button>
         </form>
+
+        {mode === 'login' && (
+          <div className="mt-3 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@proanaliz.ai');
+                setPassword('Password123!');
+                setError(null);
+              }}
+              className="text-[11px] text-amber-400 hover:text-amber-300 underline underline-offset-4 cursor-pointer font-bold transition-colors inline-flex items-center gap-1"
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-400" />
+              <span>Yönetici Bilgilerini Doldur (admin@proanaliz.ai)</span>
+            </button>
+          </div>
+        )}
 
         {/* Footer info */}
         <div className="mt-5 text-center text-[11px] text-slate-500">

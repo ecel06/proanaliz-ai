@@ -22,6 +22,40 @@ if (!fs.existsSync(DATA_DIR)) {
 // In-memory cache synced with users.json
 let usersMap = new Map();
 
+function seedDefaultAdmin() {
+  const adminEmail = 'admin@proanaliz.ai';
+  let found = false;
+  for (const u of usersMap.values()) {
+    if (u.email && u.email.toLowerCase() === adminEmail) {
+      found = true;
+      // Ensure always admin and VIP
+      u.role = 'admin';
+      u.isVip = true;
+      u.vipPlan = 'Kurucu Yönetici VIP';
+      u.vipExpiresAt = Date.now() + 365 * 24 * 60 * 60 * 1000;
+      break;
+    }
+  }
+
+  if (!found) {
+    const adminUser = {
+      id: 'usr_master_admin_001',
+      name: 'Yönetici',
+      email: adminEmail,
+      passwordHash: hashPassword('Password123!'),
+      role: 'admin',
+      isVip: true,
+      vipPlan: 'Kurucu Yönetici VIP',
+      vipExpiresAt: Date.now() + 365 * 24 * 60 * 60 * 1000,
+      createdAt: Date.now(),
+      lastLoginAt: Date.now(),
+    };
+    usersMap.set(adminUser.id, adminUser);
+    saveUsers();
+    console.log('[UserService] Master admin permanently seeded: admin@proanaliz.ai');
+  }
+}
+
 function loadUsers() {
   try {
     if (fs.existsSync(USERS_FILE)) {
@@ -36,6 +70,8 @@ function loadUsers() {
     console.error('[UserService] Error loading users:', err);
     usersMap = new Map();
   }
+  // Guarantee master admin exists at all times across container reboots
+  seedDefaultAdmin();
 }
 
 function saveUsers() {
