@@ -249,7 +249,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={onToggleMute}
                 className="p-1.5 sm:p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition-all cursor-pointer shrink-0 shadow-xs"
-                title={isMuted ? 'Canlı Gol Sesini Aç' : 'Canlı Gol Sesini Kapat'}
+                title={isMuted ? 'Canlı Gol Sesini (GOOOOL!) Aç' : 'Canlı Gol Sesini Kapat'}
               >
                 {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
               </button>

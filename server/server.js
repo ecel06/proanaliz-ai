@@ -321,7 +321,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.12.07';
+const APP_VERSION = '2026.11.12.08';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -355,8 +355,14 @@ app.get('/api/network-info', (req, res) => {
   });
 });
 
-// 6. Serve static production files from dist directory (Standalone mode)
+// 6. Serve static production files from dist directory and public directory
 const distPath = path.resolve(__dirname, '../dist');
+const publicPath = path.resolve(__dirname, '../public');
+
+if (fs.existsSync(publicPath)) {
+  app.use(express.static(publicPath));
+}
+
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath, {
     setHeaders: (res, filePath) => {
