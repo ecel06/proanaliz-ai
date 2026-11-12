@@ -33,6 +33,7 @@ interface HeaderProps {
   user?: User | null;
   onOpenAuth?: () => void;
   onOpenVIP?: () => void;
+  onOpenAdmin?: () => void;
   onLogout?: () => void;
   onGoHome?: () => void;
   onOpenCustomAnalyzer: () => void;
@@ -67,6 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
   user,
   onOpenAuth,
   onOpenVIP,
+  onOpenAdmin,
   onLogout,
   onGoHome,
   onOpenCustomAnalyzer,
@@ -321,6 +323,17 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             ) : (
               <div className="flex items-center gap-1 shrink-0">
+                {user.role === 'admin' && onOpenAdmin && (
+                  <button
+                    onClick={onOpenAdmin}
+                    className="flex items-center space-x-1 px-2 py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/50 hover:bg-rose-500/30 text-rose-300 font-black text-xs shadow-md shadow-rose-500/20 cursor-pointer active:scale-95 shrink-0"
+                    title="Yönetici (Admin) Paneli"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-rose-400" />
+                    <span className="hidden sm:inline">Admin</span>
+                  </button>
+                )}
+
                 {user.isVip ? (
                   <button
                     onClick={onOpenVIP}

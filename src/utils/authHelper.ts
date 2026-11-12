@@ -1,5 +1,5 @@
 // src/utils/authHelper.ts
-// Frontend authentication and VIP session management
+// Frontend authentication, VIP session management and Admin API
 
 export interface User {
   id: string;
@@ -163,5 +163,119 @@ export async function redeemPromoCodeApi(code: string): Promise<{ success: boole
     return { success: true, user: data.user };
   } catch (err: any) {
     return { success: false, error: 'Bağlantı hatası oluştu.' };
+  }
+}
+
+// --- 🛡️ Admin API Methods ---
+
+export async function fetchAdminStatsApi(): Promise<{ success: boolean; stats?: any; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch('/api/admin/stats', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'İstatistikler alınamadı.' };
+  }
+}
+
+export async function fetchAdminUsersApi(): Promise<{ success: boolean; users?: User[]; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch('/api/admin/users', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Kullanıcılar alınamadı.' };
+  }
+}
+
+export async function updateUserVipApi(userId: string, planDays: number = 30, planName: string = 'Yönetici VIP'): Promise<{ success: boolean; user?: User; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch(`/api/admin/users/${userId}/vip`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ planDays, planName })
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'VIP güncellenemedi.' };
+  }
+}
+
+export async function updateUserRoleApi(userId: string, role: 'admin' | 'user'): Promise<{ success: boolean; user?: User; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch(`/api/admin/users/${userId}/role`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ role })
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Rol güncellenemedi.' };
+  }
+}
+
+export async function deleteUserApi(userId: string): Promise<{ success: boolean; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch(`/api/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Kullanıcı silinemedi.' };
+  }
+}
+
+export async function fetchAdminPromosApi(): Promise<{ success: boolean; promos?: any[]; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch('/api/admin/promos', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Promosyon kodları alınamadı.' };
+  }
+}
+
+export async function createPromoCodeApi(code: string, days: number = 7, label: string = 'Özel Kampanya'): Promise<{ success: boolean; promo?: any; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch('/api/admin/promos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ code, days, label })
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Promosyon kodu oluşturulamadı.' };
+  }
+}
+
+export async function deletePromoCodeApi(code: string): Promise<{ success: boolean; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch(`/api/admin/promos/${code}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Promosyon kodu silinemedi.' };
   }
 }

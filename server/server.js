@@ -31,7 +31,15 @@ import {
   getUserById,
   verifyToken,
   activateUserVip,
-  redeemPromoCode
+  redeemPromoCode,
+  getAllUsers,
+  updateUserVip,
+  updateUserRole,
+  deleteUser,
+  getPromoCodesList,
+  createPromoCode,
+  deletePromoCode,
+  getAdminStats
 } from './userService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -355,6 +363,61 @@ app.post('/api/auth/vip-activate', authMiddleware, (req, res) => {
   res.json(result);
 });
 
+// --- 🛡️ Admin Panel Endpoints (Admin Only) ---
+function adminMiddleware(req, res, next) {
+  authMiddleware(req, res, () => {
+    const user = getUserById(req.userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Bu işlem için Yönetici (Admin) yetkisi gerekiyor.' });
+    }
+    req.adminUser = user;
+    next();
+  });
+}
+
+app.get('/api/admin/stats', adminMiddleware, (req, res) => {
+  const stats = getAdminStats();
+  res.json({ success: true, stats });
+});
+
+app.get('/api/admin/users', adminMiddleware, (req, res) => {
+  const users = getAllUsers();
+  res.json({ success: true, users });
+});
+
+app.post('/api/admin/users/:id/vip', adminMiddleware, (req, res) => {
+  const { planDays = 30, planName = 'Yönetici VIP' } = req.body;
+  const result = updateUserVip(req.params.id, planDays, planName);
+  res.json(result);
+});
+
+app.post('/api/admin/users/:id/role', adminMiddleware, (req, res) => {
+  const { role = 'user' } = req.body;
+  const result = updateUserRole(req.params.id, role);
+  res.json(result);
+});
+
+app.delete('/api/admin/users/:id', adminMiddleware, (req, res) => {
+  const result = deleteUser(req.params.id);
+  res.json(result);
+});
+
+app.get('/api/admin/promos', adminMiddleware, (req, res) => {
+  const promos = getPromoCodesList();
+  res.json({ success: true, promos });
+});
+
+app.post('/api/admin/promos', adminMiddleware, (req, res) => {
+  const { code, days = 7, label = 'Özel Promosyon' } = req.body;
+  const result = createPromoCode(code, days, label);
+  res.json(result);
+});
+
+app.delete('/api/admin/promos/:code', adminMiddleware, (req, res) => {
+  const result = deletePromoCode(req.params.code);
+  res.json(result);
+});
+
 // 6. Dynamic Real Team Forms endpoints (100% Real Match Results)
 app.get('/api/forms', (req, res) => {
   res.json(getAllRealForms());
@@ -395,7 +458,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.12.13';
+const APP_VERSION = '2026.11.12.14';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

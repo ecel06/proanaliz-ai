@@ -26,6 +26,7 @@ import { AIPerformanceModal } from './components/AIPerformanceModal';
 import { ShareSlipModal } from './components/ShareSlipModal';
 import { AuthModal } from './components/AuthModal';
 import { VIPModal } from './components/VIPModal';
+import { AdminModal } from './components/AdminModal';
 import { User, getStoredUser, clearAuthSession, fetchCurrentUser } from './utils/authHelper';
 import { HorseRacingView } from './components/horse/HorseRacingView';
 import { StockMarketView } from './components/stocks/StockMarketView';
@@ -269,6 +270,7 @@ export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(() => getStoredUser());
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
   useEffect(() => {
     fetchCurrentUser().then((u) => {
@@ -304,7 +306,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.12.13';
+  const CLIENT_BUILD_VERSION = '2026.11.12.14';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -924,6 +926,7 @@ export const App: React.FC = () => {
           onSelectStocks={() => setActiveSection('stocks')}
           onOpenInstallModal={() => setIsInstallModalOpen(true)}
           onOpenVIP={() => setIsVipModalOpen(true)}
+          onOpenAdmin={() => setIsAdminModalOpen(true)}
           user={currentUser}
           allMatches={weeklyMatches}
           analysesMap={matchAnalysesMap}
@@ -961,6 +964,7 @@ export const App: React.FC = () => {
         user={currentUser}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenVIP={() => setIsVipModalOpen(true)}
+        onOpenAdmin={() => setIsAdminModalOpen(true)}
         onLogout={handleLogout}
         onGoHome={() => {
           setActiveSection('home');
@@ -1843,6 +1847,14 @@ export const App: React.FC = () => {
         onUserUpdated={(u) => {
           setCurrentUser(u);
         }}
+      />
+
+      {/* Modal 13: 🛡️ Yönetici (Admin) Paneli */}
+      <AdminModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        currentUser={currentUser}
+        onRefreshBulletin={handleRefreshBulletin}
       />
 
       {/* Footer */}

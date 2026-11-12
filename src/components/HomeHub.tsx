@@ -14,6 +14,7 @@ import {
   QrCode,
   Coins,
   Crown,
+  ShieldCheck,
 } from 'lucide-react';
 import { Match, MatchAnalysis } from '../types';
 import { User } from '../utils/authHelper';
@@ -24,6 +25,7 @@ interface HomeHubProps {
   onSelectStocks: () => void;
   onOpenInstallModal?: () => void;
   onOpenVIP?: () => void;
+  onOpenAdmin?: () => void;
   user?: User | null;
   allMatches?: Match[];
   analysesMap?: Map<string | number, MatchAnalysis> | Record<string | number, MatchAnalysis>;
@@ -35,6 +37,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   onSelectStocks,
   onOpenInstallModal,
   onOpenVIP,
+  onOpenAdmin,
   user,
   allMatches = [],
   analysesMap,
@@ -342,6 +345,17 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               >
                 <Crown className="w-3 h-3 text-slate-950" />
                 <span>{user?.isVip ? '👑 VIP Üyeliğim' : '👑 VIP Üye Ol'}</span>
+              </button>
+            )}
+
+            {user?.role === 'admin' && onOpenAdmin && (
+              <button
+                onClick={onOpenAdmin}
+                className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/50 hover:bg-rose-500/30 text-rose-300 font-black text-[10px] transition-all shadow-md shadow-rose-500/20 cursor-pointer active:scale-95 group"
+                title="Yönetici (Admin) Paneli"
+              >
+                <ShieldCheck className="w-3 h-3 text-rose-400" />
+                <span>🛡️ Yönetici Paneli</span>
               </button>
             )}
 

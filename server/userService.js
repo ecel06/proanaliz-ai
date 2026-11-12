@@ -236,19 +236,86 @@ export function activateUserVip(userId, planDays = 30, planName = 'Aylık VIP') 
 }
 
 // Promo codes for promotion, launch testing or gift campaigns
-const PROMO_CODES = {
-  'PRO2026': { days: 7, label: '7 Günlük Tanıtım VIP' },
-  'HOSGELDIN': { days: 3, label: '3 Günlük Deneme VIP' },
-  'KRALVIP': { days: 30, label: '30 Günlük VIP Kampanya' },
-};
+const promoCodesMap = new Map([
+  ['PRO2026', { code: 'PRO2026', days: 7, label: '7 Günlük Tanıtım VIP', createdBy: 'system' }],
+  ['HOSGELDIN', { code: 'HOSGELDIN', days: 3, label: '3 Günlük Deneme VIP', createdBy: 'system' }],
+  ['KRALVIP', { code: 'KRALVIP', days: 30, label: '30 Günlük VIP Kampanya', createdBy: 'system' }],
+]);
 
 export function redeemPromoCode(userId, code) {
   const cleanCode = String(code || '').trim().toUpperCase();
-  const promo = PROMO_CODES[cleanCode];
+  const promo = promoCodesMap.get(cleanCode);
 
   if (!promo) {
     return { success: false, error: 'Geçersiz veya süresi dolmuş promosyon kodu.' };
   }
 
   return activateUserVip(userId, promo.days, promo.label);
+}
+
+// --- Admin Management Methods ---
+
+export function getAllUsers() {
+  return Array.from(usersMap.values()).map(sanitizeUser);
+}
+
+export function updateUserVip(userId, planDays = 30, planName = 'Yönetici VIP') {
+  return activateUserVip(userId, planDays, planName);
+}
+
+export function updateUserRole(userId, newRole = 'user') {
+  const user = usersMap.get(userId);
+  if (!user) return { success: false, error: 'Kullanıcı bulunamadı.' };
+
+  user.role = newRole === 'admin' ? 'admin' : 'user';
+  saveUsers();
+  return { success: true, user: sanitizeUser(user) };
+}
+
+export function deleteUser(userId) {
+  const user = usersMap.get(userId);
+  if (!user) return { success: false, error: 'Kullanıcı bulunamadı.' };
+
+  usersMap.delete(userId);
+  saveUsers();
+  return { success: true, message: 'Kullanıcı silindi.' };
+}
+
+export function getPromoCodesList() {
+  return Array.from(promoCodesMap.values());
+}
+
+export function createPromoCode(code, days = 7, label = 'Özel Kampanya') {
+  const cleanCode = String(code || '').trim().toUpperCase();
+  if (!cleanCode || cleanCode.length < 3) {
+    return { success: false, error: 'Kod en az 3 karakter olmalıdır.' };
+  }
+  const item = { code: cleanCode, days: Number(days) || 7, label, createdBy: 'admin' };
+  promoCodesMap.set(cleanCode, item);
+  return { success: true, promo: item };
+}
+
+export function deletePromoCode(code) {
+  const cleanCode = String(code || '').trim().toUpperCase();
+  if (!promoCodesMap.has(cleanCode)) {
+    return { success: false, error: 'Kod bulunamadı.' };
+  }
+  promoCodesMap.delete(cleanCode);
+  return { success: true, message: 'Kod silindi.' };
+}
+
+export function getAdminStats() {
+  const all = Array.from(usersMap.values());
+  const now = Date.now();
+  const totalUsers = all.length;
+  const vipUsers = all.filter(u => u.isVip && (!u.vipExpiresAt || u.vipExpiresAt > now)).length;
+  const adminUsers = all.filter(u => u.role === 'admin').length;
+  return {
+    totalUsers,
+    vipUsers,
+    adminUsers,
+    totalPromoCodes: promoCodesMap.size,
+    serverUptime: process.uptime(),
+    timestamp: now,
+  };
 }
