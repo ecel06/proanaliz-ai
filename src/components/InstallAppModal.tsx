@@ -39,15 +39,28 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    // Detect network IP from server
+    // Detect network IP from server or use live public URL
     const fetchNetworkInfo = async () => {
+      const currentOrigin = window.location.origin;
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+      // 1. If running on a public domain (e.g. onrender.com or custom domain), use actual public HTTPS URL!
+      if (!isLocalhost && hostname) {
+        setNetworkIp(hostname);
+        setNetworkUrl(currentOrigin);
+        setIsLoadingIp(false);
+        return;
+      }
+
+      // 2. If running locally on development machine, fetch Wi-Fi LAN IP so phones on the same Wi-Fi can connect
       try {
         const res = await fetch('/api/network-info');
         if (res.ok) {
           const data = await res.json();
-          if (data.ip && data.ip !== 'localhost') {
+          if (data.networkUrl && !data.networkUrl.includes('10.') && data.ip !== 'localhost') {
             setNetworkIp(data.ip);
-            setNetworkUrl(data.networkUrl || `http://${data.ip}:${window.location.port || '3001'}`);
+            setNetworkUrl(data.networkUrl);
             setIsLoadingIp(false);
             return;
           }
@@ -56,10 +69,9 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
         // Fallback to current host
       }
 
-      const host = window.location.hostname;
       const port = window.location.port ? `:${window.location.port}` : '';
-      const fallbackUrl = `http://${host}${port}`;
-      setNetworkIp(host);
+      const fallbackUrl = `${window.location.protocol}//${hostname}${port}`;
+      setNetworkIp(hostname);
       setNetworkUrl(fallbackUrl);
       setIsLoadingIp(false);
     };

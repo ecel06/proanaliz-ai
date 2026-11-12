@@ -321,7 +321,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.12.03';
+const APP_VERSION = '2026.11.12.04';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -332,6 +332,19 @@ app.get('/api/version', (req, res) => {
 });
 
 app.get('/api/network-info', (req, res) => {
+  const host = req.headers['host'];
+  const forwardedProto = req.headers['x-forwarded-proto'] || 'https';
+  if (process.env.RENDER_EXTERNAL_URL || (host && !host.includes('localhost') && !host.includes('127.0.0.1'))) {
+    const publicUrl = process.env.RENDER_EXTERNAL_URL || `${forwardedProto}://${host}`;
+    return res.json({
+      success: true,
+      ip: host,
+      port: PORT,
+      networkUrl: publicUrl,
+      localhostUrl: `http://localhost:${PORT}`
+    });
+  }
+
   const ip = getNetworkIp();
   res.json({
     success: true,
