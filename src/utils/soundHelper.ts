@@ -50,7 +50,7 @@ function getGoalAudio(variant?: GoalSoundVariant): HTMLAudioElement | null {
   if (!audioInstances[activeVar]) {
     const fileName = activeVar === 'ercan' ? 'ercan.mp3' : activeVar === 'kafa' ? 'kafa.mp3' : 'goal.mp3';
     const origin = window.location?.origin || '';
-    const audioUrl = `${origin}/sounds/${fileName}?v=20261112_09`;
+    const audioUrl = `${origin}/sounds/${fileName}?v=20261112_11`;
     
     const audio = new Audio(audioUrl);
     audio.preload = 'auto';
