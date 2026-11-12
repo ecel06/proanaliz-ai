@@ -28,7 +28,10 @@ import {
   Target,
   TrendingUp,
   Trophy,
+  Lock,
+  Crown,
 } from 'lucide-react';
+import { User } from '../../utils/authHelper';
 import {
   MacroTicker,
   StockAlertItem,
@@ -60,10 +63,12 @@ type PresetFilter = 'all' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' 
 type StockSort = 'ai_desc' | 'change_desc' | 'volume_desc' | 'rsi_asc' | 'pe_asc';
 
 interface StockMarketViewProps {
+  user?: User | null;
+  onOpenVIP?: () => void;
   onShowToast?: (msg: string) => void;
 }
 
-export const StockMarketView: React.FC<StockMarketViewProps> = ({ onShowToast }) => {
+export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVIP, onShowToast }) => {
   const [market, setMarket] = useState<StockMarketType>('bist');
   const [searchInput, setSearchInput] = useState<string>('');
   const [activeSearch, setActiveSearch] = useState<string>('');

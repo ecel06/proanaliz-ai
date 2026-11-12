@@ -28,6 +28,7 @@ import {
 import {
   registerUser,
   loginUser,
+  googleAuth,
   getUserById,
   verifyToken,
   activateUserVip,
@@ -35,6 +36,7 @@ import {
   getAllUsers,
   updateUserVip,
   updateUserRole,
+  updateUserDetails,
   deleteUser,
   getPromoCodesList,
   createPromoCode,
@@ -340,6 +342,14 @@ app.post('/api/auth/login', (req, res) => {
   res.json(result);
 });
 
+app.post('/api/auth/google', (req, res) => {
+  const result = googleAuth(req.body);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  res.json(result);
+});
+
 app.get('/api/auth/me', authMiddleware, (req, res) => {
   const user = getUserById(req.userId);
   if (!user) {
@@ -388,6 +398,11 @@ app.get('/api/admin/users', adminMiddleware, (req, res) => {
 app.post('/api/admin/users/:id/vip', adminMiddleware, (req, res) => {
   const { planDays = 30, planName = 'Yönetici VIP' } = req.body;
   const result = updateUserVip(req.params.id, planDays, planName);
+  res.json(result);
+});
+
+app.post('/api/admin/users/:id/update', adminMiddleware, (req, res) => {
+  const result = updateUserDetails(req.params.id, req.body);
   res.json(result);
 });
 
@@ -458,7 +473,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.12.16';
+const APP_VERSION = '2026.11.12.17';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

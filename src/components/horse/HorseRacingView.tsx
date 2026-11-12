@@ -19,7 +19,10 @@ import {
   Globe,
   Flag,
   Bot,
+  Lock,
+  Crown,
 } from 'lucide-react';
+import { User } from '../../utils/authHelper';
 import {
   GeneratedAltiliCoupon,
   HippodromeProgram,
@@ -48,10 +51,12 @@ type HRSubTab = 'bulletin' | 'ai_coupons' | 'results' | 'changes';
 type SortMode = 'number' | 'agf' | 'ganyan' | 'ai' | 'handicap';
 
 interface HorseRacingViewProps {
+  user?: User | null;
+  onOpenVIP?: () => void;
   onShowToast?: (msg: string, type?: 'success' | 'info' | 'warning') => void;
 }
 
-export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast }) => {
+export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVIP, onShowToast }) => {
   const [programs, setPrograms] = useState<HippodromeProgram[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null);
   const [detail, setDetail] = useState<ProgramDetail | null>(null);
@@ -673,7 +678,11 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
           {/* SUBTAB 2: AI ALTILI TEMPLATES */}
           {subTab === 'ai_coupons' && (
             <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {aiCoupons.map((c) => (
+              {aiCoupons.map((c) => {
+                const isHorseLocked = c.strategy !== 'EKONOMİK' && !user?.isVip;
+                const visibleLegs = isHorseLocked ? c.legs.slice(0, 2) : c.legs;
+
+                return (
                 <div
                   key={c.id}
                   className="rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-amber-400/50 p-4 flex flex-col justify-between space-y-4 transition-all"
@@ -681,17 +690,25 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-black mb-1.5 ${
-                            c.strategy === 'EKONOMİK'
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                              : c.strategy === 'İDEAL'
-                              ? 'bg-amber-400 text-slate-950'
-                              : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                          }`}
-                        >
-                          {c.strategy} KURGU
-                        </span>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-black ${
+                              c.strategy === 'EKONOMİK'
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : c.strategy === 'İDEAL'
+                                ? 'bg-amber-400 text-slate-950'
+                                : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                            }`}
+                          >
+                            {c.strategy} KURGU
+                          </span>
+                          {isHorseLocked && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black text-[9px] flex items-center gap-1 shadow-xs">
+                              <Lock className="w-2.5 h-2.5" />
+                              <span>VIP</span>
+                            </span>
+                          )}
+                        </div>
                         <h3 className="font-black text-base text-white">{c.title}</h3>
                       </div>
                       <div className="text-right shrink-0">
@@ -702,7 +719,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
                     <p className="text-xs text-slate-400 leading-relaxed">{c.subtitle}</p>
 
                     <div className="space-y-1.5 bg-slate-950/70 rounded-xl p-3 border border-slate-800/80">
-                      {c.legs.map((leg) => (
+                      {visibleLegs.map((leg) => (
                         <div
                           key={leg.legIndex}
                           className="flex items-center justify-between text-xs py-1 border-b border-slate-800/60 last:border-0"
@@ -727,6 +744,23 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
                           </div>
                         </div>
                       ))}
+
+                      {isHorseLocked && (
+                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-400/30 text-center space-y-1.5 mt-2">
+                          <div className="flex items-center justify-center gap-1 text-amber-300 font-bold text-xs">
+                            <Lock className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Kalan {c.legs.length - 2} Ayak &amp; Cazip Tekler VIP Özel</span>
+                          </div>
+                          {onOpenVIP && (
+                            <button
+                              onClick={onOpenVIP}
+                              className="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] shadow cursor-pointer transition-colors"
+                            >
+                              Şablonu Aç &amp; VIP Ol
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -739,16 +773,29 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ onShowToast })
                         {c.estimatedCost.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                       </div>
                     </div>
-                    <button
-                      onClick={() => loadAICouponToSlip(c.id)}
-                      className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs cursor-pointer transition-all flex items-center space-x-1 shadow-lg shadow-amber-500/20"
-                    >
-                      <Zap className="w-3.5 h-3.5" />
-                      <span>Kuponuma Aktar</span>
-                    </button>
+                    {isHorseLocked ? (
+                      onOpenVIP && (
+                        <button
+                          onClick={onOpenVIP}
+                          className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs cursor-pointer transition-all flex items-center space-x-1 shadow-lg shadow-amber-500/20"
+                        >
+                          <Crown className="w-3.5 h-3.5 text-slate-950" />
+                          <span>VIP Kulübüne Katıl</span>
+                        </button>
+                      )
+                    ) : (
+                      <button
+                        onClick={() => loadAICouponToSlip(c.id)}
+                        className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs cursor-pointer transition-all flex items-center space-x-1 shadow-lg shadow-amber-500/20"
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                        <span>Kuponuma Aktar</span>
+                      </button>
+                    )}
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </section>
           )}
 

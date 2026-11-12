@@ -306,7 +306,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.12.16';
+  const CLIENT_BUILD_VERSION = '2026.11.12.17';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -1082,6 +1082,8 @@ export const App: React.FC = () => {
 
         {activeSection === 'horseRacing' ? (
           <HorseRacingView
+            user={currentUser}
+            onOpenVIP={() => setIsVipModalOpen(true)}
             onShowToast={(msg) => {
               setRefreshToast(msg);
               setTimeout(() => setRefreshToast(null), 3500);
@@ -1089,6 +1091,8 @@ export const App: React.FC = () => {
           />
         ) : activeSection === 'stocks' ? (
           <StockMarketView
+            user={currentUser}
+            onOpenVIP={() => setIsVipModalOpen(true)}
             onShowToast={(msg) => {
               setRefreshToast(msg);
               setTimeout(() => setRefreshToast(null), 3500);
@@ -1650,6 +1654,8 @@ export const App: React.FC = () => {
                     allMatches={allMatches}
                     analysesMap={matchAnalysesMap}
                     currentTime={currentTime}
+                    user={currentUser}
+                    onOpenVIP={() => setIsVipModalOpen(true)}
                     onSelectMatch={(m) => setSelectedMatch(m)}
                     onViewAllMatches={() => setActiveTabMode('upcoming')}
                     onAddCouponToBetslip={handleAddCuratedCouponToBetslip}

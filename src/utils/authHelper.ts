@@ -5,6 +5,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
+  authProvider?: 'local' | 'google';
   role: 'admin' | 'user';
   isVip: boolean;
   vipPlan?: string | null;
@@ -96,16 +98,34 @@ export async function loginUserApi(email: string, password: string): Promise<{ s
   }
 }
 
-export async function registerUserApi(name: string, email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> {
+export async function registerUserApi(name: string, email: string, password: string, phone?: string): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password })
+      body: JSON.stringify({ name, email, password, phone })
     });
     const data = await res.json();
     if (!res.ok || !data.success) {
       return { success: false, error: data.error || 'Kayıt işlemi başarısız.' };
+    }
+    saveAuthSession(data.token, data.user);
+    return { success: true, user: data.user };
+  } catch (err: any) {
+    return { success: false, error: 'Sunucuya bağlanırken bir hata oluştu.' };
+  }
+}
+
+export async function googleAuthApi(params: { email: string; name?: string; phone?: string; sub?: string }): Promise<{ success: boolean; user?: User; error?: string }> {
+  try {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      return { success: false, error: data.error || 'Google ile giriş başarısız.' };
     }
     saveAuthSession(data.token, data.user);
     return { success: true, user: data.user };
@@ -206,6 +226,21 @@ export async function updateUserVipApi(userId: string, planDays: number = 30, pl
     return await res.json();
   } catch {
     return { success: false, error: 'VIP güncellenemedi.' };
+  }
+}
+
+export async function updateUserDetailsApi(userId: string, data: { name?: string; phone?: string; planDays?: number; planName?: string }): Promise<{ success: boolean; user?: User; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch(`/api/admin/users/${userId}/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Kullanıcı güncellenemedi.' };
   }
 }
 

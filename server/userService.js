@@ -42,6 +42,8 @@ function seedDefaultAdmin() {
       id: 'usr_master_admin_001',
       name: 'Yönetici',
       email: adminEmail,
+      phone: '05550000000',
+      authProvider: 'local',
       passwordHash: hashPassword('Password123!'),
       role: 'admin',
       isVip: true,
@@ -143,22 +145,26 @@ function sanitizeUser(user) {
     id: user.id,
     name: user.name,
     email: user.email,
+    phone: user.phone || null,
+    authProvider: user.authProvider || 'local',
     role: user.role || 'user',
     isVip: isVipActive,
     vipPlan: isVipActive ? user.vipPlan : null,
     vipExpiresAt: isVipActive ? user.vipExpiresAt : null,
     createdAt: user.createdAt,
+    lastLoginAt: user.lastLoginAt,
   };
 }
 
 // --- Public Auth Methods ---
 
-export function registerUser({ name, email, password }) {
+export function registerUser({ name, email, password, phone }) {
   if (!email || !password || !name) {
-    return { success: false, error: 'Tüm alanları doldurunuz.' };
+    return { success: false, error: 'Tüm zorunlu alanları doldurunuz.' };
   }
   const cleanEmail = String(email).trim().toLowerCase();
   const cleanName = String(name).trim();
+  const cleanPhone = phone ? String(phone).replace(/[^\d+]/g, '').trim() : null;
 
   if (cleanName.length < 2) {
     return { success: false, error: 'Ad soyad en az 2 karakter olmalıdır.' };
@@ -169,10 +175,13 @@ export function registerUser({ name, email, password }) {
   if (password.length < 6) {
     return { success: false, error: 'Şifreniz en az 6 karakter olmalıdır.' };
   }
+  if (cleanPhone && cleanPhone.length < 10) {
+    return { success: false, error: 'Lütfen geçerli bir telefon numarası giriniz (en az 10 hane).' };
+  }
 
   // Check unique email
   for (const existing of usersMap.values()) {
-    if (existing.email.toLowerCase() === cleanEmail) {
+    if (existing.email && existing.email.toLowerCase() === cleanEmail) {
       return { success: false, error: 'Bu e-posta adresiyle zaten kayıt olunmuş.' };
     }
   }
@@ -191,6 +200,8 @@ export function registerUser({ name, email, password }) {
     id: userId,
     name: cleanName,
     email: cleanEmail,
+    phone: cleanPhone,
+    authProvider: 'local',
     passwordHash: hashPassword(password),
     role: isFirstUser ? 'admin' : 'user',
     isVip,
@@ -207,6 +218,64 @@ export function registerUser({ name, email, password }) {
   const token = createToken({ id: safeUser.id, email: safeUser.email, role: safeUser.role, isVip: safeUser.isVip });
 
   return { success: true, token, user: safeUser };
+}
+
+export function googleAuth({ email, name, phone, sub }) {
+  if (!email) {
+    return { success: false, error: 'Google e-posta bilgisi alınamadı.' };
+  }
+  const cleanEmail = String(email).trim().toLowerCase();
+  const cleanName = String(name || cleanEmail.split('@')[0]).trim();
+  const cleanPhone = phone ? String(phone).replace(/[^\d+]/g, '').trim() : null;
+
+  let existing = null;
+  for (const u of usersMap.values()) {
+    if (u.email && u.email.toLowerCase() === cleanEmail) {
+      existing = u;
+      break;
+    }
+  }
+
+  if (existing) {
+    existing.lastLoginAt = Date.now();
+    if (cleanPhone && !existing.phone) existing.phone = cleanPhone;
+    saveUsers();
+    const safeUser = sanitizeUser(existing);
+    const token = createToken({ id: safeUser.id, email: safeUser.email, role: safeUser.role, isVip: safeUser.isVip });
+    return { success: true, token, user: safeUser, isNew: false };
+  }
+
+  // Create new user from Google signup
+  const userId = `usr_g_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+  const isFirstUser = usersMap.size === 0;
+  const isVip = true; // Welcome 7-day VIP for new registrations
+  const vipPlan = isFirstUser ? 'Kurucu Yönetici VIP' : '7 Günlük Deneme VIP';
+  const vipExpiresAt = isFirstUser
+    ? Date.now() + 365 * 24 * 60 * 60 * 1000
+    : Date.now() + 7 * 24 * 60 * 60 * 1000;
+
+  const newUser = {
+    id: userId,
+    name: cleanName,
+    email: cleanEmail,
+    phone: cleanPhone,
+    authProvider: 'google',
+    googleId: sub || null,
+    passwordHash: null,
+    role: isFirstUser ? 'admin' : 'user',
+    isVip,
+    vipPlan,
+    vipExpiresAt,
+    createdAt: Date.now(),
+    lastLoginAt: Date.now(),
+  };
+
+  usersMap.set(userId, newUser);
+  saveUsers();
+
+  const safeUser = sanitizeUser(newUser);
+  const token = createToken({ id: safeUser.id, email: safeUser.email, role: safeUser.role, isVip: safeUser.isVip });
+  return { success: true, token, user: safeUser, isNew: true };
 }
 
 export function loginUser({ email, password }) {
@@ -297,6 +366,26 @@ export function getAllUsers() {
 
 export function updateUserVip(userId, planDays = 30, planName = 'Yönetici VIP') {
   return activateUserVip(userId, planDays, planName);
+}
+
+export function updateUserDetails(userId, { name, phone, planDays, planName }) {
+  const user = usersMap.get(userId);
+  if (!user) return { success: false, error: 'Kullanıcı bulunamadı.' };
+
+  if (name && String(name).trim().length >= 2) {
+    user.name = String(name).trim();
+  }
+  if (phone !== undefined) {
+    user.phone = phone ? String(phone).replace(/[^\d+]/g, '').trim() : null;
+  }
+  if (planDays) {
+    const currentExpiry = user.vipExpiresAt && user.vipExpiresAt > Date.now() ? user.vipExpiresAt : Date.now();
+    user.vipExpiresAt = currentExpiry + Number(planDays) * 24 * 60 * 60 * 1000;
+    user.isVip = true;
+    if (planName) user.vipPlan = planName;
+  }
+  saveUsers();
+  return { success: true, user: sanitizeUser(user) };
 }
 
 export function updateUserRole(userId, newRole = 'user') {
