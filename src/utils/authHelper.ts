@@ -114,6 +114,32 @@ export async function registerUserApi(name: string, email: string, password: str
   }
 }
 
+export async function activateVipApi(planDays: number = 30, planName: string = 'Aylık VIP'): Promise<{ success: boolean; user?: User; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Önce giriş yapmalısınız.' };
+
+  try {
+    const res = await fetch('/api/auth/vip-activate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ planDays, planName })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      return { success: false, error: data.error || 'VIP aktivasyonu başarısız.' };
+    }
+    if (data.token) {
+      saveAuthSession(data.token, data.user);
+    }
+    return { success: true, user: data.user };
+  } catch (err: any) {
+    return { success: false, error: 'Bağlantı hatası oluştu.' };
+  }
+}
+
 export async function redeemPromoCodeApi(code: string): Promise<{ success: boolean; user?: User; error?: string }> {
   const token = getStoredToken();
   if (!token) return { success: false, error: 'Önce giriş yapmalısınız.' };

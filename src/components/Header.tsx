@@ -297,16 +297,28 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* 👤 User Auth & 👑 VIP Membership Actions */}
             {!user ? (
-              onOpenAuth && (
-                <button
-                  onClick={onOpenAuth}
-                  className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 active:scale-95 transition-all cursor-pointer shrink-0"
-                  title="Giriş Yap veya Ücretsiz Hesap Aç"
-                >
-                  <UserIcon className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>Giriş / Üye Ol</span>
-                </button>
-              )
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                {onOpenVIP && (
+                  <button
+                    onClick={onOpenVIP}
+                    className="flex items-center space-x-1 px-2 py-1.5 rounded-xl bg-amber-400/20 border border-amber-400/50 hover:bg-amber-400/30 text-amber-300 font-black text-xs shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+                    title="VIP Kulübü ve Ayrıcalıkları"
+                  >
+                    <Crown className="w-3.5 h-3.5 text-amber-400" />
+                    <span>VIP Ol</span>
+                  </button>
+                )}
+                {onOpenAuth && (
+                  <button
+                    onClick={onOpenAuth}
+                    className="flex items-center space-x-1 px-2 sm:px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 active:scale-95 transition-all cursor-pointer shrink-0"
+                    title="Giriş Yap veya Ücretsiz Hesap Aç"
+                  >
+                    <UserIcon className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span className="hidden sm:inline">Giriş / </span><span>Üye Ol</span>
+                  </button>
+                )}
+              </div>
             ) : (
               <div className="flex items-center gap-1 shrink-0">
                 {user.isVip ? (

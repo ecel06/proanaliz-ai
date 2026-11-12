@@ -1,7 +1,7 @@
 // src/components/VIPModal.tsx
 import React, { useState } from 'react';
-import { X, Crown, Check, Sparkles, Zap, ShieldCheck, Flame, Gift, ArrowRight } from 'lucide-react';
-import { User, redeemPromoCodeApi } from '../utils/authHelper';
+import { X, Crown, Check, Sparkles, ShieldCheck, Gift, ArrowRight, UserCheck, Zap, Star } from 'lucide-react';
+import { User, redeemPromoCodeApi, activateVipApi } from '../utils/authHelper';
 
 interface VIPModalProps {
   isOpen: boolean;
@@ -20,8 +20,8 @@ export const VIPModal: React.FC<VIPModalProps> = ({
 }) => {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'quarterly' | 'yearly'>('quarterly');
   const [promoCode, setPromoCode] = useState('');
-  const [promoLoading, setPromoLoading] = useState(false);
-  const [promoMessage, setPromoMessage] = useState<{ text: string; isError: boolean } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
   if (!isOpen) return null;
 
@@ -29,6 +29,7 @@ export const VIPModal: React.FC<VIPModalProps> = ({
     {
       id: 'monthly',
       name: 'Aylık VIP',
+      days: 30,
       price: '199 ₺',
       period: '/ ay',
       badge: 'POPÜLER',
@@ -38,6 +39,7 @@ export const VIPModal: React.FC<VIPModalProps> = ({
     {
       id: 'quarterly',
       name: '3 Aylık VIP',
+      days: 90,
       price: '499 ₺',
       period: '/ 3 ay',
       savings: '%20 İNDİRİMLİ',
@@ -48,6 +50,7 @@ export const VIPModal: React.FC<VIPModalProps> = ({
     {
       id: 'yearly',
       name: 'Yıllık Kral VIP',
+      days: 365,
       price: '1.490 ₺',
       period: '/ yıl',
       savings: '%40 BÜYÜK FIRSAT',
@@ -74,32 +77,75 @@ export const VIPModal: React.FC<VIPModalProps> = ({
       return;
     }
 
-    setPromoLoading(true);
-    setPromoMessage(null);
+    setLoading(true);
+    setMessage(null);
     try {
       const res = await redeemPromoCodeApi(promoCode);
       if (res.success && res.user) {
         onUserUpdated(res.user);
-        setPromoMessage({ text: 'Tebrikler! VIP Üyeliğiniz Başarıyla Aktif Edildi 🎉', isError: false });
+        setMessage({ text: 'Tebrikler! Promosyon Koduyla VIP Üyeliğiniz Başlatıldı 🎉', isError: false });
         setTimeout(() => {
           onClose();
-        }, 1500);
+        }, 1200);
       } else {
-        setPromoMessage({ text: res.error || 'Geçersiz promosyon kodu.', isError: true });
+        setMessage({ text: res.error || 'Geçersiz promosyon kodu.', isError: true });
       }
     } finally {
-      setPromoLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleSubscribeClick = () => {
+  const handleActivateFreeTrial = async () => {
     if (!user) {
       onOpenAuth();
       return;
     }
-    // Ready for Shopier / PayTR / Iyzico payment link
-    alert(`Seçilen Paket: ${selectedPlan.toUpperCase()}\n\nGüvenli ödeme altyapısı (PayTR / Shopier) entegre ediliyor. Tanıtım amacıyla hediye kodunuz varsa aşağıdaki Promosyon Kodu alanına "PRO2026" yazarak 7 günlük ücretsiz VIP üyeliğinizi hemen başlatabilirsiniz!`);
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await activateVipApi(7, '7 Günlük Deneme VIP');
+      if (res.success && res.user) {
+        onUserUpdated(res.user);
+        setMessage({ text: 'Harika! 7 Günlük Ücretsiz VIP Üyeliğiniz Anında Aktif Edildi 🎉', isError: false });
+        setTimeout(() => {
+          onClose();
+        }, 1200);
+      } else {
+        setMessage({ text: res.error || 'Aktivasyon yapılamadı.', isError: true });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSubscribePlan = async () => {
+    if (!user) {
+      onOpenAuth();
+      return;
+    }
+    const current = plans.find(p => p.id === selectedPlan) || plans[1];
+    setLoading(true);
+    setMessage(null);
+    try {
+      // Direct activation during test/launch phase with full feedback
+      const res = await activateVipApi(current.days, current.name);
+      if (res.success && res.user) {
+        onUserUpdated(res.user);
+        setMessage({ text: `Tebrikler! ${current.name} Paketiniz Hesabınıza Tanımlandı 🎉`, isError: false });
+        setTimeout(() => {
+          onClose();
+        }, 1200);
+      } else {
+        setMessage({ text: res.error || 'Aktivasyon hatası.', isError: true });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const remainingDays = user?.vipExpiresAt
+    ? Math.max(0, Math.ceil((user.vipExpiresAt - Date.now()) / (24 * 60 * 60 * 1000)))
+    : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto">
@@ -117,7 +163,7 @@ export const VIPModal: React.FC<VIPModalProps> = ({
         </button>
 
         {/* Header */}
-        <div className="text-center space-y-2 mb-6">
+        <div className="text-center space-y-2 mb-5">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-black tracking-wider uppercase">
             <Crown className="w-4 h-4 text-amber-400" />
             <span>ProAnaliz AI • VIP Kulübü</span>
@@ -130,8 +176,46 @@ export const VIPModal: React.FC<VIPModalProps> = ({
           </p>
         </div>
 
+        {/* ACTIVE VIP STATUS CARD (If user is already VIP) */}
+        {user?.isVip && (
+          <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-emerald-500/20 border border-amber-400/40 text-center space-y-1.5">
+            <div className="flex items-center justify-center gap-2 text-amber-300 font-black text-sm sm:text-base">
+              <Crown className="w-5 h-5 text-amber-400 animate-pulse" />
+              <span>VIP Üyeliğiniz Aktif! ({user.vipPlan || 'VIP'})</span>
+              <UserCheck className="w-4 h-4 text-emerald-400" />
+            </div>
+            <p className="text-xs text-slate-300">
+              Hoş geldiniz <strong className="text-white">{user.name}</strong>. {remainingDays !== null ? `Kalan süreniz: ${remainingDays} Gün.` : 'Aboneliğiniz kesintisiz aktiftir.'}
+            </p>
+            <div className="text-[11px] text-emerald-400 font-bold">
+              ✓ Tüm VIP analizler, günün kuponları ve quant sinyalleri hesabınıza açık.
+            </div>
+          </div>
+        )}
+
+        {/* NOT LOGGED IN WARNING / CALL TO ACTION */}
+        {!user && (
+          <div className="mb-5 p-4 rounded-2xl bg-slate-950/80 border border-amber-400/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="space-y-0.5 text-center sm:text-left">
+              <div className="text-xs font-black text-white flex items-center justify-center sm:justify-start gap-1.5">
+                <Gift className="w-4 h-4 text-amber-400" />
+                <span>7 Günlük Ücretsiz VIP Hediye!</span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                VIP avantajlarını anında kullanmak için ücretsiz hesap açın veya giriş yapın.
+              </p>
+            </div>
+            <button
+              onClick={onOpenAuth}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs whitespace-nowrap shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+            >
+              Giriş Yap / Ücretsiz Kayıt Ol
+            </button>
+          </div>
+        )}
+
         {/* Plan Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
           {plans.map((plan) => {
             const isSelected = selectedPlan === plan.id;
             return (
@@ -184,7 +268,7 @@ export const VIPModal: React.FC<VIPModalProps> = ({
         </div>
 
         {/* Feature List */}
-        <div className="bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 mb-6">
+        <div className="bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 mb-5">
           <div className="text-xs font-bold text-slate-300 mb-3 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>VIP Üyelik ile Neler Kazanacaksınız?</span>
@@ -199,17 +283,43 @@ export const VIPModal: React.FC<VIPModalProps> = ({
           </div>
         </div>
 
-        {/* Action Button */}
-        <button
-          onClick={handleSubscribeClick}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-sm uppercase tracking-wider transition-all shadow-xl shadow-amber-500/25 active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2 group"
-        >
-          <span>Hemen VIP Üye Ol &amp; Kazanmaya Başla</span>
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </button>
+        {/* Action Buttons */}
+        <div className="space-y-2">
+          {/* Main Action Button */}
+          {user ? (
+            <button
+              onClick={handleSubscribePlan}
+              disabled={loading}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-sm uppercase tracking-wider transition-all shadow-xl shadow-amber-500/25 active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2 group disabled:opacity-50"
+            >
+              <span>{user.isVip ? 'Planı Yenile / Seçili Pakete Geç' : 'Seçili Paketi Başlat & VIP Ol'}</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          ) : (
+            <button
+              onClick={onOpenAuth}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-sm uppercase tracking-wider transition-all shadow-xl shadow-amber-500/25 active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2 group"
+            >
+              <span>Ücretsiz Kayıt Ol &amp; 7 Günlük VIP Kazan</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          )}
+
+          {/* Quick 1-Click Free Trial for logged-in non-VIP users */}
+          {user && !user.isVip && (
+            <button
+              onClick={handleActivateFreeTrial}
+              disabled={loading}
+              className="w-full py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 text-amber-300 hover:text-white font-bold text-xs border border-amber-400/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span>Hemen 7 Günlük Ücretsiz VIP Denemeyi Aktif Et (Tek Tıkla)</span>
+            </button>
+          )}
+        </div>
 
         {/* Promo Code Accordion / Input */}
-        <div className="mt-5 pt-4 border-t border-slate-800/80">
+        <div className="mt-4 pt-3 border-t border-slate-800/80">
           <form onSubmit={handleRedeemPromo} className="flex flex-col sm:flex-row items-center gap-2">
             <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
               <Gift className="w-3.5 h-3.5 text-amber-400" />
@@ -225,17 +335,17 @@ export const VIPModal: React.FC<VIPModalProps> = ({
               />
               <button
                 type="submit"
-                disabled={promoLoading || !promoCode.trim()}
+                disabled={loading || !promoCode.trim()}
                 className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs whitespace-nowrap transition-colors cursor-pointer disabled:opacity-50"
               >
-                {promoLoading ? 'Kontrol...' : 'Kullan'}
+                {loading ? '...' : 'Kullan'}
               </button>
             </div>
           </form>
 
-          {promoMessage && (
-            <div className={`mt-2 text-xs font-bold text-center ${promoMessage.isError ? 'text-rose-400' : 'text-emerald-400'}`}>
-              {promoMessage.text}
+          {message && (
+            <div className={`mt-2 text-xs font-bold text-center ${message.isError ? 'text-rose-400' : 'text-emerald-400'}`}>
+              {message.text}
             </div>
           )}
         </div>
@@ -244,12 +354,12 @@ export const VIPModal: React.FC<VIPModalProps> = ({
         <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-slate-500">
           <span className="flex items-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            256-Bit SSL Güvenli Ödeme
+            256-Bit SSL Güvenli Altyapı
           </span>
           <span>•</span>
           <span>İstediğiniz An İptal Edebilme</span>
           <span>•</span>
-          <span>Anında Aktivasyon</span>
+          <span>Anında VIP Tanımlama</span>
         </div>
       </div>
     </div>

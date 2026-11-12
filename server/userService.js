@@ -144,15 +144,22 @@ export function registerUser({ name, email, password }) {
   const userId = `usr_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
   const isFirstUser = usersMap.size === 0;
 
+  // New registrations receive automatic 7-day VIP trial (first user gets 1-year Creator/Admin VIP)
+  const isVip = true;
+  const vipPlan = isFirstUser ? 'Kurucu Yönetici VIP' : '7 Günlük Deneme VIP';
+  const vipExpiresAt = isFirstUser
+    ? Date.now() + 365 * 24 * 60 * 60 * 1000
+    : Date.now() + 7 * 24 * 60 * 60 * 1000;
+
   const newUser = {
     id: userId,
     name: cleanName,
     email: cleanEmail,
     passwordHash: hashPassword(password),
     role: isFirstUser ? 'admin' : 'user',
-    isVip: isFirstUser, // First user / creator gets automatic VIP
-    vipPlan: isFirstUser ? 'creator' : null,
-    vipExpiresAt: isFirstUser ? Date.now() + 365 * 24 * 60 * 60 * 1000 : null,
+    isVip,
+    vipPlan,
+    vipExpiresAt,
     createdAt: Date.now(),
     lastLoginAt: Date.now(),
   };
