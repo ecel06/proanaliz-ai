@@ -25,6 +25,14 @@ import {
   fetchStockDeepAnalysis,
   fetchMacroOverview
 } from './stockService.js';
+import {
+  registerUser,
+  loginUser,
+  getUserById,
+  verifyToken,
+  activateUserVip,
+  redeemPromoCode
+} from './userService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -293,6 +301,60 @@ app.get('/api/macro/live', async (req, res) => {
   }
 });
 
+// --- User Authentication & VIP Subscription Routes ---
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: 'Oturum açmanız gerekiyor.' });
+  }
+  const token = authHeader.split(' ')[1];
+  const payload = verifyToken(token);
+  if (!payload) {
+    return res.status(401).json({ success: false, error: 'Oturum süresi dolmuş veya geçersiz.' });
+  }
+  req.userId = payload.id;
+  next();
+}
+
+app.post('/api/auth/register', (req, res) => {
+  const result = registerUser(req.body);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  res.json(result);
+});
+
+app.post('/api/auth/login', (req, res) => {
+  const result = loginUser(req.body);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  res.json(result);
+});
+
+app.get('/api/auth/me', authMiddleware, (req, res) => {
+  const user = getUserById(req.userId);
+  if (!user) {
+    return res.status(404).json({ success: false, error: 'Kullanıcı bulunamadı.' });
+  }
+  res.json({ success: true, user });
+});
+
+app.post('/api/auth/redeem-code', authMiddleware, (req, res) => {
+  const { code } = req.body;
+  const result = redeemPromoCode(req.userId, code);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  res.json(result);
+});
+
+app.post('/api/auth/vip-activate', authMiddleware, (req, res) => {
+  const { planDays = 30, planName = 'Aylık VIP' } = req.body;
+  const result = activateUserVip(req.userId, planDays, planName);
+  res.json(result);
+});
+
 // 6. Dynamic Real Team Forms endpoints (100% Real Match Results)
 app.get('/api/forms', (req, res) => {
   res.json(getAllRealForms());
@@ -333,7 +395,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.12.11';
+const APP_VERSION = '2026.11.12.12';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

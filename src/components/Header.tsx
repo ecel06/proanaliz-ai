@@ -21,11 +21,19 @@ import {
   Trophy,
   Bell,
   BellOff,
-  Home
+  Home,
+  User as UserIcon,
+  Crown,
+  LogOut
 } from 'lucide-react';
 import { TeamTheme } from '../utils/themeHelper';
+import { User } from '../utils/authHelper';
 
 interface HeaderProps {
+  user?: User | null;
+  onOpenAuth?: () => void;
+  onOpenVIP?: () => void;
+  onLogout?: () => void;
   onGoHome?: () => void;
   onOpenCustomAnalyzer: () => void;
   onOpenStandings?: () => void;
@@ -56,6 +64,10 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  user,
+  onOpenAuth,
+  onOpenVIP,
+  onLogout,
   onGoHome,
   onOpenCustomAnalyzer,
   onOpenStandings,
@@ -281,6 +293,57 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="hidden sm:inline lg:hidden text-[11px]">Analiz</span>
                 <span className="hidden lg:inline">Kendi Maçını Analiz Et</span>
               </button>
+            )}
+
+            {/* 👤 User Auth & 👑 VIP Membership Actions */}
+            {!user ? (
+              onOpenAuth && (
+                <button
+                  onClick={onOpenAuth}
+                  className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 active:scale-95 transition-all cursor-pointer shrink-0"
+                  title="Giriş Yap veya Ücretsiz Hesap Aç"
+                >
+                  <UserIcon className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Giriş / Üye Ol</span>
+                </button>
+              )
+            ) : (
+              <div className="flex items-center gap-1 shrink-0">
+                {user.isVip ? (
+                  <button
+                    onClick={onOpenVIP}
+                    className="flex items-center space-x-1 px-2 py-1.5 rounded-xl bg-amber-400/20 border border-amber-400/50 text-amber-300 font-black text-xs shadow-xs cursor-pointer active:scale-95 shrink-0"
+                    title={`VIP Üyelik Aktif (Plan: ${user.vipPlan || 'VIP'})`}
+                  >
+                    <Crown className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                    <span className="hidden sm:inline font-bold truncate max-w-[80px]">
+                      {user.name.split(' ')[0]}
+                    </span>
+                    <span className="text-[10px] px-1 py-0.2 rounded bg-amber-400 text-slate-950 font-black">
+                      VIP
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={onOpenVIP}
+                    className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 cursor-pointer active:scale-95 animate-pulse shrink-0"
+                    title="VIP Üyeliğe Yükselt"
+                  >
+                    <Crown className="w-3.5 h-3.5" />
+                    <span>VIP Ol</span>
+                  </button>
+                )}
+
+                {onLogout && (
+                  <button
+                    onClick={onLogout}
+                    className="p-1.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:bg-slate-800 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer shrink-0"
+                    title="Oturumu Kapat"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

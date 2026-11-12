@@ -13,14 +13,18 @@ import {
   Smartphone,
   QrCode,
   Coins,
+  Crown,
 } from 'lucide-react';
 import { Match, MatchAnalysis } from '../types';
+import { User } from '../utils/authHelper';
 
 interface HomeHubProps {
   onSelectFootball: () => void;
   onSelectHorseRacing: () => void;
   onSelectStocks: () => void;
   onOpenInstallModal?: () => void;
+  onOpenVIP?: () => void;
+  user?: User | null;
   allMatches?: Match[];
   analysesMap?: Map<string | number, MatchAnalysis> | Record<string | number, MatchAnalysis>;
 }
@@ -30,6 +34,8 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   onSelectHorseRacing,
   onSelectStocks,
   onOpenInstallModal,
+  onOpenVIP,
+  user,
   allMatches = [],
   analysesMap,
 }) => {
@@ -325,6 +331,17 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 <Smartphone className="w-3 h-3 text-emerald-400 group-hover:scale-110 transition-transform" />
                 <span>Telefona İndir</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              </button>
+            )}
+
+            {onOpenVIP && (
+              <button
+                onClick={onOpenVIP}
+                className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-[10px] transition-all shadow-md shadow-amber-500/25 cursor-pointer active:scale-95 group"
+                title="VIP Üyelik Paketleri ve Ayrıcalıkları"
+              >
+                <Crown className="w-3 h-3 text-slate-950" />
+                <span>{user?.isVip ? '👑 VIP Üyeliğim' : '👑 VIP Üye Ol'}</span>
               </button>
             )}
 

@@ -24,6 +24,9 @@ import { BankrollTrackerModal } from './components/BankrollTrackerModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { AIPerformanceModal } from './components/AIPerformanceModal';
 import { ShareSlipModal } from './components/ShareSlipModal';
+import { AuthModal } from './components/AuthModal';
+import { VIPModal } from './components/VIPModal';
+import { User, getStoredUser, clearAuthSession, fetchCurrentUser } from './utils/authHelper';
 import { HorseRacingView } from './components/horse/HorseRacingView';
 import { StockMarketView } from './components/stocks/StockMarketView';
 import { HomeHub } from './components/HomeHub';
@@ -262,6 +265,22 @@ export const App: React.FC = () => {
     }
   };
 
+  // User Authentication & VIP Subscription State
+  const [currentUser, setCurrentUser] = useState<User | null>(() => getStoredUser());
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isVipModalOpen, setIsVipModalOpen] = useState(false);
+
+  useEffect(() => {
+    fetchCurrentUser().then((u) => {
+      if (u) setCurrentUser(u);
+    });
+  }, []);
+
+  const handleLogout = () => {
+    clearAuthSession();
+    setCurrentUser(null);
+  };
+
   // AI Accuracy Scorecard Modal State
   const [isAIPerformanceOpen, setIsAIPerformanceOpen] = useState(false);
 
@@ -285,7 +304,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.12.11';
+  const CLIENT_BUILD_VERSION = '2026.11.12.12';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -904,6 +923,8 @@ export const App: React.FC = () => {
           onSelectHorseRacing={() => setActiveSection('horseRacing')}
           onSelectStocks={() => setActiveSection('stocks')}
           onOpenInstallModal={() => setIsInstallModalOpen(true)}
+          onOpenVIP={() => setIsVipModalOpen(true)}
+          user={currentUser}
           allMatches={weeklyMatches}
           analysesMap={matchAnalysesMap}
         />
@@ -937,6 +958,10 @@ export const App: React.FC = () => {
 
       {/* Top Header with Live Refresh Trigger & Mobile Install */}
       <Header
+        user={currentUser}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenVIP={() => setIsVipModalOpen(true)}
+        onLogout={handleLogout}
         onGoHome={() => {
           setActiveSection('home');
         }}
@@ -1795,6 +1820,30 @@ export const App: React.FC = () => {
       )}
 
 
+
+      {/* Modal 11: Kullanıcı Giriş & Kayıt Penceresi */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={(u) => {
+          setCurrentUser(u);
+          setIsAuthModalOpen(false);
+        }}
+      />
+
+      {/* Modal 12: VIP Üyelik & Paketler Penceresi */}
+      <VIPModal
+        isOpen={isVipModalOpen}
+        onClose={() => setIsVipModalOpen(false)}
+        user={currentUser}
+        onOpenAuth={() => {
+          setIsVipModalOpen(false);
+          setIsAuthModalOpen(true);
+        }}
+        onUserUpdated={(u) => {
+          setCurrentUser(u);
+        }}
+      />
 
       {/* Footer */}
       <footer className="mt-16 border-t border-slate-800/80 bg-slate-950 py-8">

@@ -1,0 +1,247 @@
+// server/userService.js
+// Secure, lightweight, zero-dependency User Authentication & VIP Subscription Engine
+// Built with Node.js native crypto (scrypt password hashing & HMAC-SHA256 stateless session tokens)
+
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_DIR = path.resolve(__dirname, 'data');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'proanaliz-ai-master-auth-secret-key-2026';
+
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+// In-memory cache synced with users.json
+let usersMap = new Map();
+
+function loadUsers() {
+  try {
+    if (fs.existsSync(USERS_FILE)) {
+      const raw = fs.readFileSync(USERS_FILE, 'utf-8');
+      const list = JSON.parse(raw);
+      usersMap = new Map();
+      for (const u of list) {
+        usersMap.set(u.id, u);
+      }
+    }
+  } catch (err) {
+    console.error('[UserService] Error loading users:', err);
+    usersMap = new Map();
+  }
+}
+
+function saveUsers() {
+  try {
+    const list = Array.from(usersMap.values());
+    fs.writeFileSync(USERS_FILE, JSON.stringify(list, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[UserService] Error saving users:', err);
+  }
+}
+
+// Load on start
+loadUsers();
+
+// --- Crypto Utilities ---
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, stored) {
+  if (!stored || !stored.includes(':')) return false;
+  const [salt, originalHash] = stored.split(':');
+  const checkHash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return crypto.timingSafeEqual(Buffer.from(checkHash, 'hex'), Buffer.from(originalHash, 'hex'));
+}
+
+function createToken(payload) {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const exp = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
+  const body = Buffer.from(JSON.stringify({ ...payload, exp })).toString('base64url');
+  const signature = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(`${header}.${body}`)
+    .digest('base64url');
+  return `${header}.${body}.${signature}`;
+}
+
+export function verifyToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [header, body, signature] = parts;
+  const expectedSig = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(`${header}.${body}`)
+    .digest('base64url');
+
+  if (signature !== expectedSig) return null;
+
+  try {
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf-8'));
+    if (payload.exp && Date.now() > payload.exp) {
+      return null; // Expired
+    }
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function sanitizeUser(user) {
+  if (!user) return null;
+  const now = Date.now();
+  const isVipActive = Boolean(user.isVip && (!user.vipExpiresAt || user.vipExpiresAt > now));
+  
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role || 'user',
+    isVip: isVipActive,
+    vipPlan: isVipActive ? user.vipPlan : null,
+    vipExpiresAt: isVipActive ? user.vipExpiresAt : null,
+    createdAt: user.createdAt,
+  };
+}
+
+// --- Public Auth Methods ---
+
+export function registerUser({ name, email, password }) {
+  if (!email || !password || !name) {
+    return { success: false, error: 'Tüm alanları doldurunuz.' };
+  }
+  const cleanEmail = String(email).trim().toLowerCase();
+  const cleanName = String(name).trim();
+
+  if (cleanName.length < 2) {
+    return { success: false, error: 'Ad soyad en az 2 karakter olmalıdır.' };
+  }
+  if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+    return { success: false, error: 'Geçerli bir e-posta adresi giriniz.' };
+  }
+  if (password.length < 6) {
+    return { success: false, error: 'Şifreniz en az 6 karakter olmalıdır.' };
+  }
+
+  // Check unique email
+  for (const existing of usersMap.values()) {
+    if (existing.email.toLowerCase() === cleanEmail) {
+      return { success: false, error: 'Bu e-posta adresiyle zaten kayıt olunmuş.' };
+    }
+  }
+
+  const userId = `usr_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+  const isFirstUser = usersMap.size === 0;
+
+  const newUser = {
+    id: userId,
+    name: cleanName,
+    email: cleanEmail,
+    passwordHash: hashPassword(password),
+    role: isFirstUser ? 'admin' : 'user',
+    isVip: isFirstUser, // First user / creator gets automatic VIP
+    vipPlan: isFirstUser ? 'creator' : null,
+    vipExpiresAt: isFirstUser ? Date.now() + 365 * 24 * 60 * 60 * 1000 : null,
+    createdAt: Date.now(),
+    lastLoginAt: Date.now(),
+  };
+
+  usersMap.set(userId, newUser);
+  saveUsers();
+
+  const safeUser = sanitizeUser(newUser);
+  const token = createToken({ id: safeUser.id, email: safeUser.email, role: safeUser.role, isVip: safeUser.isVip });
+
+  return { success: true, token, user: safeUser };
+}
+
+export function loginUser({ email, password }) {
+  if (!email || !password) {
+    return { success: false, error: 'E-posta ve şifrenizi giriniz.' };
+  }
+  const cleanEmail = String(email).trim().toLowerCase();
+
+  let targetUser = null;
+  for (const u of usersMap.values()) {
+    if (u.email.toLowerCase() === cleanEmail) {
+      targetUser = u;
+      break;
+    }
+  }
+
+  if (!targetUser) {
+    return { success: false, error: 'Kullanıcı bulunamadı. Lütfen e-postanızı kontrol edin.' };
+  }
+
+  const isValid = verifyPassword(password, targetUser.passwordHash);
+  if (!isValid) {
+    return { success: false, error: 'Hatalı şifre girdiniz.' };
+  }
+
+  // Check VIP expiration
+  if (targetUser.isVip && targetUser.vipExpiresAt && Date.now() > targetUser.vipExpiresAt) {
+    targetUser.isVip = false;
+    targetUser.vipPlan = null;
+  }
+
+  targetUser.lastLoginAt = Date.now();
+  saveUsers();
+
+  const safeUser = sanitizeUser(targetUser);
+  const token = createToken({ id: safeUser.id, email: safeUser.email, role: safeUser.role, isVip: safeUser.isVip });
+
+  return { success: true, token, user: safeUser };
+}
+
+export function getUserById(userId) {
+  const user = usersMap.get(userId);
+  if (!user) return null;
+  return sanitizeUser(user);
+}
+
+export function activateUserVip(userId, planDays = 30, planName = 'Aylık VIP') {
+  const user = usersMap.get(userId);
+  if (!user) return { success: false, error: 'Kullanıcı bulunamadı.' };
+
+  const currentExpiry = user.vipExpiresAt && user.vipExpiresAt > Date.now() ? user.vipExpiresAt : Date.now();
+  const newExpiry = currentExpiry + planDays * 24 * 60 * 60 * 1000;
+
+  user.isVip = true;
+  user.vipPlan = planName;
+  user.vipExpiresAt = newExpiry;
+  saveUsers();
+
+  const safe = sanitizeUser(user);
+  const token = createToken({ id: safe.id, email: safe.email, role: safe.role, isVip: true });
+
+  return { success: true, user: safe, token };
+}
+
+// Promo codes for promotion, launch testing or gift campaigns
+const PROMO_CODES = {
+  'PRO2026': { days: 7, label: '7 Günlük Tanıtım VIP' },
+  'HOSGELDIN': { days: 3, label: '3 Günlük Deneme VIP' },
+  'KRALVIP': { days: 30, label: '30 Günlük VIP Kampanya' },
+};
+
+export function redeemPromoCode(userId, code) {
+  const cleanCode = String(code || '').trim().toUpperCase();
+  const promo = PROMO_CODES[cleanCode];
+
+  if (!promo) {
+    return { success: false, error: 'Geçersiz veya süresi dolmuş promosyon kodu.' };
+  }
+
+  return activateUserVip(userId, promo.days, promo.label);
+}
