@@ -1370,12 +1370,12 @@ async function fetchStockKapAnnouncements(cleanSym, market) {
     if (market === 'bist') {
       query = `KAP ${cleanSym} OR "Kamuyu Aydınlatma" ${cleanSym}`;
     } else if (market === 'us') {
-      query = `SEC filing OR "earnings report" OR "press release" ${cleanSym}`;
+      query = `${cleanSym} stock SEC filing OR earnings OR press release`;
     } else {
-      query = `upgrade OR protocol OR announcement ${cleanSym.replace(/USDT$/, '')}`;
+      query = `${cleanSym.replace(/USDT$/, '')} protocol OR upgrade OR announcement`;
     }
 
-    const hl = market === 'bist' ? 'tr' : 'en';
+    const hl = market === 'bist' ? 'tr' : 'en-US';
     const gl = market === 'bist' ? 'TR' : 'US';
     const ceid = market === 'bist' ? 'TR:tr' : 'US:en';
     const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(
