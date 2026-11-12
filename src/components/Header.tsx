@@ -204,6 +204,24 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
+            {/* Team Theme & Color Selector Button (Football only - Prominent & Always Visible) */}
+            {activeSection === 'football' && onOpenThemeModal && (
+              <button
+                onClick={onOpenThemeModal}
+                className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl border font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
+                style={{
+                  backgroundColor: activeTheme?.badgeBg || 'rgba(16, 185, 129, 0.15)',
+                  borderColor: activeTheme?.cardBorder || 'rgba(16, 185, 129, 0.35)',
+                  color: activeTheme?.primaryColor || '#10b981'
+                }}
+                title={`Takım & Renk Teması Seçici (Aktif: ${activeTheme?.name || 'ProAnaliz'})`}
+              >
+                <Palette className="w-3.5 h-3.5 group-hover:rotate-45 transition-transform shrink-0" />
+                <span className="font-black tracking-tight text-[11px] sm:text-xs">{activeTheme?.emoji || '🎨'}</span>
+                <span className="hidden sm:inline font-bold text-xs">{activeTheme?.shortName || 'Renk Seç'}</span>
+              </button>
+            )}
+
             {/* Standings Button (Football only) */}
             {activeSection === 'football' && onOpenStandings && (
               <button
@@ -259,8 +277,8 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* User Betslip Button (if items in slip) */}
-            {betslipCount > 0 && onOpenBetslip && (
+            {/* User Betslip Button (Football only, if items in slip) */}
+            {activeSection === 'football' && betslipCount > 0 && onOpenBetslip && (
               <button
                 onClick={onOpenBetslip}
                 className="flex items-center space-x-1 px-1.5 py-1 sm:px-2.5 sm:py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-extrabold text-xs border border-emerald-500/40 transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95 animate-pulse shrink-0"
@@ -274,8 +292,8 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Virtual Bankroll Button - Compact on Mobile */}
-            {onOpenBankroll && (
+            {/* Virtual Bankroll Button - Football only */}
+            {activeSection === 'football' && onOpenBankroll && (
               <button
                 onClick={onOpenBankroll}
                 className="flex items-center space-x-1 px-1.5 py-1 sm:px-2.5 sm:py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-white font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0"
@@ -289,26 +307,8 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Team Theme & Color Selector Button */}
-            {onOpenThemeModal && (
-              <button
-                onClick={onOpenThemeModal}
-                className="flex items-center space-x-1 px-1.5 py-1 sm:px-2.5 sm:py-2 rounded-xl border font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
-                style={{
-                  backgroundColor: activeTheme?.badgeBg || 'rgba(16, 185, 129, 0.15)',
-                  borderColor: activeTheme?.cardBorder || 'rgba(16, 185, 129, 0.35)',
-                  color: activeTheme?.primaryColor || '#10b981'
-                }}
-                title={`Takım & Renk Teması Seçici (Aktif: ${activeTheme?.name || 'ProAnaliz'})`}
-              >
-                <Palette className="w-3.5 h-3.5 group-hover:rotate-45 transition-transform shrink-0" />
-                <span className="font-black tracking-tight text-[11px] sm:text-xs">{activeTheme?.emoji}</span>
-                <span className="hidden sm:inline font-bold text-xs">{activeTheme?.shortName}</span>
-              </button>
-            )}
-
-            {/* Live Goal Sound Toggle Button */}
-            {onToggleMute && (
+            {/* Live Goal Sound Toggle Button (Football only) */}
+            {activeSection === 'football' && onToggleMute && (
               <button
                 onClick={onToggleMute}
                 className="p-1.5 sm:p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition-all cursor-pointer shrink-0 shadow-xs"
@@ -318,8 +318,8 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Native Web Push Notification Toggle Button */}
-            {onTogglePush && (
+            {/* Native Web Push Notification Toggle Button (Football only) */}
+            {activeSection === 'football' && onTogglePush && (
               <button
                 onClick={onTogglePush}
                 className={`p-1.5 sm:p-2 rounded-xl border transition-all cursor-pointer shrink-0 shadow-xs ${

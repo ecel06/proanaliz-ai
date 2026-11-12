@@ -188,6 +188,22 @@ export function saveStoredTheme(theme: TeamTheme): void {
 }
 
 /**
+ * Completely removes dynamic team theme styles from document.head and restores
+ * clean neutral dark slate styling (#020617) for eye-resting sections (At Yarışı, Borsa, etc.).
+ */
+export function removeThemeFromDOM(): void {
+  if (typeof document === 'undefined') return;
+  const styleId = 'proanaliz-dynamic-team-theme';
+  const styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+  if (styleEl) {
+    styleEl.innerHTML = '';
+  }
+  if (document.body) {
+    document.body.style.backgroundColor = '#020617';
+  }
+}
+
+/**
  * Injects dynamic CSS rules globally onto document.head so the entire app
  * instantly transforms into the chosen team's authentic colors.
  */

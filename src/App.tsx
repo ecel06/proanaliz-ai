@@ -39,7 +39,8 @@ import {
   TeamTheme,
   getStoredTheme,
   saveStoredTheme,
-  applyThemeToDOM
+  applyThemeToDOM,
+  removeThemeFromDOM
 } from './utils/themeHelper';
 import {
   getSavedSlips,
@@ -238,18 +239,27 @@ export const App: React.FC = () => {
     }
   };
 
-  // Team & Custom Theme State
+  // Active Portal Section: Home, Football, Horse Racing, Stocks
+  const [activeSection, setActiveSection] = useState<'home' | 'football' | 'horseRacing' | 'stocks'>('home');
+
+  // Team & Custom Theme State (Active only inside Football; At Yarışı & Borsa stay clean eye-resting dark slate)
   const [activeTheme, setActiveTheme] = useState<TeamTheme>(() => getStoredTheme());
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   useEffect(() => {
-    applyThemeToDOM(activeTheme);
-  }, [activeTheme]);
+    if (activeSection === 'football') {
+      applyThemeToDOM(activeTheme);
+    } else {
+      removeThemeFromDOM();
+    }
+  }, [activeTheme, activeSection]);
 
   const handleSelectTheme = (theme: TeamTheme) => {
     setActiveTheme(theme);
     saveStoredTheme(theme);
-    applyThemeToDOM(theme);
+    if (activeSection === 'football') {
+      applyThemeToDOM(theme);
+    }
   };
 
   // AI Accuracy Scorecard Modal State
@@ -271,12 +281,11 @@ export const App: React.FC = () => {
     }
   };
 
-  const [activeSection, setActiveSection] = useState<'home' | 'football' | 'horseRacing' | 'stocks'>('home');
   const [newVersionAvailable, setNewVersionAvailable] = useState(false);
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.11.14';
+  const CLIENT_BUILD_VERSION = '2026.11.12.01';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -902,7 +911,9 @@ export const App: React.FC = () => {
   return (
     <div
       className="min-h-screen text-slate-100 flex flex-col pb-20 md:pb-12 transition-colors duration-300 w-full overflow-x-clip max-w-[100vw]"
-      style={{ backgroundColor: activeTheme.bgDark }}
+      style={{
+        backgroundColor: activeSection === 'football' ? (activeTheme?.bgDark || '#0b0f19') : '#020617'
+      }}
     >
 
       {/* Toast Notification */}
