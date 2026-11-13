@@ -36,6 +36,7 @@ function seedDefaultAdmin() {
       u.isVip = true;
       u.vipPlan = 'Kurucu Yönetici VIP';
       u.vipExpiresAt = Date.now() + 365 * 24 * 60 * 60 * 1000;
+      u.preferredInterest = 'all';
       break;
     }
   }
@@ -52,6 +53,7 @@ function seedDefaultAdmin() {
       isVip: true,
       vipPlan: 'Kurucu Yönetici VIP',
       vipExpiresAt: Date.now() + 365 * 24 * 60 * 60 * 1000,
+      preferredInterest: 'all',
       createdAt: Date.now(),
       lastLoginAt: Date.now(),
     };

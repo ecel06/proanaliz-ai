@@ -308,7 +308,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.13.01';
+  const CLIENT_BUILD_VERSION = '2026.11.13.02';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -951,7 +951,7 @@ export const App: React.FC = () => {
           onSuccess={(u) => {
             setCurrentUser(u);
             setIsAuthModalOpen(false);
-            if (!u.preferredInterest) {
+            if (u.role !== 'admin' && !u.preferredInterest) {
               setIsOnboardingOpen(true);
             }
           }}
@@ -1889,7 +1889,7 @@ export const App: React.FC = () => {
         onSuccess={(u) => {
           setCurrentUser(u);
           setIsAuthModalOpen(false);
-          if (!u.preferredInterest) {
+          if (u.role !== 'admin' && !u.preferredInterest) {
             setIsOnboardingOpen(true);
           }
         }}

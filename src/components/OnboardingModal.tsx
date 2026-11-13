@@ -17,7 +17,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   user,
   onSelectInterest,
 }) => {
-  if (!isOpen) return null;
+  if (!isOpen || user?.role === 'admin') return null;
 
   const handleChoose = async (interest: 'football' | 'horses' | 'stocks') => {
     try {
