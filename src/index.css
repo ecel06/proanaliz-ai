@@ -10,19 +10,34 @@
   }
 }
 
-/* Hide scrollbar utility */
-.no-scrollbar::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-.no-scrollbar {
+/* Hide scrollbar utility - Complete cross-browser override */
+.no-scrollbar,
+.no-scrollbar * {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
 
-/* Custom scrollbars */
+.no-scrollbar::-webkit-scrollbar,
+.no-scrollbar *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.no-scrollbar::-webkit-scrollbar-track,
+.no-scrollbar *::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent !important;
+}
+
+.no-scrollbar::-webkit-scrollbar-thumb,
+.no-scrollbar *::-webkit-scrollbar-thumb {
+  display: none !important;
+  background: transparent !important;
+}
+
+/* Custom scrollbars for elements without .no-scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

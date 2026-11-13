@@ -474,7 +474,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1 sm:gap-1.5 border-b border-slate-800 pb-2.5 mb-3 shrink-0 overflow-x-auto no-scrollbar">
+        <div 
+          className="flex items-center gap-1 sm:gap-1.5 border-b border-slate-800 pb-2.5 mb-3 shrink-0 overflow-x-auto no-scrollbar"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <button
             onClick={() => setActiveTab('users')}
             className={`px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${

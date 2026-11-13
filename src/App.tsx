@@ -316,19 +316,19 @@ export const App: React.FC = () => {
   const [newVersionAvailable, setNewVersionAvailable] = useState(false);
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
-  // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.13.08';
+  // Check for app version updates from server - Ultra-responsive instant detection
+  const CLIENT_BUILD_VERSION = '2026.11.13.09';
   useEffect(() => {
     const checkVersion = async () => {
       try {
-        const res = await fetch('/api/version', { cache: 'no-store' });
+        const res = await fetch(`/api/version?_t=${Date.now()}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data.version && data.version !== CLIENT_BUILD_VERSION) {
-            const dismissed = localStorage.getItem('proanaliz_dismissed_version');
-            if (dismissed !== data.version) {
-              setServerVersion(data.version);
-              setNewVersionAvailable(true);
+            setServerVersion(data.version);
+            setNewVersionAvailable(true);
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => {});
             }
           }
         }
@@ -337,9 +337,31 @@ export const App: React.FC = () => {
       }
     };
 
+    // Immediate check on mount
     checkVersion();
-    const verTimer = setInterval(checkVersion, 20000);
-    return () => clearInterval(verTimer);
+
+    // Fast 5-second polling while tab is open
+    const verTimer = setInterval(checkVersion, 5000);
+
+    // Instant check when user switches back to tab, unlocks device, or reconnects
+    const handleActive = () => {
+      if (document.visibilityState === 'visible') {
+        checkVersion();
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => {});
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleActive);
+    window.addEventListener('focus', handleActive);
+    window.addEventListener('online', handleActive);
+
+    return () => {
+      clearInterval(verTimer);
+      document.removeEventListener('visibilitychange', handleActive);
+      window.removeEventListener('focus', handleActive);
+      window.removeEventListener('online', handleActive);
+    };
   }, []);
 
   const handleUpdateApp = async () => {
@@ -938,12 +960,43 @@ export const App: React.FC = () => {
     return (
       <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col bg-slate-950">
         {newVersionAvailable && (
-          <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs shadow-xl flex items-center space-x-2">
-            <span>Yeni Güncelleme Hazır</span>
-            <button onClick={handleUpdateApp} className="px-2.5 py-1 rounded-lg bg-slate-950 text-emerald-300 cursor-pointer">
-              Yenile
-            </button>
-          </div>
+          <aside
+            aria-label="Uygulama Güncellemesi"
+            className="fixed top-2 sm:top-4 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:max-w-xl z-[99999] p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white shadow-2xl shadow-emerald-500/60 border-2 border-emerald-300 ring-4 ring-emerald-500/25 backdrop-blur-xl flex items-center justify-between gap-2.5 animate-bounce"
+          >
+            <div className="flex items-center space-x-2.5 min-w-0">
+              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-slate-950/80 border border-emerald-400/60 flex items-center justify-center shrink-0 shadow-inner">
+                <Sparkles className="w-5 h-5 text-amber-300 animate-spin" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center space-x-1.5">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-300 animate-ping" />
+                  <span className="font-black text-xs sm:text-sm tracking-wide text-white drop-shadow">
+                    YENİ GÜNCELLEME YAYINDA!
+                  </span>
+                </div>
+                <div className="text-[11px] sm:text-xs text-emerald-100 font-medium truncate">
+                  {serverVersion ? `Sürüm ${serverVersion} hazır.` : 'Yeni özellikler hazır.'} Tek tıkla yenileyin.
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-1.5 shrink-0">
+              <button
+                onClick={handleUpdateApp}
+                className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-slate-950 text-emerald-300 hover:text-emerald-200 font-black text-xs sm:text-sm shadow-xl hover:bg-slate-900 active:scale-95 transition-all cursor-pointer whitespace-nowrap border-2 border-emerald-400 flex items-center space-x-1.5"
+              >
+                <span>🔄</span>
+                <span>Şimdi Güncelle</span>
+              </button>
+              <button
+                onClick={() => setNewVersionAvailable(false)}
+                className="p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer text-xs font-bold"
+                title="Kapat"
+              >
+                ✕
+              </button>
+            </div>
+          </aside>
         )}
 
         {/* Site-Wide Announcement Bar (Home Hub - Compact) */}
