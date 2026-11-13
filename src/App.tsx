@@ -317,7 +317,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.13.04';
+  const CLIENT_BUILD_VERSION = '2026.11.13.05';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -936,7 +936,7 @@ export const App: React.FC = () => {
 
   if (activeSection === 'home') {
     return (
-      <>
+      <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col bg-slate-950">
         {newVersionAvailable && (
           <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs shadow-xl flex items-center space-x-2">
             <span>Yeni Güncelleme Hazır</span>
@@ -946,9 +946,9 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* Site-Wide Announcement Bar (Home Hub) */}
+        {/* Site-Wide Announcement Bar (Home Hub - Compact) */}
         {siteAnnouncement?.enabled && siteAnnouncement.text && (
-          <div className={`w-full py-2 px-3 text-center text-xs font-black flex items-center justify-center gap-2 border-b z-40 transition-colors ${
+          <div className={`w-full py-1.5 px-3 shrink-0 text-center text-xs font-black flex items-center justify-center gap-2 border-b z-40 transition-colors ${
             siteAnnouncement.variant === 'emerald' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' :
             siteAnnouncement.variant === 'rose' ? 'bg-rose-500/20 text-rose-200 border-rose-500/40' :
             siteAnnouncement.variant === 'blue' ? 'bg-blue-500/20 text-blue-200 border-blue-500/40' :
@@ -1056,7 +1056,7 @@ export const App: React.FC = () => {
           currentUser={currentUser}
           onRefreshBulletin={handleRefreshBulletin}
         />
-      </>
+      </div>
     );
   }
 
@@ -2036,16 +2036,19 @@ export const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="mt-16 border-t border-slate-800/80 bg-slate-950 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2.5">
           <div className="flex items-center justify-center space-x-2 text-slate-300 font-bold text-sm">
             <BrainCircuit className="w-4 h-4 text-emerald-400" />
-            <span>ProAnaliz AI • Otomatik İddaa Bülteni & Olasılık Platformu</span>
+            <span>ProAnaliz AI • Otomatik İddaa, At Yarışı &amp; Borsa Analiz Platformu</span>
           </div>
-          <p className="text-xs text-slate-500 max-w-xl mx-auto">
-            Bu uygulama hiçbir şekilde bahis oynatmaz, kupon oluşturmaz veya aracılık etmez. Tüm oran ve yüzdeler Poisson dağılımı, Dixon-Coles düzeltmesi ve ağırlıklı form matrisi ile üretilmiş saf matematiksel istatistiklerdir.
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold text-amber-300">
+            <span>⚠️ Yasal Uyarı: Bu platformda yer alan modelleme, sinyal ve analizler kesinlikle <u>YATIRIM TAVSİYESİ DEĞİLDİR (YTD)</u>.</span>
+          </div>
+          <p className="text-xs text-slate-500 max-w-xl mx-auto leading-relaxed">
+            Bu uygulama hiçbir şekilde bahis oynatmaz, kupon satmaz veya aracılık etmez. Tüm oran ve yüzdeler Poisson dağılımı, Dixon-Coles düzeltmesi, TJK AGF verileri ve Borsa quant algoritmaları ile üretilmiş saf matematiksel modellemelerdir.
           </p>
           <div className="text-[11px] text-slate-600">
-            © 2026 ProAnaliz AI • Canlı API Veri Entegrasyonu (ESPN / TheSportsDB)
+            © 2026 ProAnaliz AI • Canlı API Veri Entegrasyonu
           </div>
         </div>
       </footer>

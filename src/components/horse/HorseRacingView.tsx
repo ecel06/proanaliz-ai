@@ -1774,6 +1774,13 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
         onApplyCoupon={applyGeneratedCoupon}
       />
 
+      {/* Footer Yasal Uyarı / Sorumluluk Reddi */}
+      <div className="w-full mt-6 pt-4 pb-8 border-t border-slate-800/80 text-center space-y-1 text-slate-500 text-[11px]">
+        <p className="max-w-2xl mx-auto leading-relaxed">
+          ⚠️ <strong>Yasal Uyarı:</strong> Bu sayfada yer alan AGF oranları, jokey analizleri ve yapay zeka altılı kurguları saf istatistiki algoritmalara dayanmaktadır; kesinlikle yatırım veya müşterek bahis tavsiyesi niteliğinde değildir (YTD).
+        </p>
+      </div>
+
       {/* Floating AI Altılı Robotu FAB (Horse Racing Only) */}
       <button
         onClick={() => setIsHorseAIChatOpen(true)}

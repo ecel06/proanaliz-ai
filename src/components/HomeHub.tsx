@@ -318,12 +318,12 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   };
 
   return (
-    <div className="min-h-screen xl:h-screen xl:max-h-screen xl:overflow-hidden bg-slate-950 text-slate-100 flex flex-col justify-between items-center px-3 sm:px-6 py-2.5 sm:py-3.5 relative overflow-x-hidden">
+    <div className="h-full w-full flex-1 min-h-0 bg-slate-950 text-slate-100 flex flex-col justify-between items-center px-3 sm:px-6 py-1.5 sm:py-2.5 relative overflow-hidden">
       {/* Subtle Ambient Glow */}
       <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-emerald-500/10 blur-[130px]" />
       <div className="pointer-events-none absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-amber-500/10 blur-[130px]" />
 
-      <div className="w-full max-w-5xl h-full flex-1 flex flex-col justify-between space-y-2 sm:space-y-3 relative z-10">
+      <div className="w-full max-w-5xl h-full flex-1 min-h-0 flex flex-col justify-between space-y-1.5 sm:space-y-2 relative z-10 overflow-y-auto no-scrollbar">
         
         {/* Top Header: Brand & Quick Install Action (Compact) */}
         <div className="text-center space-y-1">
@@ -726,6 +726,11 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               </div>
             </div>
           )}
+        </div>
+
+        {/* ⚠️ Yasal Uyarı / Sorumluluk Reddi (YTD) */}
+        <div className="text-center text-[9px] sm:text-[10px] text-slate-500 font-medium tracking-wide py-0.5 shrink-0 border-t border-slate-900">
+          <span>⚠️ Yasal Uyarı: Bu platformdaki tüm tahmin, sinyal ve modellemeler analiz amaçlıdır; kesinlikle <strong className="text-slate-400 underline decoration-slate-600">yatırım tavsiyesi değildir (YTD)</strong>.</span>
         </div>
       </div>
     </div>

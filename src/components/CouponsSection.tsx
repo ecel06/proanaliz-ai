@@ -879,6 +879,11 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
         </p>
       </div>
 
+      {/* Yasal Uyarı / Sorumluluk Reddi */}
+      <div className="text-center text-[10px] sm:text-[11px] text-slate-500 max-w-xl mx-auto py-2">
+        <span>⚠️ <strong>Yasal Uyarı:</strong> Kuponlar ve maç olasılıkları saf istatistiki algoritmalar tarafından hesaplanır; kesin kazanç vaat etmez ve yatırım/bahis tavsiyesi niteliğinde değildir (YTD).</span>
+      </div>
+
       {/* Bottom Back Button */}
       {onViewAllMatches && (
         <div className="flex justify-center pt-2 pb-6">

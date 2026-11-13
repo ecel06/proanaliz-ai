@@ -580,6 +580,14 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
           );
         })()}
 
+        {/* ⚠️ YASAL UYARI / SPK Sorumluluk Reddi (YTD) */}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[10px] sm:text-[11px] text-amber-200/90 font-medium shadow-sm">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>
+            <strong className="text-amber-300 font-black">YASAL UYARI (YTD):</strong> Bu sayfadaki algoritmik modeller, RSI/MACD sinyalleri ve quant analizleri yatırım danışmanlığı kapsamında değildir; <strong className="underline decoration-amber-400">kesinlikle yatırım tavsiyesi niteliği taşımaz (YTD)</strong>. Alım-satım kararlarınızı kendi risk profilinize göre vermelisiniz.
+          </span>
+        </div>
+
         {/* Quant Presets + Live Counts + Sort */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
           <div className="flex flex-wrap gap-1.5">
@@ -1778,6 +1786,17 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         selectedStock={selectedStock}
         onSelectStock={(st) => setSelectedSymbol(st.symbol)}
       />
+
+      {/* Footer SPK Yasal Uyarı & Sorumluluk Reddi (YTD) */}
+      <div className="w-full mt-8 pt-4 pb-10 border-t border-slate-800/80 text-center space-y-1.5 text-slate-500 text-[11px]">
+        <div className="font-bold text-amber-400 flex items-center justify-center gap-1.5">
+          <ShieldAlert className="w-4 h-4 text-amber-400" />
+          <span>Sermaye Piyasası ve Finansal Sorumluluk Reddi Beyanı (YTD)</span>
+        </div>
+        <p className="max-w-3xl mx-auto leading-relaxed">
+          Burada yer alan yatırım bilgi, yorum ve tavsiyeleri yatırım danışmanlığı kapsamında değildir. Yatırım danışmanlığı hizmeti; aracı kurumlar, portföy yönetim şirketleri, mevduat kabul etmeyen bankalar ile müşteri arasında imzalanacak yatırım danışmanlığı sözleşmesi çerçevesinde sunulmaktadır. Burada yer alan tüm analizler, algoritmik göstergeler ve yapay zeka çıktıları bilgilendirme amaçlı olup mali durumunuz ile risk ve getiri tercihlerinize uygun olmayabilir. Bu nedenle yalnızca buradaki bilgilere dayanılarak yatırım kararı verilmemelidir (YTD).
+        </p>
+      </div>
 
       {/* Floating Borsa AI Robotu FAB */}
       <button
