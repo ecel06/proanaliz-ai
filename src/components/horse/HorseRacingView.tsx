@@ -38,16 +38,18 @@ import {
 } from '../../services/horseRacingService';
 import {
   GameConfig,
+  IkiliPick,
   analyzeRaceHorses,
   calculateCouponCombinations,
   generateAICoupons,
+  generateDailyIkiliAndCifte,
   getAvailableGames,
   getHorsePrimaryAgf,
   getLegBadgeForRace,
   getLegRaceNumbers,
 } from '../../utils/horseRacingEngine';
 
-type HRSubTab = 'bulletin' | 'ai_coupons' | 'results' | 'changes';
+type HRSubTab = 'bulletin' | 'ai_coupons' | 'ikili_cifte' | 'results' | 'changes';
 type SortMode = 'number' | 'agf' | 'ganyan' | 'ai' | 'handicap';
 
 interface HorseRacingViewProps {
@@ -330,6 +332,11 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
   const aiCoupons = useMemo(
     () => generateAICoupons(detail, activeGame),
     [detail, activeGame]
+  );
+
+  const ikiliPicks = useMemo(
+    () => generateDailyIkiliAndCifte(detail),
+    [detail]
   );
 
   const applyGeneratedCoupon = (coupon: GeneratedAltiliCoupon) => {
@@ -621,6 +628,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                 {[
                   { id: 'bulletin', label: 'Bülten & Kupon', icon: Ticket },
                   { id: 'ai_coupons', label: `AI Altılı Şablonları (${aiCoupons.length})`, icon: Sparkles },
+                  { id: 'ikili_cifte', label: `İkili & Çifte Robotu (${ikiliPicks.length})`, icon: Zap },
                   { id: 'results', label: 'Sonuçlar & İkramiye', icon: Trophy },
                   {
                     id: 'changes',
@@ -796,6 +804,174 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                 </div>
               );
             })}
+            </section>
+          )}
+
+          {/* SUBTAB: IKILI & CIFTE ROBOTU */}
+          {subTab === 'ikili_cifte' && (
+            <section className="space-y-4">
+              <div className="bg-gradient-to-r from-amber-500/10 via-slate-900 to-indigo-950/40 p-4 rounded-2xl border border-amber-500/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20 font-black">
+                    <Zap className="w-5 h-5 fill-current" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-white flex items-center gap-2">
+                      <span>ProAnaliz AI İkili & Çifte Robotu</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                        {ikiliPicks.length} Fırsat
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Günün yarışlarında istatistiksel üstünlüğe ve yüksek ikramiye potansiyeline sahip ikili, sıralı ikili ve çifte kombinasyonları.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {ikiliPicks.length === 0 ? (
+                <div className="p-8 text-center bg-slate-900/60 rounded-2xl border border-slate-800 text-slate-400 text-xs">
+                  Bu program için henüz ikili/çifte fırsatı üretilemedi veya koşular tamamlandı.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {ikiliPicks.map((pick, pIdx) => {
+                    const isVipRestricted = pIdx > 1 && !user?.isVip;
+                    return (
+                      <div
+                        key={pIdx}
+                        className={`rounded-2xl border transition-all relative overflow-hidden flex flex-col justify-between ${
+                          pick.type === 'CIFTE'
+                            ? 'bg-gradient-to-b from-indigo-950/40 to-slate-900/90 border-indigo-500/30 hover:border-indigo-400/60'
+                            : pick.type === 'SIRALI_IKILI'
+                            ? 'bg-gradient-to-b from-amber-950/30 to-slate-900/90 border-amber-500/30 hover:border-amber-400/60'
+                            : 'bg-slate-900/90 border-slate-800 hover:border-slate-700'
+                        } p-4 shadow-xl`}
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wide uppercase ${
+                                pick.type === 'CIFTE'
+                                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
+                                  : pick.type === 'SIRALI_IKILI'
+                                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                              }`}
+                            >
+                              {pick.type === 'CIFTE'
+                                ? '🔥 Günün Çiftesi'
+                                : pick.type === 'SIRALI_IKILI'
+                                ? '⚡ Sıralı İkili'
+                                : '🎯 İkili Bahis'}
+                            </span>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-[10px] text-slate-400 font-bold">AI Güven:</span>
+                              <span className="text-xs font-black text-amber-400 font-mono">
+                                %{pick.confidence}
+                              </span>
+                            </div>
+                          </div>
+
+                          <h4 className="text-xs font-black text-white leading-snug">
+                            {pick.title}
+                          </h4>
+
+                          {isVipRestricted ? (
+                            <div className="p-4 rounded-xl bg-slate-950/90 border border-amber-500/20 text-center space-y-2 my-2">
+                              <Lock className="w-5 h-5 text-amber-400 mx-auto" />
+                              <div className="text-xs font-bold text-slate-300">
+                                Bu özel ikili/çifte kombinasyonu VIP üyelere açıktır.
+                              </div>
+                              <button
+                                onClick={onOpenVIP}
+                                className="px-3 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 hover:from-amber-300 hover:to-amber-400 transition-all cursor-pointer"
+                              >
+                                VIP'ye Geç ve Gör
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="space-y-1.5 pt-1">
+                                {pick.horses.map((h, hIdx) => (
+                                  <div
+                                    key={hIdx}
+                                    className="flex items-center justify-between p-2 rounded-xl bg-slate-950/80 border border-slate-800/80"
+                                  >
+                                    <div className="flex items-center space-x-2 min-w-0">
+                                      <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center justify-center font-black text-xs shrink-0 font-mono">
+                                        {h.number}
+                                      </span>
+                                      <div className="min-w-0">
+                                        <div className="text-xs font-black text-white truncate">
+                                          {h.name}
+                                        </div>
+                                        {h.jockey && (
+                                          <div className="text-[10px] text-slate-400 truncate">
+                                            {h.jockey}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center space-x-1.5 shrink-0">
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded text-[9px] font-black ${
+                                          h.tag === 'BANKO'
+                                            ? 'bg-amber-400 text-slate-950'
+                                            : h.tag === 'BOMBA' || h.tag === 'SÜRPRİZ'
+                                            ? 'bg-rose-500 text-white'
+                                            : 'bg-slate-800 text-slate-300'
+                                        }`}
+                                      >
+                                        {h.tag}
+                                      </span>
+                                      {h.ganyan && h.ganyan > 0 ? (
+                                        <span className="text-[10px] font-mono font-bold text-amber-300">
+                                          {h.ganyan.toFixed(2)}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              <p className="text-[11px] text-slate-400 italic bg-slate-950/40 p-2 rounded-lg border border-slate-800/60 leading-relaxed">
+                                "{pick.reason}"
+                              </p>
+                            </>
+                          )}
+                        </div>
+
+                        {!isVipRestricted && (
+                          <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between mt-3">
+                            <button
+                              onClick={() => {
+                                setSelectedRaceNo(pick.raceNumber);
+                                setSubTab('bulletin');
+                              }}
+                              className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1 cursor-pointer transition-colors"
+                            >
+                              <span>Koşu Bültenine Git</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(
+                                  `${pick.title} - ${pick.horses.map((h) => `${h.number} ${h.name}`).join(' / ')} (ProAnaliz AI)`
+                                );
+                                onShowToast?.('İkili kombinasyonu kopyalandı!', 'success');
+                              }}
+                              className="text-[11px] font-bold text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800/60 hover:bg-slate-800 cursor-pointer transition-colors"
+                            >
+                              Kopyala
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </section>
           )}
 

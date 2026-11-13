@@ -200,15 +200,16 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* AI Performance Scorecard Button (Football only) */}
+            {/* AI Performance Scorecard Button (Visible on all devices) */}
             {activeSection === 'football' && onOpenAIPerformance && (
               <button
                 onClick={onOpenAIPerformance}
-                className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs"
+                className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300 font-bold text-[11px] sm:text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs"
                 title="Yapay Zeka Başarı Karnesi & Şeffaf İstatistikler"
               >
                 <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden lg:inline">Başarı Karnesi</span>
+                <span className="hidden xs:inline sm:hidden">Karne</span>
+                <span className="hidden sm:inline">Başarı Karnesi</span>
               </button>
             )}
 

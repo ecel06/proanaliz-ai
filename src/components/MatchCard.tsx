@@ -231,6 +231,40 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             </div>
           </div>
 
+          {/* In-Play Dynamic AI Live Signal Pill */}
+          {liveState.isLive && (() => {
+            const minNum = parseInt(String(liveState.liveMinute || '').replace(/[^\d]/g, ''), 10) || 45;
+            const hG = liveState.displayScore.home;
+            const aG = liveState.displayScore.away;
+            const totG = hG + aG;
+            let insightText = '';
+            let insightBg = 'bg-slate-900 border-slate-700 text-slate-300';
+
+            if (minNum >= 58 && totG === 0 && analysis.over25 >= 50) {
+              insightText = '⚡ Canlı AI Fırsatı: Maçta gol baskısı tavan yaptı! 0.5 Üst Gol bekleniyor (%82)';
+              insightBg = 'bg-amber-500/15 border-amber-500/40 text-amber-300';
+            } else if (totG >= 3) {
+              insightText = '✅ Canlı Durum: Yüksek tempolu maçta gol barajı aşıldı (2.5 Üst Geldi)';
+              insightBg = 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300';
+            } else if (hG > aG && analysis.ms1 >= 46) {
+              insightText = `⚡ Canlı Durum: ${homeTeam.name} üstünlüğünü koruyor (MS 1 İhtimali Yüksek)`;
+              insightBg = 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300';
+            } else if (aG > hG && analysis.ms2 >= 40) {
+              insightText = `⚡ Canlı Durum: ${awayTeam.name} deplasmanda skoru koruyor (X2 / MS 2 Değeri)`;
+              insightBg = 'bg-sky-500/15 border-sky-500/30 text-sky-300';
+            } else {
+              insightText = `⚡ Canlı Radar: ${minNum}'. dakika tempolu geçiş oyunu sürüyor`;
+              insightBg = 'bg-slate-900 border-slate-800 text-slate-400';
+            }
+
+            return (
+              <div className={`mt-2 px-2.5 py-1 rounded-xl text-[10px] font-bold border flex items-center gap-1.5 ${insightBg}`}>
+                <Zap className="w-3 h-3 text-amber-400 shrink-0" />
+                <span className="truncate">{insightText}</span>
+              </div>
+            );
+          })()}
+
         </div>
 
         {/* Prediction Glowing Badge Section (Always separated, dedicated side column with clean margin) */}

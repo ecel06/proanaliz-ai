@@ -32,6 +32,7 @@ interface HomeHubProps {
   onOpenAuth?: () => void;
   onOpenProfile?: () => void;
   onOpenAdmin?: () => void;
+  onOpenAIPerformance?: () => void;
   onLogout?: () => void;
   user?: User | null;
   allMatches?: Match[];
@@ -47,6 +48,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   onOpenAuth,
   onOpenProfile,
   onOpenAdmin,
+  onOpenAIPerformance,
   onLogout,
   user,
   allMatches = [],
@@ -415,6 +417,35 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               </button>
             )}
           </div>
+
+          {/* Live AI Accuracy Scorecard Banner */}
+          {onOpenAIPerformance && (
+            <div 
+              onClick={onOpenAIPerformance}
+              className="mt-2 mb-4 p-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-slate-900 to-emerald-500/15 border border-amber-400/30 hover:border-amber-400/60 transition-all cursor-pointer flex items-center justify-between gap-3 group shadow-lg shadow-amber-500/5 max-w-xl mx-auto"
+            >
+              <div className="flex items-center gap-2.5 text-left">
+                <div className="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-400/30">
+                  <Trophy className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-white">Yapay Zeka Başarı Karnesi</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      Doğrulanmış İstatistikler
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400">
+                    Biten maçlar ve resmi sonuçlarla kanıtlanmış şeffaf Poisson tahmin performansı
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-amber-400 font-bold text-xs shrink-0 group-hover:translate-x-1 transition-transform">
+                <span className="hidden sm:inline">İncele</span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </div>
+          )}
 
           <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white">
             Bölüm Seçiniz

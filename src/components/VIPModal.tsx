@@ -1,6 +1,22 @@
 // src/components/VIPModal.tsx
 import React, { useState } from 'react';
-import { X, Crown, Check, Sparkles, ShieldCheck, Gift, ArrowRight, UserCheck, Zap, Star } from 'lucide-react';
+import {
+  X,
+  Crown,
+  Check,
+  Sparkles,
+  ShieldCheck,
+  Gift,
+  ArrowRight,
+  UserCheck,
+  Zap,
+  Star,
+  CreditCard,
+  Building2,
+  MessageCircle,
+  Copy,
+  CheckCircle2,
+} from 'lucide-react';
 import { User, redeemPromoCodeApi, activateVipApi } from '../utils/authHelper';
 
 interface VIPModalProps {
@@ -19,6 +35,8 @@ export const VIPModal: React.FC<VIPModalProps> = ({
   onUserUpdated,
 }) => {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'quarterly' | 'yearly'>('quarterly');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank' | 'whatsapp'>('card');
+  const [copiedIban, setCopiedIban] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
@@ -283,6 +301,107 @@ export const VIPModal: React.FC<VIPModalProps> = ({
           </div>
         </div>
 
+        {/* Payment Method Selector */}
+        <div className="mb-5 space-y-2">
+          <div className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+            <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+            <span>Ödeme Yöntemi Seçiniz:</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: 'card', label: 'Banka / Kredi Kartı', icon: CreditCard, sub: '3D Secure • Anında Onay' },
+              { id: 'bank', label: 'Havale / EFT / FAST', icon: Building2, sub: 'IBAN ile Direkt Transfer' },
+              { id: 'whatsapp', label: 'WhatsApp Danışman', icon: MessageCircle, sub: '7/24 Canlı Destek' },
+            ].map((method) => {
+              const Icon = method.icon;
+              const active = paymentMethod === method.id;
+              return (
+                <button
+                  key={method.id}
+                  type="button"
+                  onClick={() => setPaymentMethod(method.id as any)}
+                  className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    active
+                      ? 'bg-amber-400/10 border-amber-400 ring-1 ring-amber-400/30 text-white shadow-md'
+                      : 'bg-slate-950/60 hover:bg-slate-800/40 border-slate-800 text-slate-400'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <Icon className={`w-4 h-4 ${active ? 'text-amber-400' : 'text-slate-500'}`} />
+                    {active && <Check className="w-3.5 h-3.5 text-amber-400 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <div className="text-xs font-black truncate">{method.label}</div>
+                    <div className="text-[10px] text-slate-500 truncate">{method.sub}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Conditional Method Details */}
+          {paymentMethod === 'bank' && (
+            <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-amber-500/30 space-y-2 animate-fade-in">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400 font-bold">Banka:</span>
+                <span className="font-black text-white">Ziraat Bankası / FAST Uyumlu</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400 font-bold">Alıcı:</span>
+                <span className="font-black text-amber-300">ProAnaliz Bilişim Teknolojileri A.Ş.</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="min-w-0 pr-2">
+                  <div className="text-[10px] text-slate-500 font-bold">IBAN Numarası:</div>
+                  <div className="text-xs font-mono font-black text-white select-all">
+                    TR12 0001 0090 1084 7291 0050 01
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText('TR120001009010847291005001');
+                    setCopiedIban(true);
+                    setTimeout(() => setCopiedIban(false), 2000);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shrink-0"
+                >
+                  {copiedIban ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedIban ? 'Kopyalandı' : 'Kopyala'}</span>
+                </button>
+              </div>
+              <div className="text-[10px] text-slate-400">
+                * Açıklama kısmına <strong>{user?.email || 'Kayıtlı E-postanızı'}</strong> yazınız. Transfer sonrası aşağıdaki butonla aktivasyonu anında onaylayabilirsiniz.
+              </div>
+            </div>
+          )}
+
+          {paymentMethod === 'whatsapp' && (
+            <div className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-2 animate-fade-in text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="text-xs font-black text-emerald-300 flex items-center justify-center sm:justify-start gap-1.5">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>WhatsApp VIP Danışman Hattı (7/24)</span>
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  Özel indirimler, havale dekont onayı ve doğrudan danışman desteği.
+                </p>
+              </div>
+              <a
+                href={`https://wa.me/905300000000?text=${encodeURIComponent(
+                  `Merhaba ProAnaliz AI! ${user?.email ? user.email : ''} hesabım için VIP üyelik başlatmak istiyorum.`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs whitespace-nowrap shadow-lg shadow-emerald-500/20 transition-all cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>WhatsApp ile Yaz</span>
+              </a>
+            </div>
+          )}
+        </div>
+
         {/* Action Buttons */}
         <div className="space-y-2">
           {/* Main Action Button */}
@@ -292,7 +411,13 @@ export const VIPModal: React.FC<VIPModalProps> = ({
               disabled={loading}
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-sm uppercase tracking-wider transition-all shadow-xl shadow-amber-500/25 active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2 group disabled:opacity-50"
             >
-              <span>{user.isVip ? 'Planı Yenile / Seçili Pakete Geç' : 'Seçili Paketi Başlat & VIP Ol'}</span>
+              <span>
+                {paymentMethod === 'bank'
+                  ? 'Havale Bildir & VIP Üyeliği Başlat'
+                  : user.isVip
+                  ? 'Planı Yenile / Seçili Pakete Geç'
+                  : 'Seçili Paketi Başlat & VIP Ol'}
+              </span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           ) : (

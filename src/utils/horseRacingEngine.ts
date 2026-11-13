@@ -564,4 +564,85 @@ export function getProgramHighlights(detail: ProgramDetail | null) {
   return { raceInsights, bestBanko, surpriseRace };
 }
 
+export interface IkiliPick {
+  raceNumber: number;
+  type: 'SIRALI_IKILI' | 'DUZ_IKILI' | 'CIFTE' | 'TABELA';
+  title: string;
+  horses: { number: number; name: string; jockey?: string; tag: string; ganyan?: number }[];
+  confidence: number;
+  reason: string;
+}
+
+export function generateDailyIkiliAndCifte(detail: ProgramDetail | null): IkiliPick[] {
+  if (!detail || !detail.races || detail.races.length === 0) return [];
+  const picks: IkiliPick[] = [];
+
+  detail.races.forEach((race, idx) => {
+    if (race.isFinished) return;
+    const map = analyzeRaceHorses(race);
+    const ranked = Array.from(map.values()).sort((a, b) => b.score - a.score);
+    if (ranked.length < 2) return;
+
+    const h1 = race.horses.find((h) => h.number === ranked[0].horseNumber);
+    const h2 = race.horses.find((h) => h.number === ranked[1].horseNumber);
+    const sleeper = ranked.find((x) => x.tag === 'BOMBA' || x.tag === 'SÜRPRİZ');
+    const sleeperHorse = race.horses.find((h) => h.number === sleeper?.horseNumber);
+
+    if (h1 && h2) {
+      // 1. Sıralı / Düz İkili
+      const gap = (ranked[0]?.score || 0) - (ranked[1]?.score || 0);
+      picks.push({
+        raceNumber: race.number,
+        type: gap >= 6 ? 'SIRALI_IKILI' : 'DUZ_IKILI',
+        title: `${race.number}. Koşu: ${gap >= 6 ? 'Sıralı İkili' : 'İkili Bahis'} (${h1.number} - ${h2.number})`,
+        horses: [
+          { number: h1.number, name: h1.name, jockey: h1.jockey?.name, tag: ranked[0].tag, ganyan: h1.ganyan },
+          { number: h2.number, name: h2.name, jockey: h2.jockey?.name, tag: ranked[1].tag, ganyan: h2.ganyan }
+        ],
+        confidence: Math.round(((ranked[0].score + ranked[1].score) / 2)),
+        reason: `${h1.name} ve ${h2.name} pist ve form puanlarıyla koşunun ilk 2 sırasını almaya en yakın safkanlardır.`
+      });
+
+      // 2. Sürpriz / Cazip İkili
+      if (sleeper && sleeperHorse && sleeper.horseNumber !== h1.number && sleeper.horseNumber !== h2.number) {
+        picks.push({
+          raceNumber: race.number,
+          type: 'DUZ_IKILI',
+          title: `${race.number}. Koşu: Sürpriz İkili (${h1.number} - ${sleeperHorse.number})`,
+          horses: [
+            { number: h1.number, name: h1.name, jockey: h1.jockey?.name, tag: ranked[0].tag, ganyan: h1.ganyan },
+            { number: sleeperHorse.number, name: sleeperHorse.name, jockey: sleeperHorse.jockey?.name, tag: sleeper.tag, ganyan: sleeperHorse.ganyan }
+          ],
+          confidence: Math.round(sleeper.score * 0.85),
+          reason: `${sleeperHorse.name} yüksek ganyan ve kilo avantajıyla ikiliye girerek ikramiyeyi katlayabilir.`
+        });
+      }
+    }
+
+    // 3. Çifte Bahis
+    const nextRace = detail.races[idx + 1];
+    if (nextRace && !nextRace.isFinished) {
+      const nextMap = analyzeRaceHorses(nextRace);
+      const nextRanked = Array.from(nextMap.values()).sort((a, b) => b.score - a.score);
+      const nextH1 = nextRace.horses.find((h) => h.number === nextRanked[0]?.horseNumber);
+
+      if (h1 && nextH1) {
+        picks.push({
+          raceNumber: race.number,
+          type: 'CIFTE',
+          title: `Günün Banko Çiftesi: ${race.number}. Koşu (${h1.number}) ✕ ${nextRace.number}. Koşu (${nextH1.number})`,
+          horses: [
+            { number: h1.number, name: `${race.number}. Koşu: ${h1.name}`, jockey: h1.jockey?.name, tag: ranked[0].tag },
+            { number: nextH1.number, name: `${nextRace.number}. Koşu: ${nextH1.name}`, jockey: nextH1.jockey?.name, tag: nextRanked[0]?.tag || 'BANKO' }
+          ],
+          confidence: Math.round((ranked[0].score + (nextRanked[0]?.score || 60)) / 2),
+          reason: 'Arka arkaya koşularda günün en net iki safkanını birleştiren yüksek getirili çifte tercihi.'
+        });
+      }
+    }
+  });
+
+  return picks;
+}
+
 
