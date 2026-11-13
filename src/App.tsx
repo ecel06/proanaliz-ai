@@ -308,7 +308,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.13.02';
+  const CLIENT_BUILD_VERSION = '2026.11.13.03';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -333,19 +333,36 @@ export const App: React.FC = () => {
     return () => clearInterval(verTimer);
   }, []);
 
-  const handleUpdateApp = () => {
+  const handleUpdateApp = async () => {
     if (serverVersion) {
       try {
         localStorage.setItem('proanaliz_dismissed_version', serverVersion);
       } catch (e) { }
     }
+    // 1. Unregister and notify service worker
+    if ('serviceWorker' in navigator) {
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+          await reg.unregister();
+        }
+      } catch (e) { }
+    }
+    // 2. Delete all client caches
     if ('caches' in window) {
-      caches.keys().then(names => names.forEach(name => caches.delete(name)));
+      try {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      } catch (e) { }
     }
     try {
       sessionStorage.clear();
     } catch (e) { }
-    window.location.reload();
+    // 3. Force clean reload bypassing disk cache with timestamp query
+    window.location.replace(window.location.origin + window.location.pathname + '?_t=' + Date.now());
   };
 
   // Listen for PWA beforeinstallprompt on supported browsers

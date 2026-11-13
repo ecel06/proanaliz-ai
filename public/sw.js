@@ -1,6 +1,6 @@
 // public/sw.js
-// ProAnaliz AI - Modern PWA Service Worker
-const CACHE_NAME = 'proanaliz-ai-v2.1';
+// ProAnaliz AI - Modern PWA Service Worker (v2.2 - Network-First for Navigation)
+const CACHE_NAME = 'proanaliz-ai-v2.2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -10,6 +10,12 @@ const STATIC_ASSETS = [
   '/icons/icon-512.png',
   '/icons/icon-maskable.png'
 ];
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -36,28 +42,40 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Network-first for dynamic API & live data, cache-first/revalidate for app assets
+// Network-First for HTML/Navigation & APIs to prevent stale chunk 404s
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Dynamic API calls or bulletin json: Network first
-  if (url.pathname.startsWith('/api') || url.pathname.includes('bulletin.json')) {
+  // 1. Navigation / HTML pages & API endpoints: ALWAYS Network-First
+  const isHtmlNavigation = event.request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html');
+  const isApiOrBulletin = url.pathname.startsWith('/api') || url.pathname.includes('bulletin.json');
+
+  if (isHtmlNavigation || isApiOrBulletin) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // Fallback to cache only when completely offline
+          return caches.match(event.request).then((cached) => {
+            if (cached) return cached;
+            if (isHtmlNavigation) return caches.match('/index.html');
+            return null;
+          });
+        })
     );
     return;
   }
 
-  // Static assets: Stale-while-revalidate / Cache first
+  // 2. Static hashed assets (.js, .css, images, fonts): Cache-first with network fallback
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Background revalidation
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-          }
-        }).catch(() => {});
         return cachedResponse;
       }
 
@@ -67,12 +85,6 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
         }
         return networkResponse;
-      }).catch((err) => {
-        // Offline fallback to root if navigation
-        if (event.request.mode === 'navigate') {
-          return caches.match('/');
-        }
-        throw err;
       });
     })
   );
