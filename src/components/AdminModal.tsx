@@ -375,7 +375,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto no-scrollbar">
       <div className="relative w-full max-w-5xl bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]">
         
         {/* Glow ambient */}
@@ -474,10 +474,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 border-b border-slate-800 pb-2.5 mb-3 shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-1 sm:gap-1.5 border-b border-slate-800 pb-2.5 mb-3 shrink-0 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'users' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
             }`}
           >
@@ -487,7 +487,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
           <button
             onClick={() => setActiveTab('finance')}
-            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'finance' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
             }`}
           >
@@ -502,47 +502,47 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
           <button
             onClick={() => setActiveTab('editor_coupons')}
-            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'editor_coupons' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
             }`}
           >
             <Crown className="w-3.5 h-3.5" />
-            <span>Yönetici Kuponları ({editorCoupons.length})</span>
+            <span>Kuponlar ({editorCoupons.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('announcement')}
-            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'announcement' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
             }`}
           >
             <Megaphone className="w-3.5 h-3.5" />
-            <span>📢 Duyuru CMS</span>
+            <span>Duyuru CMS</span>
           </button>
 
           <button
             onClick={() => setActiveTab('logs')}
-            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'logs' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
             }`}
           >
             <History className="w-3.5 h-3.5" />
-            <span>📜 Aktivite ({stats?.activityLogs?.length || 0})</span>
+            <span>Aktivite ({stats?.activityLogs?.length || 0})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('system')}
-            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'system' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
             }`}
           >
             <Radio className="w-3.5 h-3.5" />
-            <span>Bot &amp; Veri Sağlığı</span>
+            <span>Bot &amp; Veri</span>
           </button>
 
           <button
             onClick={() => setActiveTab('promos')}
-            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'promos' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
             }`}
           >
@@ -552,7 +552,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
           <button
             onClick={() => setActiveTab('tiers')}
-            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'tiers' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
             }`}
           >
@@ -588,7 +588,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </div>
 
             {/* Users Table */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pr-1">
               {filteredUsers.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 text-xs">
                   Kullanıcı bulunamadı.
@@ -733,7 +733,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
         {/* TAB 2: FINANCE & REVENUE COCKPIT */}
         {activeTab === 'finance' && (
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs text-slate-300">
+          <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 pr-1 text-xs text-slate-300">
             {/* Top Revenue Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/15 to-slate-950 border border-emerald-500/30 space-y-1">
@@ -837,7 +837,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
         {/* TAB 3: EDITOR CURATED COUPONS (CMS) */}
         {activeTab === 'editor_coupons' && (
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs text-slate-300">
+          <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-1 text-xs text-slate-300">
             {/* Top Action: Add New Editor Coupon Button */}
             <div className="flex items-center justify-between bg-slate-950/70 p-3 rounded-2xl border border-slate-800">
               <div>
@@ -1068,7 +1068,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
         {/* TAB 4: BOT & DATA SERVICES HEALTH */}
         {activeTab === 'system' && (
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs text-slate-300">
+          <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-1 text-xs text-slate-300">
             <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -1182,7 +1182,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </form>
 
             {/* Promo Codes List */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pr-1">
               {promos.map((p) => (
                 <div
                   key={p.code}
@@ -1213,7 +1213,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
         {/* TAB 6: FREE VS VIP TIERS */}
         {activeTab === 'tiers' && (
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs text-slate-300">
+          <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-1 text-xs text-slate-300">
             <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
               <h3 className="font-black text-white text-sm flex items-center gap-2">
                 <Crown className="w-4 h-4 text-amber-400" />
@@ -1265,7 +1265,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
         {/* TAB 7: SITE ANNOUNCEMENT CMS */}
         {activeTab === 'announcement' && (
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs text-slate-300">
+          <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 pr-1 text-xs text-slate-300">
             <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -1410,7 +1410,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
         {/* TAB 8: AUDIT LOGS */}
         {activeTab === 'logs' && (
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs text-slate-300">
+          <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-1 text-xs text-slate-300">
             <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

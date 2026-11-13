@@ -212,7 +212,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
-          <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
+          <div className="flex-1 overflow-y-auto no-scrollbar space-y-3.5 pr-1 text-xs">
             {/* VIP Status Card */}
             <div className={`p-4 rounded-2xl border space-y-2.5 relative overflow-hidden ${
               isVip 
@@ -362,7 +362,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
         {/* TAB 2: EDIT PROFILE */}
         {activeTab === 'edit' && (
-          <form onSubmit={handleUpdateProfile} className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+          <form onSubmit={handleUpdateProfile} className="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-1 text-xs">
             <div>
               <label className="block text-slate-400 font-bold mb-1">Adınız Soyadınız</label>
               <input
@@ -446,7 +446,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
         {/* TAB 3: PROMO CODE REDEEM */}
         {activeTab === 'promo' && (
-          <form onSubmit={handleRedeemPromo} className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs">
+          <form onSubmit={handleRedeemPromo} className="flex-1 overflow-y-auto no-scrollbar space-y-4 pr-1 text-xs">
             <div className="p-4 rounded-2xl bg-gradient-to-b from-amber-500/10 to-slate-950 border border-amber-400/30 text-center space-y-2">
               <div className="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-300 flex items-center justify-center mx-auto">
                 <Gift className="w-5 h-5 text-amber-400" />
