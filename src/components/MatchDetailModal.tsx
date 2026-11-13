@@ -441,7 +441,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                     : 'text-emerald-400'
                 }`} />
                 <span className="truncate">
-                  Hakem: <strong className="text-slate-200">{refProfile.refereeName || 'Atama Bekleniyor'}</strong>
+                  Hakem: <strong className="text-slate-200">{refProfile.refereeName || (match.status === 'live' ? 'Canlı Görevli Hakem' : match.status === 'finished' ? 'Resmi Karşılaşma Hakemi' : 'Atama Bekleniyor')}</strong>
                 </span>
               </span>
               <span className="font-mono font-bold text-amber-300 shrink-0 ml-1">~{refProfile.avgYellowCards} Kart</span>
@@ -678,10 +678,10 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                   <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
                     <div className="text-[10px] text-slate-400">Orta Hakem</div>
                     <div className="text-xs font-extrabold text-slate-100 mt-1 truncate">
-                      {refProfile.refereeName || 'Atama Bekleniyor'}
+                      {refProfile.refereeName || (match.status === 'live' ? 'Canlı Görevli Hakem' : match.status === 'finished' ? 'Resmi Karşılaşma Hakemi' : 'Atama Bekleniyor')}
                     </div>
                     <div className="text-[10px] text-slate-500 mt-0.5">
-                      {refProfile.isOfficialAssigned ? 'Resmi Atama' : 'Lig & Maç Profili'}
+                      {refProfile.isOfficialAssigned ? 'Resmi Hakem Ataması' : 'Lig & Maç Hakem Heyeti'}
                     </div>
                   </div>
 

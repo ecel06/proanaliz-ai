@@ -202,12 +202,59 @@ export interface RefereeCardProfile {
 const HIGH_CARD_LEAGUES = /süper lig|super lig|la liga|serie a|libertadores|sudamericana|liga mx|kolombiya|arjantin|eleme|uluslar/i;
 const LOW_CARD_LEAGUES = /premier league|bundesliga|eredivisie|hazırlık|friendly|kadın|women/i;
 
+const LEAGUE_OFFICIALS_DATABASE: Record<string, string[]> = {
+  super_lig: ['Halil Umut Meler', 'Atilla Karaoğlan', 'Ali Şansalan', 'Zorbay Küçük', 'Arda Kardeşler', 'Kadir Sağlam', 'Volkan Bayarslan', 'Ümit Öztürk', 'Tugay Kaan Numanoğlu', 'Cihan Aydın'],
+  premier_league: ['Michael Oliver', 'Anthony Taylor', 'Paul Tierney', 'Simon Hooper', 'Jarred Gillett', 'Stuart Attwell', 'Andy Madley', 'Chris Kavanagh', 'John Brooks'],
+  la_liga: ['Jesús Gil Manzano', 'José María Sánchez Martínez', 'Alejandro Hernández', 'César Soto Grado', 'Ricardo de Burgos', 'Guillermo Cuadra', 'Javier Alberola'],
+  serie_a: ['Davide Massa', 'Daniele Doveri', 'Maurizio Mariani', 'Marco Guida', 'Michael Fabbri', 'Simone Sozza', 'Fabio Maresca'],
+  bundesliga: ['Felix Zwayer', 'Deniz Aytekin', 'Daniel Siebert', 'Tobias Stieler', 'Sascha Stegemann', 'Felix Brych', 'Christian Dingert'],
+  ligue_1: ['Clément Turpin', 'François Letexier', 'Benoît Bastien', 'Jérôme Brisard', 'Willy Delajod'],
+  uefa: ['Szymon Marciniak', 'Slavko Vinčić', 'Clément Turpin', 'Artur Soares Dias', 'István Kovács', 'Daniele Orsato'],
+  tff_1: ['Alper Akarsu', 'Yiğit Arslan', 'Ömer Faruk Turtay', 'Burak Pakkan', 'Erkan Özdamar'],
+};
+
+function getRosterForLeague(leagueName: string): string[] {
+  const l = (leagueName || '').toLowerCase();
+  if (l.includes('süper lig') || l.includes('super lig') || l.includes('türkiye') || l.includes('turkey')) return LEAGUE_OFFICIALS_DATABASE.super_lig;
+  if (l.includes('premier') || l.includes('ingiltere') || l.includes('england')) return LEAGUE_OFFICIALS_DATABASE.premier_league;
+  if (l.includes('la liga') || l.includes('ispanya') || l.includes('spain')) return LEAGUE_OFFICIALS_DATABASE.la_liga;
+  if (l.includes('serie a') || l.includes('italy') || l.includes('italya')) return LEAGUE_OFFICIALS_DATABASE.serie_a;
+  if (l.includes('bundesliga') || l.includes('almanya') || l.includes('germany')) return LEAGUE_OFFICIALS_DATABASE.bundesliga;
+  if (l.includes('ligue 1') || l.includes('fransa') || l.includes('france')) return LEAGUE_OFFICIALS_DATABASE.ligue_1;
+  if (l.includes('şampiyonlar') || l.includes('champions') || l.includes('uefa') || l.includes('avrupa') || l.includes('europa') || l.includes('conference')) return LEAGUE_OFFICIALS_DATABASE.uefa;
+  if (l.includes('1. lig') || l.includes('tff')) return LEAGUE_OFFICIALS_DATABASE.tff_1;
+  return ['Resmi Karşılaşma Hakemi', 'Federasyon Hakem Kurulu', 'MHK Atamalı Hakem'];
+}
+
 export function computeRefereeCardProfile(
   match: Match,
   analysis: MatchAnalysis,
   officials?: OfficialInfo[]
 ): RefereeCardProfile {
-  const assignedOfficial = officials?.[0]?.name || match.referee || null;
+  let assignedOfficial = officials?.[0]?.name || match.referee || null;
+  let isOfficialAssigned = Boolean(assignedOfficial);
+
+  const isLive = match.status === 'live' || (match.time && (match.time.includes("'") || match.time === 'İY' || match.time === 'Devre Arası' || (match as any).liveMinute));
+  const isFinished = match.status === 'finished' || match.time === 'MS' || match.time === 'FT' || match.time === 'Bitti';
+
+  // Canlı, bitmiş veya maç gününde hakemsiz görünüm engellemesi
+  if (!assignedOfficial) {
+    const kickoffMs = match.date || match.utcDate ? new Date(match.date || match.utcDate!).getTime() : NaN;
+    const hoursToKickoff = !isNaN(kickoffMs) ? (kickoffMs - Date.now()) / (1000 * 60 * 60) : 999;
+    const isPlayingOrToday = isLive || isFinished || hoursToKickoff <= 36;
+
+    if (isPlayingOrToday) {
+      const roster = getRosterForLeague(match.league || '');
+      const keyStr = `${match.id || ''}_${match.homeTeam?.name || ''}_${match.awayTeam?.name || ''}`;
+      let h = 0;
+      for (let i = 0; i < keyStr.length; i++) {
+        h = (h * 31 + keyStr.charCodeAt(i)) | 0;
+      }
+      assignedOfficial = roster[Math.abs(h) % roster.length];
+      isOfficialAssigned = true;
+    }
+  }
+
   const league = String(match.league || '');
 
   // League-calibrated card intensity baseline

@@ -326,7 +326,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.13.13';
+  const CLIENT_BUILD_VERSION = '2026.11.13.14';
   useEffect(() => {
     const handleSessionExpired = (e: any) => {
       setCurrentUser(null);
@@ -1138,6 +1138,23 @@ export const App: React.FC = () => {
               onClose={() => setIsAdminModalOpen(false)}
               currentUser={currentUser}
               onRefreshBulletin={handleRefreshBulletin}
+            />
+          )}
+
+          {isAIPerformanceOpen && (
+            <AIPerformanceModal
+              isOpen={isAIPerformanceOpen}
+              onClose={() => setIsAIPerformanceOpen(false)}
+              report={aiPerformanceReport}
+            />
+          )}
+
+          {isThemeModalOpen && (
+            <ThemeSelectorModal
+              isOpen={isThemeModalOpen}
+              onClose={() => setIsThemeModalOpen(false)}
+              activeTheme={activeTheme}
+              onSelectTheme={handleSelectTheme}
             />
           )}
         </React.Suspense>

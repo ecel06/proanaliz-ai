@@ -218,6 +218,13 @@ export function mapEvent(event, league) {
   }
   const iddaaCode = String(10000 + (Math.abs(hash) % 89900));
 
+  const rawOfficials = Array.isArray(competition.officials) ? competition.officials : [];
+  const primaryRef = rawOfficials.find(o => {
+    const pos = String(o.position?.name || o.position?.displayName || '').toLowerCase();
+    return pos.includes('referee') || pos.includes('orta');
+  }) || rawOfficials[0];
+  const parsedReferee = primaryRef?.displayName || primaryRef?.fullName || primaryRef?.name || '';
+
   return {
     id: event.id,
     iddaaCode,
@@ -231,6 +238,7 @@ export function mapEvent(event, league) {
     utcDate: event.date,
     dayCategory,
     stadium: competition.venue?.fullName || '',
+    referee: parsedReferee || undefined,
     status,
     liveMinute,
     currentScore,
