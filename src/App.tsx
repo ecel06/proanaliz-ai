@@ -11,29 +11,38 @@ import { LeagueTreeSelector } from './components/LeagueTreeSelector';
 import { MatchCard } from './components/MatchCard';
 import { FinishedMatchCard } from './components/FinishedMatchCard';
 import { MatchDetailModal } from './components/MatchDetailModal';
-import { CustomMatchAnalyzer } from './components/CustomMatchAnalyzer';
-import { StandingsModal } from './components/StandingsModal';
-import { InstallAppModal } from './components/InstallAppModal';
-import { AIChatModal } from './components/AIChatModal';
-import { AIChatCoupon, AICouponItem } from './utils/aiChatEngine';
 import { BetslipDrawer } from './components/BetslipDrawer';
-import { NesineBulletinView } from './components/NesineBulletinView';
 import { MatchOfTheDayBanner } from './components/MatchOfTheDayBanner';
 import { GoalNotificationToast, LiveGoalEvent } from './components/GoalNotificationToast';
-import { BankrollTrackerModal } from './components/BankrollTrackerModal';
-import { ThemeSelectorModal } from './components/ThemeSelectorModal';
-import { AIPerformanceModal } from './components/AIPerformanceModal';
-import { ShareSlipModal } from './components/ShareSlipModal';
 import { AuthModal } from './components/AuthModal';
-import { VIPModal } from './components/VIPModal';
-import { AdminModal } from './components/AdminModal';
-import { ProfileModal } from './components/ProfileModal';
-import { OnboardingModal } from './components/OnboardingModal';
-import { User, getStoredUser, clearAuthSession, fetchCurrentUser, SiteAnnouncement, fetchAnnouncementApi } from './utils/authHelper';
-import { HorseRacingView } from './components/horse/HorseRacingView';
-import { StockMarketView } from './components/stocks/StockMarketView';
 import { HomeHub } from './components/HomeHub';
+import { User, getStoredUser, clearAuthSession, fetchCurrentUser, SiteAnnouncement, fetchAnnouncementApi } from './utils/authHelper';
 import { computeAIPerformance } from './utils/aiPerformanceHelper';
+import type { AIChatCoupon, AICouponItem } from './utils/aiChatEngine';
+
+// Code-Splitting: Heavy views and modals loaded on-demand via React.lazy
+const HorseRacingView = React.lazy(() => import('./components/horse/HorseRacingView').then(m => ({ default: m.HorseRacingView })));
+const StockMarketView = React.lazy(() => import('./components/stocks/StockMarketView').then(m => ({ default: m.StockMarketView })));
+const AdminModal = React.lazy(() => import('./components/AdminModal').then(m => ({ default: m.AdminModal })));
+const ProfileModal = React.lazy(() => import('./components/ProfileModal').then(m => ({ default: m.ProfileModal })));
+const VIPModal = React.lazy(() => import('./components/VIPModal').then(m => ({ default: m.VIPModal })));
+const CustomMatchAnalyzer = React.lazy(() => import('./components/CustomMatchAnalyzer').then(m => ({ default: m.CustomMatchAnalyzer })));
+const StandingsModal = React.lazy(() => import('./components/StandingsModal').then(m => ({ default: m.StandingsModal })));
+const InstallAppModal = React.lazy(() => import('./components/InstallAppModal').then(m => ({ default: m.InstallAppModal })));
+const OnboardingModal = React.lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
+const AIChatModal = React.lazy(() => import('./components/AIChatModal').then(m => ({ default: m.AIChatModal })));
+const BankrollTrackerModal = React.lazy(() => import('./components/BankrollTrackerModal').then(m => ({ default: m.BankrollTrackerModal })));
+const ThemeSelectorModal = React.lazy(() => import('./components/ThemeSelectorModal').then(m => ({ default: m.ThemeSelectorModal })));
+const AIPerformanceModal = React.lazy(() => import('./components/AIPerformanceModal').then(m => ({ default: m.AIPerformanceModal })));
+const ShareSlipModal = React.lazy(() => import('./components/ShareSlipModal').then(m => ({ default: m.ShareSlipModal })));
+const NesineBulletinView = React.lazy(() => import('./components/NesineBulletinView').then(m => ({ default: m.NesineBulletinView })));
+
+const SectionLoadingFallback: React.FC<{ label?: string }> = ({ label = 'Modül Yükleniyor...' }) => (
+  <div className="flex flex-col items-center justify-center p-12 min-h-[320px] space-y-3">
+    <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-400 rounded-full animate-spin" />
+    <span className="text-xs font-bold text-slate-400 tracking-wide">{label}</span>
+  </div>
+);
 import {
   isPushNotificationSupported,
   isPushNotificationEnabled,
@@ -317,7 +326,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.13.09';
+  const CLIENT_BUILD_VERSION = '2026.11.13.10';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -1042,14 +1051,6 @@ export const App: React.FC = () => {
           analysesMap={matchAnalysesMap}
         />
 
-        {/* Mobile & PWA Install Guide Modal (Telefona İndir & Kur) */}
-        <InstallAppModal
-          isOpen={isInstallModalOpen}
-          onClose={() => setIsInstallModalOpen(false)}
-          deferredPrompt={deferredPrompt}
-          onDirectInstall={handleDirectInstall}
-        />
-
         {/* Modal: Kullanıcı Giriş & Kayıt Penceresi (Ana Sayfa İçin) */}
         <AuthModal
           isOpen={isAuthModalOpen}
@@ -1063,52 +1064,68 @@ export const App: React.FC = () => {
           }}
         />
 
-        {/* Modal: Üye Kontrol Paneli & Profil (Ana Sayfa İçin) */}
-        <ProfileModal
-          isOpen={isProfileModalOpen}
-          onClose={() => setIsProfileModalOpen(false)}
-          user={currentUser}
-          onUserUpdated={setCurrentUser}
-          onOpenVIP={() => {
-            setIsProfileModalOpen(false);
-            setIsVipModalOpen(true);
-          }}
-          onLogout={handleLogout}
-        />
+        {/* Lazy Loaded On-Demand Modals (Home Hub) */}
+        <React.Suspense fallback={null}>
+          {isInstallModalOpen && (
+            <InstallAppModal
+              isOpen={isInstallModalOpen}
+              onClose={() => setIsInstallModalOpen(false)}
+              deferredPrompt={deferredPrompt}
+              onDirectInstall={handleDirectInstall}
+            />
+          )}
 
-        {/* Modal: Kişiselleştirilmiş Karşılama Anketi */}
-        <OnboardingModal
-          isOpen={isOnboardingOpen}
-          onClose={() => setIsOnboardingOpen(false)}
-          user={currentUser}
-          onSelectInterest={(interest) => {
-            if (interest === 'football') setActiveSection('football');
-            else if (interest === 'horses') setActiveSection('horseRacing');
-            else if (interest === 'stocks') setActiveSection('stocks');
-          }}
-        />
+          {isProfileModalOpen && (
+            <ProfileModal
+              isOpen={isProfileModalOpen}
+              onClose={() => setIsProfileModalOpen(false)}
+              user={currentUser}
+              onUserUpdated={setCurrentUser}
+              onOpenVIP={() => {
+                setIsProfileModalOpen(false);
+                setIsVipModalOpen(true);
+              }}
+              onLogout={handleLogout}
+            />
+          )}
 
-        {/* Modal: VIP Üyelik & Paketler Penceresi (Ana Sayfa İçin) */}
-        <VIPModal
-          isOpen={isVipModalOpen}
-          onClose={() => setIsVipModalOpen(false)}
-          user={currentUser}
-          onOpenAuth={() => {
-            setIsVipModalOpen(false);
-            setIsAuthModalOpen(true);
-          }}
-          onUserUpdated={(u) => {
-            setCurrentUser(u);
-          }}
-        />
+          {isOnboardingOpen && (
+            <OnboardingModal
+              isOpen={isOnboardingOpen}
+              onClose={() => setIsOnboardingOpen(false)}
+              user={currentUser}
+              onSelectInterest={(interest) => {
+                if (interest === 'football') setActiveSection('football');
+                else if (interest === 'horses') setActiveSection('horseRacing');
+                else if (interest === 'stocks') setActiveSection('stocks');
+              }}
+            />
+          )}
 
-        {/* Modal: 🛡️ Yönetici (Admin) Paneli (Ana Sayfa İçin) */}
-        <AdminModal
-          isOpen={isAdminModalOpen}
-          onClose={() => setIsAdminModalOpen(false)}
-          currentUser={currentUser}
-          onRefreshBulletin={handleRefreshBulletin}
-        />
+          {isVipModalOpen && (
+            <VIPModal
+              isOpen={isVipModalOpen}
+              onClose={() => setIsVipModalOpen(false)}
+              user={currentUser}
+              onOpenAuth={() => {
+                setIsVipModalOpen(false);
+                setIsAuthModalOpen(true);
+              }}
+              onUserUpdated={(u) => {
+                setCurrentUser(u);
+              }}
+            />
+          )}
+
+          {isAdminModalOpen && (
+            <AdminModal
+              isOpen={isAdminModalOpen}
+              onClose={() => setIsAdminModalOpen(false)}
+              currentUser={currentUser}
+              onRefreshBulletin={handleRefreshBulletin}
+            />
+          )}
+        </React.Suspense>
       </div>
     );
   }
@@ -1243,23 +1260,27 @@ export const App: React.FC = () => {
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
 
         {activeSection === 'horseRacing' ? (
-          <HorseRacingView
-            user={currentUser}
-            onOpenVIP={() => setIsVipModalOpen(true)}
-            onShowToast={(msg) => {
-              setRefreshToast(msg);
-              setTimeout(() => setRefreshToast(null), 3500);
-            }}
-          />
+          <React.Suspense fallback={<SectionLoadingFallback label="TJK Canlı At Yarışı Bülteni Yükleniyor..." />}>
+            <HorseRacingView
+              user={currentUser}
+              onOpenVIP={() => setIsVipModalOpen(true)}
+              onShowToast={(msg) => {
+                setRefreshToast(msg);
+                setTimeout(() => setRefreshToast(null), 3500);
+              }}
+            />
+          </React.Suspense>
         ) : activeSection === 'stocks' ? (
-          <StockMarketView
-            user={currentUser}
-            onOpenVIP={() => setIsVipModalOpen(true)}
-            onShowToast={(msg) => {
-              setRefreshToast(msg);
-              setTimeout(() => setRefreshToast(null), 3500);
-            }}
-          />
+          <React.Suspense fallback={<SectionLoadingFallback label="Borsa İstanbul & Global Piyasa Verileri Yükleniyor..." />}>
+            <StockMarketView
+              user={currentUser}
+              onOpenVIP={() => setIsVipModalOpen(true)}
+              onShowToast={(msg) => {
+                setRefreshToast(msg);
+                setTimeout(() => setRefreshToast(null), 3500);
+              }}
+            />
+          </React.Suspense>
         ) : (
         <div className="flex flex-col lg:flex-row gap-6 items-start">
 
@@ -1622,16 +1643,18 @@ export const App: React.FC = () => {
 
                   {upcomingFiltered.length > 0 ? (
                     viewMode === 'bulletin' ? (
-                      <NesineBulletinView
-                        matches={upcomingFiltered}
-                        matchAnalysesMap={matchAnalysesMap}
-                        onSelectMatch={(m) => setSelectedMatch(m)}
-                        favorites={favorites}
-                        onToggleFavorite={toggleFavorite}
-                        betslipItems={betslipItems}
-                        onToggleBetslip={handleToggleBetslip}
-                        sortOption={sortOption}
-                      />
+                      <React.Suspense fallback={<SectionLoadingFallback label="Geniş Bülten Tablosu Hazırlanıyor..." />}>
+                        <NesineBulletinView
+                          matches={upcomingFiltered}
+                          matchAnalysesMap={matchAnalysesMap}
+                          onSelectMatch={(m) => setSelectedMatch(m)}
+                          favorites={favorites}
+                          onToggleFavorite={toggleFavorite}
+                          betslipItems={betslipItems}
+                          onToggleBetslip={handleToggleBetslip}
+                          sortOption={sortOption}
+                        />
+                      </React.Suspense>
                     ) : (
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
                         {upcomingFiltered?.map((match) => {
@@ -1742,16 +1765,18 @@ export const App: React.FC = () => {
 
                     {upcomingFiltered.length > 0 ? (
                       viewMode === 'bulletin' ? (
-                        <NesineBulletinView
-                          matches={upcomingFiltered}
-                          matchAnalysesMap={matchAnalysesMap}
-                          onSelectMatch={(m) => setSelectedMatch(m)}
-                          favorites={favorites}
-                          onToggleFavorite={toggleFavorite}
-                          betslipItems={betslipItems}
-                          onToggleBetslip={handleToggleBetslip}
-                          sortOption={sortOption}
-                        />
+                        <React.Suspense fallback={<SectionLoadingFallback label="Geniş Bülten Tablosu Hazırlanıyor..." />}>
+                          <NesineBulletinView
+                            matches={upcomingFiltered}
+                            matchAnalysesMap={matchAnalysesMap}
+                            onSelectMatch={(m) => setSelectedMatch(m)}
+                            favorites={favorites}
+                            onToggleFavorite={toggleFavorite}
+                            betslipItems={betslipItems}
+                            onToggleBetslip={handleToggleBetslip}
+                            sortOption={sortOption}
+                          />
+                        </React.Suspense>
                       ) : (
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
                           {upcomingFiltered?.map((match) => {
@@ -1900,54 +1925,7 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Modal 2: Custom Match Analyzer (Kendi Maçını Analiz Et - Yalnızca Oynanacak Maçlar) */}
-      <CustomMatchAnalyzer
-        isOpen={isCustomAnalyzerOpen}
-        onClose={() => setIsCustomAnalyzerOpen(false)}
-        matches={allMatches.filter(m => {
-          if (m.status === 'finished') return false;
-          if (m.time === 'MS' || m.time === 'Bitti' || m.time === 'FT') return false;
-          const s = getMatchLiveState(m, currentTime);
-          return !s.isFinished;
-        })}
-        onSelectMatchDetail={(match) => {
-          setSelectedMatch(match);
-          setIsCustomAnalyzerOpen(false);
-        }}
-      />
-
-      {/* Modal 3: Standings Modal (Süper Lig & Tüm Ligler Puan Durumu) */}
-      {isStandingsOpen && (
-        <StandingsModal
-          isOpen={isStandingsOpen}
-          onClose={() => setIsStandingsOpen(false)}
-        />
-      )}
-
-      {/* Modal 4: Mobile & PWA Install Guide Modal (Telefona İndir & Kur) */}
-      <InstallAppModal
-        isOpen={isInstallModalOpen}
-        onClose={() => setIsInstallModalOpen(false)}
-        deferredPrompt={deferredPrompt}
-        onDirectInstall={handleDirectInstall}
-      />
-
-      {/* Modal 5: Interactive AI Chatbot & Smart Coupon Generator (Football Only) */}
-      {activeSection === 'football' && (
-        <AIChatModal
-          isOpen={isAIChatOpen}
-          onClose={() => setIsAIChatOpen(false)}
-          allMatches={weeklyMatches}
-          analysesMap={matchAnalysesMap}
-          currentTime={currentTime}
-          onSelectMatch={(m) => setSelectedMatch(m)}
-          betslipMatchIds={betslipItems.map(it => String(it.matchId))}
-          onAddCouponToBetslip={handleAddAICouponToBetslip}
-          onAddItemToBetslip={handleAddAIItemToBetslip}
-        />
-      )}
-
-      {/* Modal 6: Kupon Hesaplayıcı & Betslip Drawer */}
+      {/* Modal 6: Kupon Hesaplayıcı & Betslip Drawer (Eager for instant response) */}
       <BetslipDrawer
         items={betslipItems}
         isOpen={isBetslipOpen}
@@ -1962,18 +1940,6 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* Modal 7: Sanal Kasa & Kupon Takip Sistemi */}
-      <BankrollTrackerModal
-        isOpen={isBankrollModalOpen}
-        onClose={() => setIsBankrollModalOpen(false)}
-        slips={settledSlips}
-        stats={bankrollStats}
-        onRefreshSlips={() => {
-          setSavedSlips(getSavedSlips());
-          setBankrollRefreshKey(k => k + 1);
-        }}
-      />
-
       {/* Canlı Gol Sesi & Bildirim Kartı - Sadece Futbol Bölümünde */}
       {activeSection === 'football' && (
         <GoalNotificationToast
@@ -1984,50 +1950,7 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Modal 8: Takım & Renk Teması Seçici */}
-      <ThemeSelectorModal
-        isOpen={isThemeModalOpen}
-        onClose={() => setIsThemeModalOpen(false)}
-        activeTheme={activeTheme}
-        onSelectTheme={handleSelectTheme}
-      />
-
-      {/* Modal 9: Yapay Zeka Başarı Karnesi (Şeffaf Başarı İstatistikleri) */}
-      <AIPerformanceModal
-        isOpen={isAIPerformanceOpen}
-        onClose={() => setIsAIPerformanceOpen(false)}
-        report={aiPerformanceReport}
-      />
-
-      {/* Modal 10: Kupon Görseli Paylaşım Kartı (WhatsApp / Resim İndir) */}
-      <ShareSlipModal
-        isOpen={!!shareSlipCoupon}
-        onClose={() => setShareSlipCoupon(null)}
-        coupon={shareSlipCoupon}
-      />
-
-      {/* Floating AI Kupon Robotu FAB Button (Football Only) */}
-      {activeSection === 'football' && (
-        <button
-          onClick={() => setIsAIChatOpen(true)}
-          className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-600 text-white font-black text-xs sm:text-sm shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/70 border-2 border-purple-300/50 active:scale-95 transition-all cursor-pointer group hover:scale-105"
-          title="Yapay Zeka Sohbet & Kupon Robotu"
-        >
-          <div className="relative">
-            <Bot className="w-5 h-5 text-amber-300 animate-pulse group-hover:scale-110 transition-transform" />
-            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
-            </span>
-          </div>
-          <span className="font-extrabold tracking-tight">AI Kupon Robotu</span>
-          <Sparkles className="w-4 h-4 text-amber-300 fill-current opacity-80 hidden sm:inline" />
-        </button>
-      )}
-
-
-
-      {/* Modal 11: Kullanıcı Giriş & Kayıt Penceresi */}
+      {/* Modal: Kullanıcı Giriş & Kayıt Penceresi (Hızlı Eager Açılış) */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
@@ -2040,52 +1963,144 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* Modal 11.2: Üye Kontrol Paneli & Profil */}
-      <ProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        user={currentUser}
-        onUserUpdated={setCurrentUser}
-        onOpenVIP={() => {
-          setIsProfileModalOpen(false);
-          setIsVipModalOpen(true);
-        }}
-        onLogout={handleLogout}
-      />
+      {/* On-Demand Lazy Loaded Modals (Code-Splitting) */}
+      <React.Suspense fallback={null}>
+        {isCustomAnalyzerOpen && (
+          <CustomMatchAnalyzer
+            isOpen={isCustomAnalyzerOpen}
+            onClose={() => setIsCustomAnalyzerOpen(false)}
+            matches={allMatches.filter(m => {
+              if (m.status === 'finished') return false;
+              if (m.time === 'MS' || m.time === 'Bitti' || m.time === 'FT') return false;
+              const s = getMatchLiveState(m, currentTime);
+              return !s.isFinished;
+            })}
+            onSelectMatchDetail={(match) => {
+              setSelectedMatch(match);
+              setIsCustomAnalyzerOpen(false);
+            }}
+          />
+        )}
 
-      {/* Modal 11.5: Kişiselleştirilmiş Karşılama Anketi */}
-      <OnboardingModal
-        isOpen={isOnboardingOpen}
-        onClose={() => setIsOnboardingOpen(false)}
-        user={currentUser}
-        onSelectInterest={(interest) => {
-          if (interest === 'football') setActiveSection('football');
-          else if (interest === 'horses') setActiveSection('horseRacing');
-          else if (interest === 'stocks') setActiveSection('stocks');
-        }}
-      />
+        {isStandingsOpen && (
+          <StandingsModal
+            isOpen={isStandingsOpen}
+            onClose={() => setIsStandingsOpen(false)}
+          />
+        )}
 
-      {/* Modal 12: VIP Üyelik & Paketler Penceresi */}
-      <VIPModal
-        isOpen={isVipModalOpen}
-        onClose={() => setIsVipModalOpen(false)}
-        user={currentUser}
-        onOpenAuth={() => {
-          setIsVipModalOpen(false);
-          setIsAuthModalOpen(true);
-        }}
-        onUserUpdated={(u) => {
-          setCurrentUser(u);
-        }}
-      />
+        {isInstallModalOpen && (
+          <InstallAppModal
+            isOpen={isInstallModalOpen}
+            onClose={() => setIsInstallModalOpen(false)}
+            deferredPrompt={deferredPrompt}
+            onDirectInstall={handleDirectInstall}
+          />
+        )}
 
-      {/* Modal 13: 🛡️ Yönetici (Admin) Paneli */}
-      <AdminModal
-        isOpen={isAdminModalOpen}
-        onClose={() => setIsAdminModalOpen(false)}
-        currentUser={currentUser}
-        onRefreshBulletin={handleRefreshBulletin}
-      />
+        {activeSection === 'football' && isAIChatOpen && (
+          <AIChatModal
+            isOpen={isAIChatOpen}
+            onClose={() => setIsAIChatOpen(false)}
+            allMatches={weeklyMatches}
+            analysesMap={matchAnalysesMap}
+            currentTime={currentTime}
+            onSelectMatch={(m) => setSelectedMatch(m)}
+            betslipMatchIds={betslipItems.map(it => String(it.matchId))}
+            onAddCouponToBetslip={handleAddAICouponToBetslip}
+            onAddItemToBetslip={handleAddAIItemToBetslip}
+          />
+        )}
+
+        {isBankrollModalOpen && (
+          <BankrollTrackerModal
+            isOpen={isBankrollModalOpen}
+            onClose={() => setIsBankrollModalOpen(false)}
+            slips={settledSlips}
+            stats={bankrollStats}
+            onRefreshSlips={() => {
+              setSavedSlips(getSavedSlips());
+              setBankrollRefreshKey(k => k + 1);
+            }}
+          />
+        )}
+
+        {isThemeModalOpen && (
+          <ThemeSelectorModal
+            isOpen={isThemeModalOpen}
+            onClose={() => setIsThemeModalOpen(false)}
+            activeTheme={activeTheme}
+            onSelectTheme={handleSelectTheme}
+          />
+        )}
+
+        {isAIPerformanceOpen && (
+          <AIPerformanceModal
+            isOpen={isAIPerformanceOpen}
+            onClose={() => setIsAIPerformanceOpen(false)}
+            report={aiPerformanceReport}
+          />
+        )}
+
+        {!!shareSlipCoupon && (
+          <ShareSlipModal
+            isOpen={!!shareSlipCoupon}
+            onClose={() => setShareSlipCoupon(null)}
+            coupon={shareSlipCoupon}
+          />
+        )}
+
+        {isProfileModalOpen && (
+          <ProfileModal
+            isOpen={isProfileModalOpen}
+            onClose={() => setIsProfileModalOpen(false)}
+            user={currentUser}
+            onUserUpdated={setCurrentUser}
+            onOpenVIP={() => {
+              setIsProfileModalOpen(false);
+              setIsVipModalOpen(true);
+            }}
+            onLogout={handleLogout}
+          />
+        )}
+
+        {isOnboardingOpen && (
+          <OnboardingModal
+            isOpen={isOnboardingOpen}
+            onClose={() => setIsOnboardingOpen(false)}
+            user={currentUser}
+            onSelectInterest={(interest) => {
+              if (interest === 'football') setActiveSection('football');
+              else if (interest === 'horses') setActiveSection('horseRacing');
+              else if (interest === 'stocks') setActiveSection('stocks');
+            }}
+          />
+        )}
+
+        {isVipModalOpen && (
+          <VIPModal
+            isOpen={isVipModalOpen}
+            onClose={() => setIsVipModalOpen(false)}
+            user={currentUser}
+            onOpenAuth={() => {
+              setIsVipModalOpen(false);
+              setIsAuthModalOpen(true);
+            }}
+            onUserUpdated={(u) => {
+              setCurrentUser(u);
+            }}
+          />
+        )}
+
+        {isAdminModalOpen && (
+          <AdminModal
+            isOpen={isAdminModalOpen}
+            onClose={() => setIsAdminModalOpen(false)}
+            currentUser={currentUser}
+            onRefreshBulletin={handleRefreshBulletin}
+          />
+        )}
+      </React.Suspense>
 
       {/* Footer */}
       <footer className="mt-16 border-t border-slate-800/80 bg-slate-950 py-8">
