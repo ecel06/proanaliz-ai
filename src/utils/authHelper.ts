@@ -6,12 +6,40 @@ export interface User {
   name: string;
   email: string;
   phone?: string | null;
-  authProvider?: 'local' | 'google';
+  preferredInterest?: 'football' | 'horses' | 'stocks' | null;
+  authProvider?: 'local' | 'google' | 'whatsapp_otp';
   role: 'admin' | 'user';
   isVip: boolean;
   vipPlan?: string | null;
   vipExpiresAt?: number | null;
   createdAt?: number;
+}
+
+export interface EditorMatch {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  league: string;
+  matchTime: string;
+  matchDate: string;
+  prediction: string;
+  odds: number;
+  confidence: number;
+  reason?: string;
+}
+
+export interface EditorCoupon {
+  id: string;
+  title: string;
+  subtitle: string;
+  category: 'football' | 'horses' | 'stocks';
+  confidence: number;
+  totalOdds: number;
+  isVipOnly: boolean;
+  status: 'pending' | 'won' | 'lost';
+  author: string;
+  createdAt: number;
+  matches: EditorMatch[];
 }
 
 const TOKEN_KEY = 'proanaliz_auth_token';
@@ -312,5 +340,109 @@ export async function deletePromoCodeApi(code: string): Promise<{ success: boole
     return await res.json();
   } catch {
     return { success: false, error: 'Promosyon kodu silinemedi.' };
+  }
+}
+
+// --- WhatsApp / SMS OTP Helpers ---
+export async function requestOtpApi(phone: string): Promise<{ success: boolean; message?: string; code?: string; error?: string }> {
+  try {
+    const res = await fetch('/api/auth/otp/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone })
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Doğrulama kodu gönderilemedi. Sunucu bağlantınızı kontrol edin.' };
+  }
+}
+
+export async function verifyOtpApi(phone: string, code: string): Promise<{ success: boolean; user?: User; token?: string; isNew?: boolean; error?: string }> {
+  try {
+    const res = await fetch('/api/auth/otp/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, code })
+    });
+    const data = await res.json();
+    if (data.success && data.token && data.user) {
+      saveAuthSession(data.token, data.user);
+    }
+    return data;
+  } catch {
+    return { success: false, error: 'Giriş doğrulanamadı.' };
+  }
+}
+
+// --- User Preference Update (Onboarding) ---
+export async function updateUserPreferenceApi(preference: 'football' | 'horses' | 'stocks'): Promise<{ success: boolean; user?: User; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Giriş yapılmamış.' };
+  try {
+    const res = await fetch('/api/user/preference', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ preference })
+    });
+    const data = await res.json();
+    if (data.success && data.user) {
+      saveAuthSession(token, data.user);
+    }
+    return data;
+  } catch {
+    return { success: false, error: 'Tercih kaydedilemedi.' };
+  }
+}
+
+// --- Editor Curated Coupons API ---
+export async function fetchEditorCouponsApi(): Promise<{ success: boolean; coupons?: EditorCoupon[]; error?: string }> {
+  try {
+    const res = await fetch('/api/editor-coupons');
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Yönetici kuponları alınamadı.' };
+  }
+}
+
+export async function saveEditorCouponApi(coupon: Partial<EditorCoupon>): Promise<{ success: boolean; coupon?: EditorCoupon; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch('/api/admin/editor-coupons', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(coupon)
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Kupon kaydedilemedi.' };
+  }
+}
+
+export async function deleteEditorCouponApi(couponId: string): Promise<{ success: boolean; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch(`/api/admin/editor-coupons/${couponId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Kupon silinemedi.' };
+  }
+}
+
+// --- Services Health API ---
+export async function fetchServicesHealthApi(): Promise<{ success: boolean; health?: any; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch('/api/admin/services-health', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Sistem sağlık verisi alınamadı.' };
   }
 }

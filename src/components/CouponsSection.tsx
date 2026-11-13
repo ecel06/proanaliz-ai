@@ -31,9 +31,11 @@ import {
   Share2,
   Lock,
   Unlock,
-  Crown
+  Crown,
+  MessageCircle,
+  Send
 } from 'lucide-react';
-import { User } from '../utils/authHelper';
+import { User, EditorCoupon, fetchEditorCouponsApi } from '../utils/authHelper';
 
 interface CouponsSectionProps {
   coupons?: CuratedCoupon[];
@@ -63,6 +65,15 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
   const [stake, setStake] = useState<number>(100);
   const [copiedCouponId, setCopiedCouponId] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<CouponDayFilter>('today');
+  const [editorCoupons, setEditorCoupons] = useState<EditorCoupon[]>([]);
+
+  React.useEffect(() => {
+    fetchEditorCouponsApi().then((res) => {
+      if (res.success && res.coupons) {
+        setEditorCoupons(res.coupons);
+      }
+    });
+  }, []);
 
   const quickStakes = [50, 100, 250, 500, 1000];
 
@@ -240,6 +251,139 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
           </button>
         </div>
       </div>
+
+      {/* 👑 PROANALIZ YÖNETİCİ & EDİTÖR ÖZEL KUPONLARI */}
+      {editorCoupons.length > 0 && (
+        <div className="space-y-4">
+          {editorCoupons.map((edCoupon) => {
+            const isEdLocked = edCoupon.isVipOnly && !user?.isVip;
+            const visibleMatches = isEdLocked ? edCoupon.matches.slice(0, 1) : edCoupon.matches;
+            const edPotentialWin = Math.round(stake * edCoupon.totalOdds);
+
+            return (
+              <div
+                key={edCoupon.id}
+                className="rounded-3xl p-5 sm:p-6 bg-gradient-to-br from-amber-500/15 via-slate-900/95 to-slate-950 border-2 border-amber-400/60 shadow-[0_0_40px_rgba(251,191,36,0.15)] relative overflow-hidden backdrop-blur-md space-y-4"
+              >
+                {/* Royal Ambient Glow */}
+                <div className="pointer-events-none absolute -top-12 -right-12 w-48 h-48 bg-amber-400/15 rounded-full blur-3xl animate-pulse" />
+
+                {/* Top Badge */}
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20">
+                      <Crown className="w-5 h-5 fill-slate-950" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base sm:text-lg font-black text-white">{edCoupon.title}</h3>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase tracking-wider">
+                          Yönetici Özel
+                        </span>
+                        {isEdLocked && (
+                          <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-black text-[10px] flex items-center gap-1">
+                            <Lock className="w-3 h-3" />
+                            <span>VIP Kilitli</span>
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-amber-200/80">{edCoupon.subtitle}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="text-[10px] text-slate-400">Yönetici Güven Skoru</div>
+                      <div className="text-base font-black text-emerald-400">%{edCoupon.confidence}</div>
+                    </div>
+                    <div className="text-right pl-3 border-l border-slate-800">
+                      <div className="text-[10px] text-slate-400">Toplam Oran</div>
+                      <div className="text-xl font-black text-amber-400 font-mono">{edCoupon.totalOdds.toFixed(2)}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Match Cards List */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {visibleMatches.map((m, mIdx) => (
+                    <div
+                      key={m.id || mIdx}
+                      className="p-3 rounded-2xl bg-slate-950/80 border border-amber-500/30 hover:border-amber-400/60 transition-all space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between text-[11px] text-slate-400">
+                        <span className="font-bold text-amber-300">{m.league}</span>
+                        <span>{m.matchTime} • {m.matchDate}</span>
+                      </div>
+                      <div className="font-bold text-white text-xs sm:text-sm truncate">
+                        {m.homeTeam} vs {m.awayTeam}
+                      </div>
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+                        <span className="px-2 py-0.5 rounded-lg bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-xs">
+                          {m.prediction}
+                        </span>
+                        <span className="font-mono font-black text-emerald-400 text-xs">
+                          {Number(m.odds).toFixed(2)}
+                        </span>
+                      </div>
+                      {m.reason && (
+                        <p className="text-[10px] text-slate-400 line-clamp-2 italic pt-0.5">
+                          💡 {m.reason}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Locked preview card for non-VIPs */}
+                  {isEdLocked && edCoupon.matches.length > 1 && (
+                    <div className="p-4 rounded-2xl bg-slate-950/90 border border-amber-500/40 flex flex-col items-center justify-center text-center space-y-2 col-span-1 md:col-span-2">
+                      <div className="p-2 rounded-full bg-amber-400/20 text-amber-300">
+                        <Lock className="w-5 h-5 text-amber-400" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <div className="font-black text-white text-xs sm:text-sm">
+                          Kalan {edCoupon.matches.length - 1} Özel Maç &amp; Yüksek Oranlı Tercihler VIP Özel
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          Yönetici analiziyle hazırlanan tam kuponu görüntülemek için VIP Kulübüne katılın.
+                        </p>
+                      </div>
+                      {onOpenVIP && (
+                        <button
+                          onClick={onOpenVIP}
+                          className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs transition-all shadow-lg shadow-amber-500/25 cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Crown className="w-4 h-4 fill-slate-950" />
+                          <span>👑 VIP Kulübüne Katıl &amp; Kuponu Aç</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Bar: Stake Potential Return */}
+                <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-amber-500/20 text-xs">
+                  <div className="text-slate-400">
+                    {stake} ₺ Bahis ile Tahmini Getiri:{' '}
+                    <span className="font-mono font-black text-amber-300 text-sm">
+                      {edPotentialWin.toLocaleString('tr-TR')} ₺
+                    </span>
+                  </div>
+
+                  {!isEdLocked && onShareCoupon && (
+                    <button
+                      onClick={() => alert('Yönetici kuponu panoya kopyalandı!')}
+                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>Kuponu Paylaş</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* 3 Coupons Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -686,6 +830,45 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
             </div>
           );
         })}
+      </div>
+
+      {/* 🚀 VIP TELEGRAM & WHATSAPP ANLIK BİLDİRİM KANALI */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-blue-900/40 via-emerald-950/40 to-slate-900/90 border border-emerald-500/30 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <Send className="w-6 h-6 text-emerald-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-black text-white text-sm sm:text-base">ProAnaliz AI VIP Bildirim Kanalları</span>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black animate-pulse">CANLI</span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Günün Banko kuponları ve son dakika sakatlık/oran düşüş uyarıları anında cebinize gelsin.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <a
+            href="https://t.me/proanaliz_vip"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white font-black text-xs transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/20 cursor-pointer"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Telegram VIP Kanalı</span>
+          </a>
+          <a
+            href="https://wa.me/905550000000?text=Merhaba%2C%20ProAnaliz%20AI%20VIP%20WhatsApp%20grubuna%20kat%C4%B1lmak%20istiyorum."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20 cursor-pointer"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span>WhatsApp Grubu</span>
+          </a>
+        </div>
       </div>
 
       {/* Info Banner at Bottom */}

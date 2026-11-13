@@ -27,6 +27,7 @@ import { ShareSlipModal } from './components/ShareSlipModal';
 import { AuthModal } from './components/AuthModal';
 import { VIPModal } from './components/VIPModal';
 import { AdminModal } from './components/AdminModal';
+import { OnboardingModal } from './components/OnboardingModal';
 import { User, getStoredUser, clearAuthSession, fetchCurrentUser } from './utils/authHelper';
 import { HorseRacingView } from './components/horse/HorseRacingView';
 import { StockMarketView } from './components/stocks/StockMarketView';
@@ -271,6 +272,7 @@ export const App: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
 
   useEffect(() => {
     fetchCurrentUser().then((u) => {
@@ -306,7 +308,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.12.17';
+  const CLIENT_BUILD_VERSION = '2026.11.13.01';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -949,6 +951,21 @@ export const App: React.FC = () => {
           onSuccess={(u) => {
             setCurrentUser(u);
             setIsAuthModalOpen(false);
+            if (!u.preferredInterest) {
+              setIsOnboardingOpen(true);
+            }
+          }}
+        />
+
+        {/* Modal: Kişiselleştirilmiş Karşılama Anketi */}
+        <OnboardingModal
+          isOpen={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
+          user={currentUser}
+          onSelectInterest={(interest) => {
+            if (interest === 'football') setActiveSection('football');
+            else if (interest === 'horses') setActiveSection('horseRacing');
+            else if (interest === 'stocks') setActiveSection('stocks');
           }}
         />
 
@@ -1872,6 +1889,21 @@ export const App: React.FC = () => {
         onSuccess={(u) => {
           setCurrentUser(u);
           setIsAuthModalOpen(false);
+          if (!u.preferredInterest) {
+            setIsOnboardingOpen(true);
+          }
+        }}
+      />
+
+      {/* Modal 11.5: Kişiselleştirilmiş Karşılama Anketi */}
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        user={currentUser}
+        onSelectInterest={(interest) => {
+          if (interest === 'football') setActiveSection('football');
+          else if (interest === 'horses') setActiveSection('horseRacing');
+          else if (interest === 'stocks') setActiveSection('stocks');
         }}
       />
 

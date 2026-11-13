@@ -41,7 +41,14 @@ import {
   getPromoCodesList,
   createPromoCode,
   deletePromoCode,
-  getAdminStats
+  getAdminStats,
+  requestOtp,
+  verifyOtp,
+  updateUserPreference,
+  getEditorCoupons,
+  saveEditorCoupon,
+  deleteEditorCoupon,
+  getServicesHealth
 } from './userService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -350,6 +357,37 @@ app.post('/api/auth/google', (req, res) => {
   res.json(result);
 });
 
+// WhatsApp / SMS OTP endpoints
+app.post('/api/auth/otp/send', (req, res) => {
+  const result = requestOtp(req.body.phone);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  res.json(result);
+});
+
+app.post('/api/auth/otp/verify', (req, res) => {
+  const { phone, code } = req.body;
+  const result = verifyOtp(phone, code);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  res.json(result);
+});
+
+// Update user preference (onboarding selection)
+app.post('/api/user/preference', authMiddleware, (req, res) => {
+  const { preference } = req.body;
+  const result = updateUserPreference(req.userId, preference);
+  res.json(result);
+});
+
+// Public / User Editor Curated Coupons
+app.get('/api/editor-coupons', (req, res) => {
+  const coupons = getEditorCoupons();
+  res.json({ success: true, coupons });
+});
+
 app.get('/api/auth/me', authMiddleware, (req, res) => {
   const user = getUserById(req.userId);
   if (!user) {
@@ -433,6 +471,29 @@ app.delete('/api/admin/promos/:code', adminMiddleware, (req, res) => {
   res.json(result);
 });
 
+// Admin Editor Curated Coupons Endpoints
+app.post('/api/admin/editor-coupons', adminMiddleware, (req, res) => {
+  const result = saveEditorCoupon(req.body);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  res.json(result);
+});
+
+app.delete('/api/admin/editor-coupons/:id', adminMiddleware, (req, res) => {
+  const result = deleteEditorCoupon(req.params.id);
+  if (!result.success) {
+    return res.status(404).json(result);
+  }
+  res.json(result);
+});
+
+// Admin Live Services Health Monitor
+app.get('/api/admin/services-health', adminMiddleware, (req, res) => {
+  const health = getServicesHealth();
+  res.json({ success: true, health });
+});
+
 // 6. Dynamic Real Team Forms endpoints (100% Real Match Results)
 app.get('/api/forms', (req, res) => {
   res.json(getAllRealForms());
@@ -473,7 +534,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.12.17';
+const APP_VERSION = '2026.11.13.01';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

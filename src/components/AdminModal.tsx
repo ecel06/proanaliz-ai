@@ -19,10 +19,21 @@ import {
   Lock,
   Unlock,
   Layers,
-  Sparkles
+  Sparkles,
+  TrendingUp,
+  DollarSign,
+  Radio,
+  Plus,
+  Clock,
+  Send,
+  Cpu,
+  Flame,
+  Check
 } from 'lucide-react';
 import { 
   User, 
+  EditorCoupon,
+  EditorMatch,
   fetchAdminStatsApi, 
   fetchAdminUsersApi, 
   updateUserVipApi, 
@@ -31,7 +42,11 @@ import {
   deleteUserApi, 
   fetchAdminPromosApi, 
   createPromoCodeApi, 
-  deletePromoCodeApi 
+  deletePromoCodeApi,
+  fetchEditorCouponsApi,
+  saveEditorCouponApi,
+  deleteEditorCouponApi,
+  fetchServicesHealthApi
 } from '../utils/authHelper';
 
 interface AdminModalProps {
@@ -47,11 +62,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   currentUser,
   onRefreshBulletin,
 }) => {
-  const [activeTab, setActiveTab] = useState<'users' | 'promos' | 'tiers' | 'stats'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'finance' | 'editor_coupons' | 'system' | 'promos' | 'tiers'>('users');
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [promos, setPromos] = useState<any[]>([]);
+  const [editorCoupons, setEditorCoupons] = useState<EditorCoupon[]>([]);
+  const [servicesHealth, setServicesHealth] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionMessage, setActionMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
@@ -59,6 +76,48 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [newPromoCode, setNewPromoCode] = useState('');
   const [newPromoDays, setNewPromoDays] = useState(7);
   const [newPromoLabel, setNewPromoLabel] = useState('Yönetici Kampanyası');
+
+  // New Editor Coupon Form State
+  const [isAddingCoupon, setIsAddingCoupon] = useState(false);
+  const [couponTitle, setCouponTitle] = useState('👑 YÖNETİCİ ŞEREF KUPONU');
+  const [couponSubtitle, setCouponSubtitle] = useState('Yönetici Masası Özel Tercihleri & AI Analizi');
+  const [couponCategory, setCouponCategory] = useState<'football' | 'horses' | 'stocks'>('football');
+  const [couponConfidence, setCouponConfidence] = useState(92);
+  const [couponIsVipOnly, setCouponIsVipOnly] = useState(true);
+  const [couponMatches, setCouponMatches] = useState<Array<{
+    homeTeam: string;
+    awayTeam: string;
+    league: string;
+    matchTime: string;
+    matchDate: string;
+    prediction: string;
+    odds: number;
+    confidence: number;
+    reason: string;
+  }>>([
+    {
+      homeTeam: 'Real Madrid',
+      awayTeam: 'Barcelona',
+      league: 'İspanya La Liga',
+      matchTime: '21:00',
+      matchDate: 'Bugün',
+      prediction: '2.5 ÜST & KG VAR',
+      odds: 1.72,
+      confidence: 93,
+      reason: 'El Clasico xG analizi en az 3 golü işaret ediyor.'
+    },
+    {
+      homeTeam: 'Liverpool',
+      awayTeam: 'Man City',
+      league: 'İngiltere Premier Lig',
+      matchTime: '19:30',
+      matchDate: 'Bugün',
+      prediction: 'MS 1X',
+      odds: 1.48,
+      confidence: 89,
+      reason: 'Anfield saha avantajı ve Liverpool pres gücü.'
+    }
+  ]);
 
   useEffect(() => {
     if (isOpen && currentUser?.role === 'admin') {
@@ -69,14 +128,18 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const loadData = async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, promosRes] = await Promise.all([
+      const [statsRes, usersRes, promosRes, couponsRes, healthRes] = await Promise.all([
         fetchAdminStatsApi(),
         fetchAdminUsersApi(),
         fetchAdminPromosApi(),
+        fetchEditorCouponsApi(),
+        fetchServicesHealthApi()
       ]);
       if (statsRes.success) setStats(statsRes.stats);
       if (usersRes.success && usersRes.users) setUsers(usersRes.users);
       if (promosRes.success && promosRes.promos) setPromos(promosRes.promos);
+      if (couponsRes.success && couponsRes.coupons) setEditorCoupons(couponsRes.coupons);
+      if (healthRes.success && healthRes.health) setServicesHealth(healthRes.health);
     } finally {
       setLoading(false);
     }
@@ -86,7 +149,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const showFeedback = (text: string, isError: boolean = false) => {
     setActionMessage({ text, isError });
-    setTimeout(() => setActionMessage(null), 3000);
+    setTimeout(() => setActionMessage(null), 3500);
   };
 
   const handleGiveVip = async (userId: string, days: number, planName: string) => {
@@ -171,12 +234,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const handleExportCsv = () => {
     if (users.length === 0) return;
-    const headers = ['ID', 'Ad Soyad', 'E-Posta', 'Telefon', 'Giriş Yöntemi', 'Rol', 'VIP Durumu', 'VIP Bitiş Tarihi'];
+    const headers = ['ID', 'Ad Soyad', 'E-Posta', 'Telefon', 'İlgi Alanı', 'Giriş Yöntemi', 'Rol', 'VIP Durumu', 'VIP Bitiş Tarihi'];
     const rows = users.map(u => [
       u.id,
       `"${u.name}"`,
       u.email,
       u.phone || '',
+      u.preferredInterest || 'Genel',
       u.authProvider || 'local',
       u.role,
       u.isVip ? 'VIP' : 'Free',
@@ -194,6 +258,75 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     showFeedback('Kullanıcı & Telefon listesi CSV olarak indirildi.');
   };
 
+  // Editor Coupon Management Handlers
+  const handleAddMatchRow = () => {
+    setCouponMatches(prev => [
+      ...prev,
+      {
+        homeTeam: '',
+        awayTeam: '',
+        league: 'Süper Lig',
+        matchTime: '20:00',
+        matchDate: 'Bugün',
+        prediction: 'MS 1',
+        odds: 1.65,
+        confidence: 88,
+        reason: ''
+      }
+    ]);
+  };
+
+  const handleRemoveMatchRow = (index: number) => {
+    if (couponMatches.length <= 1) {
+      alert('Kuponda en az 1 maç bulunmalıdır.');
+      return;
+    }
+    setCouponMatches(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveEditorCoupon = async () => {
+    if (!couponTitle.trim()) {
+      alert('Lütfen kupon başlığı girin.');
+      return;
+    }
+    const invalid = couponMatches.some(m => !m.homeTeam.trim() || !m.awayTeam.trim() || !m.prediction.trim());
+    if (invalid) {
+      alert('Lütfen maçlardaki ev sahibi, deplasman ve tahmin alanlarını doldurunuz.');
+      return;
+    }
+
+    const res = await saveEditorCouponApi({
+      title: couponTitle,
+      subtitle: couponSubtitle,
+      category: couponCategory,
+      confidence: couponConfidence,
+      isVipOnly: couponIsVipOnly,
+      matches: couponMatches.map((m, i) => ({
+        id: `m_ed_${Date.now()}_${i}`,
+        ...m
+      }))
+    });
+
+    if (res.success && res.coupon) {
+      setEditorCoupons(prev => [res.coupon!, ...prev.filter(c => c.id !== res.coupon!.id)]);
+      setIsAddingCoupon(false);
+      showFeedback('👑 Yönetici kuponu başarıyla yayına alındı!');
+    } else {
+      showFeedback(res.error || 'Kupon kaydedilemedi', true);
+    }
+  };
+
+  const handleDeleteEditorCoupon = async (id: string) => {
+    if (!confirm('Bu yönetici kuponunu yayından kaldırmak istediğinize emin misiniz?')) return;
+    const res = await deleteEditorCouponApi(id);
+    if (res.success) {
+      setEditorCoupons(prev => prev.filter(c => c.id !== id));
+      showFeedback('Kupon yayından kaldırıldı.');
+    } else {
+      showFeedback(res.error || 'Kupon silinemedi', true);
+    }
+  };
+
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -202,7 +335,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]">
+      <div className="relative w-full max-w-5xl bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]">
         
         {/* Glow ambient */}
         <div className="pointer-events-none absolute -top-32 -left-32 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl" />
@@ -216,13 +349,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-black text-white">Yönetici (Admin) Paneli</h2>
+                <h2 className="text-lg sm:text-xl font-black text-white">Yönetici (Admin) Kokpiti</h2>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-black border border-rose-500/30">
                   KURUCU &amp; ADMİN
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Kullanıcı telefonları, VIP süreleri, Google kayıtları ve sistem kontrolü.
+                Finans &amp; Gelir, Yönetici Kuponları, Canlı Bot Sağlığı ve Üye CRM Yönetimi.
               </p>
             </div>
           </div>
@@ -279,27 +412,28 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
           <div className="p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800/80">
             <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Telefonlu Üyeler</span>
+              <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Tahmini Aylık MRR</span>
             </div>
-            <div className="text-xl font-black text-emerald-400 mt-0.5">
-              {users.filter(u => u.phone).length}
+            <div className="text-xl font-black text-emerald-400 font-mono mt-0.5">
+              ₺{(stats?.estimatedMrr || 0).toLocaleString('tr-TR')}
             </div>
           </div>
 
           <div className="p-2.5 rounded-2xl bg-slate-950/60 border border-slate-800/80">
             <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
               <Server className="w-3.5 h-3.5 text-purple-400" />
-              <span>Sunucu Durumu</span>
+              <span>Sistem Sağlığı</span>
             </div>
-            <div className="text-xs font-mono font-bold text-purple-300 mt-1">
-              v2026.11.12.17 • Çevrimiçi
+            <div className="text-xs font-mono font-bold text-emerald-400 mt-1 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>%100 Çevrimiçi</span>
             </div>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5 mb-3 shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-1.5 border-b border-slate-800 pb-2.5 mb-3 shrink-0 overflow-x-auto">
           <button
             onClick={() => setActiveTab('users')}
             className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
@@ -311,13 +445,38 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('tiers')}
+            onClick={() => setActiveTab('finance')}
             className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'tiers' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
+              activeTab === 'finance' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Free vs. VIP Kuralları</span>
+            <DollarSign className="w-3.5 h-3.5" />
+            <span>Finans &amp; Gelir</span>
+            {stats?.expiringSoonCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[9px] font-black">
+                {stats.expiringSoonCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('editor_coupons')}
+            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'editor_coupons' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
+            }`}
+          >
+            <Crown className="w-3.5 h-3.5" />
+            <span>Yönetici Kuponları ({editorCoupons.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('system')}
+            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'system' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
+            }`}
+          >
+            <Radio className="w-3.5 h-3.5" />
+            <span>Bot &amp; Veri Sağlığı</span>
           </button>
 
           <button
@@ -327,17 +486,17 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             }`}
           >
             <Gift className="w-3.5 h-3.5" />
-            <span>Promosyon Kodları ({promos.length})</span>
+            <span>Promosyonlar ({promos.length})</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('stats')}
+            onClick={() => setActiveTab('tiers')}
             className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'stats' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
+              activeTab === 'tiers' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
             }`}
           >
-            <Activity className="w-3.5 h-3.5" />
-            <span>Sistem &amp; Bülten</span>
+            <Layers className="w-3.5 h-3.5" />
+            <span>Free vs. VIP</span>
           </button>
         </div>
 
@@ -353,125 +512,144 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   placeholder="İsim, e-posta veya telefon ile ara..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 text-xs focus:outline-hidden focus:border-amber-400"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-hidden focus:border-amber-400"
                 />
               </div>
+
               <button
                 onClick={handleExportCsv}
-                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
-                title="Tüm kullanıcı ve telefon listesini CSV formatında indir"
+                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 border border-slate-700"
+                title="Tüm kullanıcıları telefonlarıyla CSV (Excel) olarak indir"
               >
                 <Download className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="hidden sm:inline">CSV İndir</span>
               </button>
             </div>
 
-            {/* Users Table / Scrollable Container */}
+            {/* Users Table */}
             <div className="flex-1 overflow-y-auto space-y-2 pr-1">
               {filteredUsers.length === 0 ? (
-                <div className="text-center py-8 text-xs text-slate-500">
-                  Eşleşen kullanıcı bulunamadı.
+                <div className="text-center py-8 text-slate-500 text-xs">
+                  Kullanıcı bulunamadı.
                 </div>
               ) : (
                 filteredUsers.map((u) => {
-                  const daysLeft = u.vipExpiresAt ? Math.max(0, Math.ceil((u.vipExpiresAt - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
                   const isCurrent = u.id === currentUser.id;
-                  const cleanPhoneNum = u.phone ? u.phone.replace(/\D/g, '') : null;
+                  const cleanPhoneForWa = u.phone ? u.phone.replace(/[^\d]/g, '') : null;
+                  const waNumber = cleanPhoneForWa?.startsWith('0') ? '90' + cleanPhoneForWa.slice(1) : (cleanPhoneForWa || '');
 
                   return (
                     <div
                       key={u.id}
-                      className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                      className={`p-3 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        isCurrent 
+                          ? 'bg-amber-500/10 border-amber-400/40' 
+                          : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
+                      }`}
                     >
-                      {/* User Info */}
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-black text-white truncate text-sm">{u.name}</span>
-                          {isCurrent && (
-                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold">
-                              (Siz)
-                            </span>
-                          )}
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
-                            u.authProvider === 'google' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-slate-800 text-slate-400'
-                          }`}>
-                            {u.authProvider === 'google' ? 'Google' : 'E-Posta'}
-                          </span>
-                          <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold ${
-                            u.role === 'admin' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-slate-800 text-slate-400'
-                          }`}>
-                            {u.role === 'admin' ? '🛡️ Admin' : '👤 Free Üye'}
-                          </span>
+                      {/* Left: User details */}
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${
+                          u.isVip ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20' : 'bg-slate-800 text-slate-400'
+                        }`}>
+                          {u.name.charAt(0).toUpperCase()}
                         </div>
 
-                        <div className="flex items-center gap-3 text-[11px] text-slate-400 flex-wrap">
-                          <span>{u.email}</span>
-                          {u.phone ? (
-                            <span className="flex items-center gap-1 text-emerald-400 font-mono font-bold">
-                              <Phone className="w-3 h-3" />
-                              {u.phone}
-                              {cleanPhoneNum && (
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-white text-xs truncate">{u.name}</span>
+                            {u.role === 'admin' && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                ADMİN
+                              </span>
+                            )}
+                            {u.authProvider === 'google' && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                Google
+                              </span>
+                            )}
+                            {u.authProvider === 'whatsapp_otp' && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                WhatsApp OTP
+                              </span>
+                            )}
+                            {u.isVip ? (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                                👑 VIP ({u.vipPlan || 'Aktif'})
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-800 text-slate-400">
+                                Free
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                            {u.email}
+                          </div>
+
+                          {/* Phone number and direct WhatsApp link */}
+                          <div className="flex items-center gap-2 mt-1 text-[11px]">
+                            {u.phone ? (
+                              <>
+                                <span className="font-mono text-emerald-400 font-bold">{u.phone}</span>
                                 <a
-                                  href={`https://wa.me/${cleanPhoneNum.startsWith('90') ? cleanPhoneNum : '90' + cleanPhoneNum}`}
+                                  href={`https://wa.me/${waNumber}?text=Merhaba%20${encodeURIComponent(u.name)}%2C%20ProAnaliz%20AI%20destek%20ekibinden%20yaz%C4%B1yorum.`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="ml-1 text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold inline-flex items-center gap-0.5"
-                                  title="WhatsApp ile İletişime Geç"
+                                  className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 font-bold border border-emerald-500/30 transition-colors"
+                                  title="WhatsApp ile Sohbet Başlat"
                                 >
-                                  <MessageCircle className="w-2.5 h-2.5" />
+                                  <MessageCircle className="w-3 h-3 text-emerald-400" />
                                   <span>WhatsApp</span>
                                 </a>
-                              )}
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleEditPhone(u.id, u.phone)}
-                              className="text-[10px] text-slate-500 hover:text-amber-300 underline cursor-pointer"
-                            >
-                              + Telefon Ekle
-                            </button>
-                          )}
-                        </div>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => handleEditPhone(u.id, u.phone)}
+                                className="text-[10px] text-slate-500 hover:text-slate-300 underline cursor-pointer"
+                              >
+                                + Telefon Ekle
+                              </button>
+                            )}
 
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                          <span>Üyelik:</span>
-                          {u.isVip ? (
-                            <span className="text-amber-400 font-bold flex items-center gap-1">
-                              <Crown className="w-3 h-3 text-amber-400" />
-                              {u.vipPlan || 'VIP'} ({daysLeft} Gün Kaldı)
-                            </span>
-                          ) : (
-                            <span className="text-slate-500">Standart Ücretsiz (Free) Plan</span>
-                          )}
+                            {u.vipExpiresAt && (
+                              <span className="text-[10px] text-slate-500">
+                                • VIP Bitiş: {new Date(u.vipExpiresAt).toLocaleDateString('tr-TR')}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                      {/* User Actions */}
-                      <div className="flex items-center flex-wrap gap-1.5 shrink-0">
-                        {/* Quick Add VIP Buttons */}
+                      {/* Right: Actions */}
+                      <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 flex-wrap">
+                        {/* VIP Duration Quick Actions */}
                         <button
-                          onClick={() => handleGiveVip(u.id, 30, '1 Aylık VIP')}
-                          className="px-2 py-1 rounded-lg bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold text-[11px] transition-colors cursor-pointer"
-                          title="Kullanıcıya 30 Gün VIP Ver"
+                          onClick={() => handleGiveVip(u.id, 7, '7 Gün Hediye VIP')}
+                          className="px-2 py-1 rounded-lg bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 border border-amber-400/20 text-[10px] font-bold transition-colors cursor-pointer"
+                          title="7 Gün VIP Tanımla"
                         >
-                          +30 Gün
+                          +7G VIP
                         </button>
                         <button
-                          onClick={() => handleGiveVip(u.id, 365, 'Yıllık Kral VIP')}
-                          className="px-2 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold text-[11px] transition-colors cursor-pointer"
-                          title="Kullanıcıya 1 Yıl VIP Ver"
+                          onClick={() => handleGiveVip(u.id, 30, 'Aylık VIP')}
+                          className="px-2 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 text-[10px] font-black transition-colors cursor-pointer"
+                          title="30 Gün VIP Tanımla"
                         >
-                          +1 Yıl
+                          +30G VIP
                         </button>
 
-                        {/* Toggle Admin Role */}
-                        <button
-                          onClick={() => handleToggleRole(u.id, u.role)}
-                          className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] transition-colors cursor-pointer"
-                          title="Rolünü Değiştir"
-                        >
-                          {u.role === 'admin' ? 'Yetki Düşür' : 'Admin Yap'}
-                        </button>
+                        {/* Toggle Admin */}
+                        {!isCurrent && (
+                          <button
+                            onClick={() => handleToggleRole(u.id, u.role)}
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition-colors cursor-pointer"
+                            title={u.role === 'admin' ? 'Yetkiyi Düşür' : 'Admin Yap'}
+                          >
+                            <ShieldCheck className={`w-3.5 h-3.5 ${u.role === 'admin' ? 'text-rose-400' : 'text-slate-400'}`} />
+                          </button>
+                        )}
 
                         {/* Delete User */}
                         {!isCurrent && (
@@ -492,59 +670,418 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           </div>
         )}
 
-        {/* TAB 2: FREE vs VIP MATRIX */}
-        {activeTab === 'tiers' && (
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs text-slate-300">
-            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
-              <h3 className="font-black text-amber-300 text-sm flex items-center gap-2">
-                <Crown className="w-4 h-4 text-amber-400" />
-                <span>Free (Standart) vs. VIP Üyelik Kullanım Kuralları</span>
-              </h3>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                VIP süresi dolan kullanıcıların hesabı silinmez; otomatik olarak Free (Ücretsiz) plana düşürülür. Kilitli alanlar tekrar `🔒 VIP` haline gelir.
-              </p>
+        {/* TAB 2: FINANCE & REVENUE COCKPIT */}
+        {activeTab === 'finance' && (
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs text-slate-300">
+            {/* Top Revenue Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/15 to-slate-950 border border-emerald-500/30 space-y-1">
+                <span className="text-[10px] font-black uppercase text-emerald-400 tracking-wider">Aylık Tahmini MRR</span>
+                <div className="text-2xl font-black text-white font-mono">₺{(stats?.estimatedMrr || 0).toLocaleString('tr-TR')}</div>
+                <div className="text-[10px] text-slate-400">Aktif {stats?.vipUsers || 0} VIP aboneden üretilen düzenli ciro</div>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                {/* FREE TIER */}
-                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-black text-white text-xs uppercase tracking-wider">🆓 Free (Ücretsiz) Plan</span>
-                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-bold">Herkes Açık</span>
-                  </div>
-                  <ul className="space-y-1.5 text-[11px] text-slate-400">
-                    <li className="flex items-center gap-1.5">✓ Tüm liglerin canlı maç bülteni &amp; skorları</li>
-                    <li className="flex items-center gap-1.5">✓ Temel oranlar, form durumları &amp; puan tablosu</li>
-                    <li className="flex items-center gap-1.5">✓ <strong>1 Adet Kupon:</strong> Günün İdeal Kuponu açık</li>
-                    <li className="flex items-center gap-1.5">✓ TJK yarış bülteni ve at listeleri</li>
-                    <li className="flex items-center gap-1.5">✓ Canlı Döviz, Altın &amp; Borsa genel görünümü</li>
-                    <li className="flex items-center gap-1.5 text-rose-400/80">✗ Banko (%85+) &amp; Sürpriz Kuponlar Kilitli</li>
-                    <li className="flex items-center gap-1.5 text-rose-400/80">✗ TJK Altılı Robotu Hazır Kuponu Kilitli</li>
-                    <li className="flex items-center gap-1.5 text-rose-400/80">✗ Borsa Quant "GÜÇLÜ AL" Sinyalleri Kilitli</li>
-                  </ul>
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/15 to-slate-950 border border-amber-500/30 space-y-1">
+                <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider">Tahmini Toplam Hacim</span>
+                <div className="text-2xl font-black text-amber-300 font-mono">₺{(stats?.totalRevenue || 0).toLocaleString('tr-TR')}</div>
+                <div className="text-[10px] text-slate-400">Kullanıcı başına LTV tahmini ile kümülatif hacim</div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-500/15 to-slate-950 border border-blue-500/30 space-y-1">
+                <span className="text-[10px] font-black uppercase text-blue-400 tracking-wider">VIP Dönüşüm Oranı</span>
+                <div className="text-2xl font-black text-blue-300 font-mono">
+                  %{stats?.totalUsers ? Math.round(((stats?.vipUsers || 0) / stats.totalUsers) * 100) : 0}
                 </div>
+                <div className="text-[10px] text-slate-400">Toplam {stats?.totalUsers || 0} kayıtlı kullanıcı içindeki payı</div>
+              </div>
+            </div>
 
-                {/* VIP TIER */}
-                <div className="p-3.5 rounded-xl bg-gradient-to-b from-amber-500/10 to-slate-900 border border-amber-400/40 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-black text-amber-300 text-xs uppercase tracking-wider">👑 VIP Kulübü Üyesi</span>
-                    <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 text-[10px] font-black">Full Erişim</span>
+            {/* Retention & Expiring Soon List */}
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400">
+                    <Clock className="w-4 h-4" />
                   </div>
-                  <ul className="space-y-1.5 text-[11px] text-amber-100">
-                    <li className="flex items-center gap-1.5">★ <strong>Günün Banko Kuponu (%85+ Güvenilirlik)</strong></li>
-                    <li className="flex items-center gap-1.5">★ <strong>Yüksek Oranlı Sürpriz Kupon</strong></li>
-                    <li className="flex items-center gap-1.5">★ <strong>TJK Altılı Robotu:</strong> Günün Cazip Banko Tekleri</li>
-                    <li className="flex items-center gap-1.5">★ <strong>Borsa &amp; Kripto:</strong> Quant "GÜÇLÜ AL" Sinyalleri</li>
-                    <li className="flex items-center gap-1.5">★ <strong>Sınırsız AI Kupon &amp; Sohbet Robotu</strong></li>
-                    <li className="flex items-center gap-1.5">★ <strong>Anlık VIP Push Bildirimleri (Sıfır Gecikme)</strong></li>
-                    <li className="flex items-center gap-1.5 text-emerald-400 font-bold">★ Reklamsız, öncelikli VIP terminal desteği</li>
-                  </ul>
+                  <div>
+                    <h3 className="font-black text-white text-xs sm:text-sm">🚨 3 Gün İçinde Süresi Bitecek VIP Üyeler (Kritik Hatırlatma)</h3>
+                    <p className="text-[10px] text-slate-400">Aboneliği bitmek üzere olan üyelere tek tıkla indirimli WhatsApp teklifi gönderin.</p>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[10px] font-bold">
+                  {stats?.expiringSoonCount || 0} Üye
+                </span>
+              </div>
+
+              {stats?.expiringSoonUsers && stats.expiringSoonUsers.length > 0 ? (
+                <div className="space-y-2 pt-1">
+                  {stats.expiringSoonUsers.map((u: any) => {
+                    const cleanPhone = u.phone ? u.phone.replace(/[^\d]/g, '') : null;
+                    const waNumber = cleanPhone?.startsWith('0') ? '90' + cleanPhone.slice(1) : (cleanPhone || '');
+                    const daysLeft = Math.max(1, Math.ceil((u.vipExpiresAt - Date.now()) / (24 * 3600 * 1000)));
+
+                    return (
+                      <div key={u.id} className="p-2.5 rounded-xl bg-slate-900 border border-rose-500/30 flex items-center justify-between gap-2">
+                        <div>
+                          <div className="font-bold text-white text-xs">{u.name}</div>
+                          <div className="text-[10px] text-slate-400">
+                            {u.phone || u.email} • <span className="text-rose-400 font-bold">{daysLeft} gün kaldı</span>
+                          </div>
+                        </div>
+
+                        {u.phone ? (
+                          <a
+                            href={`https://wa.me/${waNumber}?text=Merhaba%20${encodeURIComponent(u.name)}%2C%20ProAnaliz%20AI%20VIP%20%C3%BCyeli%C4%9Finiz%20${daysLeft}%20g%C3%BCn%20i%C3%A7inde%20sona%20eriyor.%20Bug%C3%BCne%20%C3%B6zel%20%2530%20yenileme%20f\u0131rsat\u0131n\u0131%20ka%C3%A7\u0131rmay\u0131n!`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-[10px] flex items-center gap-1 transition-colors"
+                          >
+                            <Send className="w-3 h-3" />
+                            <span>WhatsApp Teklifi</span>
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-slate-500 italic">Telefon yok</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-slate-900/40 text-center text-slate-500 text-xs">
+                  Şu an süresi bitmek üzere olan acil kullanıcı bulunmuyor. Tüm VIP süreleri güvende!
+                </div>
+              )}
+            </div>
+
+            {/* Plan Pricing Matrix */}
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+              <h3 className="font-black text-amber-300 text-xs uppercase tracking-wider">Aktif VIP Fiyatlandırma Politikası</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
+                <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="text-slate-400">Haftalık VIP:</div>
+                  <div className="font-black text-white text-sm">350 ₺ / Hafta</div>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="text-slate-400">Aylık VIP (Popüler):</div>
+                  <div className="font-black text-amber-400 text-sm">990 ₺ / Ay</div>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="text-slate-400">Sezonluk / Yıllık VIP:</div>
+                  <div className="font-black text-emerald-400 text-sm">4.900 ₺ / Sezon</div>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 3: PROMO CODES */}
+        {/* TAB 3: EDITOR CURATED COUPONS (CMS) */}
+        {activeTab === 'editor_coupons' && (
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs text-slate-300">
+            {/* Top Action: Add New Editor Coupon Button */}
+            <div className="flex items-center justify-between bg-slate-950/70 p-3 rounded-2xl border border-slate-800">
+              <div>
+                <h3 className="font-black text-white text-xs sm:text-sm flex items-center gap-2">
+                  <Crown className="w-4 h-4 text-amber-400" />
+                  <span>Yönetici &amp; Editör Özel Kuponları</span>
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Buradan oluşturacağınız kuponlar ana sayfadaki Kuponlar bölümünün en başında altın rozetle sergilenir.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsAddingCoupon(!isAddingCoupon)}
+                className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isAddingCoupon ? 'İptal' : 'Yeni Kupon Ekle'}</span>
+              </button>
+            </div>
+
+            {/* Coupon Creation Form */}
+            {isAddingCoupon && (
+              <div className="p-4 rounded-2xl bg-gradient-to-b from-amber-500/10 to-slate-950 border border-amber-400/40 space-y-3">
+                <div className="font-black text-amber-300 text-sm">👑 Yeni Yönetici Kuponu Oluştur</div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-slate-400 font-bold block mb-1">Kupon Başlığı</label>
+                    <input
+                      type="text"
+                      value={couponTitle}
+                      onChange={(e) => setCouponTitle(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-400 font-bold block mb-1">Alt Açıklama</label>
+                    <input
+                      type="text"
+                      value={couponSubtitle}
+                      onChange={(e) => setCouponSubtitle(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-[10px] text-slate-400 font-bold block mb-1">Güven Skoru (%)</label>
+                    <input
+                      type="number"
+                      min="50"
+                      max="99"
+                      value={couponConfidence}
+                      onChange={(e) => setCouponConfidence(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-400 font-bold block mb-1">Kategori</label>
+                    <select
+                      value={couponCategory}
+                      onChange={(e: any) => setCouponCategory(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-amber-400"
+                    >
+                      <option value="football">Futbol (İddaa)</option>
+                      <option value="horses">At Yarışı (TJK)</option>
+                      <option value="stocks">Borsa &amp; Kripto</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-400 font-bold block mb-1">Erişim Tipi</label>
+                    <select
+                      value={couponIsVipOnly ? 'vip' : 'free'}
+                      onChange={(e) => setCouponIsVipOnly(e.target.value === 'vip')}
+                      className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-amber-400"
+                    >
+                      <option value="vip">👑 VIP Özel (Free Kilitli)</option>
+                      <option value="free">🆓 Herkese Açık (Ücretsiz)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Match Rows */}
+                <div className="space-y-2 pt-2 border-t border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-white text-xs">Kupon Maçları ({couponMatches.length})</span>
+                    <button
+                      type="button"
+                      onClick={handleAddMatchRow}
+                      className="text-[11px] text-amber-400 hover:text-amber-300 font-bold cursor-pointer"
+                    >
+                      + Maç Ekle
+                    </button>
+                  </div>
+
+                  {couponMatches.map((m, idx) => (
+                    <div key={idx} className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                        <input
+                          type="text"
+                          placeholder="Ev Sahibi (Örn: Real Madrid)"
+                          value={m.homeTeam}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setCouponMatches(prev => prev.map((item, i) => i === idx ? { ...item, homeTeam: val } : item));
+                          }}
+                          className="px-2 py-1 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-400"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Deplasman (Örn: Barcelona)"
+                          value={m.awayTeam}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setCouponMatches(prev => prev.map((item, i) => i === idx ? { ...item, awayTeam: val } : item));
+                          }}
+                          className="px-2 py-1 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-400"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Tahmin (Örn: 2.5 ÜST)"
+                          value={m.prediction}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setCouponMatches(prev => prev.map((item, i) => i === idx ? { ...item, prediction: val } : item));
+                          }}
+                          className="px-2 py-1 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-400"
+                        />
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            step="0.05"
+                            placeholder="Oran"
+                            value={m.odds}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setCouponMatches(prev => prev.map((item, i) => i === idx ? { ...item, odds: val } : item));
+                            }}
+                            className="w-full px-2 py-1 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-400 font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMatchRow(idx)}
+                            className="p-1 text-rose-400 hover:text-rose-300"
+                            title="Maçı Çıkar"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingCoupon(false)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs cursor-pointer"
+                  >
+                    Vazgeç
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveEditorCoupon}
+                    className="px-4 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs cursor-pointer shadow-lg shadow-amber-500/20"
+                  >
+                    👑 Kuponu Yayına Al
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* List of Published Editor Coupons */}
+            <div className="space-y-3">
+              {editorCoupons.length === 0 ? (
+                <div className="text-center py-8 text-slate-500 text-xs">
+                  Henüz yayında bir yönetici kuponu bulunmuyor.
+                </div>
+              ) : (
+                editorCoupons.map((c) => (
+                  <div key={c.id} className="p-3.5 rounded-2xl bg-slate-950/70 border border-amber-500/30 space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-white text-sm">{c.title}</span>
+                          <span className="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black text-[9px]">
+                            {c.isVipOnly ? 'VIP ÖZEL' : 'HERKESE AÇIK'}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">{c.subtitle}</div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <div className="text-[10px] text-slate-400">Toplam Oran</div>
+                          <div className="text-sm font-black text-amber-400 font-mono">{c.totalOdds}</div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteEditorCoupon(c.id)}
+                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 cursor-pointer"
+                          title="Yayından Kaldır"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                      {c.matches.map((m) => (
+                        <div key={m.id} className="flex items-center justify-between text-xs py-0.5 border-b border-slate-800/50 last:border-0">
+                          <span className="text-white font-medium">{m.homeTeam} - {m.awayTeam}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-amber-300 font-mono">{m.prediction}</span>
+                            <span className="font-mono text-emerald-400">{m.odds}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: BOT & DATA SERVICES HEALTH */}
+        {activeTab === 'system' && (
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs text-slate-300">
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
+                    <Radio className="w-4 h-4 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-white text-xs sm:text-sm">Canlı Botlar &amp; Veri Akışı Durumu</h3>
+                    <p className="text-[10px] text-slate-400">Tüm dış veri kaynakları ve yapay zeka hesaplama motorları anlık izleniyor.</p>
+                  </div>
+                </div>
+
+                {onRefreshBulletin && (
+                  <button
+                    onClick={() => {
+                      onRefreshBulletin();
+                      showFeedback('Bülten ve maç formları zorla yenileniyor...');
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Zorla Senkronize Et</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Service Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                {servicesHealth?.services?.map((s: any) => (
+                  <div key={s.id} className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                        <span className="font-black text-white text-xs">{s.name}</span>
+                      </div>
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-black">
+                        {s.latencyMs} ms
+                      </span>
+                    </div>
+
+                    <div className="text-[10px] text-slate-400 flex items-center justify-between">
+                      <span>Sağlık Skoru: <strong className="text-emerald-400">%{s.healthScore}</strong></span>
+                      <span>Son Senk: {Math.round((Date.now() - s.lastSync) / 1000)} sn önce</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Server Specifications */}
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+              <h3 className="font-black text-purple-400 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                <Cpu className="w-3.5 h-3.5" />
+                <span>Bulut Sunucu Metrikleri (Render Production)</span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] pt-1">
+                <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="text-slate-400">Uptime (Çalışma Süresi):</div>
+                  <div className="font-bold text-white font-mono">{Math.floor(servicesHealth?.server?.uptimeSeconds / 60 || 1)} Dakika</div>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="text-slate-400">Bellek (RAM) Tüketimi:</div>
+                  <div className="font-bold text-emerald-400 font-mono">{servicesHealth?.server?.memoryMb || 85} MB</div>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="text-slate-400">Node Çalışma Ortamı:</div>
+                  <div className="font-bold text-blue-300 font-mono">{servicesHealth?.server?.nodeVersion || 'v20.x'} (Linux)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: PROMO CODES */}
         {activeTab === 'promos' && (
           <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
             {/* Add Promo Code Form */}
@@ -613,53 +1150,54 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           </div>
         )}
 
-        {/* TAB 4: SYSTEM & STATS */}
-        {activeTab === 'stats' && (
+        {/* TAB 6: FREE VS VIP TIERS */}
+        {activeTab === 'tiers' && (
           <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs text-slate-300">
             <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
               <h3 className="font-black text-white text-sm flex items-center gap-2">
-                <Activity className="w-4 h-4 text-emerald-400" />
-                <span>Canlı Sistem Durumu &amp; Kontroller</span>
-              </h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="space-y-1 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                  <div className="text-slate-400 text-[11px]">Sunucu Dağıtımı (Render):</div>
-                  <div className="font-mono text-emerald-400 font-bold">https://proanaliz-ai.onrender.com</div>
-                </div>
-
-                <div className="space-y-1 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                  <div className="text-slate-400 text-[11px]">Yönetici Hesabınız:</div>
-                  <div className="font-bold text-white">{currentUser.name} ({currentUser.email})</div>
-                </div>
-              </div>
-
-              {onRefreshBulletin && (
-                <div className="pt-2">
-                  <button
-                    onClick={() => {
-                      onRefreshBulletin();
-                      showFeedback('Canlı bülten verileri güncelleniyor...');
-                    }}
-                    className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center gap-2"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Canlı İddaa Bültenini Yenile</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Monetization / PayTR notes */}
-            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
-              <h3 className="font-black text-amber-300 text-sm flex items-center gap-2">
                 <Crown className="w-4 h-4 text-amber-400" />
-                <span>Ödeme &amp; Abonelik Durumu</span>
+                <span>Free (Standart) vs. VIP Üyelik Kullanım Kuralları</span>
               </h3>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Şu anda VIP üyelikler promosyon kodları ve yönetici paneli üzerinden anında tanımlanabilir haldedir.
-                Gerçek kredi kartı ile otomatik ödeme almak için <strong>PayTR</strong> veya <strong>Shopier</strong> mağazanızı bağlayabilirsiniz.
+                VIP süresi dolan kullanıcıların hesabı silinmez; otomatik olarak Free (Ücretsiz) plana düşürülür. Kilitli alanlar tekrar `🔒 VIP` haline gelir.
               </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                {/* FREE TIER */}
+                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-white text-xs uppercase tracking-wider">🆓 Free (Ücretsiz) Plan</span>
+                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-bold">Herkes Açık</span>
+                  </div>
+                  <ul className="space-y-1.5 text-[11px] text-slate-400">
+                    <li className="flex items-center gap-1.5">✓ Tüm liglerin canlı maç bülteni &amp; skorları</li>
+                    <li className="flex items-center gap-1.5">✓ Temel oranlar, form durumları &amp; puan tablosu</li>
+                    <li className="flex items-center gap-1.5">✓ <strong>1 Adet Kupon:</strong> Günün İdeal Kuponu açık</li>
+                    <li className="flex items-center gap-1.5">✓ TJK yarış bülteni ve at listeleri</li>
+                    <li className="flex items-center gap-1.5">✓ Canlı Döviz, Altın &amp; Borsa genel görünümü</li>
+                    <li className="flex items-center gap-1.5 text-rose-400/80">✗ Banko (%85+) &amp; Sürpriz Kuponlar Kilitli</li>
+                    <li className="flex items-center gap-1.5 text-rose-400/80">✗ TJK Altılı Robotu Hazır Kuponu Kilitli</li>
+                    <li className="flex items-center gap-1.5 text-rose-400/80">✗ Borsa Quant "GÜÇLÜ AL" Sinyalleri Kilitli</li>
+                  </ul>
+                </div>
+
+                {/* VIP TIER */}
+                <div className="p-3.5 rounded-xl bg-gradient-to-b from-amber-500/10 to-slate-900 border border-amber-400/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-amber-300 text-xs uppercase tracking-wider">👑 VIP Kulübü Üyesi</span>
+                    <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 text-[10px] font-black">Full Erişim</span>
+                  </div>
+                  <ul className="space-y-1.5 text-[11px] text-amber-100">
+                    <li className="flex items-center gap-1.5">★ <strong>Günün Banko Kuponu (%85+ Güvenilirlik)</strong></li>
+                    <li className="flex items-center gap-1.5">★ <strong>Yüksek Oranlı Sürpriz Kupon</strong></li>
+                    <li className="flex items-center gap-1.5">★ <strong>TJK Altılı Robotu:</strong> Günün Cazip Banko Tekleri</li>
+                    <li className="flex items-center gap-1.5">★ <strong>Borsa &amp; Kripto:</strong> Quant "GÜÇLÜ AL" Sinyalleri</li>
+                    <li className="flex items-center gap-1.5">★ <strong>Sınırsız AI Kupon &amp; Sohbet Robotu</strong></li>
+                    <li className="flex items-center gap-1.5">★ <strong>Anlık VIP Push Bildirimleri (Sıfır Gecikme)</strong></li>
+                    <li className="flex items-center gap-1.5 text-emerald-400 font-bold">★ Reklamsız, öncelikli VIP terminal desteği</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         )}
