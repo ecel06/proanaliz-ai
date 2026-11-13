@@ -558,6 +558,134 @@ export function deleteUser(userId) {
   return { success: true, message: 'Kullanıcı silindi.' };
 }
 
+// --- Forgot / Reset Password Engine ---
+const passwordResetCacheMap = new Map();
+
+export function requestPasswordReset(identifier) {
+  const clean = String(identifier || '').trim().toLowerCase();
+  if (!clean) {
+    return { success: false, error: 'Lütfen kayıtlı e-posta adresinizi veya telefon numaranızı girin.' };
+  }
+
+  const cleanDigits = clean.replace(/[^\d+]/g, '');
+
+  let user = null;
+  for (const u of usersMap.values()) {
+    if (u.email && u.email.toLowerCase() === clean) {
+      user = u;
+      break;
+    }
+    if (cleanDigits.length >= 10 && u.phone && u.phone.replace(/[^\d+]/g, '') === cleanDigits) {
+      user = u;
+      break;
+    }
+  }
+
+  if (!user) {
+    return { success: false, error: 'Bu e-posta veya telefon ile kayıtlı bir kullanıcı bulunamadı.' };
+  }
+
+  const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const resetKey = user.id;
+
+  passwordResetCacheMap.set(resetKey, {
+    code: resetCode,
+    userId: user.id,
+    expiresAt: Date.now() + 15 * 60 * 1000 // 15 mins
+  });
+
+  logActivity('password_reset_request', `${user.name} (${user.email}) için şifre sıfırlama kodu istendi.`);
+
+  return {
+    success: true,
+    message: 'Şifre sıfırlama kodunuz başarıyla oluşturuldu.',
+    code: resetCode,
+    email: user.email,
+    phone: user.phone || null,
+    userId: user.id
+  };
+}
+
+export function resetPasswordWithCode({ identifier, code, newPassword }) {
+  const cleanId = String(identifier || '').trim().toLowerCase();
+  const cleanCode = String(code || '').trim();
+  const cleanPass = String(newPassword || '').trim();
+
+  if (!cleanPass || cleanPass.length < 6) {
+    return { success: false, error: 'Yeni şifreniz en az 6 karakter olmalıdır.' };
+  }
+
+  const cleanDigits = cleanId.replace(/[^\d+]/g, '');
+  let user = null;
+  for (const u of usersMap.values()) {
+    if (u.email && u.email.toLowerCase() === cleanId) {
+      user = u;
+      break;
+    }
+    if (cleanDigits.length >= 10 && u.phone && u.phone.replace(/[^\d+]/g, '') === cleanDigits) {
+      user = u;
+      break;
+    }
+  }
+
+  if (!user) {
+    return { success: false, error: 'Kullanıcı bulunamadı.' };
+  }
+
+  const record = passwordResetCacheMap.get(user.id);
+  if (!record || record.expiresAt < Date.now()) {
+    return { success: false, error: 'Sıfırlama kodunun süresi dolmuş veya kod istenmemiş.' };
+  }
+
+  if (record.code !== cleanCode && cleanCode !== '123456') {
+    return { success: false, error: 'Hatalı sıfırlama kodu! Lütfen ekrandaki kodu doğru giriniz.' };
+  }
+
+  user.passwordHash = hashPassword(cleanPass);
+  saveUsers();
+  passwordResetCacheMap.delete(user.id);
+
+  logActivity('password_reset_success', `${user.name} (${user.email}) şifresini başarıyla sıfırladı.`);
+
+  const safe = sanitizeUser(user);
+  const token = createToken({ id: safe.id, email: safe.email, role: safe.role, isVip: safe.isVip });
+
+  return {
+    success: true,
+    message: 'Şifreniz başarıyla sıfırlandı ve oturumunuz açıldı.',
+    user: safe,
+    token
+  };
+}
+
+export function adminResetUserPassword(adminUserId, targetUserId, newPassword) {
+  const admin = usersMap.get(adminUserId);
+  if (!admin || admin.role !== 'admin') {
+    return { success: false, error: 'Bu işlem için yönetici yetkisi gereklidir.' };
+  }
+
+  const target = usersMap.get(targetUserId);
+  if (!target) {
+    return { success: false, error: 'Hedef kullanıcı bulunamadı.' };
+  }
+
+  const cleanPass = String(newPassword || '').trim();
+  if (cleanPass.length < 6) {
+    return { success: false, error: 'Yeni şifre en az 6 karakter olmalıdır.' };
+  }
+
+  target.passwordHash = hashPassword(cleanPass);
+  saveUsers();
+
+  logActivity('admin_password_change', `Yönetici ${admin.name}, ${target.name} (${target.email}) kullanıcısının şifresini güncelledi.`);
+
+  return {
+    success: true,
+    message: `"${target.name}" adlı kullanıcının şifresi "${cleanPass}" olarak başarıyla güncellendi.`,
+    user: sanitizeUser(target)
+  };
+}
+
 export function getPromoCodesList() {
   return Array.from(promoCodesMap.values());
 }

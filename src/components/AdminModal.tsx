@@ -53,7 +53,9 @@ import {
   deleteEditorCouponApi,
   fetchServicesHealthApi,
   fetchAnnouncementApi,
-  saveAnnouncementApi
+  saveAnnouncementApi,
+  adminResetUserPasswordApi,
+  updateOwnProfileApi
 } from '../utils/authHelper';
 
 interface AdminModalProps {
@@ -248,6 +250,41 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
   };
 
+  const handleResetUserPassword = async (userId: string, name: string) => {
+    const newPass = prompt(`"${name}" kullanıcısı için yeni bir şifre belirleyin (En az 6 karakter):`, '123456');
+    if (!newPass) return;
+    if (newPass.trim().length < 6) {
+      alert('Şifre en az 6 karakter olmalıdır.');
+      return;
+    }
+    const res = await adminResetUserPasswordApi(userId, newPass.trim());
+    if (res.success) {
+      showFeedback(`🔑 "${name}" kullanıcısının şifresi "${newPass.trim()}" olarak güncellendi!`);
+      loadData();
+    } else {
+      showFeedback(res.error || 'Şifre güncellenemedi', true);
+    }
+  };
+
+  const handleChangeOwnAdminPassword = async () => {
+    const currentPass = prompt('Mevcut Yönetici Şifrenizi Girin:');
+    if (!currentPass) return;
+    const newPass = prompt('Yeni Yönetici Şifrenizi Girin (En az 6 karakter):');
+    if (!newPass || newPass.trim().length < 6) {
+      alert('Yeni şifreniz en az 6 karakter olmalıdır.');
+      return;
+    }
+    const res = await updateOwnProfileApi({
+      currentPassword: currentPass.trim(),
+      newPassword: newPass.trim()
+    });
+    if (res.success) {
+      showFeedback('👑 Yönetici şifreniz başarıyla güncellendi!');
+    } else {
+      showFeedback(res.error || 'Yönetici şifresi güncellenemedi.', true);
+    }
+  };
+
   const handleCreatePromo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPromoCode.trim()) return;
@@ -402,6 +439,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleChangeOwnAdminPassword}
+              className="px-2.5 py-2 rounded-xl bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+              title="Kendi Yönetici Şifrenizi Değiştirin"
+            >
+              <Lock className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Şifremi Değiştir</span>
+            </button>
             <button
               onClick={loadData}
               disabled={loading}
@@ -702,6 +747,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                           title="30 Gün VIP Tanımla"
                         >
                           +30G VIP
+                        </button>
+
+                        {/* Reset / Change User Password */}
+                        <button
+                          onClick={() => handleResetUserPassword(u.id, u.name)}
+                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px] transition-colors cursor-pointer border border-slate-700 hover:border-amber-400/50"
+                          title={`"${u.name}" adlı kullanıcının şifresini değiştir / sıfırla`}
+                        >
+                          <Lock className="w-3.5 h-3.5 text-amber-400" />
                         </button>
 
                         {/* Toggle Admin */}

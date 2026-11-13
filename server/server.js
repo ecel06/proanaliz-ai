@@ -52,7 +52,10 @@ import {
   updateOwnProfile,
   getAnnouncement,
   setAnnouncement,
-  logActivity
+  logActivity,
+  requestPasswordReset,
+  resetPasswordWithCode,
+  adminResetUserPassword
 } from './userService.js';
 import {
   securityHeadersMiddleware,
@@ -391,6 +394,24 @@ app.post('/api/auth/otp/verify', (req, res) => {
   res.json(result);
 });
 
+// Forgot & Reset Password
+app.post('/api/auth/forgot-password', otpRateLimiter, (req, res) => {
+  const { identifier } = req.body;
+  const result = requestPasswordReset(identifier);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  res.json(result);
+});
+
+app.post('/api/auth/reset-password', (req, res) => {
+  const result = resetPasswordWithCode(req.body);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  res.json(result);
+});
+
 // Update user preference (onboarding selection)
 app.post('/api/user/preference', authMiddleware, (req, res) => {
   const { preference } = req.body;
@@ -474,6 +495,15 @@ app.post('/api/admin/users/:id/vip', adminMiddleware, (req, res) => {
 
 app.post('/api/admin/users/:id/update', adminMiddleware, (req, res) => {
   const result = updateUserDetails(req.params.id, req.body);
+  res.json(result);
+});
+
+app.post('/api/admin/users/:id/reset-password', adminMiddleware, (req, res) => {
+  const { newPassword } = req.body;
+  const result = adminResetUserPassword(req.userId, req.params.id, newPassword);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
   res.json(result);
 });
 
@@ -573,7 +603,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.13.10';
+const APP_VERSION = '2026.11.13.11';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

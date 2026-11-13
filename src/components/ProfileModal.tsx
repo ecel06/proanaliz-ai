@@ -20,7 +20,9 @@ import {
   Check, 
   KeyRound,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { 
   User, 
@@ -54,6 +56,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ text: string; isError: boolean } | null>(null);
@@ -194,11 +199,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('edit')}
-            className={`py-1.5 rounded-xl transition-all cursor-pointer ${
+            className={`py-1.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
               activeTab === 'edit' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Bilgileri Düzenle
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>Bilgiler &amp; Şifre</span>
           </button>
           <button
             onClick={() => setActiveTab('promo')}
@@ -263,8 +269,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             </div>
 
             {/* User Details Grid */}
-            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
-              <h3 className="font-bold text-white text-xs uppercase tracking-wider mb-2">Hesap Özeti</h3>
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-white text-xs uppercase tracking-wider">Hesap Özeti</h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('edit')}
+                  className="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                >
+                  <KeyRound className="w-3 h-3" />
+                  <span>Şifremi Değiştir</span>
+                </button>
+              </div>
               <div className="grid grid-cols-2 gap-2 text-[11px]">
                 <div className="p-2 rounded-xl bg-slate-900 border border-slate-800/80">
                   <span className="text-slate-500 block">Kayıtlı Telefon:</span>
@@ -385,43 +401,70 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               />
             </div>
 
-            <div className="pt-2 border-t border-slate-800 space-y-2">
+            <div className="pt-2 border-t border-slate-800 space-y-2.5">
               <div className="font-bold text-amber-300 text-xs flex items-center gap-1.5">
                 <KeyRound className="w-3.5 h-3.5" />
-                <span>Şifre Değiştir (İsteğe Bağlı)</span>
+                <span>Şifre Değiştir</span>
               </div>
 
               <div>
                 <label className="block text-slate-400 text-[11px] mb-1">Mevcut Şifreniz</label>
-                <input
-                  type="password"
-                  placeholder="Mevcut şifre"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400"
-                />
+                <div className="relative">
+                  <input
+                    type={showCurrentPass ? 'text' : 'password'}
+                    placeholder="Mevcut şifreniz"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full pl-3 pr-9 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPass(!showCurrentPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white cursor-pointer"
+                  >
+                    {showCurrentPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="block text-slate-400 text-[11px] mb-1">Yeni Şifreniz (En az 6 karakter)</label>
-                <input
-                  type="password"
-                  placeholder="Yeni şifre"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400"
-                />
+                <div className="relative">
+                  <input
+                    type={showNewPass ? 'text' : 'password'}
+                    placeholder="Yeni şifreniz"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full pl-3 pr-9 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPass(!showNewPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white cursor-pointer"
+                  >
+                    {showNewPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="block text-slate-400 text-[11px] mb-1">Yeni Şifre Tekrar</label>
-                <input
-                  type="password"
-                  placeholder="Yeni şifre tekrar"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400"
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPass ? 'text' : 'password'}
+                    placeholder="Yeni şifrenizi tekrar girin"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-3 pr-9 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPass(!showConfirmPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white cursor-pointer"
+                  >
+                    {showConfirmPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
             </div>
 

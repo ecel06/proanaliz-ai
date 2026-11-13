@@ -499,3 +499,69 @@ export async function saveAnnouncementApi(announcement: SiteAnnouncement): Promi
     return { success: false, error: 'Duyuru kaydedilemedi.' };
   }
 }
+
+// --- Password Reset & Forgot Password APIs ---
+export async function requestPasswordResetApi(identifier: string): Promise<{
+  success: boolean;
+  message?: string;
+  code?: string;
+  email?: string;
+  phone?: string;
+  error?: string;
+}> {
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier })
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Sunucuya ulaşılamadı. Lütfen tekrar deneyin.' };
+  }
+}
+
+export async function resetPasswordWithCodeApi(
+  identifier: string,
+  code: string,
+  newPassword: string
+): Promise<{
+  success: boolean;
+  message?: string;
+  user?: User;
+  token?: string;
+  error?: string;
+}> {
+  try {
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier, code, newPassword })
+    });
+    const result = await res.json();
+    if (result.success && result.token && result.user) {
+      saveAuthSession(result.token, result.user);
+    }
+    return result;
+  } catch {
+    return { success: false, error: 'Şifre sıfırlanamadı.' };
+  }
+}
+
+export async function adminResetUserPasswordApi(
+  targetUserId: string,
+  newPassword: string
+): Promise<{ success: boolean; message?: string; user?: User; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch(`/api/admin/users/${targetUserId}/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ newPassword })
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Şifre güncellenemedi.' };
+  }
+}
