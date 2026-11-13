@@ -13,13 +13,32 @@ const DATA_DIR = path.resolve(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const EDITOR_COUPONS_FILE = path.join(DATA_DIR, 'editor_coupons.json');
 const ANNOUNCEMENT_FILE = path.join(DATA_DIR, 'announcement.json');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'proanaliz-ai-master-auth-secret-key-2026';
+const JWT_SECRET_FILE = path.join(DATA_DIR, '.jwt_secret');
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
+
+// Cryptographically secure persistent secret resolution
+function resolveJwtSecret() {
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length >= 16) {
+    return process.env.JWT_SECRET;
+  }
+  try {
+    if (fs.existsSync(JWT_SECRET_FILE)) {
+      const saved = fs.readFileSync(JWT_SECRET_FILE, 'utf8').trim();
+      if (saved.length >= 32) return saved;
+    }
+    const generated = crypto.randomBytes(64).toString('hex');
+    fs.writeFileSync(JWT_SECRET_FILE, generated, 'utf8');
+    return generated;
+  } catch {
+    return crypto.randomBytes(64).toString('hex');
+  }
+}
+
+const JWT_SECRET = resolveJwtSecret();
 
 // In-memory caches synced with persistence files
 let usersMap = new Map();

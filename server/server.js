@@ -51,8 +51,18 @@ import {
   getServicesHealth,
   updateOwnProfile,
   getAnnouncement,
-  setAnnouncement
+  setAnnouncement,
+  logActivity
 } from './userService.js';
+import {
+  securityHeadersMiddleware,
+  corsGuardMiddleware,
+  loginRateLimiter,
+  registerRateLimiter,
+  promoRateLimiter,
+  otpRateLimiter,
+  globalApiRateLimiter
+} from './securityMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,8 +70,11 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
-app.use(express.json());
+// Enterprise Security Shield Pipeline
+app.use(securityHeadersMiddleware);
+app.use(corsGuardMiddleware);
+app.use(globalApiRateLimiter);
+app.use(express.json({ limit: '500kb' }));
 
 // In-memory cache
 let cachedBulletin = null;
@@ -336,7 +349,7 @@ function authMiddleware(req, res, next) {
   next();
 }
 
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', registerRateLimiter, (req, res) => {
   const result = registerUser(req.body);
   if (!result.success) {
     return res.status(400).json(result);
@@ -344,7 +357,7 @@ app.post('/api/auth/register', (req, res) => {
   res.json(result);
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', loginRateLimiter, (req, res) => {
   const result = loginUser(req.body);
   if (!result.success) {
     return res.status(400).json(result);
@@ -352,7 +365,7 @@ app.post('/api/auth/login', (req, res) => {
   res.json(result);
 });
 
-app.post('/api/auth/google', (req, res) => {
+app.post('/api/auth/google', loginRateLimiter, (req, res) => {
   const result = googleAuth(req.body);
   if (!result.success) {
     return res.status(400).json(result);
@@ -361,7 +374,7 @@ app.post('/api/auth/google', (req, res) => {
 });
 
 // WhatsApp / SMS OTP endpoints
-app.post('/api/auth/otp/send', (req, res) => {
+app.post('/api/auth/otp/send', otpRateLimiter, (req, res) => {
   const result = requestOtp(req.body.phone);
   if (!result.success) {
     return res.status(400).json(result);
@@ -413,7 +426,7 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
   res.json({ success: true, user });
 });
 
-app.post('/api/auth/redeem-code', authMiddleware, (req, res) => {
+app.post('/api/auth/redeem-code', authMiddleware, promoRateLimiter, (req, res) => {
   const { code } = req.body;
   const result = redeemPromoCode(req.userId, code);
   if (!result.success) {
@@ -433,6 +446,9 @@ function adminMiddleware(req, res, next) {
   authMiddleware(req, res, () => {
     const user = getUserById(req.userId);
     if (!user || user.role !== 'admin') {
+      try {
+        logActivity('SECURITY_ALERT', 'Engellenen yetkisiz Admin erişimi', { ip: req.ip, userId: req.userId || 'anon' });
+      } catch {}
       return res.status(403).json({ success: false, error: 'Bu işlem için Yönetici (Admin) yetkisi gerekiyor.' });
     }
     req.adminUser = user;
@@ -557,7 +573,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.13.06';
+const APP_VERSION = '2026.11.13.07';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
