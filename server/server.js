@@ -55,7 +55,13 @@ import {
   logActivity,
   requestPasswordReset,
   resetPasswordWithCode,
-  adminResetUserPassword
+  adminResetUserPassword,
+  createSupportTicket,
+  getAllSupportTickets,
+  getUserSupportTickets,
+  updateSupportTicketStatus,
+  invalidateOtherSessions,
+  deleteOwnAccount
 } from './userService.js';
 import {
   securityHeadersMiddleware,
@@ -428,6 +434,49 @@ app.post('/api/user/profile', authMiddleware, (req, res) => {
   res.json(result);
 });
 
+// Revoke other device sessions
+app.post('/api/user/invalidate-sessions', authMiddleware, (req, res) => {
+  try {
+    const result = invalidateOtherSessions(req.userId);
+    res.json({ success: true, ...result, message: 'Diğer tüm cihazlardaki oturumlar başarıyla kapatıldı.' });
+  } catch (e) {
+    res.status(400).json({ success: false, message: e.message });
+  }
+});
+
+// Self-service KVKK/GDPR Account Deletion
+app.post('/api/user/delete-account', authMiddleware, (req, res) => {
+  try {
+    const { password } = req.body;
+    const result = deleteOwnAccount(req.userId, password);
+    res.json(result);
+  } catch (e) {
+    res.status(400).json({ success: false, message: e.message });
+  }
+});
+
+// User & Public Support Ticket Submission
+app.post('/api/support/ticket', (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    let userId = null;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const payload = verifyToken(authHeader.substring(7));
+      if (payload) userId = payload.id;
+    }
+    const ticket = createSupportTicket({ ...req.body, userId });
+    res.json({ success: true, ticket });
+  } catch (e) {
+    res.status(400).json({ success: false, message: e.message });
+  }
+});
+
+// Get user's own tickets
+app.get('/api/user/support-tickets', authMiddleware, (req, res) => {
+  const tickets = getUserSupportTickets(req.userId);
+  res.json({ success: true, tickets });
+});
+
 // Site-Wide Announcement (Public)
 app.get('/api/announcement', (req, res) => {
   res.json({ success: true, announcement: getAnnouncement() });
@@ -602,8 +651,23 @@ function getNetworkIp() {
   return 'localhost';
 }
 
+// Admin Support Tickets Management
+app.get('/api/admin/support/tickets', adminMiddleware, (req, res) => {
+  const tickets = getAllSupportTickets();
+  res.json({ success: true, tickets });
+});
+
+app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) => {
+  try {
+    const ticket = updateSupportTicketStatus(req.params.id, req.body);
+    res.json({ success: true, ticket });
+  } catch (e) {
+    res.status(400).json({ success: false, message: e.message });
+  }
+});
+
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.13.11';
+const APP_VERSION = '2026.11.13.12';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

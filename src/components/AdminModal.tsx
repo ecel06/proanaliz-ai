@@ -32,13 +32,15 @@ import {
   Megaphone,
   History,
   Save,
-  Globe
+  Globe,
+  LifeBuoy
 } from 'lucide-react';
 import { 
   User, 
   EditorCoupon,
   EditorMatch,
   SiteAnnouncement,
+  SupportTicket,
   fetchAdminStatsApi, 
   fetchAdminUsersApi, 
   updateUserVipApi, 
@@ -55,7 +57,9 @@ import {
   fetchAnnouncementApi,
   saveAnnouncementApi,
   adminResetUserPasswordApi,
-  updateOwnProfileApi
+  updateOwnProfileApi,
+  fetchAdminSupportTicketsApi,
+  updateAdminSupportTicketApi
 } from '../utils/authHelper';
 
 interface AdminModalProps {
@@ -71,7 +75,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   currentUser,
   onRefreshBulletin,
 }) => {
-  const [activeTab, setActiveTab] = useState<'users' | 'finance' | 'editor_coupons' | 'announcement' | 'logs' | 'system' | 'promos' | 'tiers'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'tickets' | 'finance' | 'editor_coupons' | 'announcement' | 'logs' | 'system' | 'promos' | 'tiers'>('users');
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -80,6 +84,12 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [servicesHealth, setServicesHealth] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionMessage, setActionMessage] = useState<{ text: string; isError: boolean } | null>(null);
+
+  // Support Tickets State
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'in_progress' | 'resolved'>('all');
+  const [replyTextMap, setReplyTextMap] = useState<Record<string, string>>({});
+  const [updatingTicketId, setUpdatingTicketId] = useState<string | null>(null);
 
   // Announcement CMS state
   const [announcementText, setAnnouncementText] = useState('');
@@ -144,19 +154,21 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const loadData = async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, promosRes, couponsRes, healthRes, annRes] = await Promise.all([
+      const [statsRes, usersRes, promosRes, couponsRes, healthRes, annRes, ticketsRes] = await Promise.all([
         fetchAdminStatsApi(),
         fetchAdminUsersApi(),
         fetchAdminPromosApi(),
         fetchEditorCouponsApi(),
         fetchServicesHealthApi(),
-        fetchAnnouncementApi()
+        fetchAnnouncementApi(),
+        fetchAdminSupportTicketsApi()
       ]);
       if (statsRes.success) setStats(statsRes.stats);
       if (usersRes.success && usersRes.users) setUsers(usersRes.users);
       if (promosRes.success && promosRes.promos) setPromos(promosRes.promos);
       if (couponsRes.success && couponsRes.coupons) setEditorCoupons(couponsRes.coupons);
       if (healthRes.success && healthRes.health) setServicesHealth(healthRes.health);
+      if (ticketsRes?.success && Array.isArray(ticketsRes.tickets)) setTickets(ticketsRes.tickets);
       if (annRes?.success && annRes.announcement) {
         setAnnouncementText(annRes.announcement.text || '');
         setAnnouncementEnabled(!!annRes.announcement.enabled);
@@ -165,6 +177,21 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateTicketStatus = async (ticketId: string, status: string, reply?: string) => {
+    setUpdatingTicketId(ticketId);
+    try {
+      const res = await updateAdminSupportTicketApi(ticketId, { status, adminReply: reply });
+      if (res.success && res.ticket) {
+        setTickets(prev => prev.map(t => t.id === ticketId ? res.ticket! : t));
+        showFeedback(`Destek talebi güncellendi (${status})`);
+      } else {
+        showFeedback(res.error || 'Talep güncellenemedi', true);
+      }
+    } finally {
+      setUpdatingTicketId(null);
     }
   };
 
@@ -520,8 +547,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
         {/* Navigation Tabs */}
         <div 
-          className="flex items-center gap-1 sm:gap-1.5 border-b border-slate-800 pb-2.5 mb-3 shrink-0 overflow-x-auto no-scrollbar"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex flex-wrap items-center gap-1 sm:gap-1.5 border-b border-slate-800 pb-2.5 mb-3 shrink-0"
         >
           <button
             onClick={() => setActiveTab('users')}
@@ -532,6 +558,26 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             <Users className="w-3.5 h-3.5" />
             <span>Kullanıcılar ({users.length})</span>
           </button>
+
+          {(() => {
+            const openCount = tickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
+            return (
+              <button
+                onClick={() => setActiveTab('tickets')}
+                className={`px-2.5 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  activeTab === 'tickets' ? 'bg-amber-400 text-slate-950 font-black shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                <LifeBuoy className="w-3.5 h-3.5" />
+                <span>Destek ({tickets.length})</span>
+                {openCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[9px] font-black">
+                    {openCount} Yeni
+                  </span>
+                )}
+              </button>
+            );
+          })()}
 
           <button
             onClick={() => setActiveTab('finance')}
@@ -788,7 +834,167 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           </div>
         )}
 
-        {/* TAB 2: FINANCE & REVENUE COCKPIT */}
+        {/* TAB 2: SUPPORT TICKETS (DESTEK TALEPLERİ) */}
+        {activeTab === 'tickets' && (
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            {/* Filter buttons */}
+            <div className="flex items-center gap-1.5 mb-3 shrink-0">
+              <button
+                onClick={() => setTicketFilter('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                  ticketFilter === 'all' ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                Tümü ({tickets.length})
+              </button>
+              <button
+                onClick={() => setTicketFilter('open')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                  ticketFilter === 'open' ? 'bg-rose-500 text-white font-black' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                Açık ({tickets.filter(t => t.status === 'open').length})
+              </button>
+              <button
+                onClick={() => setTicketFilter('in_progress')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                  ticketFilter === 'in_progress' ? 'bg-sky-500 text-white font-black' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                İnceleniyor ({tickets.filter(t => t.status === 'in_progress').length})
+              </button>
+              <button
+                onClick={() => setTicketFilter('resolved')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                  ticketFilter === 'resolved' ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                Çözüldü ({tickets.filter(t => t.status === 'resolved').length})
+              </button>
+            </div>
+
+            {/* Tickets list */}
+            <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-1 text-xs">
+              {(() => {
+                const filteredTickets = tickets.filter(t => ticketFilter === 'all' || t.status === ticketFilter);
+                if (filteredTickets.length === 0) {
+                  return (
+                    <div className="p-8 text-center text-slate-500 rounded-2xl bg-slate-950/60 border border-slate-800">
+                      Bu filtreye uygun destek talebi bulunamadı.
+                    </div>
+                  );
+                }
+                return filteredTickets.map((t) => {
+                  const replyText = replyTextMap[t.id] ?? (t.adminReply || '');
+                  return (
+                    <div key={t.id} className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] text-slate-500">#{t.id}</span>
+                          <span className="font-black text-white text-sm">{t.subject}</span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-amber-300 uppercase">
+                            {t.category}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={t.status}
+                            disabled={updatingTicketId === t.id}
+                            onChange={(e) => handleUpdateTicketStatus(t.id, e.target.value, replyText)}
+                            className="px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-700 text-xs font-bold text-white cursor-pointer"
+                          >
+                            <option value="open">Açık (Yeni)</option>
+                            <option value="in_progress">İnceleniyor</option>
+                            <option value="resolved">Çözüldü</option>
+                            <option value="closed">Kapatıldı</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* User Info & Message */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/60 text-[11px]">
+                        <div>
+                          <span className="text-slate-500 block">Gönderen:</span>
+                          <span className="font-bold text-slate-200">{t.name}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block">E-Posta:</span>
+                          <a href={`mailto:${t.email}`} className="text-amber-400 hover:underline">{t.email}</a>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block">Telefon / WhatsApp:</span>
+                          {t.phone ? (
+                            <a
+                              href={`https://wa.me/${t.phone.replace(/[^\d]/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-emerald-400 hover:underline flex items-center gap-1 font-mono"
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                              <span>{t.phone}</span>
+                            </a>
+                          ) : (
+                            <span className="text-slate-600">Belirtilmedi</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-xs leading-relaxed">
+                        {t.message}
+                      </div>
+
+                      {/* Admin Reply & Action */}
+                      <div className="pt-2 space-y-2 border-t border-slate-800/80">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-bold text-amber-400 flex items-center gap-1">
+                            <Send className="w-3 h-3" />
+                            <span>Yönetici Cevabı</span>
+                          </span>
+                          {t.repliedAt && (
+                            <span className="text-slate-500 text-[10px]">
+                              Son cevap: {new Date(t.repliedAt).toLocaleString('tr-TR')}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="text"
+                            placeholder="Kullanıcıya iletilecek yönetici yanıtı..."
+                            value={replyText}
+                            onChange={(e) => setReplyTextMap(prev => ({ ...prev, [t.id]: e.target.value }))}
+                            className="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:border-amber-400"
+                          />
+                          <button
+                            type="button"
+                            disabled={updatingTicketId === t.id || !replyText.trim()}
+                            onClick={() => handleUpdateTicketStatus(t.id, t.status === 'open' ? 'in_progress' : t.status, replyText)}
+                            className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {updatingTicketId === t.id ? 'Kaydediliyor...' : 'Cevabı Kaydet'}
+                          </button>
+                          {t.status !== 'resolved' && (
+                            <button
+                              type="button"
+                              disabled={updatingTicketId === t.id}
+                              onClick={() => handleUpdateTicketStatus(t.id, 'resolved', replyText)}
+                              className="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-1 whitespace-nowrap"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Çözüldü Olarak İşaretle</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: FINANCE & REVENUE COCKPIT */}
         {activeTab === 'finance' && (
           <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 pr-1 text-xs text-slate-300">
             {/* Top Revenue Summary Cards */}

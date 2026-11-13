@@ -42,13 +42,29 @@ export interface EditorCoupon {
   matches: EditorMatch[];
 }
 
+export interface SupportTicket {
+  id: string;
+  userId?: string | null;
+  name: string;
+  email: string;
+  phone?: string;
+  category: 'hesap' | 'vip' | 'bot' | 'oneri' | 'genel';
+  subject: string;
+  message: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  createdAt: number;
+  updatedAt: number;
+  adminReply?: string | null;
+  repliedAt?: number | null;
+}
+
 const TOKEN_KEY = 'proanaliz_auth_token';
 const USER_KEY = 'proanaliz_auth_user';
 
 export function getStoredToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    return localStorage.getItem(TOKEN_KEY);
+    return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
   } catch {
     return null;
   }
@@ -57,7 +73,7 @@ export function getStoredToken(): string | null {
 export function getStoredUser(): User | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = localStorage.getItem(USER_KEY);
+    const raw = localStorage.getItem(USER_KEY) || sessionStorage.getItem(USER_KEY);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -65,11 +81,20 @@ export function getStoredUser(): User | null {
   }
 }
 
-export function saveAuthSession(token: string, user: User): void {
+export function saveAuthSession(token: string, user: User, rememberMe: boolean = true): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    if (rememberMe) {
+      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(USER_KEY);
+    } else {
+      sessionStorage.setItem(TOKEN_KEY, token);
+      sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    }
   } catch {}
 }
 
@@ -78,6 +103,8 @@ export function clearAuthSession(): void {
   try {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
   } catch {}
 }
 
@@ -94,6 +121,11 @@ export async function fetchCurrentUser(): Promise<User | null> {
     if (!res.ok) {
       if (res.status === 401) {
         clearAuthSession();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('proanaliz_session_expired', {
+            detail: { message: 'Oturum süreniz doldu veya oturumunuz başka bir cihazdan kapatıldı. Lütfen tekrar giriş yapın.' }
+          }));
+        }
       }
       return null;
     }
@@ -108,7 +140,7 @@ export async function fetchCurrentUser(): Promise<User | null> {
   }
 }
 
-export async function loginUserApi(email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> {
+export async function loginUserApi(email: string, password: string, rememberMe: boolean = true): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
@@ -119,14 +151,14 @@ export async function loginUserApi(email: string, password: string): Promise<{ s
     if (!res.ok || !data.success) {
       return { success: false, error: data.error || 'Giriş yapılamadı.' };
     }
-    saveAuthSession(data.token, data.user);
+    saveAuthSession(data.token, data.user, rememberMe);
     return { success: true, user: data.user };
   } catch (err: any) {
     return { success: false, error: 'Sunucuya bağlanırken bir hata oluştu.' };
   }
 }
 
-export async function registerUserApi(name: string, email: string, password: string, phone?: string): Promise<{ success: boolean; user?: User; error?: string }> {
+export async function registerUserApi(name: string, email: string, password: string, phone?: string, rememberMe: boolean = true): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
@@ -137,14 +169,14 @@ export async function registerUserApi(name: string, email: string, password: str
     if (!res.ok || !data.success) {
       return { success: false, error: data.error || 'Kayıt işlemi başarısız.' };
     }
-    saveAuthSession(data.token, data.user);
+    saveAuthSession(data.token, data.user, rememberMe);
     return { success: true, user: data.user };
   } catch (err: any) {
     return { success: false, error: 'Sunucuya bağlanırken bir hata oluştu.' };
   }
 }
 
-export async function googleAuthApi(params: { email: string; name?: string; phone?: string; sub?: string }): Promise<{ success: boolean; user?: User; error?: string }> {
+export async function googleAuthApi(params: { email: string; name?: string; phone?: string; sub?: string }, rememberMe: boolean = true): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
     const res = await fetch('/api/auth/google', {
       method: 'POST',
@@ -155,7 +187,7 @@ export async function googleAuthApi(params: { email: string; name?: string; phon
     if (!res.ok || !data.success) {
       return { success: false, error: data.error || 'Google ile giriş başarısız.' };
     }
-    saveAuthSession(data.token, data.user);
+    saveAuthSession(data.token, data.user, rememberMe);
     return { success: true, user: data.user };
   } catch (err: any) {
     return { success: false, error: 'Sunucuya bağlanırken bir hata oluştu.' };
@@ -564,4 +596,145 @@ export async function adminResetUserPasswordApi(
   } catch {
     return { success: false, error: 'Şifre güncellenemedi.' };
   }
+}
+
+// --- Session Management & Multi-Device Logout ---
+export async function invalidateOtherSessionsApi(): Promise<{ success: boolean; message?: string; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Giriş yapılmamış.' };
+  try {
+    const res = await fetch('/api/user/invalidate-sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success && data.newToken) {
+      const user = getStoredUser();
+      if (user) saveAuthSession(data.newToken, user);
+    }
+    return data;
+  } catch {
+    return { success: false, error: 'Oturumlar kapatılamadı.' };
+  }
+}
+
+// --- KVKK/GDPR Self-Service Account Deletion ---
+export async function deleteOwnAccountApi(password?: string): Promise<{ success: boolean; message?: string; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Giriş yapılmamış.' };
+  try {
+    const res = await fetch('/api/user/delete-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      clearAuthSession();
+    }
+    return data;
+  } catch {
+    return { success: false, error: 'Hesap silme işlemi gerçekleştirilemedi.' };
+  }
+}
+
+// --- Destek Talepleri (Support Tickets) APIs ---
+export async function submitSupportTicketApi(ticketData: {
+  name: string;
+  email: string;
+  phone?: string;
+  category: string;
+  subject: string;
+  message: string;
+}): Promise<{ success: boolean; ticket?: SupportTicket; error?: string }> {
+  const token = getStoredToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  try {
+    const res = await fetch('/api/support/ticket', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(ticketData)
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Destek talebi iletilemedi. Lütfen tekrar deneyin.' };
+  }
+}
+
+export async function fetchUserSupportTicketsApi(): Promise<{ success: boolean; tickets: SupportTicket[] }> {
+  const token = getStoredToken();
+  if (!token) return { success: true, tickets: [] };
+  try {
+    const res = await fetch('/api/user/support-tickets', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: true, tickets: [] };
+  }
+}
+
+export async function fetchAdminSupportTicketsApi(): Promise<{ success: boolean; tickets: SupportTicket[] }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, tickets: [] };
+  try {
+    const res = await fetch('/api/admin/support/tickets', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: false, tickets: [] };
+  }
+}
+
+export async function updateAdminSupportTicketApi(
+  ticketId: string,
+  updates: { status?: string; adminReply?: string }
+): Promise<{ success: boolean; ticket?: SupportTicket; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch(`/api/admin/support/tickets/${ticketId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(updates)
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Talep güncellenemedi.' };
+  }
+}
+
+// --- Şifre Güçlülüğü Hesaplayıcı ---
+export function evaluatePasswordStrength(password: string): {
+  score: number; // 0 to 4
+  label: 'Çok Zayıf' | 'Zayıf' | 'Orta' | 'Güçlü' | 'Mükemmel';
+  color: string;
+  barWidth: string;
+  hints: string[];
+} {
+  if (!password) {
+    return { score: 0, label: 'Çok Zayıf', color: 'bg-slate-700', barWidth: 'w-0', hints: ['En az 6 karakter'] };
+  }
+  let score = 0;
+  const hints: string[] = [];
+
+  if (password.length >= 8) score += 1;
+  else hints.push('En az 8 karakter');
+
+  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
+  else hints.push('Büyük ve küçük harf');
+
+  if (/[0-9]/.test(password)) score += 1;
+  else hints.push('En az bir rakam');
+
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+  else hints.push('Özel karakter (!, @, # vb.)');
+
+  if (score <= 1) return { score: 1, label: 'Zayıf', color: 'bg-rose-500', barWidth: 'w-1/4', hints };
+  if (score === 2) return { score: 2, label: 'Orta', color: 'bg-amber-500', barWidth: 'w-2/4', hints };
+  if (score === 3) return { score: 3, label: 'Güçlü', color: 'bg-emerald-500', barWidth: 'w-3/4', hints };
+  return { score: 4, label: 'Mükemmel', color: 'bg-emerald-400', barWidth: 'w-full', hints: [] };
 }

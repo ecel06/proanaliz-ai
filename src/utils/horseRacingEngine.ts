@@ -324,12 +324,25 @@ export function generateAICoupons(
     return { raceNumber: race.number, ranked, gap: (ranked[0]?.score || 0) - (ranked[1]?.score || 0) };
   });
 
-  // Identify strongest single-banko leg & second strongest leg
+  // Identify strongest single-banko leg & second strongest leg ONLY IF they meet true statistical superiority
   const sortedByStrength = [...legAnalyses].sort(
     (a, b) => (b.ranked[0]?.score || 0) + b.gap - ((a.ranked[0]?.score || 0) + a.gap)
   );
-  const primaryBankoRace = sortedByStrength[0]?.raceNumber;
-  const secondaryBankoRace = sortedByStrength[1]?.raceNumber;
+
+  const bestCandidate = sortedByStrength[0];
+  const secondCandidate = sortedByStrength[1];
+
+  // A leg is ONLY a legitimate primary single if it has a real gap (>=5) or high confidence (>=68)
+  const hasLegitPrimaryBanko = Boolean(
+    bestCandidate && (bestCandidate.gap >= 5 || (bestCandidate.ranked[0]?.score || 0) >= 68)
+  );
+  const primaryBankoRace = hasLegitPrimaryBanko ? bestCandidate.raceNumber : null;
+
+  // A leg is ONLY a secondary banko if gap is >= 4 and score >= 64
+  const hasLegitSecondaryBanko = Boolean(
+    secondCandidate && (secondCandidate.gap >= 4 || (secondCandidate.ranked[0]?.score || 0) >= 64)
+  );
+  const secondaryBankoRace = hasLegitSecondaryBanko ? secondCandidate.raceNumber : null;
 
   const buildCoupon = (
     id: string,
@@ -366,14 +379,19 @@ export function generateAICoupons(
     };
   };
 
-  // 1. Ekonomik (2 Tek + dar ayaklar)
+  // 1. Ekonomik (Güçlü ayakta Tek/Banko, diğer ayaklarda güçlü ikili)
   const ekonomik = buildCoupon(
     'hr-eco',
     `Ekonomik ${game.label} Şablonu`,
-    'En yüksek AGF + Form puanlı iki ayakta Tek/Banko, diğer ayaklarda güçlü ikili',
+    hasLegitPrimaryBanko 
+      ? 'En yüksek AGF + Form puanlı ayakta Tek/Banko, diğer ayaklarda güçlü ikili'
+      : 'Denk ve zorlu koşularda sürprize kapalı dar ayaklı ekonomik şablon',
     'EKONOMİK',
     (raceNo, ranked) => {
-      if (raceNo === primaryBankoRace || raceNo === secondaryBankoRace) {
+      if (primaryBankoRace && raceNo === primaryBankoRace) {
+        return ranked.slice(0, 1).map((x) => x.horseNumber);
+      }
+      if (secondaryBankoRace && raceNo === secondaryBankoRace) {
         return ranked.slice(0, 1).map((x) => x.horseNumber);
       }
       return ranked.slice(0, 2).map((x) => x.horseNumber);
@@ -384,13 +402,15 @@ export function generateAICoupons(
   const ideal = buildCoupon(
     'hr-ideal',
     `ProAnaliz İdeal ${game.label}`,
-    'Günün en net favorisi Tek, kalabalık koşularda 3-4 atlı dengeli kurgu',
+    hasLegitPrimaryBanko 
+      ? 'Günün en net favorisi Tek, kalabalık koşularda 3-4 atlı dengeli kurgu'
+      : 'Zorlu programda her ayakta en şanslı 2-3 atlı dengeli kurgu',
     'İDEAL',
     (raceNo, ranked, gap) => {
-      if (raceNo === primaryBankoRace) {
+      if (primaryBankoRace && raceNo === primaryBankoRace) {
         return ranked.slice(0, 1).map((x) => x.horseNumber);
       }
-      if (gap >= 6) return ranked.slice(0, 2).map((x) => x.horseNumber);
+      if (gap >= 5) return ranked.slice(0, 2).map((x) => x.horseNumber);
       return ranked.slice(0, 3).map((x) => x.horseNumber);
     }
   );
@@ -399,10 +419,10 @@ export function generateAICoupons(
   const genis = buildCoupon(
     'hr-broad',
     `Geniş & Sürprizli ${game.label}`,
-    '1 Banko yanında bomba & sürpriz adaylarını da kapsayan yüksek ikramiye kurgusu',
+    'Banko adayı yanında bomba & sürpriz adaylarını da kapsayan yüksek ikramiye kurgusu',
     'GENİŞ',
     (raceNo, ranked) => {
-      if (raceNo === primaryBankoRace) {
+      if (primaryBankoRace && raceNo === primaryBankoRace) {
         return ranked.slice(0, 1).map((x) => x.horseNumber);
       }
       const maxCount = Math.min(5, ranked.length);

@@ -245,11 +245,22 @@ export function analyzeStockQuant(stock: StockItem): StockQuantAnalysis {
     )
   );
 
+  // Overbought & Top Reversal Guard (Prevents giving "AL" at the peak of a rally)
+  const isOverbought = Boolean(
+    (stock.rsi !== null && stock.rsi >= 74) ||
+    (stock.bbUpper !== null && price >= stock.bbUpper * 1.01)
+  );
+
+  if (isOverbought && score >= 60) {
+    bearReasons.push('Fiyat aşırı alım / direnç tavanında. Yeni pozisyon açmak yerine kâr realizasyonu veya düzeltme beklenmeli.');
+  }
+
   let signal: StockSignalType = 'TUT';
-  if (score >= 74) signal = 'GÜÇLÜ AL';
-  else if (score >= 60) signal = 'AL';
-  else if (score <= 28) signal = 'GÜÇLÜ SAT';
-  else if (score <= 42) signal = 'SAT';
+  if (score >= 76 && !isOverbought) signal = 'GÜÇLÜ AL';
+  else if (score >= 64 && !isOverbought) signal = 'AL';
+  else if (score <= 26) signal = 'GÜÇLÜ SAT';
+  else if (score <= 38) signal = 'SAT';
+  else signal = 'TUT'; // Healthy neutral/hold range (39 - 63)
 
   // --- 5. PIVOTS, FIBONACCI & ATR RISK/REWARD TRADE PLAN ---
   const highDay = stock.high || price * 1.015;

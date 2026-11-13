@@ -326,7 +326,21 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.13.11';
+  const CLIENT_BUILD_VERSION = '2026.11.13.12';
+  useEffect(() => {
+    const handleSessionExpired = (e: any) => {
+      setCurrentUser(null);
+      setIsProfileModalOpen(false);
+      setIsAuthModalOpen(true);
+      if (e.detail?.message) {
+        alert(e.detail.message);
+      }
+    };
+    window.addEventListener('proanaliz_session_expired', handleSessionExpired);
+    return () => {
+      window.removeEventListener('proanaliz_session_expired', handleSessionExpired);
+    };
+  }, []);
   useEffect(() => {
     const checkVersion = async () => {
       try {

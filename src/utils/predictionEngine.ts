@@ -223,10 +223,10 @@ export function analyzeMatch(home: TeamStats, away: TeamStats, matchId?: string)
   const homeZeroProb = Math.exp(-expHomeGoals);
   const awayZeroProb = Math.exp(-expAwayGoals);
   const rawBttsYes = (1 - homeZeroProb) * (1 - awayZeroProb);
-  // Temiz sayfa ve form ağırlığı ekle
-  const bttsAdj = ((1 - home.cleanSheetRate) + (1 - away.cleanSheetRate)) / 2;
-  let bttsYes = Math.round((rawBttsYes * 0.7 + bttsAdj * 0.3) * 100);
-  bttsYes = Math.min(93, Math.max(12, bttsYes));
+  // Pure Poisson + clean sheet penalty (if a team has high clean sheet, KG Var probability reduces realistically)
+  const defensiveDampener = Math.min(1.0, 1.0 - (home.cleanSheetRate * 0.35 + away.cleanSheetRate * 0.35));
+  let bttsYes = Math.round(rawBttsYes * defensiveDampener * 100);
+  bttsYes = Math.min(88, Math.max(12, bttsYes));
   const bttsNo = 100 - bttsYes;
 
   // 5. İlk Yarı / Maç Sonucu (İY/MS) Kombinasyonları Hesaplama
@@ -308,113 +308,126 @@ export function analyzeMatch(home: TeamStats, away: TeamStats, matchId?: string)
     label: string;
     market: string;
     confidence: number;
+    valueScore: number; // 3-way vs 2-way normalized edge over random baseline
     badgeType: 'banko' | 'guclu' | 'surpriz';
     reason: string;
   }
 
   const candidates: Candidate[] = [];
 
-  // MS 1 (Ev Sahibi Galibiyeti)
-  if (ms1 >= 45 && ms1 >= ms2 + 8) {
+  // MS 1 (Ev Sahibi Galibiyeti - 3 İhtimalli Pazar, Baz: %33.3)
+  if (ms1 >= 44 && ms1 >= ms2 + 5) {
     candidates.push({
       label: `MS 1 (${home.shortName || home.name})`,
       market: 'Maç Sonucu',
       confidence: ms1,
-      badgeType: ms1 >= 68 ? 'banko' : 'guclu',
+      valueScore: ms1 * 1.38, // 3-way weighting
+      badgeType: ms1 >= 64 ? 'banko' : 'guclu',
       reason: `${home.name} evinde net üstünlüğe ve yüksek kazanma olasılığına (%${ms1}) sahip.`
     });
   }
 
-  // MS 2 (Deplasman Galibiyeti)
-  if (ms2 >= 42 && ms2 >= ms1 + 6) {
+  // MS 2 (Deplasman Galibiyeti - 3 İhtimalli Pazar, Baz: %33.3)
+  if (ms2 >= 40 && ms2 >= ms1 + 4) {
     candidates.push({
       label: `MS 2 (${away.shortName || away.name})`,
       market: 'Maç Sonucu',
       confidence: ms2,
-      badgeType: ms2 >= 66 ? 'banko' : 'guclu',
+      valueScore: ms2 * 1.40, // 3-way weighting
+      badgeType: ms2 >= 62 ? 'banko' : 'guclu',
       reason: `${away.name} deplasmanda üstün hücum performansı ve form grafiğiyle öne çıkıyor (%${ms2}).`
     });
   }
 
+  // Çifte Şans 1X (Ev Sahibi Kaybetmez)
+  if (ms1 + msX >= 66 && ms1 >= 35) {
+    const csConfidence = Math.min(92, Math.round(ms1 + msX - 4));
+    candidates.push({
+      label: 'ÇŞ 1X',
+      market: 'Çifte Şans',
+      confidence: csConfidence,
+      valueScore: csConfidence * 0.94,
+      badgeType: csConfidence >= 75 ? 'banko' : 'guclu',
+      reason: `${home.name} saha avantajıyla maçtan puan çıkarma ihtimali çok kuvvetli (%${csConfidence}).`
+    });
+  }
+
+  // Çifte Şans X2 (Deplasman Kaybetmez)
+  if (ms2 + msX >= 64 && ms2 >= 32) {
+    const csConfidence = Math.min(90, Math.round(ms2 + msX - 4));
+    candidates.push({
+      label: 'ÇŞ X2',
+      market: 'Çifte Şans',
+      confidence: csConfidence,
+      valueScore: csConfidence * 0.94,
+      badgeType: csConfidence >= 75 ? 'banko' : 'guclu',
+      reason: `${away.name} deplasmanda puan ya da galibiyet almaya daha yakın (%${csConfidence}).`
+    });
+  }
+
   // 2.5 Gol Üst (Yüksek Tempolu Maçlar)
-  if (over25 >= 50 && expectedTotalGoals >= 2.5) {
+  if (over25 >= 52 && expectedTotalGoals >= 2.55) {
     candidates.push({
       label: '2.5 Gol Üst',
       market: 'Toplam Gol',
       confidence: over25,
+      valueScore: over25 * 1.02,
       badgeType: over25 >= 66 ? 'banko' : 'guclu',
       reason: `İki takımın ${expectedTotalGoals} gol beklentisi (xG) ve tempolu hücum hatları 2.5 üstünü destekliyor.`
     });
   }
 
   // 2.5 Gol Alt (Kontrollü / Düşük Skorlu Maçlar)
-  if (under25 >= 51 && expectedTotalGoals <= 2.35) {
+  if (under25 >= 52 && expectedTotalGoals <= 2.30) {
     candidates.push({
       label: '2.5 Gol Alt',
       market: 'Toplam Gol',
       confidence: under25,
+      valueScore: under25 * 1.05,
       badgeType: under25 >= 66 ? 'banko' : 'guclu',
       reason: `Katı savunma anlayışı ve ${expectedTotalGoals} düşük xG beklentisi sebebiyle az gollü bir maç öngörülüyor.`
     });
   }
 
-  // KG Var (Karşılıklı Gol)
-  if (bttsYes >= 52) {
+  // KG Var (Karşılıklı Gol) - YALNIZCA her iki takım da gol atacak güçteyse ve tek taraflı 3-0 / 4-0 maçı değilse!
+  const isCompetitiveGoals = Math.abs(expHomeGoals - expAwayGoals) <= 1.25;
+  if (bttsYes >= 60 && expHomeGoals >= 1.20 && expAwayGoals >= 1.10 && isCompetitiveGoals) {
     candidates.push({
       label: 'KG Var',
       market: 'Karşılıklı Gol',
       confidence: bttsYes,
-      badgeType: bttsYes >= 66 ? 'banko' : 'guclu',
+      valueScore: bttsYes * 0.96, // 2-way normalization
+      badgeType: bttsYes >= 68 ? 'banko' : 'guclu',
       reason: `İki takımın da hücum gücü yüksek, karşılıklı gol bulma olasılıkları %${bttsYes} seviyesinde.`
     });
   }
 
-  // KG Yok
-  if (bttsNo >= 54) {
+  // KG Yok (Savunma Odaklı veya Tek Taraflı Temiz Maçlar)
+  if (bttsNo >= 54 && (homeZeroProb >= 0.32 || awayZeroProb >= 0.38 || expectedTotalGoals <= 2.20)) {
     candidates.push({
       label: 'KG Yok',
       market: 'Karşılıklı Gol',
       confidence: bttsNo,
+      valueScore: bttsNo * 1.02,
       badgeType: bttsNo >= 66 ? 'banko' : 'guclu',
       reason: `Savunma kurgusu ve gol kısırlığı nedeniyle en az bir ekibin gol atamayacağı öngörülüyor.`
     });
   }
 
-  // Çifte Şans 1X (Ev Sahibi Kaybetmez)
-  if (ms1 + msX >= 66 && ms1 >= 38) {
-    candidates.push({
-      label: 'ÇŞ 1X',
-      market: 'Çifte Şans',
-      confidence: Math.min(88, Math.round(ms1 + msX - 6)),
-      badgeType: 'banko',
-      reason: `${home.name} saha avantajıyla maçtan puan çıkarma ihtimali çok kuvvetli.`
-    });
-  }
-
-  // Çifte Şans X2 (Deplasman Kaybetmez)
-  if (ms2 + msX >= 64 && ms2 >= 34) {
-    candidates.push({
-      label: 'ÇŞ X2',
-      market: 'Çifte Şans',
-      confidence: Math.min(86, Math.round(ms2 + msX - 6)),
-      badgeType: 'banko',
-      reason: `${away.name} deplasmanda puan ya da galibiyet almaya daha yakın.`
-    });
-  }
-
   // En iyi İY/MS
-  if (topHtFt[0] && topHtFt[0].prob >= 50) {
+  if (topHtFt[0] && topHtFt[0].prob >= 52) {
     candidates.push({
       label: topHtFt[0].label,
       market: 'İlk Yarı / Maç Sonucu',
       confidence: topHtFt[0].prob,
+      valueScore: topHtFt[0].prob * 1.20,
       badgeType: topHtFt[0].prob >= 60 ? 'guclu' : 'surpriz',
       reason: `İlk yarı dominasyonu doğrultusunda ${topHtFt[0].label} kombinasyonu değer taşıyor.`
     });
   }
 
-  // Sırala ve en yüksek güvene sahip olanı ana banko yap
-  candidates.sort((a, b) => b.confidence - a.confidence);
+  // Sırala ve en yüksek normalize edilmiş değere sahip olanı ana banko yap
+  candidates.sort((a, b) => b.valueScore - a.valueScore);
   
   const primaryPrediction: PrimaryPrediction = candidates[0] || {
     label: ms1 >= ms2 ? 'MS 1 (Ev Sahibi)' : 'MS X2 (Çifte Şans)',

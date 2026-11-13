@@ -13,6 +13,7 @@ const DATA_DIR = path.resolve(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const EDITOR_COUPONS_FILE = path.join(DATA_DIR, 'editor_coupons.json');
 const ANNOUNCEMENT_FILE = path.join(DATA_DIR, 'announcement.json');
+const TICKETS_FILE = path.join(DATA_DIR, 'support_tickets.json');
 const JWT_SECRET_FILE = path.join(DATA_DIR, '.jwt_secret');
 
 // Ensure data directory exists
@@ -43,6 +44,7 @@ const JWT_SECRET = resolveJwtSecret();
 // In-memory caches synced with persistence files
 let usersMap = new Map();
 let editorCouponsMap = new Map();
+let supportTicketsMap = new Map();
 const otpCacheMap = new Map();
 
 // Site-Wide Announcement Banner
@@ -235,9 +237,34 @@ function saveEditorCoupons() {
   }
 }
 
+function loadSupportTickets() {
+  try {
+    if (fs.existsSync(TICKETS_FILE)) {
+      const raw = fs.readFileSync(TICKETS_FILE, 'utf-8');
+      const list = JSON.parse(raw);
+      supportTicketsMap = new Map();
+      for (const t of list) {
+        supportTicketsMap.set(t.id, t);
+      }
+    }
+  } catch (e) {
+    console.warn('[UserService] Destek talepleri okunamadı:', e);
+  }
+}
+
+function saveSupportTickets() {
+  try {
+    const list = Array.from(supportTicketsMap.values());
+    fs.writeFileSync(TICKETS_FILE, JSON.stringify(list, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('[UserService] Destek talepleri kaydedilemedi:', e);
+  }
+}
+
 // Load on start
 loadUsers();
 loadEditorCoupons();
+loadSupportTickets();
 
 // --- Crypto Utilities ---
 function hashPassword(password) {
@@ -256,7 +283,9 @@ function verifyPassword(password, stored) {
 function createToken(payload) {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
   const exp = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
-  const body = Buffer.from(JSON.stringify({ ...payload, exp })).toString('base64url');
+  const user = payload.id ? usersMap.get(payload.id) : null;
+  const tokenVersion = payload.tokenVersion || (user ? (user.tokenVersion || 1) : 1);
+  const body = Buffer.from(JSON.stringify({ ...payload, tokenVersion, exp })).toString('base64url');
   const signature = crypto
     .createHmac('sha256', JWT_SECRET)
     .update(`${header}.${body}`)
@@ -280,6 +309,15 @@ export function verifyToken(token) {
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf-8'));
     if (payload.exp && Date.now() > payload.exp) {
       return null; // Expired
+    }
+    // Multi-device session revocation check
+    if (payload.id && usersMap.has(payload.id)) {
+      const u = usersMap.get(payload.id);
+      const userVersion = u.tokenVersion || 1;
+      const tokenVersion = payload.tokenVersion || 1;
+      if (tokenVersion !== userVersion) {
+        return null; // Revoked token
+      }
     }
     return payload;
   } catch {
@@ -997,4 +1035,100 @@ export function getServicesHealth() {
       }
     ]
   };
+}
+
+// --- Destek Talepleri (Support Tickets) ---
+export function createSupportTicket({ userId, name, email, phone, subject, message, category }) {
+  if (!subject || !message) {
+    throw new Error('Konu ve mesaj alanları zorunludur.');
+  }
+  const id = `tkt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const ticket = {
+    id,
+    userId: userId || null,
+    name: name || 'Anonim Üye',
+    email: email || '',
+    phone: phone || '',
+    category: category || 'genel', // 'hesap', 'vip', 'bot', 'oneri', 'genel'
+    subject: String(subject).slice(0, 150),
+    message: String(message).slice(0, 2000),
+    status: 'open', // 'open', 'in_progress', 'resolved', 'closed'
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    adminReply: null,
+    repliedAt: null
+  };
+  supportTicketsMap.set(id, ticket);
+  saveSupportTickets();
+  logActivity('ticket_created', `Yeni destek talebi: ${ticket.subject} (${ticket.name})`, { ticketId: id, email });
+  return ticket;
+}
+
+export function getAllSupportTickets() {
+  return Array.from(supportTicketsMap.values()).sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export function getUserSupportTickets(userId) {
+  if (!userId) return [];
+  return Array.from(supportTicketsMap.values())
+    .filter(t => t.userId === userId)
+    .sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export function updateSupportTicketStatus(ticketId, { status, adminReply }) {
+  const ticket = supportTicketsMap.get(ticketId);
+  if (!ticket) {
+    throw new Error('Destek talebi bulunamadı.');
+  }
+  if (status) ticket.status = status;
+  if (adminReply !== undefined) {
+    ticket.adminReply = adminReply;
+    ticket.repliedAt = Date.now();
+  }
+  ticket.updatedAt = Date.now();
+  supportTicketsMap.set(ticketId, ticket);
+  saveSupportTickets();
+  logActivity('ticket_updated', `Destek talebi güncellendi (#${ticketId}): ${ticket.status}`, { ticketId });
+  return ticket;
+}
+
+// --- Oturum Yönetimi & Çoklu Cihaz Oturum İptali ---
+export function invalidateOtherSessions(userId) {
+  const user = usersMap.get(userId);
+  if (!user) throw new Error('Kullanıcı bulunamadı.');
+  user.tokenVersion = (user.tokenVersion || 1) + 1;
+  usersMap.set(userId, user);
+  saveUsers();
+  // Return fresh token for CURRENT session so user doesn't get logged out on this device!
+  const newToken = createToken({
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    tokenVersion: user.tokenVersion
+  });
+  logActivity('sessions_revoked', `${user.name} tüm diğer cihazlardaki oturumlarını kapattı.`, { userId });
+  return { newToken, tokenVersion: user.tokenVersion };
+}
+
+// --- KVKK / GDPR Uyumlu Hesap Silme ---
+export function deleteOwnAccount(userId, passwordConfirmation) {
+  const user = usersMap.get(userId);
+  if (!user) throw new Error('Kullanıcı bulunamadı.');
+  if (user.role === 'admin') {
+    throw new Error('Yönetici hesabı güvenlik sebebiyle panel üzerinden silinemez.');
+  }
+  if (user.authProvider === 'local') {
+    if (!passwordConfirmation) {
+      throw new Error('Hesabınızı silmek için mevcut şifrenizi girmelisiniz.');
+    }
+    if (!verifyPassword(passwordConfirmation, user.passwordHash)) {
+      throw new Error('Girilen şifre hatalı. Hesap silme işlemi iptal edildi.');
+    }
+  }
+  
+  // Kalıcı olarak sil
+  usersMap.delete(userId);
+  saveUsers();
+  logActivity('account_deleted', `Kullanıcı hesabını kalıcı olarak sildi: ${user.email} (${user.name})`, { userId });
+  return { success: true, message: 'Hesabınız ve tüm verileriniz başarıyla kalıcı olarak silindi.' };
 }

@@ -24,6 +24,7 @@ import {
   verifyOtpApi,
   requestPasswordResetApi,
   resetPasswordWithCodeApi,
+  evaluatePasswordStrength,
   User 
 } from '../utils/authHelper';
 
@@ -45,6 +46,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const cleanPhone = phone.trim();
 
       if (mode === 'login') {
-        const res = await loginUserApi(cleanEmail, cleanPass);
+        const res = await loginUserApi(cleanEmail, cleanPass, rememberMe);
         if (res.success && res.user) {
           onSuccess(res.user);
           onClose();
@@ -83,7 +85,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setError(res.error || 'Giriş yapılamadı. Bilgilerinizi kontrol ediniz.');
         }
       } else if (mode === 'register') {
-        const res = await registerUserApi(name.trim(), cleanEmail, cleanPass, cleanPhone);
+        const res = await registerUserApi(name.trim(), cleanEmail, cleanPass, cleanPhone, rememberMe);
         if (res.success && res.user) {
           onSuccess(res.user);
           onClose();
@@ -552,8 +554,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </button>
               </div>
 
+              {/* Password Strength Meter (Register Mode) */}
+              {mode === 'register' && password && (() => {
+                const strength = evaluatePasswordStrength(password);
+                return (
+                  <div className="mt-2 p-2 rounded-xl bg-slate-950/70 border border-slate-800">
+                    <div className="flex items-center justify-between text-[10px] mb-1">
+                      <span className="text-slate-400 font-semibold">Şifre Güvenliği:</span>
+                      <span className={`font-black ${
+                        strength.score <= 1 ? 'text-rose-400' : strength.score === 2 ? 'text-amber-400' : 'text-emerald-400'
+                      }`}>{strength.label}</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className={`h-full transition-all duration-300 ${strength.color} ${strength.barWidth}`} />
+                    </div>
+                    {strength.hints.length > 0 && (
+                      <div className="text-[10px] text-slate-500 mt-1">
+                        Öneri: {strength.hints.join(', ')}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {mode === 'login' && (
-                <div className="flex justify-end pt-1.5">
+                <div className="flex items-center justify-between pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-3.5 h-3.5 rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer accent-emerald-500"
+                    />
+                    <span className="text-[11px] text-slate-400 hover:text-slate-200 transition-colors">Beni Hatırla</span>
+                  </label>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -565,7 +600,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     }}
                     className="text-[11px] text-amber-400 hover:text-amber-300 hover:underline cursor-pointer font-bold transition-colors"
                   >
-                    Şifrenizi mi unuttunuz?
+                    Şifremi Unuttum
                   </button>
                 </div>
               )}
@@ -656,6 +691,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 text-xs focus:outline-hidden focus:border-amber-400 transition-colors"
                     />
                   </div>
+
+                  {forgotNewPassword && (() => {
+                    const strength = evaluatePasswordStrength(forgotNewPassword);
+                    return (
+                      <div className="mt-2 p-2 rounded-xl bg-slate-950/70 border border-slate-800">
+                        <div className="flex items-center justify-between text-[10px] mb-1">
+                          <span className="text-slate-400 font-semibold">Şifre Güvenliği:</span>
+                          <span className={`font-black ${
+                            strength.score <= 1 ? 'text-rose-400' : strength.score === 2 ? 'text-amber-400' : 'text-emerald-400'
+                          }`}>{strength.label}</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          <div className={`h-full transition-all duration-300 ${strength.color} ${strength.barWidth}`} />
+                        </div>
+                        {strength.hints.length > 0 && (
+                          <div className="text-[10px] text-slate-500 mt-1">
+                            Öneri: {strength.hints.join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div>
