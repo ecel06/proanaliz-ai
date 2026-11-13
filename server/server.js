@@ -48,7 +48,10 @@ import {
   getEditorCoupons,
   saveEditorCoupon,
   deleteEditorCoupon,
-  getServicesHealth
+  getServicesHealth,
+  updateOwnProfile,
+  getAnnouncement,
+  setAnnouncement
 } from './userService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -382,6 +385,20 @@ app.post('/api/user/preference', authMiddleware, (req, res) => {
   res.json(result);
 });
 
+// Update own profile (name, phone, password)
+app.post('/api/user/profile', authMiddleware, (req, res) => {
+  const result = updateOwnProfile(req.userId, req.body);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  res.json(result);
+});
+
+// Site-Wide Announcement (Public)
+app.get('/api/announcement', (req, res) => {
+  res.json({ success: true, announcement: getAnnouncement() });
+});
+
 // Public / User Editor Curated Coupons
 app.get('/api/editor-coupons', (req, res) => {
   const coupons = getEditorCoupons();
@@ -494,6 +511,12 @@ app.get('/api/admin/services-health', adminMiddleware, (req, res) => {
   res.json({ success: true, health });
 });
 
+// Admin Announcement Update
+app.post('/api/admin/announcement', adminMiddleware, (req, res) => {
+  const result = setAnnouncement(req.body);
+  res.json(result);
+});
+
 // 6. Dynamic Real Team Forms endpoints (100% Real Match Results)
 app.get('/api/forms', (req, res) => {
   res.json(getAllRealForms());
@@ -534,7 +557,7 @@ function getNetworkIp() {
 }
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.13.03';
+const APP_VERSION = '2026.11.13.04';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

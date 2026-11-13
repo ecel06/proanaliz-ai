@@ -34,6 +34,7 @@ interface HeaderProps {
   onOpenAuth?: () => void;
   onOpenVIP?: () => void;
   onOpenAdmin?: () => void;
+  onOpenProfile?: () => void;
   onLogout?: () => void;
   onGoHome?: () => void;
   onOpenCustomAnalyzer: () => void;
@@ -69,6 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   onOpenVIP,
   onOpenAdmin,
+  onOpenProfile,
   onLogout,
   onGoHome,
   onOpenCustomAnalyzer,
@@ -331,6 +333,22 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     <ShieldCheck className="w-3.5 h-3.5 text-rose-400" />
                     <span className="hidden sm:inline">Admin</span>
+                  </button>
+                )}
+
+                {/* 👤 Member Profile Dashboard Trigger */}
+                {onOpenProfile && (
+                  <button
+                    onClick={onOpenProfile}
+                    className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-white font-bold text-xs shadow-xs cursor-pointer active:scale-95 shrink-0 transition-colors"
+                    title="Üye Profili & Hesap Ayarları"
+                  >
+                    <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 font-black text-[10px] flex items-center justify-center">
+                      {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <span className="hidden sm:inline font-bold truncate max-w-[80px]">
+                      {user.name.split(' ')[0]}
+                    </span>
                   </button>
                 )}
 

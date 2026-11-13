@@ -28,6 +28,7 @@ interface HomeHubProps {
   onOpenInstallModal?: () => void;
   onOpenVIP?: () => void;
   onOpenAuth?: () => void;
+  onOpenProfile?: () => void;
   onOpenAdmin?: () => void;
   onLogout?: () => void;
   user?: User | null;
@@ -42,6 +43,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   onOpenInstallModal,
   onOpenVIP,
   onOpenAuth,
+  onOpenProfile,
   onOpenAdmin,
   onLogout,
   user,
@@ -367,14 +369,21 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               )
             ) : (
               <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-slate-900/90 border border-slate-800 text-[10px]">
-                <span className="font-bold text-slate-300">{user.name.split(' ')[0]}</span>
+                <button
+                  onClick={onOpenProfile}
+                  className="inline-flex items-center space-x-1 font-bold text-slate-300 hover:text-white cursor-pointer transition-colors"
+                  title="Üye Paneli & Hesap Ayarları"
+                >
+                  <UserIcon className="w-3 h-3 text-emerald-400" />
+                  <span>{user.name.split(' ')[0]}</span>
+                </button>
                 {user.isVip && (
                   <span className="text-[9px] px-1 py-0.2 rounded bg-amber-400 text-slate-950 font-black">VIP</span>
                 )}
                 {onLogout && (
                   <button
                     onClick={onLogout}
-                    className="text-slate-500 hover:text-rose-400 cursor-pointer transition-colors"
+                    className="text-slate-500 hover:text-rose-400 cursor-pointer transition-colors ml-1"
                     title="Çıkış Yap"
                   >
                     <LogOut className="w-3 h-3" />

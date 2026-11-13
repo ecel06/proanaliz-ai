@@ -446,3 +446,56 @@ export async function fetchServicesHealthApi(): Promise<{ success: boolean; heal
     return { success: false, error: 'Sistem sağlık verisi alınamadı.' };
   }
 }
+
+// --- Member Profile Update API ---
+export async function updateOwnProfileApi(data: { name?: string; phone?: string; currentPassword?: string; newPassword?: string }): Promise<{ success: boolean; user?: User; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Giriş yapılmamış.' };
+  try {
+    const res = await fetch('/api/user/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if (result.success && result.user) {
+      saveAuthSession(token, result.user);
+    }
+    return result;
+  } catch {
+    return { success: false, error: 'Profil güncellenemedi.' };
+  }
+}
+
+// --- Site-Wide Announcement API ---
+export interface SiteAnnouncement {
+  enabled: boolean;
+  text: string;
+  variant: 'gold' | 'emerald' | 'rose' | 'blue';
+  link?: string;
+  updatedAt?: number;
+}
+
+export async function fetchAnnouncementApi(): Promise<{ success: boolean; announcement?: SiteAnnouncement; error?: string }> {
+  try {
+    const res = await fetch('/api/announcement');
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Duyuru alınamadı.' };
+  }
+}
+
+export async function saveAnnouncementApi(announcement: SiteAnnouncement): Promise<{ success: boolean; announcement?: SiteAnnouncement; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch('/api/admin/announcement', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(announcement)
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Duyuru kaydedilemedi.' };
+  }
+}

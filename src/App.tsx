@@ -27,8 +27,9 @@ import { ShareSlipModal } from './components/ShareSlipModal';
 import { AuthModal } from './components/AuthModal';
 import { VIPModal } from './components/VIPModal';
 import { AdminModal } from './components/AdminModal';
+import { ProfileModal } from './components/ProfileModal';
 import { OnboardingModal } from './components/OnboardingModal';
-import { User, getStoredUser, clearAuthSession, fetchCurrentUser } from './utils/authHelper';
+import { User, getStoredUser, clearAuthSession, fetchCurrentUser, SiteAnnouncement, fetchAnnouncementApi } from './utils/authHelper';
 import { HorseRacingView } from './components/horse/HorseRacingView';
 import { StockMarketView } from './components/stocks/StockMarketView';
 import { HomeHub } from './components/HomeHub';
@@ -270,19 +271,27 @@ export const App: React.FC = () => {
   // User Authentication & VIP Subscription State
   const [currentUser, setCurrentUser] = useState<User | null>(() => getStoredUser());
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [siteAnnouncement, setSiteAnnouncement] = useState<SiteAnnouncement | null>(null);
 
   useEffect(() => {
     fetchCurrentUser().then((u) => {
       if (u) setCurrentUser(u);
+    });
+    fetchAnnouncementApi().then((res) => {
+      if (res?.success && res.announcement) {
+        setSiteAnnouncement(res.announcement);
+      }
     });
   }, []);
 
   const handleLogout = () => {
     clearAuthSession();
     setCurrentUser(null);
+    setIsProfileModalOpen(false);
   };
 
   // AI Accuracy Scorecard Modal State
@@ -308,7 +317,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.13.03';
+  const CLIENT_BUILD_VERSION = '2026.11.13.04';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -936,6 +945,32 @@ export const App: React.FC = () => {
             </button>
           </div>
         )}
+
+        {/* Site-Wide Announcement Bar (Home Hub) */}
+        {siteAnnouncement?.enabled && siteAnnouncement.text && (
+          <div className={`w-full py-2 px-3 text-center text-xs font-black flex items-center justify-center gap-2 border-b z-40 transition-colors ${
+            siteAnnouncement.variant === 'emerald' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' :
+            siteAnnouncement.variant === 'rose' ? 'bg-rose-500/20 text-rose-200 border-rose-500/40' :
+            siteAnnouncement.variant === 'blue' ? 'bg-blue-500/20 text-blue-200 border-blue-500/40' :
+            'bg-gradient-to-r from-amber-500/25 via-amber-400/20 to-amber-500/25 text-amber-200 border-amber-400/40'
+          }`}>
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-white/20 text-white shrink-0">
+              DUYURU
+            </span>
+            <span className="truncate">{siteAnnouncement.text}</span>
+            {siteAnnouncement.link && (
+              <a
+                href={siteAnnouncement.link}
+                target={siteAnnouncement.link.startsWith('http') ? '_blank' : '_self'}
+                rel="noopener noreferrer"
+                className="text-[11px] underline font-black hover:text-white shrink-0 ml-1"
+              >
+                İncele →
+              </a>
+            )}
+          </div>
+        )}
+
         <HomeHub
           onSelectFootball={() => {
             setActiveSection('football');
@@ -946,6 +981,7 @@ export const App: React.FC = () => {
           onOpenInstallModal={() => setIsInstallModalOpen(true)}
           onOpenVIP={() => setIsVipModalOpen(true)}
           onOpenAuth={() => setIsAuthModalOpen(true)}
+          onOpenProfile={() => setIsProfileModalOpen(true)}
           onOpenAdmin={() => setIsAdminModalOpen(true)}
           onLogout={handleLogout}
           user={currentUser}
@@ -972,6 +1008,19 @@ export const App: React.FC = () => {
               setIsOnboardingOpen(true);
             }
           }}
+        />
+
+        {/* Modal: Üye Kontrol Paneli & Profil (Ana Sayfa İçin) */}
+        <ProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          user={currentUser}
+          onUserUpdated={setCurrentUser}
+          onOpenVIP={() => {
+            setIsProfileModalOpen(false);
+            setIsVipModalOpen(true);
+          }}
+          onLogout={handleLogout}
         />
 
         {/* Modal: Kişiselleştirilmiş Karşılama Anketi */}
@@ -1027,10 +1076,36 @@ export const App: React.FC = () => {
         </div>
       )}
 
+      {/* Site-Wide Announcement Bar */}
+      {siteAnnouncement?.enabled && siteAnnouncement.text && (
+        <div className={`w-full py-2 px-3 text-center text-xs font-black flex items-center justify-center gap-2 border-b z-40 transition-colors ${
+          siteAnnouncement.variant === 'emerald' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' :
+          siteAnnouncement.variant === 'rose' ? 'bg-rose-500/20 text-rose-200 border-rose-500/40' :
+          siteAnnouncement.variant === 'blue' ? 'bg-blue-500/20 text-blue-200 border-blue-500/40' :
+          'bg-gradient-to-r from-amber-500/25 via-amber-400/20 to-amber-500/25 text-amber-200 border-amber-400/40'
+        }`}>
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-white/20 text-white shrink-0">
+            DUYURU
+          </span>
+          <span className="truncate">{siteAnnouncement.text}</span>
+          {siteAnnouncement.link && (
+            <a
+              href={siteAnnouncement.link}
+              target={siteAnnouncement.link.startsWith('http') ? '_blank' : '_self'}
+              rel="noopener noreferrer"
+              className="text-[11px] underline font-black hover:text-white shrink-0 ml-1"
+            >
+              İncele →
+            </a>
+          )}
+        </div>
+      )}
+
       {/* Top Header with Live Refresh Trigger & Mobile Install */}
       <Header
         user={currentUser}
         onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
         onOpenVIP={() => setIsVipModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onLogout={handleLogout}
@@ -1910,6 +1985,19 @@ export const App: React.FC = () => {
             setIsOnboardingOpen(true);
           }
         }}
+      />
+
+      {/* Modal 11.2: Üye Kontrol Paneli & Profil */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        user={currentUser}
+        onUserUpdated={setCurrentUser}
+        onOpenVIP={() => {
+          setIsProfileModalOpen(false);
+          setIsVipModalOpen(true);
+        }}
+        onLogout={handleLogout}
       />
 
       {/* Modal 11.5: Kişiselleştirilmiş Karşılama Anketi */}

@@ -12,6 +12,7 @@ const __dirname = path.dirname(__filename);
 const DATA_DIR = path.resolve(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const EDITOR_COUPONS_FILE = path.join(DATA_DIR, 'editor_coupons.json');
+const ANNOUNCEMENT_FILE = path.join(DATA_DIR, 'announcement.json');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'proanaliz-ai-master-auth-secret-key-2026';
 
@@ -24,6 +25,48 @@ if (!fs.existsSync(DATA_DIR)) {
 let usersMap = new Map();
 let editorCouponsMap = new Map();
 const otpCacheMap = new Map();
+
+// Site-Wide Announcement Banner
+let currentAnnouncement = {
+  enabled: true,
+  text: '👑 DÜNKÜ YÖNETİCİ KUPONUMUZ 3.85 ORANLA KAZANDIRDI! BUGÜNÜN YENİ BANKO KUPONLARI YAYINDA!',
+  variant: 'gold', // 'gold' | 'emerald' | 'rose' | 'blue'
+  link: '',
+  updatedAt: Date.now()
+};
+
+function loadAnnouncement() {
+  try {
+    if (fs.existsSync(ANNOUNCEMENT_FILE)) {
+      const raw = fs.readFileSync(ANNOUNCEMENT_FILE, 'utf-8');
+      currentAnnouncement = JSON.parse(raw);
+    }
+  } catch (e) {
+    console.warn('[UserService] Could not load announcement:', e);
+  }
+}
+loadAnnouncement();
+
+// Live Activity Log
+const activityLogs = [
+  { id: 'act_init_1', type: 'system', message: 'ProAnaliz AI Yönetici ve Üye Platformu aktif.', timestamp: Date.now() - 3600000 },
+  { id: 'act_init_2', type: 'admin', message: 'Kalıcı Yönetici (admin@proanaliz.ai) doğrulandı.', timestamp: Date.now() - 1800000 },
+  { id: 'act_init_3', type: 'coupon', message: 'Günün Banko ve Yönetici Kuponları canlıya alındı.', timestamp: Date.now() - 600000 },
+];
+
+export function logActivity(type, message, meta = {}) {
+  const item = {
+    id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    type,
+    message,
+    meta,
+    timestamp: Date.now()
+  };
+  activityLogs.unshift(item);
+  if (activityLogs.length > 50) {
+    activityLogs.pop();
+  }
+}
 
 function seedDefaultAdmin() {
   const adminEmail = 'admin@proanaliz.ai';
@@ -600,6 +643,53 @@ export function updateUserPreference(userId, preferredInterest) {
   return { success: true, user: sanitizeUser(user) };
 }
 
+// --- User Profile & Account Management ---
+export function updateOwnProfile(userId, { name, phone, currentPassword, newPassword }) {
+  const user = usersMap.get(userId);
+  if (!user) return { success: false, error: 'Kullanıcı bulunamadı.' };
+
+  if (name && String(name).trim().length >= 2) {
+    user.name = String(name).trim();
+  }
+  if (phone !== undefined) {
+    user.phone = phone ? String(phone).replace(/[^\d+]/g, '').trim() : null;
+  }
+  if (newPassword && String(newPassword).trim().length >= 6) {
+    if (user.passwordHash) {
+      if (!currentPassword || !verifyPassword(currentPassword, user.passwordHash)) {
+        return { success: false, error: 'Mevcut şifreniz hatalı.' };
+      }
+    }
+    user.passwordHash = hashPassword(String(newPassword).trim());
+  }
+
+  saveUsers();
+  logActivity('profile_updated', `${user.name} profilini güncelledi.`, { userId });
+  return { success: true, user: sanitizeUser(user), message: 'Profil başarıyla güncellendi.' };
+}
+
+// --- Site-Wide Announcements (Admin CMS) ---
+export function getAnnouncement() {
+  return currentAnnouncement;
+}
+
+export function setAnnouncement(data) {
+  currentAnnouncement = {
+    enabled: Boolean(data.enabled),
+    text: String(data.text || '').trim(),
+    variant: data.variant || 'gold',
+    link: String(data.link || '').trim(),
+    updatedAt: Date.now()
+  };
+  try {
+    fs.writeFileSync(ANNOUNCEMENT_FILE, JSON.stringify(currentAnnouncement, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('Could not save announcement:', e);
+  }
+  logActivity('announcement_updated', `Site duyurusu güncellendi: "${currentAnnouncement.text.slice(0, 35)}..."`);
+  return { success: true, announcement: currentAnnouncement };
+}
+
 // --- Editor / Admin Curated Coupons ---
 export function getEditorCoupons() {
   return Array.from(editorCouponsMap.values()).sort((a, b) => b.createdAt - a.createdAt);
@@ -697,6 +787,8 @@ export function getAdminStats() {
     estimatedMrr,
     totalRevenue,
     editorCouponsCount: editorCouponsMap.size,
+    activityLogs: activityLogs.slice(0, 30),
+    announcement: currentAnnouncement,
     serverUptime: process.uptime(),
     timestamp: now,
   };
