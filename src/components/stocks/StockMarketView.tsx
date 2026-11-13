@@ -580,12 +580,31 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
           );
         })()}
 
-        {/* ⚠️ YASAL UYARI / SPK Sorumluluk Reddi (YTD) */}
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[10px] sm:text-[11px] text-amber-200/90 font-medium shadow-sm">
-          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-          <span>
-            <strong className="text-amber-300 font-black">YASAL UYARI (YTD):</strong> Bu sayfadaki algoritmik modeller, RSI/MACD sinyalleri ve quant analizleri yatırım danışmanlığı kapsamında değildir; <strong className="underline decoration-amber-400">kesinlikle yatırım tavsiyesi niteliği taşımaz (YTD)</strong>. Alım-satım kararlarınızı kendi risk profilinize göre vermelisiniz.
-          </span>
+        {/* 🛡️ YASAL UYARI & SPK SORUMLULUK REDDİ (YTD) - Belirgin & Prestijli Görünüm */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/15 via-slate-900 to-amber-500/10 border-2 border-amber-400/40 p-3 sm:p-3.5 shadow-lg shadow-amber-500/10">
+          <div className="pointer-events-none absolute -right-6 -bottom-6 w-28 h-28 bg-amber-400/15 rounded-full blur-2xl animate-pulse" />
+          <div className="flex items-start sm:items-center gap-3 relative z-10">
+            <div className="w-9 h-9 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0 shadow-inner mt-0.5 sm:mt-0">
+              <ShieldAlert className="w-5 h-5 text-amber-300 animate-pulse" />
+            </div>
+            <div className="text-[11px] sm:text-xs leading-relaxed text-slate-200">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow">
+                  SPK MEVZUATI • YASAL UYARI
+                </span>
+                <span className="font-black text-amber-300 tracking-wide text-xs">
+                  Yatırım Tavsiyesi Değildir (YTD)
+                </span>
+              </div>
+              <p className="text-slate-300">
+                Bu sayfadaki tüm Quant algoritmaları, RSI/MACD sinyalleri ve yapay zeka analizleri istatistiksel simülasyondur;{' '}
+                <strong className="text-amber-300 font-black underline decoration-amber-400 underline-offset-2">
+                  kesinlikle yatırım danışmanlığı veya alım-satım tavsiyesi niteliği taşımaz (YTD)
+                </strong>
+                . Yatırım kararlarınızı kendi bağımsız araştırmanıza ve risk profilinize göre vermelisiniz.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Quant Presets + Live Counts + Sort */}

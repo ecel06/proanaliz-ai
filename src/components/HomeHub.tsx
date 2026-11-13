@@ -15,6 +15,8 @@ import {
   Coins,
   Crown,
   ShieldCheck,
+  ShieldAlert,
+  AlertTriangle,
   User as UserIcon,
   LogOut,
 } from 'lucide-react';
@@ -728,9 +730,22 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           )}
         </div>
 
-        {/* ⚠️ Yasal Uyarı / Sorumluluk Reddi (YTD) */}
-        <div className="text-center text-[9px] sm:text-[10px] text-slate-500 font-medium tracking-wide py-0.5 shrink-0 border-t border-slate-900">
-          <span>⚠️ Yasal Uyarı: Bu platformdaki tüm tahmin, sinyal ve modellemeler analiz amaçlıdır; kesinlikle <strong className="text-slate-400 underline decoration-slate-600">yatırım tavsiyesi değildir (YTD)</strong>.</span>
+        {/* 🛡️ YASAL UYARI & SORUMLULUK REDDİ (YTD) - Belirgin & Göze Hitap Eden Tasarım */}
+        <div className="w-full shrink-0 flex items-center justify-center py-1">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 via-amber-400/20 to-amber-500/10 border border-amber-400/40 text-amber-200/90 shadow-md shadow-amber-500/10 text-[10px] sm:text-[11px] backdrop-blur-md max-w-full">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span className="font-black uppercase tracking-wider text-amber-300 shrink-0">
+              YASAL UYARI:
+            </span>
+            <span className="font-medium text-slate-300 truncate sm:whitespace-normal">
+              Bu platformdaki tüm analiz ve modellemeler bilgilendirme amaçlıdır; kesinlikle{' '}
+              <strong className="text-amber-300 font-black tracking-wide underline decoration-amber-400 decoration-2 underline-offset-2">
+                YATIRIM TAVSİYESİ DEĞİLDİR (YTD)
+              </strong>
+              .
+            </span>
+          </div>
         </div>
       </div>
     </div>

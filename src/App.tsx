@@ -317,7 +317,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server
-  const CLIENT_BUILD_VERSION = '2026.11.13.05';
+  const CLIENT_BUILD_VERSION = '2026.11.13.06';
   useEffect(() => {
     const checkVersion = async () => {
       try {
@@ -2041,8 +2041,9 @@ export const App: React.FC = () => {
             <BrainCircuit className="w-4 h-4 text-emerald-400" />
             <span>ProAnaliz AI • Otomatik İddaa, At Yarışı &amp; Borsa Analiz Platformu</span>
           </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold text-amber-300">
-            <span>⚠️ Yasal Uyarı: Bu platformda yer alan modelleme, sinyal ve analizler kesinlikle <u>YATIRIM TAVSİYESİ DEĞİLDİR (YTD)</u>.</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-amber-400/20 to-amber-500/15 border border-amber-400/40 text-xs font-bold text-amber-200 shadow-md shadow-amber-500/10 backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            <span>⚠️ Yasal Uyarı: Bu platformdaki tüm içerik, sinyal ve analizler <strong className="text-amber-300 font-black underline decoration-amber-400">YATIRIM TAVSİYESİ DEĞİLDİR (YTD)</strong>.</span>
           </div>
           <p className="text-xs text-slate-500 max-w-xl mx-auto leading-relaxed">
             Bu uygulama hiçbir şekilde bahis oynatmaz, kupon satmaz veya aracılık etmez. Tüm oran ve yüzdeler Poisson dağılımı, Dixon-Coles düzeltmesi, TJK AGF verileri ve Borsa quant algoritmaları ile üretilmiş saf matematiksel modellemelerdir.
