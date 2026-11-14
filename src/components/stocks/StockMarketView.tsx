@@ -1355,8 +1355,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                         onClick={() => handleSelectStock(st.symbol)}
                         className={`px-3 py-2.5 cursor-pointer transition-all flex items-center justify-between gap-2 ${
                           isSel
-                            ? 'bg-cyan-500/15 border-l-4 border-l-cyan-400'
-                            : 'hover:bg-slate-800/50 border-l-4 border-l-transparent'
+                            ? 'bg-cyan-500/20 border-l-4 border-l-cyan-400 ring-1 ring-cyan-400/50 shadow-inner'
+                            : 'hover:bg-slate-800/60 border-l-4 border-l-transparent'
                         }`}
                       >
                         <div className="flex items-center space-x-2 min-w-0">
@@ -1372,6 +1372,11 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                           <div className="min-w-0">
                             <div className="flex items-center space-x-1.5 flex-wrap">
                               <span className="font-black text-xs text-white">{st.symbol}</span>
+                              {isSel && (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-cyan-400 text-slate-950 uppercase tracking-wider">
+                                  Seçili
+                                </span>
+                              )}
                               {(() => {
                                 const openRisk = risksBySymbolMap.get(st.symbol);
                                 if (

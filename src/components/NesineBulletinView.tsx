@@ -80,6 +80,37 @@ const QUICK_ODDS_DEFS: QuickOddDef[] = [
 ];
 
 /**
+ * Checks if a 7-column quick odd definition (ms1, msX, ms2, under25, over25, bttsYes, bttsNo)
+ * matches an AI recommendation or category label (e.g. "MS 1 (FRA)", "2.5 Gol Üst", "KG Var")
+ */
+function isQuickOddMatchingPick(defKey: string, pickLabel?: string): boolean {
+  if (!pickLabel) return false;
+  const norm = pickLabel.toUpperCase().trim();
+  if (defKey === 'ms1') {
+    return norm.startsWith('MS 1') || norm.startsWith('MS1') || norm === '1';
+  }
+  if (defKey === 'msX') {
+    return norm.startsWith('MS X') || norm.startsWith('MSX') || norm.includes('BERABERLİK') || norm === 'X';
+  }
+  if (defKey === 'ms2') {
+    return norm.startsWith('MS 2') || norm.startsWith('MS2') || norm === '2';
+  }
+  if (defKey === 'over25') {
+    return norm.includes('2.5 ÜST') || norm.includes('2.5 GOL ÜST');
+  }
+  if (defKey === 'under25') {
+    return norm.includes('2.5 ALT') || norm.includes('2.5 GOL ALT');
+  }
+  if (defKey === 'bttsYes') {
+    return norm.includes('KG VAR') || norm.includes('KARŞILIKLI GOL VAR');
+  }
+  if (defKey === 'bttsNo') {
+    return norm.includes('KG YOK') || norm.includes('KARŞILIKLI GOL YOK');
+  }
+  return false;
+}
+
+/**
  * Returns a clean, short time & date string (e.g. time: "13:00", date: "14 Kas")
  * Prevents bloated raw ISO date strings from crushing team names.
  */
@@ -470,9 +501,13 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                             (item) => item.matchId === match.id && item.pickKey === def.key
                           );
                           const isValueOdd = valueSummary.hasValue && valueSummary.bestValuePick?.pickKey === def.key;
+                          const isAIPick =
+                            isQuickOddMatchingPick(def.key, sortPill.label) ||
+                            isQuickOddMatchingPick(def.key, primaryPrediction.label);
                           const isCategoryTarget =
-                            (selectedCategory === 'btts' && def.key === 'bttsYes') ||
-                            (selectedCategory === 'over25' && def.key === 'over25');
+                            (selectedCategory === 'btts' && (def.key === 'bttsYes' || isAIPick)) ||
+                            (selectedCategory === 'over25' && (def.key === 'over25' || isAIPick)) ||
+                            (selectedCategory === 'banko' && isAIPick);
 
                           const option: BettingPickOption = {
                             key: def.key,
@@ -492,22 +527,30 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                               key={def.key}
                               type="button"
                               onClick={() => onToggleBetslip(match, option)}
-                              title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)} (%${prob} Güven)${isValueOdd ? ' • 🎯 Değer Bahsi!' : ''}${isCategoryTarget ? ' • ✨ Filtrelenen Tercih!' : ''}`}
+                              title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)} (%${prob} Güven)${isAIPick ? ' • 🤖 Yapay Zeka Tercihi!' : ''}${isValueOdd ? ' • 🎯 Değer Bahsi!' : ''}${isCategoryTarget ? ' • ✨ Filtrelenen Tercih!' : ''}`}
                               className={`relative flex flex-col items-center justify-center min-w-[44px] px-1 py-1 sm:py-1.5 rounded-lg text-center transition-all cursor-pointer select-none active:scale-95 ${
                                 isSelected
                                   ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-300 scale-105'
                                   : isCategoryTarget
                                   ? selectedCategory === 'btts'
                                     ? 'bg-purple-950/60 text-purple-200 border border-purple-400/80 ring-2 ring-purple-400/60 font-black shadow-md'
+                                    : selectedCategory === 'banko'
+                                    ? 'bg-emerald-950/70 text-emerald-200 border-2 border-emerald-400 ring-2 ring-emerald-400/60 font-black shadow-md shadow-emerald-950/50'
                                     : 'bg-amber-950/60 text-amber-200 border border-amber-400/80 ring-2 ring-amber-400/60 font-black shadow-md'
                                   : isValueOdd
                                   ? 'bg-amber-950/40 text-amber-200 border border-amber-500/60 ring-1 ring-amber-400/50 hover:bg-amber-900/40'
+                                  : isAIPick
+                                  ? 'bg-emerald-950/60 text-emerald-200 border-2 border-emerald-400/90 ring-2 ring-emerald-400/40 font-black shadow-md shadow-emerald-950/40 hover:bg-emerald-900/40'
                                   : 'bg-slate-950/80 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-emerald-500/40 hover:text-emerald-300'
                               }`}
                             >
-                              {(isValueOdd || isCategoryTarget) && !isSelected && (
-                                <span className={`absolute -top-1 -right-0.5 w-2 h-2 rounded-full shadow-sm ${
-                                  isCategoryTarget ? 'bg-purple-400 shadow-purple-400 ring-1 ring-white' : 'bg-amber-400 shadow-amber-400'
+                              {(isAIPick || isCategoryTarget || isValueOdd) && !isSelected && (
+                                <span className={`absolute -top-1 -right-0.5 w-2 h-2 rounded-full shadow-sm ring-1 ring-white/70 ${
+                                  isCategoryTarget && selectedCategory === 'btts'
+                                    ? 'bg-purple-400 shadow-purple-400'
+                                    : isValueOdd
+                                    ? 'bg-amber-400 shadow-amber-400'
+                                    : 'bg-emerald-400 shadow-emerald-400'
                                 }`} />
                               )}
                               <span
@@ -515,9 +558,15 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                                   isSelected
                                     ? 'text-slate-950'
                                     : isCategoryTarget
-                                    ? selectedCategory === 'btts' ? 'text-purple-300 font-black' : 'text-amber-300 font-black'
+                                    ? selectedCategory === 'btts'
+                                      ? 'text-purple-300 font-black'
+                                      : selectedCategory === 'banko'
+                                      ? 'text-emerald-300 font-black'
+                                      : 'text-amber-300 font-black'
                                     : isValueOdd
                                     ? 'text-amber-300'
+                                    : isAIPick
+                                    ? 'text-emerald-300 font-black'
                                     : 'text-slate-400'
                                 }`}
                               >
@@ -527,7 +576,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                                 className={`font-mono text-xs sm:text-[13px] font-bold ${
                                   isSelected
                                     ? 'text-slate-950 font-black'
-                                    : isCategoryTarget
+                                    : isCategoryTarget || isAIPick
                                     ? 'text-white font-black'
                                     : isValueOdd
                                     ? 'text-amber-200 font-black'
@@ -682,9 +731,13 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                           (item) => item.matchId === match.id && item.pickKey === def.key
                         );
                         const isValueOdd = valueSummary.hasValue && valueSummary.bestValuePick?.pickKey === def.key;
+                        const isAIPick =
+                          isQuickOddMatchingPick(def.key, sortPill.label) ||
+                          isQuickOddMatchingPick(def.key, primaryPrediction.label);
                         const isCategoryTarget =
-                          (selectedCategory === 'btts' && def.key === 'bttsYes') ||
-                          (selectedCategory === 'over25' && def.key === 'over25');
+                          (selectedCategory === 'btts' && (def.key === 'bttsYes' || isAIPick)) ||
+                          (selectedCategory === 'over25' && (def.key === 'over25' || isAIPick)) ||
+                          (selectedCategory === 'banko' && isAIPick);
 
                         const option: BettingPickOption = {
                           key: def.key,
@@ -704,29 +757,56 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                             key={def.key}
                             type="button"
                             onClick={() => onToggleBetslip(match, option)}
-                            title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)}${isValueOdd ? ' • 🎯 Değer Bahsi!' : ''}${isCategoryTarget ? ' • ✨ Filtrelenen Tercih' : ''}`}
-                            className={`flex flex-col items-center justify-center p-1 rounded text-center transition-all cursor-pointer select-none active:scale-95 ${
+                            title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)}${isAIPick ? ' • 🤖 Yapay Zeka Tercihi!' : ''}${isValueOdd ? ' • 🎯 Değer Bahsi!' : ''}${isCategoryTarget ? ' • ✨ Filtrelenen Tercih' : ''}`}
+                            className={`relative flex flex-col items-center justify-center p-1 rounded text-center transition-all cursor-pointer select-none active:scale-95 ${
                               isSelected
                                 ? 'bg-emerald-500 text-slate-950 font-black ring-1 ring-emerald-300'
                                 : isCategoryTarget
                                 ? selectedCategory === 'btts'
                                   ? 'bg-purple-950/70 text-purple-200 border border-purple-400/80 ring-1 ring-purple-400'
+                                  : selectedCategory === 'banko'
+                                  ? 'bg-emerald-950/70 text-emerald-200 border-2 border-emerald-400 ring-1 ring-emerald-400 font-black shadow-sm'
                                   : 'bg-amber-950/70 text-amber-200 border border-amber-400/80 ring-1 ring-amber-400'
                                 : isValueOdd
                                 ? 'bg-amber-950/40 text-amber-200 border border-amber-500/60 ring-1 ring-amber-400/50'
+                                : isAIPick
+                                ? 'bg-emerald-950/70 text-emerald-200 border-2 border-emerald-400/90 ring-1 ring-emerald-400 font-black shadow-sm'
                                 : 'bg-slate-950 hover:bg-slate-800 text-slate-200 border border-slate-800'
                             }`}
                           >
+                            {(isAIPick || isCategoryTarget || isValueOdd) && !isSelected && (
+                              <span className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full shadow-sm ring-1 ring-white/60 ${
+                                isCategoryTarget && selectedCategory === 'btts'
+                                  ? 'bg-purple-400 shadow-purple-400'
+                                  : isValueOdd
+                                  ? 'bg-amber-400 shadow-amber-400'
+                                  : 'bg-emerald-400 shadow-emerald-400'
+                              }`} />
+                            )}
                             <span
                               className={`text-[8px] uppercase tracking-wider font-extrabold leading-none mb-0.5 ${
-                                isSelected ? 'text-slate-950' : 'text-slate-400'
+                                isSelected
+                                  ? 'text-slate-950'
+                                  : isCategoryTarget
+                                  ? selectedCategory === 'btts'
+                                    ? 'text-purple-300'
+                                    : selectedCategory === 'banko'
+                                    ? 'text-emerald-300 font-black'
+                                    : 'text-amber-300'
+                                  : isAIPick
+                                  ? 'text-emerald-300 font-black'
+                                  : 'text-slate-400'
                               }`}
                             >
                               {def.shortLabel}
                             </span>
                             <span
                               className={`font-mono text-[11px] font-bold leading-none ${
-                                isSelected ? 'text-slate-950 font-black' : 'text-white'
+                                isSelected
+                                  ? 'text-slate-950 font-black'
+                                  : isAIPick || isCategoryTarget
+                                  ? 'text-white font-black'
+                                  : 'text-white'
                               }`}
                             >
                               {odd.toFixed(2)}
