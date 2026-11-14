@@ -7,6 +7,7 @@ import { analyzeMatch } from './utils/predictionEngine';
 import { BettingPickOption } from './utils/oddsHelper';
 import { Header } from './components/Header';
 import { Filters, CategoryFilter, SortOption } from './components/Filters';
+import { matchMatchesCategory } from './utils/categoryFilterHelper';
 import { LeagueTreeSelector } from './components/LeagueTreeSelector';
 import { MatchCard } from './components/MatchCard';
 import { FinishedMatchCard } from './components/FinishedMatchCard';
@@ -93,7 +94,8 @@ import {
   ChevronRight,
   Bot,
   LayoutList,
-  LayoutGrid
+  LayoutGrid,
+  X
 } from 'lucide-react';
 import { getMatchLiveState, parseMatchKickoffEpoch } from './utils/liveMatchHelper';
 import { getDynamicDateOptions, isMatchOnDateFilter } from './utils/dateHelper';
@@ -326,7 +328,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.13.14';
+  const CLIENT_BUILD_VERSION = '2026.11.14.01';
   useEffect(() => {
     const handleSessionExpired = (e: any) => {
       setCurrentUser(null);
@@ -648,7 +650,7 @@ export const App: React.FC = () => {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isStandingsOpen, setIsStandingsOpen] = useState(false);
 
-  // 5. Compute category counts for upcoming matches
+  // 5. Compute category counts for active bulletin matches
   const counts = useMemo(() => {
     let banko = 0;
     let over25 = 0;
@@ -657,24 +659,24 @@ export const App: React.FC = () => {
     let favCount = 0;
     let valueCount = 0;
 
-    const upcomingMatches = allMatches.filter(m => {
+    const activeMatches = allMatches.filter(m => {
       const state = getMatchLiveState(m, currentTime);
-      return state.isUpcoming;
+      return !state.isFinished;
     });
 
-    upcomingMatches.forEach((m) => {
+    activeMatches.forEach((m) => {
       const a = matchAnalysesMap.get(m.id);
       if (favorites.includes(m.id)) favCount++;
       if (!a) return;
-      if (a.primaryPrediction.confidence >= 75 || a.primaryPrediction.badgeType === 'banko') banko++;
-      if (a.over25 >= 60) over25++;
-      if (a.bttsYes >= 60) btts++;
-      if (a.topHtFt[0]?.prob >= 48) htft++;
-      if (detectMatchValueBets(m, a).hasValue) valueCount++;
+      if (matchMatchesCategory(m, a, 'banko', favorites)) banko++;
+      if (matchMatchesCategory(m, a, 'over25', favorites)) over25++;
+      if (matchMatchesCategory(m, a, 'btts', favorites)) btts++;
+      if (matchMatchesCategory(m, a, 'htft', favorites)) htft++;
+      if (matchMatchesCategory(m, a, 'value', favorites)) valueCount++;
     });
 
     return {
-      all: upcomingMatches.length,
+      all: activeMatches.length,
       banko,
       over25,
       btts,
@@ -806,26 +808,10 @@ export const App: React.FC = () => {
       }
     }
 
-    // D. Category Filter (applies to upcoming matches)
-    const liveState = getMatchLiveState(match, currentTime);
-    if (!liveState.isFinished) {
-      if (selectedCategory === 'favorites') {
-        return favorites.includes(match.id);
-      }
-      if (selectedCategory === 'value') {
-        return detectMatchValueBets(match, a).hasValue;
-      }
-      if (selectedCategory === 'banko') {
-        return a.primaryPrediction.confidence >= 75 || a.primaryPrediction.badgeType === 'banko';
-      }
-      if (selectedCategory === 'over25') {
-        return a.over25 >= 60;
-      }
-      if (selectedCategory === 'btts') {
-        return a.bttsYes >= 60;
-      }
-      if (selectedCategory === 'htft') {
-        return a.topHtFt[0]?.prob >= 48;
+    // D. Category Filter (uses unified matchMatchesCategory for 100% mathematical consistency)
+    if (selectedCategory !== 'all') {
+      if (!matchMatchesCategory(match, a, selectedCategory, favorites)) {
+        return false;
       }
     }
 
@@ -839,7 +825,7 @@ export const App: React.FC = () => {
       return liveState.isLive && filterMatchItem(m);
     });
     return list.sort((m1, m2) => parseMatchKickoffEpoch(m1) - parseMatchKickoffEpoch(m2));
-  }, [allMatches, currentTime, searchQuery, selectedLeague, selectedDate, matchAnalysesMap]);
+  }, [allMatches, currentTime, searchQuery, selectedLeague, selectedDate, selectedCategory, matchAnalysesMap, favorites]);
 
   const upcomingFiltered = useMemo(() => {
     const list = allMatches.filter(m => {
@@ -880,7 +866,7 @@ export const App: React.FC = () => {
     });
     // En son tamamlanan maçlar en üstte görünsün (kronolojik azalan)
     return list.sort((m1, m2) => parseMatchKickoffEpoch(m2) - parseMatchKickoffEpoch(m1));
-  }, [allMatches, currentTime, searchQuery, selectedLeague, selectedDate, matchAnalysesMap]);
+  }, [allMatches, currentTime, searchQuery, selectedLeague, selectedDate, selectedCategory, matchAnalysesMap, favorites]);
 
   // Live Goal Radar Alerts (Momentum & Pressure detection for in-play matches)
   const liveGoalAlerts = useMemo(() => {
@@ -1385,7 +1371,12 @@ export const App: React.FC = () => {
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
+              setSelectedCategory={(cat) => {
+                setSelectedCategory(cat);
+                if (activeTabMode !== 'upcoming') {
+                  setActiveTabMode('upcoming');
+                }
+              }}
               selectedLeague={selectedLeague}
               setSelectedLeague={setSelectedLeague}
               selectedDate={selectedDate}
@@ -1771,8 +1762,8 @@ export const App: React.FC = () => {
                       </div>
                     )}
 
-                    {/* GÜNÜN VİTRİN KARŞILAŞMASI (HERO SHOWCASE BANNER) */}
-                    {heroMatch && heroAnalysis && (
+                    {/* GÜNÜN VİTRİN KARŞILAŞMASI (HERO SHOWCASE BANNER - Yalnızca Tüm Maçlar Seçiliyken) */}
+                    {heroMatch && heroAnalysis && selectedCategory === 'all' && (
                       <div className="mb-4">
                         <MatchOfTheDayBanner
                           match={heroMatch}
@@ -1781,6 +1772,37 @@ export const App: React.FC = () => {
                           onAddToBetslip={handleToggleBetslip}
                           isAlreadyInBetslip={isHeroInBetslip}
                         />
+                      </div>
+                    )}
+
+                    {/* AKTİF KATEGORİ FİLTRESİ BAŞLIK ŞERİDİ (Filtrelenen Sonuçlar) */}
+                    {selectedCategory !== 'all' && (
+                      <div className="flex items-center justify-between p-3 mb-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-slate-900 to-slate-900 border border-emerald-500/40 text-xs shadow-lg animate-fadeIn">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="font-semibold text-slate-400">Aktif Kategori:</span>
+                          <span className="font-black text-white flex items-center space-x-1">
+                            <span>
+                              {selectedCategory === 'value' && '🎯 Değer Bahisleri'}
+                              {selectedCategory === 'banko' && '🔥 Bankolar (+%70)'}
+                              {selectedCategory === 'over25' && '⚡ 2.5 Gol Üst'}
+                              {selectedCategory === 'btts' && '✨ KG Var'}
+                              {selectedCategory === 'htft' && '🛡️ İY/MS Sürpriz'}
+                              {selectedCategory === 'favorites' && '⭐ Favoriler'}
+                            </span>
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 ml-1">
+                            {upcomingFiltered.length + liveFiltered.length} Karşılaşma
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCategory('all')}
+                          className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          <span>Tüm Maçları Göster</span>
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     )}
 
