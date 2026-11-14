@@ -32,6 +32,8 @@ import {
   Crown,
   Zap,
   Rocket,
+  Coins,
+  Radio,
 } from 'lucide-react';
 import { User } from '../../utils/authHelper';
 import {
@@ -64,6 +66,9 @@ import { StockPerformanceModal } from './StockPerformanceModal';
 import { StockAlertsModal, playAlertSound } from './StockAlertsModal';
 import { StockPortfolioModal } from './StockPortfolioModal';
 import { StockIpoModal } from './StockIpoModal';
+import { StockDividendModal } from './StockDividendModal';
+import { StockKapModal } from './StockKapModal';
+import { StockMoneyFlowModal } from './StockMoneyFlowModal';
 import { INITIAL_IPOS } from '../../data/ipoData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
@@ -105,6 +110,9 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
   const [isAlertsModalOpen, setIsAlertsModalOpen] = useState<boolean>(false);
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState<boolean>(false);
   const [isIpoModalOpen, setIsIpoModalOpen] = useState<boolean>(false);
+  const [isDividendModalOpen, setIsDividendModalOpen] = useState<boolean>(false);
+  const [isKapModalOpen, setIsKapModalOpen] = useState<boolean>(false);
+  const [isMoneyFlowModalOpen, setIsMoneyFlowModalOpen] = useState<boolean>(false);
 
   const [alerts, setAlerts] = useState<StockAlertItem[]>(() => {
     try {
@@ -544,20 +552,56 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
             {/* 🚀 Halka Arz Merkezi */}
             <button
               onClick={() => setIsIpoModalOpen(true)}
-              className="px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-600/30 via-cyan-600/20 to-teal-600/30 hover:from-indigo-600/40 hover:to-teal-600/40 border border-cyan-400/50 text-cyan-200 text-xs font-black cursor-pointer flex items-center space-x-1.5 transition-all shadow-md shadow-cyan-950/40 active:scale-95"
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-600/30 via-cyan-600/20 to-teal-600/30 hover:from-indigo-600/40 hover:to-teal-600/40 border border-cyan-400/50 text-cyan-200 text-xs font-black cursor-pointer flex items-center space-x-1.5 transition-all shadow-md shadow-cyan-950/40 active:scale-95"
               title="Borsa İstanbul Halka Arz Takvimi, Katılım Endeksi & Kaç Lot Düşer Simülatörü"
             >
               <Rocket className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
               <span>Halka Arz</span>
               {INITIAL_IPOS.filter((i) => i.status === 'active').length > 0 ? (
                 <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black animate-pulse">
-                  {INITIAL_IPOS.filter((i) => i.status === 'active').length} Aktif
+                  {INITIAL_IPOS.filter((i) => i.status === 'active').length}
                 </span>
               ) : (
                 <span className="px-1.5 py-0.2 rounded-full bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 text-[10px] font-bold">
                   Takvim
                 </span>
               )}
+            </button>
+
+            {/* 💰 Temettü Merkezi */}
+            <button
+              onClick={() => setIsDividendModalOpen(true)}
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-amber-600/25 via-yellow-600/20 to-amber-600/25 hover:from-amber-600/35 hover:to-amber-600/35 border border-amber-500/40 text-amber-200 text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-md shadow-amber-950/40 active:scale-95"
+              title="2026 Temettü Dağıtım Takvimi, Yüksek Verimliler ve Kar Payı Simülatörü"
+            >
+              <Coins className="w-3.5 h-3.5 text-amber-400" />
+              <span>Temettü</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold">
+                2026
+              </span>
+            </button>
+
+            {/* 📢 KAP AI Radarı */}
+            <button
+              onClick={() => setIsKapModalOpen(true)}
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-blue-600/25 via-indigo-600/20 to-blue-600/25 hover:from-blue-600/35 hover:to-blue-600/35 border border-blue-500/40 text-blue-200 text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-md shadow-blue-950/40 active:scale-95"
+              title="KAP AI Radarı & Kritik Şirket İhaleleri, Geri Alımları ve Bildirimleri"
+            >
+              <Radio className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+              <span>KAP</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[10px] font-bold">
+                AI
+              </span>
+            </button>
+
+            {/* 🏛️ Para Akışı / AKD */}
+            <button
+              onClick={() => setIsMoneyFlowModalOpen(true)}
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-600/25 via-teal-600/20 to-emerald-600/25 hover:from-emerald-600/35 hover:to-emerald-600/35 border border-emerald-500/40 text-emerald-200 text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-md shadow-emerald-950/40 active:scale-95"
+              title="Borsa İstanbul Para Giriş-Çıkış Radarı, BofA & Kurumsal Takas Dağılımı"
+            >
+              <Activity className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Para Akışı</span>
             </button>
 
             {/* 🏆 Başarı Karnesi */}
@@ -2230,6 +2274,40 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
           savePortfolio([pos, ...portfolio]);
         }}
         onShowToast={onShowToast}
+      />
+
+      {/* 💰 Borsa İstanbul Temettü Merkezi & Verim Simülatörü Modal */}
+      <StockDividendModal
+        isOpen={isDividendModalOpen}
+        onClose={() => setIsDividendModalOpen(false)}
+        stocks={stocks}
+        positions={portfolio}
+        onSelectStock={(sym) => {
+          setSelectedSymbol(sym);
+          setIsDividendModalOpen(false);
+        }}
+      />
+
+      {/* 📢 KAP AI Radarı & Kritik Şirket Bildirimleri Modal */}
+      <StockKapModal
+        isOpen={isKapModalOpen}
+        onClose={() => setIsKapModalOpen(false)}
+        stocks={stocks}
+        onSelectStock={(sym) => {
+          setSelectedSymbol(sym);
+          setIsKapModalOpen(false);
+        }}
+      />
+
+      {/* 🏛️ Borsa İstanbul Akıllı Para & Para Giriş-Çıkış Radarı Modal */}
+      <StockMoneyFlowModal
+        isOpen={isMoneyFlowModalOpen}
+        onClose={() => setIsMoneyFlowModalOpen(false)}
+        stocks={stocks}
+        onSelectStock={(sym) => {
+          setSelectedSymbol(sym);
+          setIsMoneyFlowModalOpen(false);
+        }}
       />
 
       {/* Borsa Dedicated AI Sinyal Robotu Modal */}

@@ -328,4 +328,57 @@ export interface StockIpoItem {
   estimatedLotsByParticipants: EstimatedLotItem[];
 }
 
+// --- 💰 Temettü (Dividend Hub) Veri Tipleri ---
+export interface StockDividendItem {
+  id: string;
+  code: string;
+  companyName: string;
+  grossDividendPerShare: number; // Hisse başı brüt ₺
+  netDividendPerShare: number; // Hisse başı net ₺ (stopaj düşülmüş)
+  dividendYieldPct: number; // Yıllık temettü verimi %
+  exDividendDate: string; // Hak kullanım tarihi
+  paymentDate: string; // Nakit hesaba geçiş (T+2)
+  status: 'confirmed' | 'expected' | 'paid';
+  year: number;
+  notes?: string;
+}
+
+// --- 📢 KAP (Kamuyu Aydınlatma Platformu) Yapay Zeka Radarı ---
+export type KapNotificationCategory =
+  | 'yeni_is'
+  | 'bedelsiz'
+  | 'bedelli'
+  | 'geri_alim'
+  | 'finansal_rapor'
+  | 'ozel_durum'
+  | 'kritik_risk';
+
+export interface StockKapNewsItem {
+  id: string;
+  code: string;
+  companyName: string;
+  title: string;
+  publishTime: string;
+  category: KapNotificationCategory;
+  categoryLabel: string;
+  dealSizeTl?: number;
+  aiImpact: 'ÇOK POZİTİF' | 'POZİTİF' | 'NÖTR' | 'NEGATİF' | 'KRİTİK RİSK';
+  aiScore: number;
+  aiSummary: string;
+  sourceUrl?: string;
+}
+
+// --- 🏛️ Para Giriş-Çıkış & Kurumsal Akış (Smart Money Flow) ---
+export interface StockMoneyFlowItem {
+  code: string;
+  companyName: string;
+  price: number;
+  changePct: number;
+  netCashFlowTl: number;
+  volumeTl: number;
+  topBuyerBroker: string;
+  topSellerBroker: string;
+  direction: 'inflow' | 'outflow';
+}
+
 
