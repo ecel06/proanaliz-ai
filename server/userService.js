@@ -330,6 +330,12 @@ function sanitizeUser(user) {
   const now = Date.now();
   const isVipActive = Boolean(user.isVip && (!user.vipExpiresAt || user.vipExpiresAt > now));
   
+  // Ensure user has a referral code
+  if (!user.referralCode) {
+    const base = user.name ? user.name.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '') : 'pro';
+    user.referralCode = `${base || 'vip'}${Math.floor(100 + Math.random() * 900)}`;
+  }
+
   return {
     id: user.id,
     name: user.name,
@@ -341,6 +347,8 @@ function sanitizeUser(user) {
     isVip: isVipActive,
     vipPlan: isVipActive ? user.vipPlan : null,
     vipExpiresAt: isVipActive ? user.vipExpiresAt : null,
+    referralCode: user.referralCode,
+    referralCount: user.referralCount || 0,
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt,
   };
@@ -348,7 +356,7 @@ function sanitizeUser(user) {
 
 // --- Public Auth Methods ---
 
-export function registerUser({ name, email, password, phone }) {
+export function registerUser({ name, email, password, phone, referredBy }) {
   if (!email || !password || !name) {
     return { success: false, error: 'Tüm zorunlu alanları doldurunuz.' };
   }
@@ -379,12 +387,45 @@ export function registerUser({ name, email, password, phone }) {
   const userId = `usr_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
   const isFirstUser = usersMap.size === 0;
 
-  // New registrations receive automatic 7-day VIP trial (first user gets 1-year Creator/Admin VIP)
+  // Check referral code
+  let cleanReferrer = null;
+  if (referredBy) {
+    const refCode = String(referredBy).trim().toLowerCase();
+    for (const u of usersMap.values()) {
+      if (
+        (u.referralCode && u.referralCode.toLowerCase() === refCode) ||
+        (u.id && u.id.toLowerCase() === refCode) ||
+        (u.email && u.email.toLowerCase() === refCode)
+      ) {
+        cleanReferrer = u;
+        break;
+      }
+    }
+  }
+
+  // New registrations receive automatic 7-day VIP trial (10 days if referred, first user gets 1-year Creator/Admin VIP)
   const isVip = true;
-  const vipPlan = isFirstUser ? 'Kurucu Yönetici VIP' : '7 Günlük Deneme VIP';
-  const vipExpiresAt = isFirstUser
+  const trialDays = cleanReferrer ? 10 : 7;
+  const vipPlan = isFirstUser ? 'Kurucu Yönetici VIP' : `${trialDays} Günlük Deneme VIP`;
+  let vipExpiresAt = isFirstUser
     ? Date.now() + 365 * 24 * 60 * 60 * 1000
-    : Date.now() + 7 * 24 * 60 * 60 * 1000;
+    : Date.now() + trialDays * 24 * 60 * 60 * 1000;
+
+  // Reward referrer with +3 days VIP
+  if (cleanReferrer) {
+    cleanReferrer.referralCount = (cleanReferrer.referralCount || 0) + 1;
+    const now = Date.now();
+    const currentExpiry = (cleanReferrer.vipExpiresAt && cleanReferrer.vipExpiresAt > now)
+      ? cleanReferrer.vipExpiresAt
+      : now;
+    cleanReferrer.vipExpiresAt = currentExpiry + 3 * 24 * 60 * 60 * 1000;
+    cleanReferrer.isVip = true;
+    if (!cleanReferrer.vipPlan) cleanReferrer.vipPlan = 'Referans Hediye VIP';
+    console.log(`[Referral] User ${cleanEmail} registered via referral ${referredBy}. Referrer ${cleanReferrer.email} awarded +3 days VIP.`);
+  }
+
+  const baseCode = cleanName.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'vip';
+  const referralCode = `${baseCode}${Math.floor(100 + Math.random() * 900)}`;
 
   const newUser = {
     id: userId,
@@ -397,6 +438,9 @@ export function registerUser({ name, email, password, phone }) {
     isVip,
     vipPlan,
     vipExpiresAt,
+    referralCode,
+    referralCount: 0,
+    referredBy: cleanReferrer ? cleanReferrer.id : null,
     createdAt: Date.now(),
     lastLoginAt: Date.now(),
   };

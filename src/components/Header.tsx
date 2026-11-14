@@ -24,7 +24,8 @@ import {
   Home,
   User as UserIcon,
   Crown,
-  LogOut
+  LogOut,
+  Share2
 } from 'lucide-react';
 import { TeamTheme } from '../utils/themeHelper';
 import { User } from '../utils/authHelper';
@@ -33,6 +34,7 @@ interface HeaderProps {
   user?: User | null;
   onOpenAuth?: () => void;
   onOpenVIP?: () => void;
+  onOpenShare?: () => void;
   onOpenAdmin?: () => void;
   onOpenProfile?: () => void;
   onLogout?: () => void;
@@ -69,6 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
   user,
   onOpenAuth,
   onOpenVIP,
+  onOpenShare,
   onOpenAdmin,
   onOpenProfile,
   onLogout,
@@ -297,6 +300,21 @@ export const Header: React.FC<HeaderProps> = ({
                 <Calculator className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span className="hidden sm:inline lg:hidden text-[11px]">Analiz</span>
                 <span className="hidden lg:inline">Kendi Maçını Analiz Et</span>
+              </button>
+            )}
+
+            {/* 🎁 Share App & Referral Trigger */}
+            {onOpenShare && (
+              <button
+                onClick={onOpenShare}
+                className="flex items-center space-x-1 px-2 sm:px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-amber-500/15 hover:from-emerald-500/25 hover:to-amber-500/25 border border-emerald-500/40 text-emerald-300 hover:text-white text-xs font-black transition-all shadow-xs cursor-pointer shrink-0 active:scale-95 group"
+                title="Uygulamayı Paylaş & Arkadaşını Davet Et (+3 Gün VIP Kazan!)"
+              >
+                <Share2 className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline">Paylaş</span>
+                <span className="px-1 py-0.2 rounded text-[9px] font-black bg-amber-400 text-slate-950 font-mono">
+                  +3G
+                </span>
               </button>
             )}
 

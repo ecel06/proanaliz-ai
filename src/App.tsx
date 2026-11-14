@@ -36,6 +36,7 @@ const BankrollTrackerModal = React.lazy(() => import('./components/BankrollTrack
 const ThemeSelectorModal = React.lazy(() => import('./components/ThemeSelectorModal').then(m => ({ default: m.ThemeSelectorModal })));
 const AIPerformanceModal = React.lazy(() => import('./components/AIPerformanceModal').then(m => ({ default: m.AIPerformanceModal })));
 const ShareSlipModal = React.lazy(() => import('./components/ShareSlipModal').then(m => ({ default: m.ShareSlipModal })));
+const ShareAppModal = React.lazy(() => import('./components/ShareAppModal').then(m => ({ default: m.ShareAppModal })));
 const NesineBulletinView = React.lazy(() => import('./components/NesineBulletinView').then(m => ({ default: m.NesineBulletinView })));
 
 const SectionLoadingFallback: React.FC<{ label?: string }> = ({ label = 'Modül Yükleniyor...' }) => (
@@ -307,6 +308,7 @@ export const App: React.FC = () => {
 
   // AI Accuracy Scorecard Modal State
   const [isAIPerformanceOpen, setIsAIPerformanceOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Social Coupon Share Modal State
   const [shareSlipCoupon, setShareSlipCoupon] = useState<any | null>(null);
@@ -328,7 +330,29 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.14.04';
+  const CLIENT_BUILD_VERSION = '2026.11.14.05';
+
+  // Capture viral referral link if accessed via ?ref=...
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const refParam = params.get('ref');
+      if (refParam && refParam.trim()) {
+        const cleanRef = refParam.trim().toLowerCase();
+        localStorage.setItem('proanaliz_referred_by', cleanRef);
+        // Clean URL parameter without reloading
+        const newUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, newUrl || '/');
+        // If not logged in, proactively open auth modal
+        const savedToken = localStorage.getItem('proanaliz_auth_token');
+        if (!savedToken) {
+          setIsAuthModalOpen(true);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
   useEffect(() => {
     const handleSessionExpired = (e: any) => {
       setCurrentUser(null);
@@ -1060,6 +1084,7 @@ export const App: React.FC = () => {
           onOpenProfile={() => setIsProfileModalOpen(true)}
           onOpenAdmin={() => setIsAdminModalOpen(true)}
           onOpenAIPerformance={() => setIsAIPerformanceOpen(true)}
+          onOpenShare={() => setIsShareModalOpen(true)}
           onLogout={handleLogout}
           user={currentUser}
           allMatches={weeklyMatches}
@@ -1157,6 +1182,15 @@ export const App: React.FC = () => {
               onSelectTheme={handleSelectTheme}
             />
           )}
+
+          {isShareModalOpen && (
+            <ShareAppModal
+              isOpen={isShareModalOpen}
+              onClose={() => setIsShareModalOpen(false)}
+              user={currentUser}
+              onOpenAuth={() => setIsAuthModalOpen(true)}
+            />
+          )}
         </React.Suspense>
       </div>
     );
@@ -1224,6 +1258,7 @@ export const App: React.FC = () => {
         onOpenCustomAnalyzer={() => setIsCustomAnalyzerOpen(true)}
         onOpenStandings={() => setIsStandingsOpen(true)}
         onOpenAIPerformance={() => setIsAIPerformanceOpen(true)}
+        onOpenShare={() => setIsShareModalOpen(true)}
         onOpenCoupons={() => setActiveTabMode('coupons')}
         onOpenInstallApp={() => setIsInstallModalOpen(true)}
         onOpenAIChat={() => setIsAIChatOpen(true)}
@@ -2168,6 +2203,15 @@ export const App: React.FC = () => {
             onClose={() => setIsAdminModalOpen(false)}
             currentUser={currentUser}
             onRefreshBulletin={handleRefreshBulletin}
+          />
+        )}
+
+        {isShareModalOpen && (
+          <ShareAppModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            user={currentUser}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
           />
         )}
       </React.Suspense>

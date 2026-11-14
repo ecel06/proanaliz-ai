@@ -19,6 +19,8 @@ import {
   AlertTriangle,
   User as UserIcon,
   LogOut,
+  Share2,
+  Gift,
 } from 'lucide-react';
 import { Match, MatchAnalysis } from '../types';
 import { User } from '../utils/authHelper';
@@ -28,6 +30,7 @@ interface HomeHubProps {
   onSelectHorseRacing: () => void;
   onSelectStocks: () => void;
   onOpenInstallModal?: () => void;
+  onOpenShare?: () => void;
   onOpenVIP?: () => void;
   onOpenAuth?: () => void;
   onOpenProfile?: () => void;
@@ -44,6 +47,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   onSelectHorseRacing,
   onSelectStocks,
   onOpenInstallModal,
+  onOpenShare,
   onOpenVIP,
   onOpenAuth,
   onOpenProfile,
@@ -349,6 +353,20 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               </button>
             )}
 
+            {onOpenShare && (
+              <button
+                onClick={onOpenShare}
+                className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 border border-emerald-400/40 text-[10px] font-black text-emerald-300 hover:text-white transition-all shadow cursor-pointer group"
+                title="Arkadaşını Davet Et, +3 Gün Hediye VIP Kazan!"
+              >
+                <Gift className="w-3 h-3 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span>Paylaş &amp; Kazan</span>
+                <span className="px-1 py-0.2 rounded text-[8px] font-black bg-amber-400 text-slate-950 font-mono">
+                  +3G
+                </span>
+              </button>
+            )}
+
             {onOpenVIP && (
               <button
                 onClick={onOpenVIP}
@@ -639,11 +657,21 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               onClick={() => {
                 if (onOpenInstallModal) onOpenInstallModal();
               }}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 hover:border-emerald-400/60 border border-slate-700 active:scale-95 text-white font-black text-xs sm:text-sm transition-all shadow-xs cursor-pointer group"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 hover:border-emerald-400/60 border border-slate-700 active:scale-95 text-white font-black text-xs sm:text-sm transition-all shadow-xs cursor-pointer group"
             >
               <QrCode className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
-              <span>Telefona İndir &amp; Karekod</span>
+              <span>Telefona İndir</span>
             </button>
+            {onOpenShare && (
+              <button
+                onClick={onOpenShare}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-95 text-slate-950 font-black text-xs sm:text-sm transition-all shadow-md shadow-amber-500/20 cursor-pointer group"
+                title="Arkadaşını Davet Et, +3 Gün Hediye VIP Kazan!"
+              >
+                <Gift className="w-4 h-4 stroke-[2.5]" />
+                <span>Paylaş &amp; Kazan</span>
+              </button>
+            )}
           </div>
         </div>
 

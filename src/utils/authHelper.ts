@@ -12,6 +12,9 @@ export interface User {
   isVip: boolean;
   vipPlan?: string | null;
   vipExpiresAt?: number | null;
+  referralCode?: string;
+  referralCount?: number;
+  referredBy?: string | null;
   createdAt?: number;
 }
 
@@ -158,16 +161,20 @@ export async function loginUserApi(email: string, password: string, rememberMe: 
   }
 }
 
-export async function registerUserApi(name: string, email: string, password: string, phone?: string, rememberMe: boolean = true): Promise<{ success: boolean; user?: User; error?: string }> {
+export async function registerUserApi(name: string, email: string, password: string, phone?: string, rememberMe: boolean = true, referredBy?: string): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
+    const finalReferredBy = referredBy || (typeof window !== 'undefined' ? localStorage.getItem('proanaliz_referred_by') || undefined : undefined);
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, phone })
+      body: JSON.stringify({ name, email, password, phone, referredBy: finalReferredBy })
     });
     const data = await res.json();
     if (!res.ok || !data.success) {
       return { success: false, error: data.error || 'Kayıt işlemi başarısız.' };
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('proanaliz_referred_by');
     }
     saveAuthSession(data.token, data.user, rememberMe);
     return { success: true, user: data.user };
