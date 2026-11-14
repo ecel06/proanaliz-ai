@@ -312,7 +312,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
 
   const selectedAnalysis: StockQuantAnalysis | null = useMemo(() => {
     if (!selectedStock) return null;
-    return analysesMap.get(selectedStock.symbol) || null;
+    return analysesMap.get(selectedStock.symbol) || analyzeStockQuant(selectedStock);
   }, [selectedStock, analysesMap]);
 
   // Fetch OHLCV candles when selected stock or chartRange changes
@@ -1111,7 +1111,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
             ) : (
               <div className="divide-y divide-slate-800/80 max-h-[760px] overflow-y-auto">
                 {filteredStocks.map((st) => {
-                  const qa = analysesMap.get(st.symbol)!;
+                  const qa = analysesMap.get(st.symbol) || { signal: 'TUT' as const, score: 70 };
                   const isSel = selectedStock?.symbol === st.symbol;
                   const isFav = watchlist.includes(st.symbol);
                   return (
@@ -1216,7 +1216,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
 
           {/* RIGHT: DEEP QUANT & TECHNICAL TERMINAL FOR SELECTED STOCK */}
           {selectedStock && selectedAnalysis && (
-            <div className="flex-1 w-full min-w-0 space-y-4">
+            <div id="stock-detail-workstation" className="flex-1 w-full min-w-0 space-y-4 scroll-mt-24">
               {/* Top Signal & Price Header */}
               <div className="rounded-2xl bg-slate-900/95 border border-slate-800 p-4 sm:p-5 shadow-xl space-y-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -2316,7 +2316,13 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         positions={portfolio}
         onSelectStock={(sym) => {
           setSelectedSymbol(sym);
+          setSearchInput('');
+          setActiveSearch('');
           setIsDividendModalOpen(false);
+          setTimeout(() => {
+            const elem = document.getElementById('stock-detail-workstation');
+            if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 150);
         }}
       />
 
@@ -2327,7 +2333,13 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         stocks={stocks}
         onSelectStock={(sym) => {
           setSelectedSymbol(sym);
+          setSearchInput('');
+          setActiveSearch('');
           setIsKapModalOpen(false);
+          setTimeout(() => {
+            const elem = document.getElementById('stock-detail-workstation');
+            if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 150);
         }}
       />
 
@@ -2338,7 +2350,13 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         stocks={stocks}
         onSelectStock={(sym) => {
           setSelectedSymbol(sym);
+          setSearchInput('');
+          setActiveSearch('');
           setIsMoneyFlowModalOpen(false);
+          setTimeout(() => {
+            const elem = document.getElementById('stock-detail-workstation');
+            if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 150);
         }}
       />
 
@@ -2350,9 +2368,20 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         stocks={stocks}
         analysesMap={analysesMap}
         onToggleWatchlist={toggleWatchlist}
-        onSelectStock={(sym) => {
+        onSelectStock={(sym, targetMarket) => {
+          if (targetMarket && targetMarket !== market) {
+            setMarket(targetMarket);
+          }
           setSelectedSymbol(sym);
+          setSearchInput('');
+          setActiveSearch('');
           setIsWatchlistModalOpen(false);
+          setTimeout(() => {
+            const elem = document.getElementById('stock-detail-workstation');
+            if (elem) {
+              elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 150);
         }}
         onAddToPortfolio={(pos) => savePortfolio([pos, ...portfolio])}
         onShowToast={onShowToast}

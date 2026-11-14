@@ -21,7 +21,7 @@ interface StockWatchlistModalProps {
   stocks?: StockItem[];
   analysesMap?: Map<string, StockQuantAnalysis>;
   onToggleWatchlist: (symbol: string) => void;
-  onSelectStock?: (symbol: string) => void;
+  onSelectStock?: (symbol: string, market?: 'bist' | 'crypto' | 'us') => void;
   onAddToPortfolio?: (position: StockPortfolioPosition) => void;
   onShowToast?: (message: string) => void;
 }
@@ -64,7 +64,7 @@ export const StockWatchlistModal: React.FC<StockWatchlistModalProps> = ({
         market: stock?.market || 'bist',
         sector: stock?.sector || '',
         aiScore: analysis?.totalScore || 70,
-        signal: analysis?.signal || 'HOLD',
+        signal: analysis?.signal || ('TUT' as const),
       };
     });
   }, [watchlist, stockMap, analysesMap]);
@@ -289,14 +289,15 @@ export const StockWatchlistModal: React.FC<StockWatchlistModalProps> = ({
                     {/* Header line */}
                     <div className="flex items-start justify-between gap-2">
                       <div
-                        onClick={() => {
-                          onSelectStock?.(item.symbol);
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectStock?.(item.symbol, item.market as any);
                           onClose();
                         }}
                         className="flex items-center gap-2.5 cursor-pointer"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center font-black text-sm text-white group-hover:border-amber-500/50 group-hover:text-amber-400 transition-colors">
-                          {item.symbol}
+                        <div className="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center font-black text-[11px] text-white tracking-tighter group-hover:border-amber-500/50 group-hover:text-amber-400 transition-colors shadow-inner overflow-hidden px-1 text-center">
+                          <span className="truncate max-w-full">{item.symbol}</span>
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -376,8 +377,10 @@ export const StockWatchlistModal: React.FC<StockWatchlistModalProps> = ({
 
                         {/* View Details */}
                         <button
-                          onClick={() => {
-                            onSelectStock?.(item.symbol);
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectStock?.(item.symbol, item.market as any);
                             onClose();
                           }}
                           className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
