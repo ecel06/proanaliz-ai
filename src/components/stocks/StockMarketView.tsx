@@ -612,6 +612,33 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* 🛡️ YASAL UYARI & SPK SORUMLULUK REDDİ (YTD) - Sayfanın En Üstünde Sabit & Belirgin */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/15 via-slate-900 to-amber-500/10 border-2 border-amber-400/40 p-3 sm:p-3.5 shadow-lg shadow-amber-500/10">
+        <div className="pointer-events-none absolute -right-6 -bottom-6 w-28 h-28 bg-amber-400/15 rounded-full blur-2xl animate-pulse" />
+        <div className="flex items-start sm:items-center gap-3 relative z-10">
+          <div className="w-9 h-9 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0 shadow-inner mt-0.5 sm:mt-0">
+            <ShieldAlert className="w-5 h-5 text-amber-300 animate-pulse" />
+          </div>
+          <div className="text-[11px] sm:text-xs leading-relaxed text-slate-200">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow">
+                SPK MEVZUATI • YASAL UYARI
+              </span>
+              <span className="font-black text-amber-300 tracking-wide text-xs">
+                Yatırım Tavsiyesi Değildir (YTD)
+              </span>
+            </div>
+            <p className="text-slate-300">
+              Bu sayfadaki tüm Quant algoritmaları, RSI/MACD sinyalleri ve yapay zeka analizleri istatistiksel simülasyondur;{' '}
+              <strong className="text-amber-300 font-black underline decoration-amber-400 underline-offset-2">
+                kesinlikle yatırım danışmanlığı veya alım-satım tavsiyesi niteliği taşımaz (YTD)
+              </strong>
+              . Yatırım kararlarınızı kendi bağımsız araştırmanıza ve risk profilinize göre vermelisiniz.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* 1. MACRO INDICES & FX LIVE TICKER STRIP */}
       {macro.length > 0 && (
         <section className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
@@ -976,33 +1003,6 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
           );
         })()}
 
-        {/* 🛡️ YASAL UYARI & SPK SORUMLULUK REDDİ (YTD) - Belirgin & Prestijli Görünüm */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/15 via-slate-900 to-amber-500/10 border-2 border-amber-400/40 p-3 sm:p-3.5 shadow-lg shadow-amber-500/10">
-          <div className="pointer-events-none absolute -right-6 -bottom-6 w-28 h-28 bg-amber-400/15 rounded-full blur-2xl animate-pulse" />
-          <div className="flex items-start sm:items-center gap-3 relative z-10">
-            <div className="w-9 h-9 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0 shadow-inner mt-0.5 sm:mt-0">
-              <ShieldAlert className="w-5 h-5 text-amber-300 animate-pulse" />
-            </div>
-            <div className="text-[11px] sm:text-xs leading-relaxed text-slate-200">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow">
-                  SPK MEVZUATI • YASAL UYARI
-                </span>
-                <span className="font-black text-amber-300 tracking-wide text-xs">
-                  Yatırım Tavsiyesi Değildir (YTD)
-                </span>
-              </div>
-              <p className="text-slate-300">
-                Bu sayfadaki tüm Quant algoritmaları, RSI/MACD sinyalleri ve yapay zeka analizleri istatistiksel simülasyondur;{' '}
-                <strong className="text-amber-300 font-black underline decoration-amber-400 underline-offset-2">
-                  kesinlikle yatırım danışmanlığı veya alım-satım tavsiyesi niteliği taşımaz (YTD)
-                </strong>
-                . Yatırım kararlarınızı kendi bağımsız araştırmanıza ve risk profilinize göre vermelisiniz.
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* 🚨 PORTFÖYDE RİSKLİ HİSSE ALARMI (SAT / GÜÇLÜ SAT) */}
         {urgentPortfolioRisks.length > 0 && (
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-950/90 via-red-950/60 to-slate-900 border-2 border-rose-500/80 p-3.5 sm:p-4 shadow-2xl shadow-rose-950/50 space-y-3 animate-in fade-in">
@@ -1337,21 +1337,21 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             {/* LEFT: SCREENER LIST */}
             <div
               id="stock-screener-list"
-              className={`w-full xl:w-[440px] shrink-0 rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl scroll-mt-24 xl:sticky xl:top-4 ${
-                mobileViewTab === 'detail' ? 'hidden xl:block' : 'block'
+              className={`w-full xl:w-[420px] shrink-0 rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl scroll-mt-24 xl:sticky xl:top-[6.5rem] xl:h-[calc(100vh-7.5rem)] flex flex-col ${
+                mobileViewTab === 'detail' ? 'hidden xl:flex' : 'flex'
               }`}
             >
-              <div className="px-3.5 py-2.5 bg-slate-950/70 border-b border-slate-800 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400">
+              <div className="px-3.5 py-2.5 bg-slate-950/70 border-b border-slate-800 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400 shrink-0">
                 <span>Hisse / Varlık ({filteredStocks.length})</span>
                 <span>Fiyat &bull; RSI &bull; Sinyal</span>
               </div>
 
               {loading && stocks.length === 0 ? (
-                <div className="p-10 text-center text-xs text-slate-400 animate-pulse">
+                <div className="p-10 text-center text-xs text-slate-400 animate-pulse flex-1 flex items-center justify-center">
                   Canlı borsa taraması yapılıyor...
                 </div>
               ) : filteredStocks.length === 0 ? (
-                <div className="p-8 text-center text-xs text-slate-400 space-y-2">
+                <div className="p-8 text-center text-xs text-slate-400 space-y-2 flex-1 flex flex-col items-center justify-center">
                   <div>Seçili filtrede hisse bulunamadı.</div>
                   <button
                     onClick={() => {
@@ -1364,7 +1364,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                   </button>
                 </div>
               ) : (
-                <div className="divide-y divide-slate-800/80 max-h-[calc(100vh-180px)] overflow-y-auto">
+                <div className="divide-y divide-slate-800/80 overflow-y-auto flex-1 overscroll-contain">
                   {filteredStocks.map((st) => {
                     const qa = analysesMap.get(st.symbol) || { signal: 'TUT' as const, score: 70 };
                     const isSel = selectedStock?.symbol === st.symbol;
