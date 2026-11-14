@@ -31,6 +31,7 @@ import {
   Lock,
   Crown,
   Zap,
+  Rocket,
 } from 'lucide-react';
 import { User } from '../../utils/authHelper';
 import {
@@ -62,6 +63,8 @@ import { StockAIChatModal } from './StockAIChatModal';
 import { StockPerformanceModal } from './StockPerformanceModal';
 import { StockAlertsModal, playAlertSound } from './StockAlertsModal';
 import { StockPortfolioModal } from './StockPortfolioModal';
+import { StockIpoModal } from './StockIpoModal';
+import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
 type PresetFilter = 'all' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
 type StockSort = 'ai_desc' | 'change_desc' | 'volume_desc' | 'rsi_asc' | 'pe_asc';
@@ -84,6 +87,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [preset, setPreset] = useState<PresetFilter>('all');
+  const [indexFilter, setIndexFilter] = useState<BistIndexType>('ALL');
   const [sortBy, setSortBy] = useState<StockSort>('ai_desc');
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [chartRange, setChartRange] = useState<'1mo' | '3mo' | '6mo' | '1y'>('6mo');
@@ -95,10 +99,11 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
   const [riskPctInput, setRiskPctInput] = useState<string>('2');
   const [isAIChatOpen, setIsAIChatOpen] = useState<boolean>(false);
 
-  // Elite Extension Modals: Karnesi, Alarmlar, Sanal Portföy
+  // Elite Extension Modals: Karnesi, Alarmlar, Sanal Portföy, Halka Arz
   const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState<boolean>(false);
   const [isAlertsModalOpen, setIsAlertsModalOpen] = useState<boolean>(false);
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState<boolean>(false);
+  const [isIpoModalOpen, setIsIpoModalOpen] = useState<boolean>(false);
 
   const [alerts, setAlerts] = useState<StockAlertItem[]>(() => {
     try {
@@ -376,6 +381,12 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
 
   const filteredStocks = useMemo(() => {
     let list = [...stocks];
+
+    // BIST Index Filter (BIST 30, BIST 50, BIST 100, Temettü 25, Banka, Sınai, Teknoloji)
+    if (market === 'bist' && indexFilter !== 'ALL') {
+      list = list.filter((s) => isStockInIndex(s.symbol, indexFilter));
+    }
+
     if (preset === 'strong_buy') {
       list = list.filter((s) => analysesMap.get(s.symbol)?.signal === 'GÜÇLÜ AL');
     } else if (preset === 'buy') {
@@ -410,7 +421,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
       return (analysesMap.get(b.symbol)?.score || 0) - (analysesMap.get(a.symbol)?.score || 0);
     });
     return list;
-  }, [stocks, analysesMap, preset, sortBy, watchlist]);
+  }, [stocks, analysesMap, market, indexFilter, preset, sortBy, watchlist]);
 
   const statsSummary = useMemo(() => {
     let strongBuy = 0;
@@ -528,6 +539,19 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
                 className="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
               />
             </div>
+
+            {/* 🚀 Halka Arz Merkezi */}
+            <button
+              onClick={() => setIsIpoModalOpen(true)}
+              className="px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-600/30 via-cyan-600/20 to-teal-600/30 hover:from-indigo-600/40 hover:to-teal-600/40 border border-cyan-400/50 text-cyan-200 text-xs font-black cursor-pointer flex items-center space-x-1.5 transition-all shadow-md shadow-cyan-950/40 active:scale-95"
+              title="Borsa İstanbul Halka Arz Takvimi, Katılım Endeksi & Kaç Lot Düşer Simülatörü"
+            >
+              <Rocket className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+              <span>Halka Arz</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black animate-pulse">
+                2 Aktif
+              </span>
+            </button>
 
             {/* 🏆 Başarı Karnesi */}
             <button
@@ -813,6 +837,57 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
                       </button>
                     </div>
                   </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 🏛️ BIST Endeks Filtreleri (BIST 30, BIST 50, BIST 100, Temettü 25, Banka, Sınai, Teknoloji) */}
+        {market === 'bist' && (
+          <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-black text-cyan-300 flex items-center gap-1.5">
+                <span>🏛️ BIST Endeks &amp; Sektör Seçici:</span>
+                <span className="text-slate-400 font-normal hidden sm:inline">
+                  {BIST_INDICES_CONFIG.find((i) => i.id === indexFilter)?.description}
+                </span>
+              </span>
+              {indexFilter !== 'ALL' && (
+                <button
+                  onClick={() => setIndexFilter('ALL')}
+                  className="text-[10px] text-cyan-400 hover:underline font-bold cursor-pointer"
+                >
+                  Tüm BIST'e Dön
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {BIST_INDICES_CONFIG.map((idx) => {
+                const active = indexFilter === idx.id;
+                return (
+                  <button
+                    key={idx.id}
+                    onClick={() => setIndexFilter(idx.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 shadow-sm ${
+                      active
+                        ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 border-cyan-300 font-black shadow-md shadow-cyan-500/20 scale-[1.02]'
+                        : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+                    }`}
+                  >
+                    <span>{idx.icon}</span>
+                    <span>{idx.label}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                        active
+                          ? 'bg-slate-950 text-cyan-300'
+                          : 'bg-slate-850 text-slate-400'
+                      }`}
+                    >
+                      {idx.count}
+                    </span>
+                  </button>
                 );
               })}
             </div>
@@ -2137,6 +2212,16 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
           savePortfolio([]);
           onShowToast?.('Sanal portföy sıfırlandı');
         }}
+      />
+
+      {/* 🚀 Borsa İstanbul Halka Arz Merkezi & SPK Takvimi Modal */}
+      <StockIpoModal
+        isOpen={isIpoModalOpen}
+        onClose={() => setIsIpoModalOpen(false)}
+        onAddToPortfolio={(pos) => {
+          savePortfolio([pos, ...portfolio]);
+        }}
+        onShowToast={onShowToast}
       />
 
       {/* Borsa Dedicated AI Sinyal Robotu Modal */}

@@ -276,3 +276,56 @@ export interface StockDeepAnalysis {
   updatedAt: string;
 }
 
+// --- BIST Endeks & Universe Türleri ---
+export type BistIndexType =
+  | 'ALL'
+  | 'BIST30'
+  | 'BIST50'
+  | 'BIST100'
+  | 'DIVIDEND25'
+  | 'XBANK'
+  | 'XUSIN'
+  | 'XUTEK';
+
+// --- Halka Arz (IPO Hub) Veri Tipleri ---
+export type IpoStatus = 'active' | 'upcoming' | 'recent' | 'draft';
+
+export interface EstimatedLotItem {
+  participants: number;
+  participantsLabel: string;
+  lots: number;
+  totalCostTl: number;
+}
+
+export interface StockIpoItem {
+  id: string;
+  code: string; // örn: ONURT, KOTON, LILAK, HOROZ
+  companyName: string;
+  logoUrl?: string;
+  status: IpoStatus;
+  offerPrice: number; // ₺
+  totalShares: number; // Toplam Lot
+  totalSizeTl: number; // Toplam Halka Arz Büyüklüğü ₺
+  bookBuildingDates: string; // örn: "13 - 14 - 15 Kasım 2026"
+  firstTradingDate?: string; // örn: "20 Kasım 2026"
+  distributionMethod: 'Eşit Dağıtım (Tamamı)' | 'Bireysele Eşit' | 'Oransal';
+  katilimEndeksineUygun: boolean; // Helal / Faizsiz finans
+  katilimNotu?: string; // Diyanet / BIST Katılım kriterleri açıklaması
+  t1t2Kullanilabilir: boolean; // T1 / T2 kullanılabilir mi
+  bistKod: string;
+  pazar: 'Yıldız Pazar' | 'Ana Pazar' | 'Girişim Sermayesi';
+  leadUnderwriter: string; // Konsorsiyum Lideri (Aracı Kurum)
+  consortiumMembers: string[]; // Başvuru yapılabilecek banka & kurumlar
+  useOfProceeds: { category: string; pct: number }[]; // Fon kullanım yeri
+  lockupCommitment: string; // 1 Yıl ortak satışı yok taahhüdü
+  // Son halka arzlar için canlı performans
+  currentPrice?: number;
+  initialPrice?: number;
+  ceilingCount?: number; // Kaç tavan yaptı
+  isCeilingBroke?: boolean;
+  returnFromIpoPct?: number; // %+125.4 vb.
+  // Tahmini kişi başı lot tablosu
+  estimatedLotsByParticipants: EstimatedLotItem[];
+}
+
+
