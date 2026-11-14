@@ -30,12 +30,18 @@ export function matchMatchesCategory(
       );
 
     case 'over25':
-      return analysis.over25 >= 55 || analysis.expectedTotalGoals >= 2.50;
+      return (
+        analysis.primaryPrediction.market === '2.5 Gol' ||
+        analysis.primaryPrediction.label.includes('2.5 Üst') ||
+        analysis.primaryPrediction.label.includes('2.5 Gol Üst') ||
+        (analysis.over25 >= 58 && analysis.over25 > analysis.under25)
+      );
 
     case 'btts':
       return (
-        analysis.bttsYes >= 55 ||
-        (analysis.expectedHomeGoals >= 1.2 && analysis.expectedAwayGoals >= 1.1)
+        analysis.primaryPrediction.market === 'Karşılıklı Gol' ||
+        analysis.primaryPrediction.label.includes('KG') ||
+        (analysis.bttsYes >= 58 && analysis.bttsYes > analysis.bttsNo)
       );
 
     case 'htft':

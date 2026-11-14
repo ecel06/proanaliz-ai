@@ -328,7 +328,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.14.01';
+  const CLIENT_BUILD_VERSION = '2026.11.14.02';
   useEffect(() => {
     const handleSessionExpired = (e: any) => {
       setCurrentUser(null);
@@ -835,6 +835,20 @@ export const App: React.FC = () => {
 
     return list.sort((m1, m2) => {
       if (sortOption === 'time') {
+        // Category priority: When user filters by a specific category, show the strongest candidates at the top
+        if (selectedCategory === 'btts') {
+          const b1 = matchAnalysesMap.get(m1.id)?.bttsYes ?? 0;
+          const b2 = matchAnalysesMap.get(m2.id)?.bttsYes ?? 0;
+          if (b1 !== b2) return b2 - b1;
+        } else if (selectedCategory === 'over25') {
+          const o1 = matchAnalysesMap.get(m1.id)?.over25 ?? 0;
+          const o2 = matchAnalysesMap.get(m2.id)?.over25 ?? 0;
+          if (o1 !== o2) return o2 - o1;
+        } else if (selectedCategory === 'banko') {
+          const c1 = matchAnalysesMap.get(m1.id)?.primaryPrediction.confidence ?? 0;
+          const c2 = matchAnalysesMap.get(m2.id)?.primaryPrediction.confidence ?? 0;
+          if (c1 !== c2) return c2 - c1;
+        }
         const t1 = parseMatchKickoffEpoch(m1);
         const t2 = parseMatchKickoffEpoch(m2);
         if (t1 !== t2) return t1 - t2; // Erkenden geçe doğru tam kronolojik sıra
@@ -1676,6 +1690,7 @@ export const App: React.FC = () => {
                           betslipItems={betslipItems}
                           onToggleBetslip={handleToggleBetslip}
                           sortOption={sortOption}
+                          selectedCategory={selectedCategory}
                         />
                       </React.Suspense>
                     ) : (
@@ -1829,6 +1844,7 @@ export const App: React.FC = () => {
                             betslipItems={betslipItems}
                             onToggleBetslip={handleToggleBetslip}
                             sortOption={sortOption}
+                            selectedCategory={selectedCategory}
                           />
                         </React.Suspense>
                       ) : (

@@ -58,6 +58,28 @@
   box-shadow: 0 0 20px -3px rgba(16, 185, 129, 0.25);
 }
 
+/* Continuous smooth ticker marquee for live finance/macro rates */
+@keyframes ticker-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: ticker-marquee 28s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover,
+.animate-marquee:active {
+  animation-play-state: paused;
+}
+
 .glow-amber {
   box-shadow: 0 0 20px -3px rgba(245, 158, 11, 0.25);
 }

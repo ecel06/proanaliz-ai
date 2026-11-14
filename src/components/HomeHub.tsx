@@ -468,57 +468,66 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-0.5 min-w-0 flex-1">
+          {/* Infinite Smooth Scrolling Ticker Loop */}
+          <div className="relative overflow-hidden flex-1 min-w-0 [mask-image:linear-gradient(to_right,transparent,black_8px,black_calc(100%-8px),transparent)]">
             {macroRates.length > 0 ? (
-              macroRates.map((item) => {
-                const isGold = item.symbol.includes('ALTIN') || item.symbol === 'GC=F';
-                const isUsd = item.symbol === 'USDTRY=X';
-                const isEur = item.symbol === 'EURTRY=X';
-                const isGbp = item.symbol === 'GBPTRY=X';
-                const isBtc = item.symbol === 'BTC-USD';
-                const isBist = item.symbol === 'XU100.IS';
+              <div className="flex items-center gap-1.5 sm:gap-2 animate-marquee py-0.5">
+                {/* Render two duplicated sets for seamless continuous animation loop */}
+                {[0, 1].map((copyIndex) => (
+                  <div key={copyIndex} className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    {macroRates.map((item) => {
+                      const isGold = item.symbol.includes('ALTIN') || item.symbol === 'GC=F';
+                      const isUsd = item.symbol === 'USDTRY=X';
+                      const isEur = item.symbol === 'EURTRY=X';
+                      const isGbp = item.symbol === 'GBPTRY=X';
+                      const isBtc = item.symbol === 'BTC-USD';
+                      const isBist = item.symbol === 'XU100.IS';
 
-                let icon = '📊';
-                if (item.symbol === 'GRAM_ALTIN') icon = '🪙';
-                else if (item.symbol === 'CEYREK_ALTIN') icon = '👑';
-                else if (item.symbol === 'GC=F') icon = '🟡';
-                else if (isUsd) icon = '💵';
-                else if (isEur) icon = '💶';
-                else if (isGbp) icon = '💷';
-                else if (isBtc) icon = '₿';
-                else if (isBist) icon = '📈';
+                      let icon = '📊';
+                      let cleanLabel = item.label;
+                      if (item.symbol === 'GRAM_ALTIN') { icon = '🪙'; cleanLabel = 'Gram Altın'; }
+                      else if (item.symbol === 'CEYREK_ALTIN') { icon = '👑'; cleanLabel = 'Çeyrek'; }
+                      else if (item.symbol === 'GC=F') { icon = '🟡'; cleanLabel = 'Ons Altın'; }
+                      else if (isUsd) { icon = '💵'; cleanLabel = 'USD/TRY'; }
+                      else if (isEur) { icon = '💶'; cleanLabel = 'EUR/TRY'; }
+                      else if (isGbp) { icon = '💷'; cleanLabel = 'GBP/TRY'; }
+                      else if (isBtc) { icon = '₿'; cleanLabel = 'BTC'; }
+                      else if (isBist) { icon = '📈'; cleanLabel = 'BIST 100'; }
 
-                const isPos = item.changePct >= 0;
-                const formattedPrice = item.price >= 1000
-                  ? item.price.toLocaleString('tr-TR', { maximumFractionDigits: item.price >= 10000 ? 0 : 2 })
-                  : item.price.toFixed(2);
+                      const isPos = item.changePct >= 0;
+                      const formattedPrice = item.price >= 1000
+                        ? item.price.toLocaleString('tr-TR', { maximumFractionDigits: item.price >= 10000 ? 0 : 2 })
+                        : item.price.toFixed(2);
 
-                return (
-                  <div
-                    key={item.symbol}
-                    className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] sm:text-[11px] whitespace-nowrap shrink-0 transition-transform group-hover:scale-[1.02] ${
-                      isGold
-                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
-                        : isUsd || isEur || isGbp
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
-                        : 'bg-slate-800/80 border-slate-700/60 text-slate-200'
-                    }`}
-                  >
-                    <span className="text-[11px] sm:text-xs">{icon}</span>
-                    <span className="font-bold text-slate-300">{item.label}:</span>
-                    <span className="font-mono font-black text-white">
-                      {formattedPrice} {item.unit}
-                    </span>
-                    <span
-                      className={`font-mono text-[9px] sm:text-[10px] font-extrabold ${
-                        isPos ? 'text-emerald-400' : 'text-rose-400'
-                      }`}
-                    >
-                      {isPos ? '+' : ''}{item.changePct}%
-                    </span>
+                      return (
+                        <div
+                          key={`${copyIndex}-${item.symbol}`}
+                          className={`flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg border text-[10px] sm:text-[11px] whitespace-nowrap shrink-0 transition-transform ${
+                            isGold
+                              ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                              : isUsd || isEur || isGbp
+                              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
+                              : 'bg-slate-800/80 border-slate-700/60 text-slate-200'
+                          }`}
+                        >
+                          <span className="text-[11px] sm:text-xs">{icon}</span>
+                          <span className="font-bold text-slate-300">{cleanLabel}:</span>
+                          <span className="font-mono font-black text-white">
+                            {formattedPrice} {item.unit}
+                          </span>
+                          <span
+                            className={`font-mono text-[9px] sm:text-[10px] font-extrabold ${
+                              isPos ? 'text-emerald-400' : 'text-rose-400'
+                            }`}
+                          >
+                            {isPos ? '+' : ''}{item.changePct}%
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })
+                ))}
+              </div>
             ) : (
               <div className="flex items-center space-x-2 text-[10px] sm:text-[11px] text-slate-400 animate-pulse">
                 <span>Canlı altın ve döviz kurları yükleniyor...</span>

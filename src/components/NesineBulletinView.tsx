@@ -4,7 +4,8 @@ import { BettingPickOption, resolveMarketOdd } from '../utils/oddsHelper';
 import { getMatchParsedDate, TURKISH_MONTHS } from '../utils/dateHelper';
 import { getMatchLiveState, parseMatchKickoffEpoch } from '../utils/liveMatchHelper';
 import { detectMatchValueBets } from '../utils/valueBetHelper';
-import { Clock, Star, ChevronRight, Trophy, Bot, Radio, Target, Zap } from 'lucide-react';
+import { CategoryFilter } from '../utils/categoryFilterHelper';
+import { Clock, Star, ChevronRight, Trophy, Bot, Radio, Target, Zap, Sparkles, Flame, ShieldAlert } from 'lucide-react';
 
 interface NesineBulletinViewProps {
   matches: Match[];
@@ -15,6 +16,7 @@ interface NesineBulletinViewProps {
   betslipItems: UserBetslipItem[];
   onToggleBetslip: (match: Match, option: BettingPickOption) => void;
   sortOption?: string;
+  selectedCategory?: CategoryFilter;
 }
 
 interface QuickOddDef {
@@ -131,7 +133,8 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
   onToggleFavorite,
   betslipItems,
   onToggleBetslip,
-  sortOption = 'time'
+  sortOption = 'time',
+  selectedCategory = 'all'
 }) => {
   // If user selected a Rank-based sort (confidence, goals, ms1), show a single unified ranked leaderboard!
   // If user selected 'time', group chronologically by league (traditional Nesine style).
@@ -236,8 +239,8 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                 <div>X</div>
                 <div>2</div>
                 <div>2.5 Alt</div>
-                <div>2.5 Üst</div>
-                <div>KG Var</div>
+                <div className={selectedCategory === 'over25' ? 'text-amber-400 font-black' : ''}>2.5 Üst</div>
+                <div className={selectedCategory === 'btts' ? 'text-purple-400 font-black' : ''}>KG Var</div>
                 <div>KG Yok</div>
               </div>
               <div className="w-12 text-center">Detay</div>
@@ -257,6 +260,46 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
               const valueSummary = detectMatchValueBets(match, analysis);
 
               const sortPill = (() => {
+                if (selectedCategory === 'btts') {
+                  return {
+                    icon: <Sparkles className="w-3.5 h-3.5 text-purple-400" />,
+                    label: 'KG Var',
+                    sub: `%${analysis.bttsYes}`,
+                    style: 'bg-purple-500/20 text-purple-300 border-purple-500/40 ring-1 ring-purple-400/30'
+                  };
+                }
+                if (selectedCategory === 'over25') {
+                  return {
+                    icon: <Zap className="w-3.5 h-3.5 text-amber-400" />,
+                    label: '2.5 Gol Üst',
+                    sub: `%${analysis.over25}`,
+                    style: 'bg-amber-500/20 text-amber-300 border-amber-500/40 ring-1 ring-amber-400/30'
+                  };
+                }
+                if (selectedCategory === 'banko') {
+                  return {
+                    icon: <Flame className="w-3.5 h-3.5 text-emerald-400" />,
+                    label: primaryPrediction.label,
+                    sub: `%${primaryPrediction.confidence} Banko`,
+                    style: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 ring-1 ring-emerald-400/30'
+                  };
+                }
+                if (selectedCategory === 'value' && valueSummary.hasValue && valueSummary.bestValuePick) {
+                  return {
+                    icon: <Target className="w-3.5 h-3.5 text-amber-400" />,
+                    label: valueSummary.bestValuePick.pickLabel,
+                    sub: `+${valueSummary.bestValuePick.edgePercent}% Değer`,
+                    style: 'bg-amber-500/20 text-amber-300 border-amber-500/40 ring-1 ring-amber-400/30'
+                  };
+                }
+                if (selectedCategory === 'htft' && analysis.topHtFt && analysis.topHtFt[0]) {
+                  return {
+                    icon: <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />,
+                    label: analysis.topHtFt[0].label || analysis.topHtFt[0].code,
+                    sub: `%${analysis.topHtFt[0].prob}`,
+                    style: 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                  };
+                }
                 if (sortOption === 'goals') {
                   return {
                     icon: <Zap className="w-3.5 h-3.5 text-amber-400" />,
@@ -287,9 +330,9 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                   className="p-3 sm:p-3.5 hover:bg-slate-800/40 transition-colors group"
                 >
                   {/* DESKTOP & TABLET VIEW (lg and up): 3 clear non-colliding columns */}
-                  <div className="hidden lg:flex items-center justify-between gap-4">
-                    {/* Col 1: Star, Rank, Time & Code */}
-                    <div className="flex items-center space-x-2 w-32 shrink-0">
+                  <div className="hidden lg:flex items-center justify-between gap-3 xl:gap-4">
+                    {/* Col 1: Star, Rank, Time & Code (Clean width, never crushes teams) */}
+                    <div className="flex items-center space-x-1.5 w-24 sm:w-28 shrink-0">
                       {group.isRanked && (
                         <span
                           className={`px-1.5 py-0.5 rounded text-[10px] font-black font-mono shrink-0 ${
@@ -346,7 +389,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                           {group.isRanked && match.league && (
                             <>
                               <span className="text-slate-600">•</span>
-                              <span className="text-emerald-400 font-semibold truncate max-w-[70px]" title={match.league}>
+                              <span className="text-emerald-400 font-semibold truncate max-w-[55px]" title={match.league}>
                                 {match.league}
                               </span>
                             </>
@@ -361,14 +404,14 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Col 2: Teams & AI Pick (Flexible flex-1, min-w-0, CAN NEVER OVERLAP) */}
+                    {/* Col 2: Teams & AI Pick (Guaranteed min width for teams + stacked badges to never squash names) */}
                     <div
                       onClick={() => onSelectMatch(match)}
-                      className="flex-1 min-w-0 cursor-pointer flex items-center justify-between gap-3 pr-2"
+                      className="flex-1 min-w-[170px] sm:min-w-[200px] cursor-pointer flex items-center justify-between gap-2.5 pr-2"
                     >
-                      {/* Teams (Stacked cleanly like Nesine so names are 100% visible) */}
-                      <div className="flex flex-col space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center space-x-2 text-sm font-black text-white group-hover:text-emerald-300 transition-colors">
+                      {/* Teams (Guaranteed width: team names are 100% visible) */}
+                      <div className="flex flex-col space-y-1 min-w-[130px] flex-1">
+                        <div className="flex items-center space-x-2 text-xs sm:text-sm font-black text-white group-hover:text-emerald-300 transition-colors">
                           <span
                             className="w-2 h-2 rounded-full shrink-0"
                             style={{ backgroundColor: match.homeTeam.primaryColor || '#10b981' }}
@@ -381,7 +424,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                           )}
                         </div>
 
-                        <div className="flex items-center space-x-2 text-sm font-black text-slate-200 group-hover:text-indigo-300 transition-colors">
+                        <div className="flex items-center space-x-2 text-xs sm:text-sm font-black text-slate-200 group-hover:text-indigo-300 transition-colors">
                           <span
                             className="w-2 h-2 rounded-full shrink-0"
                             style={{ backgroundColor: match.awayTeam.primaryColor || '#6366f1' }}
@@ -395,23 +438,23 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                         </div>
                       </div>
 
-                      {/* AI & Value Recommendation Pills */}
-                      <div className="shrink-0 pl-2 flex items-center space-x-1.5">
+                      {/* AI & Value Recommendation Pills (Stacked vertically when both exist to save 140px width!) */}
+                      <div className="shrink-0 flex flex-col items-end justify-center space-y-1 pl-1">
                         <span
-                          className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-black border whitespace-nowrap shadow-xs ${sortPill.style}`}
-                          title="Yapay Zeka Poisson & Sıralama Değeri"
+                          className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-[11px] font-black border whitespace-nowrap shadow-xs ${sortPill.style}`}
+                          title="Yapay Zeka Poisson & Kategori Değeri"
                         >
                           {sortPill.icon}
                           <span>{sortPill.label}</span>
                           <span className="font-mono font-bold opacity-90">{sortPill.sub}</span>
                         </span>
 
-                        {valueSummary.hasValue && valueSummary.bestValuePick && (
+                        {valueSummary.hasValue && valueSummary.bestValuePick && selectedCategory !== 'value' && (
                           <span
-                            className="inline-flex items-center space-x-1 px-2 py-1 rounded-lg text-[11px] font-black border bg-amber-500/15 text-amber-300 border-amber-500/40 whitespace-nowrap shadow-xs"
+                            className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-lg text-[10px] font-black border bg-amber-500/15 text-amber-300 border-amber-500/40 whitespace-nowrap shadow-xs"
                             title={`Değer Bahsi: ${valueSummary.bestValuePick.pickLabel} (Piyasa oranından +%${valueSummary.bestValuePick.edgePercent} daha değerli!)`}
                           >
-                            <Target className="w-3 h-3 text-amber-400" />
+                            <Target className="w-2.5 h-2.5 text-amber-400" />
                             <span>+%{valueSummary.bestValuePick.edgePercent} Değer</span>
                           </span>
                         )}
@@ -427,6 +470,9 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                             (item) => item.matchId === match.id && item.pickKey === def.key
                           );
                           const isValueOdd = valueSummary.hasValue && valueSummary.bestValuePick?.pickKey === def.key;
+                          const isCategoryTarget =
+                            (selectedCategory === 'btts' && def.key === 'bttsYes') ||
+                            (selectedCategory === 'over25' && def.key === 'over25');
 
                           const option: BettingPickOption = {
                             key: def.key,
@@ -446,28 +492,46 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                               key={def.key}
                               type="button"
                               onClick={() => onToggleBetslip(match, option)}
-                              title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)} (%${prob} Güven)${isValueOdd ? ' • 🎯 Değer Bahsi!' : ''}`}
+                              title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)} (%${prob} Güven)${isValueOdd ? ' • 🎯 Değer Bahsi!' : ''}${isCategoryTarget ? ' • ✨ Filtrelenen Tercih!' : ''}`}
                               className={`relative flex flex-col items-center justify-center min-w-[44px] px-1 py-1 sm:py-1.5 rounded-lg text-center transition-all cursor-pointer select-none active:scale-95 ${
                                 isSelected
                                   ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-300 scale-105'
+                                  : isCategoryTarget
+                                  ? selectedCategory === 'btts'
+                                    ? 'bg-purple-950/60 text-purple-200 border border-purple-400/80 ring-2 ring-purple-400/60 font-black shadow-md'
+                                    : 'bg-amber-950/60 text-amber-200 border border-amber-400/80 ring-2 ring-amber-400/60 font-black shadow-md'
                                   : isValueOdd
                                   ? 'bg-amber-950/40 text-amber-200 border border-amber-500/60 ring-1 ring-amber-400/50 hover:bg-amber-900/40'
                                   : 'bg-slate-950/80 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-emerald-500/40 hover:text-emerald-300'
                               }`}
                             >
-                              {isValueOdd && !isSelected && (
-                                <span className="absolute -top-1 -right-0.5 w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400" />
+                              {(isValueOdd || isCategoryTarget) && !isSelected && (
+                                <span className={`absolute -top-1 -right-0.5 w-2 h-2 rounded-full shadow-sm ${
+                                  isCategoryTarget ? 'bg-purple-400 shadow-purple-400 ring-1 ring-white' : 'bg-amber-400 shadow-amber-400'
+                                }`} />
                               )}
                               <span
                                 className={`text-[9px] uppercase tracking-wider font-extrabold ${
-                                  isSelected ? 'text-slate-950' : isValueOdd ? 'text-amber-300' : 'text-slate-400'
+                                  isSelected
+                                    ? 'text-slate-950'
+                                    : isCategoryTarget
+                                    ? selectedCategory === 'btts' ? 'text-purple-300 font-black' : 'text-amber-300 font-black'
+                                    : isValueOdd
+                                    ? 'text-amber-300'
+                                    : 'text-slate-400'
                                 }`}
                               >
                                 {def.shortLabel}
                               </span>
                               <span
                                 className={`font-mono text-xs sm:text-[13px] font-bold ${
-                                  isSelected ? 'text-slate-950 font-black' : isValueOdd ? 'text-amber-200 font-black' : 'text-white'
+                                  isSelected
+                                    ? 'text-slate-950 font-black'
+                                    : isCategoryTarget
+                                    ? 'text-white font-black'
+                                    : isValueOdd
+                                    ? 'text-amber-200 font-black'
+                                    : 'text-white'
                                 }`}
                               >
                                 {odd.toFixed(2)}
@@ -578,22 +642,36 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Row 2: Team Names (Large, bold, 100% visible, clicking opens modal) */}
+                    {/* Row 2: Team Names (Stacked cleanly on mobile so names never collide or get cut off) */}
                     <div
                       onClick={() => onSelectMatch(match)}
-                      className="flex items-center justify-between cursor-pointer py-0.5 hover:text-emerald-300 transition-colors"
+                      className="flex flex-col space-y-1 cursor-pointer py-1 hover:text-emerald-300 transition-colors"
                     >
-                      <div className="flex items-center space-x-2 text-sm sm:text-base font-black text-white truncate">
+                      <div className="flex items-center space-x-2 text-xs sm:text-sm font-black text-white">
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: match.homeTeam.primaryColor || '#10b981' }}
+                        />
                         <span className="truncate">{match.homeTeam.name}</span>
-                        <span className="text-slate-500 text-xs font-normal shrink-0">vs</span>
-                        <span className="truncate">{match.awayTeam.name}</span>
+                        {liveState.isLive && (
+                          <span className="font-mono font-black text-rose-400 text-xs ml-auto pr-1">
+                            {liveState.displayScore.home}
+                          </span>
+                        )}
                       </div>
 
-                      {liveState.isLive && (
-                        <span className="font-mono font-black text-rose-400 text-sm shrink-0 ml-2">
-                          ({liveState.displayScore.home} - {liveState.displayScore.away})
-                        </span>
-                      )}
+                      <div className="flex items-center space-x-2 text-xs sm:text-sm font-black text-slate-200">
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: match.awayTeam.primaryColor || '#6366f1' }}
+                        />
+                        <span className="truncate">{match.awayTeam.name}</span>
+                        {liveState.isLive && (
+                          <span className="font-mono font-black text-rose-400 text-xs ml-auto pr-1">
+                            {liveState.displayScore.away}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Row 3: Quick Odds Bar (8 columns: 7 odds + 1 detail button) */}
@@ -604,6 +682,9 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                           (item) => item.matchId === match.id && item.pickKey === def.key
                         );
                         const isValueOdd = valueSummary.hasValue && valueSummary.bestValuePick?.pickKey === def.key;
+                        const isCategoryTarget =
+                          (selectedCategory === 'btts' && def.key === 'bttsYes') ||
+                          (selectedCategory === 'over25' && def.key === 'over25');
 
                         const option: BettingPickOption = {
                           key: def.key,
@@ -623,10 +704,14 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                             key={def.key}
                             type="button"
                             onClick={() => onToggleBetslip(match, option)}
-                            title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)}${isValueOdd ? ' • 🎯 Değer Bahsi!' : ''}`}
+                            title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)}${isValueOdd ? ' • 🎯 Değer Bahsi!' : ''}${isCategoryTarget ? ' • ✨ Filtrelenen Tercih' : ''}`}
                             className={`flex flex-col items-center justify-center p-1 rounded text-center transition-all cursor-pointer select-none active:scale-95 ${
                               isSelected
                                 ? 'bg-emerald-500 text-slate-950 font-black ring-1 ring-emerald-300'
+                                : isCategoryTarget
+                                ? selectedCategory === 'btts'
+                                  ? 'bg-purple-950/70 text-purple-200 border border-purple-400/80 ring-1 ring-purple-400'
+                                  : 'bg-amber-950/70 text-amber-200 border border-amber-400/80 ring-1 ring-amber-400'
                                 : isValueOdd
                                 ? 'bg-amber-950/40 text-amber-200 border border-amber-500/60 ring-1 ring-amber-400/50'
                                 : 'bg-slate-950 hover:bg-slate-800 text-slate-200 border border-slate-800'
