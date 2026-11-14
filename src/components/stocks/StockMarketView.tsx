@@ -76,6 +76,7 @@ import { StockKapModal } from './StockKapModal';
 import { StockMoneyFlowModal } from './StockMoneyFlowModal';
 import { StockWatchlistModal } from './StockWatchlistModal';
 import { StockCryptoWidgetsModal } from './StockCryptoWidgetsModal';
+import { StockViopModal } from './StockViopModal';
 import { INITIAL_IPOS } from '../../data/ipoData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
@@ -129,6 +130,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
   const [isMoneyFlowModalOpen, setIsMoneyFlowModalOpen] = useState<boolean>(false);
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState<boolean>(false);
   const [isCryptoWidgetsModalOpen, setIsCryptoWidgetsModalOpen] = useState<boolean>(false);
+  const [isViopModalOpen, setIsViopModalOpen] = useState<boolean>(false);
 
   const [alerts, setAlerts] = useState<StockAlertItem[]>(() => {
     try {
@@ -286,6 +288,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         setIsCryptoWidgetsModalOpen(false);
         return;
       }
+      if (isViopModalOpen) {
+        setIsViopModalOpen(false);
+        return;
+      }
 
       // 2. If in mobile detail view, go back to list view and clear search!
       if (mobileViewTab === 'detail') {
@@ -308,6 +314,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     isPerformanceModalOpen,
     isAIChatOpen,
     isCryptoWidgetsModalOpen,
+    isViopModalOpen,
   ]);
 
   useEffect(() => {
@@ -758,6 +765,19 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                 </span>
               </button>
             )}
+
+            {/* ⚡ VİOP Vadeli İşlem & Kaldıraç Merkezi */}
+            <button
+              onClick={() => setIsViopModalOpen(true)}
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-600/30 via-teal-600/25 to-cyan-600/30 hover:from-cyan-600/40 hover:to-teal-600/40 border border-cyan-400/50 text-cyan-200 text-xs font-black cursor-pointer flex items-center space-x-1.5 transition-all shadow-md shadow-cyan-950/40 active:scale-95"
+              title="VİOP BIST 30 Endeks, Pay, Döviz & Emtia Vadeli İşlem, Kaldıraç & Teminat Terminali"
+            >
+              <Zap className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+              <span>VİOP</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-cyan-500 text-slate-950 text-[10px] font-black">
+                Vadeli
+              </span>
+            </button>
 
             {/* 🚀 Halka Arz Merkezi */}
             <button
@@ -2663,6 +2683,19 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         onSelectStock={(sym) => {
           handleSelectStock(sym);
           setIsCryptoWidgetsModalOpen(false);
+        }}
+      />
+
+      {/* ⚡ VİOP Vadeli İşlemler & Kaldıraç Terminali Modal */}
+      <StockViopModal
+        isOpen={isViopModalOpen}
+        onClose={() => setIsViopModalOpen(false)}
+        stocks={stocks}
+        onSelectStock={(sym) => {
+          handleSelectStock(sym);
+          setSearchInput('');
+          setActiveSearch('');
+          setIsViopModalOpen(false);
         }}
       />
 

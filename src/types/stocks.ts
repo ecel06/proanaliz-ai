@@ -382,4 +382,31 @@ export interface StockMoneyFlowItem {
   direction: 'inflow' | 'outflow';
 }
 
+// --- ⚡ VİOP (Vadeli İşlem ve Opsiyon Piyasası) ---
+export interface StockViopContract {
+  code: string;
+  name: string;
+  category: 'index' | 'fx' | 'metal' | 'stock';
+  underlyingCode: string;
+  maturity: string;
+  maturityDate: string;
+  daysToExpiry: number;
+  spotPrice: number;
+  futuresPrice: number;
+  settlementPrice: number;
+  changePct: number;
+  spreadPoints: number;
+  spreadPct: number;
+  theoreticalPrice: number;
+  openInterest: number;
+  openInterestChange: number;
+  volumeTl: number;
+  contractSize: number;
+  initialMargin: number;
+  leverage: number;
+  signal: 'GÜÇLÜ AL' | 'AL' | 'NÖTR' | 'SAT' | 'GÜÇLÜ SAT';
+  signalScore: number;
+}
+
+
 
