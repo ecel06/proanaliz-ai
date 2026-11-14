@@ -272,6 +272,21 @@ export const App: React.FC = () => {
     }
   }, [activeTheme, activeSection]);
 
+  // Completely hide browser window scrollbar on home page
+  useEffect(() => {
+    if (activeSection === 'home') {
+      document.documentElement.classList.add('no-scrollbar');
+      document.body.classList.add('no-scrollbar');
+    } else {
+      document.documentElement.classList.remove('no-scrollbar');
+      document.body.classList.remove('no-scrollbar');
+    }
+    return () => {
+      document.documentElement.classList.remove('no-scrollbar');
+      document.body.classList.remove('no-scrollbar');
+    };
+  }, [activeSection]);
+
   const handleSelectTheme = (theme: TeamTheme) => {
     setActiveTheme(theme);
     saveStoredTheme(theme);
@@ -330,7 +345,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.14.05';
+  const CLIENT_BUILD_VERSION = '2026.11.14.06';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -389,8 +404,8 @@ export const App: React.FC = () => {
     // Immediate check on mount
     checkVersion();
 
-    // Fast 5-second polling while tab is open
-    const verTimer = setInterval(checkVersion, 5000);
+    // Efficient 60-second polling while tab is open (checks instantly on tab switch/focus)
+    const verTimer = setInterval(checkVersion, 60000);
 
     // Instant check when user switches back to tab, unlocks device, or reconnects
     const handleActive = () => {
@@ -471,15 +486,15 @@ export const App: React.FC = () => {
     setDeferredPrompt(null);
   };
 
-  // Real-time clock tick every 20 seconds to smoothly update live minutes & live match states
+  // Real-time clock tick every 60 seconds to smoothly update live minutes & live match states without CPU thrashing
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 20000);
+    }, 60000);
     return () => clearInterval(timer);
   }, []);
 
-  // Load weekly matches on mount & auto-poll live scores every 25 seconds
+  // Load weekly matches on mount & poll live scores every 45s only when user is inside Football section
   useEffect(() => {
     const fetchMatches = () => {
       getWeeklyMatches()
@@ -496,10 +511,15 @@ export const App: React.FC = () => {
         });
     };
 
+    // Initial fetch once on load
     fetchMatches();
-    const livePollInterval = setInterval(fetchMatches, 25000);
-    return () => clearInterval(livePollInterval);
-  }, []);
+
+    // Auto-poll live scores only when in Football section
+    if (activeSection === 'football') {
+      const livePollInterval = setInterval(fetchMatches, 45000);
+      return () => clearInterval(livePollInterval);
+    }
+  }, [activeSection]);
 
   const handleRefreshBulletin = async () => {
     setIsRefreshing(true);
@@ -1005,7 +1025,7 @@ export const App: React.FC = () => {
 
   if (activeSection === 'home') {
     return (
-      <div className="min-h-screen w-full flex flex-col bg-slate-950 overflow-x-hidden">
+      <div className="min-h-screen w-full flex flex-col bg-slate-950 overflow-x-hidden no-scrollbar">
         {newVersionAvailable && (
           <aside
             aria-label="Uygulama Güncellemesi"

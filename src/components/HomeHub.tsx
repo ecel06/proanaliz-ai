@@ -42,6 +42,12 @@ interface HomeHubProps {
   analysesMap?: Map<string | number, MatchAnalysis> | Record<string | number, MatchAnalysis>;
 }
 
+// Module-level cache to eliminate layout shift and repeated heavy API hits
+let cachedBestHorse: any = null;
+let cachedBestStock: any = null;
+let cachedMacroRates: any[] = [];
+let lastHubFetchTime = 0;
+
 export const HomeHub: React.FC<HomeHubProps> = ({
   onSelectFootball,
   onSelectHorseRacing,
@@ -62,14 +68,14 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
   const [showGoldRadar, setShowGoldRadar] = useState<boolean>(true);
 
-  // Real live data for today's horse and stock
+  // Real live data for today's horse and stock with instant cache hydration
   const [bestHorse, setBestHorse] = useState<{
     title: string;
     place: string;
     jockey?: string;
     badge: string;
     recommendation: string;
-  } | null>(null);
+  } | null>(() => cachedBestHorse);
 
   const [bestStock, setBestStock] = useState<{
     symbol: string;
@@ -79,7 +85,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
     isPositive: boolean;
     recommendation: string;
     badge: string;
-  } | null>(null);
+  } | null>(() => cachedBestStock);
 
   // Real live Gold & Currency macro rates (Dolar, Euro, Gram Altın, Çeyrek Altın, Ons, vb.)
   const [macroRates, setMacroRates] = useState<Array<{
@@ -88,7 +94,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
     unit: string;
     price: number;
     changePct: number;
-  }>>([]);
+  }>>(() => cachedMacroRates);
 
   // PWA Install prompt listener
   useEffect(() => {
@@ -105,97 +111,113 @@ export const HomeHub: React.FC<HomeHubProps> = ({
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  // Fetch real today's horse and stock data
+  // Fetch real today's horse and stock data with smart caching
   useEffect(() => {
-    // 1. Fetch real today's Horse Racing top runner
-    fetch('/api/horse-racing/bulletin')
-      .then((r) => r.json())
-      .then((data) => {
-        const prog = data?.programs?.[0];
-        const detail = data?.activeProgramDetail;
-        const placeName = prog?.place ? `${prog.place} Hipodromu` : 'TJK Bugün Bülteni';
+    const now = Date.now();
+    const shouldFetch = now - lastHubFetchTime > 120000 || !cachedBestHorse || !cachedBestStock;
 
-        if (detail?.races && detail.races.length > 0) {
-          let topHorse: any = null;
-          let topRaceNum = 1;
-          let highestAgf = 0;
+    if (shouldFetch) {
+      lastHubFetchTime = now;
+      // 1. Fetch real today's Horse Racing top runner
+      fetch('/api/horse-racing/bulletin')
+        .then((r) => r.json())
+        .then((data) => {
+          const prog = data?.programs?.[0];
+          const detail = data?.activeProgramDetail;
+          const placeName = prog?.place ? `${prog.place} Hipodromu` : 'TJK Bugün Bülteni';
 
-          for (const race of detail.races) {
-            if (!race.horses) continue;
-            for (const h of race.horses) {
-              const agf = parseFloat(h.agfPercent || '0') || 0;
-              if (agf > highestAgf) {
-                highestAgf = agf;
-                topHorse = h;
-                topRaceNum = race.raceNumber;
+          if (detail?.races && detail.races.length > 0) {
+            let topHorse: any = null;
+            let topRaceNum = 1;
+            let highestAgf = 0;
+
+            for (const race of detail.races) {
+              if (!race.horses) continue;
+              for (const h of race.horses) {
+                const agf = parseFloat(h.agfPercent || '0') || 0;
+                if (agf > highestAgf) {
+                  highestAgf = agf;
+                  topHorse = h;
+                  topRaceNum = race.raceNumber;
+                }
               }
             }
-          }
 
-          if (topHorse) {
-            setBestHorse({
-              title: `#${topHorse.number} ${topHorse.name}`,
-              place: `${placeName} • ${topRaceNum}. Koşu`,
-              jockey: topHorse.jockey?.name ? `Jokey: ${topHorse.jockey.name}` : undefined,
-              badge: highestAgf > 0 ? `%${highestAgf} AGF Lideri` : 'Günün Bankosu',
-              recommendation: `AI Robotu: #${topHorse.number} Tek / Banko Tavsiyesi`,
-            });
-            return;
-          }
+            if (topHorse) {
+              const horseObj = {
+                title: `#${topHorse.number} ${topHorse.name}`,
+                place: `${placeName} • ${topRaceNum}. Koşu`,
+                jockey: topHorse.jockey?.name ? `Jokey: ${topHorse.jockey.name}` : undefined,
+                badge: highestAgf > 0 ? `%${highestAgf} AGF Lideri` : 'Günün Bankosu',
+                recommendation: `AI Robotu: #${topHorse.number} Tek / Banko Tavsiyesi`,
+              };
+              cachedBestHorse = horseObj;
+              setBestHorse(horseObj);
+              return;
+            }
 
-          const r1 = detail.races[0];
-          const h1 = r1?.horses?.[0];
-          if (h1) {
-            setBestHorse({
-              title: `#${h1.number} ${h1.name}`,
-              place: `${placeName} • ${r1.raceNumber}. Koşu`,
-              jockey: h1.jockey?.name ? `Jokey: ${h1.jockey.name}` : undefined,
-              badge: 'Günün Favorisi',
-              recommendation: `Öne Çıkan Form: #${h1.number} ${h1.name}`,
-            });
+            const r1 = detail.races[0];
+            const h1 = r1?.horses?.[0];
+            if (h1) {
+              const horseObj = {
+                title: `#${h1.number} ${h1.name}`,
+                place: `${placeName} • ${r1.raceNumber}. Koşu`,
+                jockey: h1.jockey?.name ? `Jokey: ${h1.jockey.name}` : undefined,
+                badge: 'Günün Favorisi',
+                recommendation: `Öne Çıkan Form: #${h1.number} ${h1.name}`,
+              };
+              cachedBestHorse = horseObj;
+              setBestHorse(horseObj);
+            }
           }
-        }
-      })
-      .catch(() => {});
+        })
+        .catch(() => {});
 
-    // 2. Fetch real today's BIST stock leader
-    fetch('/api/stocks/screener?market=bist')
-      .then((r) => r.json())
-      .then((data) => {
-        const stocks = data?.stocks;
-        if (stocks && stocks.length > 0) {
-          const positive = stocks.filter((s: any) => s.changePct > 0);
-          const pool = positive.length > 0 ? positive : stocks;
-          const sorted = [...pool].sort((a: any, b: any) => (b.volume || 0) - (a.volume || 0));
-          const top = sorted[0];
-          if (top) {
-            setBestStock({
-              symbol: top.symbol,
-              name: top.name || 'Borsa İstanbul',
-              price: `${top.close?.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} ₺`,
-              changePct: `${top.changePct >= 0 ? '+' : ''}${top.changePct?.toFixed(2)}%`,
-              isPositive: top.changePct >= 0,
-              recommendation: `RSI: ${Math.round(top.rsi || 55)} • Quant Alım Sinyali`,
-              badge: 'GÜÇLÜ AL',
-            });
+      // 2. Fetch real today's BIST stock leader
+      fetch('/api/stocks/screener?market=bist')
+        .then((r) => r.json())
+        .then((data) => {
+          const stocks = data?.stocks;
+          if (stocks && stocks.length > 0) {
+            const positive = stocks.filter((s: any) => s.changePct > 0);
+            const pool = positive.length > 0 ? positive : stocks;
+            const sorted = [...pool].sort((a: any, b: any) => (b.volume || 0) - (a.volume || 0));
+            const top = sorted[0];
+            if (top) {
+              const stockObj = {
+                symbol: top.symbol,
+                name: top.name || 'Borsa İstanbul',
+                price: `${top.close?.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} ₺`,
+                changePct: `${top.changePct >= 0 ? '+' : ''}${top.changePct?.toFixed(2)}%`,
+                isPositive: top.changePct >= 0,
+                recommendation: `RSI: ${Math.round(top.rsi || 55)} • Quant Alım Sinyali`,
+                badge: 'GÜÇLÜ AL',
+              };
+              cachedBestStock = stockObj;
+              setBestStock(stockObj);
+            }
           }
-        }
-      })
-      .catch(() => {});
+        })
+        .catch(() => {});
+    }
 
-    // 3. Fetch real live Gold & Foreign Currency Macro overview (Dolar, Euro, Gram Altın, Çeyrek Altın, vb.)
+    // 3. Fetch real live Gold & Foreign Currency Macro overview (every 60s)
     const fetchMacro = () => {
       fetch('/api/macro/live')
         .then((r) => r.json())
         .then((data) => {
           if (data?.items && Array.isArray(data.items)) {
+            cachedMacroRates = data.items;
             setMacroRates(data.items);
           }
         })
         .catch(() => {});
     };
-    fetchMacro();
-    const macroTimer = setInterval(fetchMacro, 30000);
+
+    if (cachedMacroRates.length === 0 || now - lastHubFetchTime > 60000) {
+      fetchMacro();
+    }
+    const macroTimer = setInterval(fetchMacro, 60000);
 
     return () => clearInterval(macroTimer);
   }, []);
@@ -326,12 +348,12 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full flex-1 bg-slate-950 text-slate-100 flex flex-col items-center px-3 sm:px-6 py-3 sm:py-5 relative overflow-x-hidden">
+    <div className="min-h-screen w-full flex-1 bg-slate-950 text-slate-100 flex flex-col items-center px-3 sm:px-6 py-2 sm:py-3 md:py-4 relative overflow-x-hidden no-scrollbar">
       {/* Subtle Ambient Glow */}
-      <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-emerald-500/10 blur-[130px]" />
-      <div className="pointer-events-none absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-amber-500/10 blur-[130px]" />
+      <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-emerald-500/10 blur-[90px]" />
+      <div className="pointer-events-none absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-amber-500/10 blur-[90px]" />
 
-      <div className="w-full max-w-5xl flex-1 flex flex-col space-y-3.5 sm:space-y-4 relative z-10 pb-20">
+      <div className="w-full max-w-5xl flex-1 flex flex-col space-y-2.5 sm:space-y-3 md:space-y-3.5 relative z-10 pb-6 sm:pb-8 no-scrollbar">
         
         {/* Top Header: Brand & Quick Install Action (Compact) */}
         <div className="text-center space-y-1">
@@ -486,8 +508,11 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             </span>
           </div>
 
-          {/* Infinite Smooth Scrolling Ticker Loop */}
-          <div className="relative overflow-hidden flex-1 min-w-0 [mask-image:linear-gradient(to_right,transparent,black_8px,black_calc(100%-8px),transparent)]">
+          {/* Infinite Smooth Scrolling Ticker Loop - Hardware Accelerated */}
+          <div className="relative overflow-hidden flex-1 min-w-0">
+            {/* Smooth Edge Fades without heavy mask-image */}
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-3 sm:w-4 bg-gradient-to-r from-slate-900 to-transparent z-10" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-3 sm:w-4 bg-gradient-to-l from-slate-900 to-transparent z-10" />
             {macroRates.length > 0 ? (
               <div className="flex items-center gap-1.5 sm:gap-2 animate-marquee py-0.5">
                 {/* Render two duplicated sets for seamless continuous animation loop */}
