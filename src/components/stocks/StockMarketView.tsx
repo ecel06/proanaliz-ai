@@ -1039,8 +1039,57 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
                       {selectedStock.name}
                     </h2>
 
-                    {/* Quick Stock Actions: Alarm Kur, Takip Et, AI Raporu */}
+                    {/* Quick Stock Actions: Portföye Ekle, Alarm Kur, Takip Et, AI Raporu */}
                     <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <button
+                        onClick={() => {
+                          const existing = portfolio.find(
+                            (p) => p.symbol === selectedStock.symbol && p.status === 'open'
+                          );
+                          if (existing) {
+                            setIsPortfolioModalOpen(true);
+                            return;
+                          }
+                          const units =
+                            positionCalc && positionCalc.units > 0 ? positionCalc.units : 100;
+                          const newPos: StockPortfolioPosition = {
+                            id: `pos-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                            symbol: selectedStock.symbol,
+                            name: selectedStock.name,
+                            market: selectedStock.market,
+                            units,
+                            entryPrice: selectedStock.close,
+                            currentPrice: selectedStock.close,
+                            stopLoss: selectedAnalysis?.tradePlan.stopLoss || null,
+                            targetPrice: selectedAnalysis?.tradePlan.tp1 || null,
+                            entryDate: new Date().toISOString(),
+                            status: 'open',
+                            notes: `${selectedAnalysis?.signal || 'AI'} analizi ile eklendi`,
+                          };
+                          savePortfolio([newPos, ...portfolio]);
+                          onShowToast?.(
+                            `💼 ${selectedStock.symbol} (${units.toLocaleString()} Lot) Sanal Portföye Eklendi!`
+                          );
+                        }}
+                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
+                          portfolio.some(
+                            (p) => p.symbol === selectedStock.symbol && p.status === 'open'
+                          )
+                            ? 'bg-sky-500/20 border-sky-400/40 text-sky-300'
+                            : 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 text-emerald-300'
+                        }`}
+                        title="Bu hisseyi sanal portföye ekle veya durumunu incele"
+                      >
+                        <Briefcase className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>
+                          {portfolio.some(
+                            (p) => p.symbol === selectedStock.symbol && p.status === 'open'
+                          )
+                            ? 'Portföyde Açık'
+                            : 'Portföye Ekle'}
+                        </span>
+                      </button>
+
                       <button
                         onClick={() => setIsAlertsModalOpen(true)}
                         className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
