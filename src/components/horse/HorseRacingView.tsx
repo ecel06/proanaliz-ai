@@ -1727,10 +1727,10 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
               </div>
 
               {/* RIGHT SIDEBAR: STICKY NESINE KUPON HESAPLAYICI */}
-              <aside className="w-full xl:w-[360px] shrink-0 xl:sticky xl:top-20 space-y-3">
-                <div className="rounded-2xl bg-slate-900/95 border border-amber-500/30 shadow-2xl overflow-hidden">
+              <aside className="w-full xl:w-[360px] shrink-0 xl:sticky xl:top-[6.5rem] xl:h-[calc(100vh-7.5rem)] flex flex-col space-y-3">
+                <div className="rounded-2xl bg-slate-900/95 border border-amber-500/30 shadow-2xl overflow-hidden flex flex-col flex-1">
                   {/* Coupon Header */}
-                  <div className="px-4 py-3 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 text-slate-950 flex items-center justify-between">
+                  <div className="px-4 py-3 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 text-slate-950 flex items-center justify-between shrink-0">
                     <div className="flex items-center space-x-2">
                       <Ticket className="w-4 h-4 font-black" />
                       <div>
@@ -1752,7 +1752,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                   </div>
 
                   {/* Coupon Legs */}
-                  <div className="p-3 space-y-2 max-h-[420px] overflow-y-auto">
+                  <div className="p-3 space-y-2 overflow-y-auto flex-1 overscroll-contain">
                     {legRaceNumbers.map((rNo, idx) => {
                       const raceObj = detail.races.find((r) => r.number === rNo);
                       const picked = currentSelections[rNo] || [];
