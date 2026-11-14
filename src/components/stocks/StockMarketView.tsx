@@ -4,6 +4,7 @@ import {
   Activity,
   AlertTriangle,
   ArrowDownRight,
+  ArrowLeft,
   ArrowUpRight,
   BarChart3,
   Bell,
@@ -18,6 +19,7 @@ import {
   Flame,
   Globe,
   Layers,
+  ListFilter,
   Megaphone,
   Newspaper,
   RefreshCw,
@@ -98,6 +100,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
   const [indexFilter, setIndexFilter] = useState<BistIndexType>('ALL');
   const [sortBy, setSortBy] = useState<StockSort>('ai_desc');
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
+  const [mobileViewTab, setMobileViewTab] = useState<'list' | 'detail'>('list');
   const [chartRange, setChartRange] = useState<'1mo' | '3mo' | '6mo' | '1y'>('6mo');
   const [chartData, setChartData] = useState<StockChartResponse | null>(null);
   const [chartLoading, setChartLoading] = useState<boolean>(false);
@@ -200,6 +203,20 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSelectStock = (sym: string, targetMarket?: StockMarketType) => {
+    if (targetMarket && targetMarket !== market) {
+      setMarket(targetMarket);
+    }
+    setSelectedSymbol(sym);
+    setMobileViewTab('detail');
+    setTimeout(() => {
+      const elem = document.getElementById('stock-detail-workstation');
+      if (elem) {
+        elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 80);
   };
 
   useEffect(() => {
@@ -1060,7 +1077,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
               .map((card: any) => (
                 <button
                   key={card.tag}
-                  onClick={() => setSelectedSymbol(card.sym)}
+                  onClick={() => handleSelectStock(card.sym)}
                   className={`px-3 py-2 rounded-xl border text-left transition-all hover:brightness-125 cursor-pointer flex items-center justify-between gap-2 ${card.tone}`}
                 >
                   <div className="min-w-0">
@@ -1082,141 +1099,217 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
           <div className="text-sm font-bold text-rose-200">{errorMsg}</div>
         </div>
       ) : (
-        /* 3. TWO-COLUMN PRO TERMINAL WORKSTATION */
-        <div className="flex flex-col xl:flex-row gap-4 items-start">
-          {/* LEFT: SCREENER LIST */}
-          <div className="w-full xl:w-[440px] shrink-0 rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl">
-            <div className="px-3.5 py-2.5 bg-slate-950/70 border-b border-slate-800 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400">
-              <span>Hisse / Varlık ({filteredStocks.length})</span>
-              <span>Fiyat &bull; RSI &bull; Sinyal</span>
-            </div>
+        <>
+          {/* Mobile View Switcher Tab: List vs Detail */}
+          <div className="xl:hidden flex items-center p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg mb-3 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setMobileViewTab('list');
+                setTimeout(() => {
+                  const elem = document.getElementById('stock-screener-list');
+                  if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+              }}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                mobileViewTab === 'list'
+                  ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 shadow-md shadow-cyan-950/40'
+                  : 'text-slate-400 hover:text-white bg-slate-950/40'
+              }`}
+            >
+              <ListFilter className="w-4 h-4" />
+              <span>Hisse Listesi ({filteredStocks.length})</span>
+            </button>
 
-            {loading && stocks.length === 0 ? (
-              <div className="p-10 text-center text-xs text-slate-400 animate-pulse">
-                Canlı borsa taraması yapılıyor...
-              </div>
-            ) : filteredStocks.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400 space-y-2">
-                <div>Seçili filtrede hisse bulunamadı.</div>
-                <button
-                  onClick={() => {
-                    setPreset('all');
-                    setSearchInput('');
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-white font-bold cursor-pointer"
-                >
-                  Filtreleri Sıfırla
-                </button>
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-800/80 max-h-[760px] overflow-y-auto">
-                {filteredStocks.map((st) => {
-                  const qa = analysesMap.get(st.symbol) || { signal: 'TUT' as const, score: 70 };
-                  const isSel = selectedStock?.symbol === st.symbol;
-                  const isFav = watchlist.includes(st.symbol);
-                  return (
-                    <div
-                      key={st.symbol}
-                      onClick={() => setSelectedSymbol(st.symbol)}
-                      className={`px-3 py-2.5 cursor-pointer transition-all flex items-center justify-between gap-2 ${
-                        isSel
-                          ? 'bg-cyan-500/15 border-l-4 border-l-cyan-400'
-                          : 'hover:bg-slate-800/50 border-l-4 border-l-transparent'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2 min-w-0">
-                        <button
-                          onClick={(e) => toggleWatchlist(st.symbol, e)}
-                          className="p-1 text-slate-500 hover:text-amber-400 cursor-pointer shrink-0"
-                          title="İzleme Listesine Ekle / Çıkar"
-                        >
-                          <Star
-                            className={`w-3.5 h-3.5 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`}
-                          />
-                        </button>
-                        <div className="min-w-0">
-                          <div className="flex items-center space-x-1.5 flex-wrap">
-                            <span className="font-black text-xs text-white">{st.symbol}</span>
-                            {(() => {
-                              const openRisk = risksBySymbolMap.get(st.symbol);
-                              if (
-                                !openRisk ||
-                                (openRisk.alertType !== 'GÜÇLÜ SAT' && openRisk.alertType !== 'SAT')
-                              )
-                                return null;
-                              return (
-                                <span
-                                  className={`px-1.5 py-0.2 rounded text-[9px] font-black border ${
-                                    openRisk.alertType === 'GÜÇLÜ SAT'
-                                      ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 animate-pulse'
-                                      : 'bg-amber-500/20 text-amber-300 border-amber-500/50'
-                                  }`}
-                                  title={`Sepette: ${openRisk.alertType} (${openRisk.primaryReason})`}
-                                >
-                                  🚨 {openRisk.alertType}
-                                </span>
-                              );
-                            })()}
-                            <span className="text-[10px] font-mono text-slate-400">
-                              RSI:{st.rsi !== null ? st.rsi.toFixed(0) : '-'}
-                            </span>
-                            {st.pe && st.pe > 0 && (
-                              <span className="text-[9px] text-cyan-400 font-mono hidden sm:inline">
-                                F/K:{st.pe.toFixed(1)}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[10px] text-slate-400 truncate max-w-[175px]">
-                            {st.name}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2.5 shrink-0">
-                        <div className="text-right">
-                          <div className="font-mono font-black text-xs text-white">
-                            {formatStockPrice(st.close, st.currency)}
-                          </div>
-                          <div
-                            className={`text-[10px] font-mono font-bold flex items-center justify-end ${
-                              st.changePct >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                            }`}
-                          >
-                            {st.changePct >= 0 ? (
-                              <ArrowUpRight className="w-3 h-3" />
-                            ) : (
-                              <ArrowDownRight className="w-3 h-3" />
-                            )}
-                            <span>
-                              {st.changePct >= 0 ? '+' : ''}
-                              {st.changePct.toFixed(2)}%
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="text-right min-w-[74px]">
-                          <span
-                            className={`inline-block px-1.5 py-0.5 rounded border text-[9px] ${getSignalStyle(
-                              qa.signal
-                            )}`}
-                          >
-                            {qa.signal}
-                          </span>
-                          <div className="text-[9px] font-mono text-slate-400 mt-0.5">
-                            Skor: <strong className="text-white">{qa.score}</strong>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileViewTab('detail');
+                setTimeout(() => {
+                  const elem = document.getElementById('stock-detail-workstation');
+                  if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+              }}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                mobileViewTab === 'detail'
+                  ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 shadow-md shadow-cyan-950/40'
+                  : 'text-slate-400 hover:text-white bg-slate-950/40'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>{selectedStock?.symbol || 'Hisse'} Detay &amp; Grafik</span>
+            </button>
           </div>
 
-          {/* RIGHT: DEEP QUANT & TECHNICAL TERMINAL FOR SELECTED STOCK */}
-          {selectedStock && selectedAnalysis && (
-            <div id="stock-detail-workstation" className="flex-1 w-full min-w-0 space-y-4 scroll-mt-24">
+          {/* 3. TWO-COLUMN PRO TERMINAL WORKSTATION */}
+          <div className="flex flex-col xl:flex-row gap-4 items-start">
+            {/* LEFT: SCREENER LIST */}
+            <div
+              id="stock-screener-list"
+              className={`w-full xl:w-[440px] shrink-0 rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl scroll-mt-24 ${
+                mobileViewTab === 'detail' ? 'hidden xl:block' : 'block'
+              }`}
+            >
+              <div className="px-3.5 py-2.5 bg-slate-950/70 border-b border-slate-800 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400">
+                <span>Hisse / Varlık ({filteredStocks.length})</span>
+                <span>Fiyat &bull; RSI &bull; Sinyal</span>
+              </div>
+
+              {loading && stocks.length === 0 ? (
+                <div className="p-10 text-center text-xs text-slate-400 animate-pulse">
+                  Canlı borsa taraması yapılıyor...
+                </div>
+              ) : filteredStocks.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-400 space-y-2">
+                  <div>Seçili filtrede hisse bulunamadı.</div>
+                  <button
+                    onClick={() => {
+                      setPreset('all');
+                      setSearchInput('');
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 text-white font-bold cursor-pointer"
+                  >
+                    Filtreleri Sıfırla
+                  </button>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-800/80 max-h-[760px] overflow-y-auto">
+                  {filteredStocks.map((st) => {
+                    const qa = analysesMap.get(st.symbol) || { signal: 'TUT' as const, score: 70 };
+                    const isSel = selectedStock?.symbol === st.symbol;
+                    const isFav = watchlist.includes(st.symbol);
+                    return (
+                      <div
+                        key={st.symbol}
+                        onClick={() => handleSelectStock(st.symbol)}
+                        className={`px-3 py-2.5 cursor-pointer transition-all flex items-center justify-between gap-2 ${
+                          isSel
+                            ? 'bg-cyan-500/15 border-l-4 border-l-cyan-400'
+                            : 'hover:bg-slate-800/50 border-l-4 border-l-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2 min-w-0">
+                          <button
+                            onClick={(e) => toggleWatchlist(st.symbol, e)}
+                            className="p-1 text-slate-500 hover:text-amber-400 cursor-pointer shrink-0"
+                            title="İzleme Listesine Ekle / Çıkar"
+                          >
+                            <Star
+                              className={`w-3.5 h-3.5 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`}
+                            />
+                          </button>
+                          <div className="min-w-0">
+                            <div className="flex items-center space-x-1.5 flex-wrap">
+                              <span className="font-black text-xs text-white">{st.symbol}</span>
+                              {(() => {
+                                const openRisk = risksBySymbolMap.get(st.symbol);
+                                if (
+                                  !openRisk ||
+                                  (openRisk.alertType !== 'GÜÇLÜ SAT' && openRisk.alertType !== 'SAT')
+                                )
+                                  return null;
+                                return (
+                                  <span
+                                    className={`px-1.5 py-0.2 rounded text-[9px] font-black border ${
+                                      openRisk.alertType === 'GÜÇLÜ SAT'
+                                        ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 animate-pulse'
+                                        : 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                                    }`}
+                                    title={`Sepette: ${openRisk.alertType} (${openRisk.primaryReason})`}
+                                  >
+                                    🚨 {openRisk.alertType}
+                                  </span>
+                                );
+                              })()}
+                              <span className="text-[10px] font-mono text-slate-400">
+                                RSI:{st.rsi !== null ? st.rsi.toFixed(0) : '-'}
+                              </span>
+                              {st.pe && st.pe > 0 && (
+                                <span className="text-[9px] text-cyan-400 font-mono hidden sm:inline">
+                                  F/K:{st.pe.toFixed(1)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400 truncate max-w-[175px]">
+                              {st.name}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2.5 shrink-0">
+                          <div className="text-right">
+                            <div className="font-mono font-black text-xs text-white">
+                              {formatStockPrice(st.close, st.currency)}
+                            </div>
+                            <div
+                              className={`text-[10px] font-mono font-bold flex items-center justify-end ${
+                                st.changePct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                              }`}
+                            >
+                              {st.changePct >= 0 ? (
+                                <ArrowUpRight className="w-3 h-3" />
+                              ) : (
+                                <ArrowDownRight className="w-3 h-3" />
+                              )}
+                              <span>
+                                {st.changePct >= 0 ? '+' : ''}
+                                {st.changePct.toFixed(2)}%
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-right min-w-[74px]">
+                            <span
+                              className={`inline-block px-1.5 py-0.5 rounded border text-[9px] ${getSignalStyle(
+                                qa.signal
+                              )}`}
+                            >
+                              {qa.signal}
+                            </span>
+                            <div className="text-[9px] font-mono text-slate-400 mt-0.5 flex items-center justify-end gap-1">
+                              <span>Skor: <strong className="text-white">{qa.score}</strong></span>
+                              <span className="text-cyan-400 font-bold xl:hidden">Detay →</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT: DEEP QUANT & TECHNICAL TERMINAL FOR SELECTED STOCK */}
+            {selectedStock && selectedAnalysis && (
+              <div
+                id="stock-detail-workstation"
+                className={`flex-1 w-full min-w-0 space-y-4 scroll-mt-24 ${
+                  mobileViewTab === 'list' ? 'hidden xl:block' : 'block'
+                }`}
+              >
+                {/* Mobile Back-to-List Bar */}
+                <div className="xl:hidden flex items-center justify-between p-3 rounded-2xl bg-slate-950/90 border border-slate-800 shadow-md">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileViewTab('list');
+                      setTimeout(() => {
+                        const elem = document.getElementById('stock-screener-list');
+                        if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 50);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>← Hisse Listesine Dön ({filteredStocks.length})</span>
+                  </button>
+                  <div className="text-right">
+                    <span className="text-xs font-black text-white">{selectedStock.symbol} </span>
+                    <span className="text-xs font-bold text-cyan-400 font-mono">
+                      {formatStockPrice(selectedStock.close, selectedStock.currency)}
+                    </span>
+                  </div>
+                </div>
               {/* Top Signal & Price Header */}
               <div className="rounded-2xl bg-slate-900/95 border border-slate-800 p-4 sm:p-5 shadow-xl space-y-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -2235,6 +2328,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
             </div>
           )}
         </div>
+        </>
       )}
 
       {/* 🏆 Borsa AI Başarı Karnesi Modal */}
@@ -2315,14 +2409,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         stocks={stocks}
         positions={portfolio}
         onSelectStock={(sym) => {
-          setSelectedSymbol(sym);
+          handleSelectStock(sym);
           setSearchInput('');
           setActiveSearch('');
           setIsDividendModalOpen(false);
-          setTimeout(() => {
-            const elem = document.getElementById('stock-detail-workstation');
-            if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 150);
         }}
       />
 
@@ -2332,14 +2422,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         onClose={() => setIsKapModalOpen(false)}
         stocks={stocks}
         onSelectStock={(sym) => {
-          setSelectedSymbol(sym);
+          handleSelectStock(sym);
           setSearchInput('');
           setActiveSearch('');
           setIsKapModalOpen(false);
-          setTimeout(() => {
-            const elem = document.getElementById('stock-detail-workstation');
-            if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 150);
         }}
       />
 
@@ -2349,14 +2435,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         onClose={() => setIsMoneyFlowModalOpen(false)}
         stocks={stocks}
         onSelectStock={(sym) => {
-          setSelectedSymbol(sym);
+          handleSelectStock(sym);
           setSearchInput('');
           setActiveSearch('');
           setIsMoneyFlowModalOpen(false);
-          setTimeout(() => {
-            const elem = document.getElementById('stock-detail-workstation');
-            if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 150);
         }}
       />
 
@@ -2369,19 +2451,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         analysesMap={analysesMap}
         onToggleWatchlist={toggleWatchlist}
         onSelectStock={(sym, targetMarket) => {
-          if (targetMarket && targetMarket !== market) {
-            setMarket(targetMarket);
-          }
-          setSelectedSymbol(sym);
+          handleSelectStock(sym, targetMarket as any);
           setSearchInput('');
           setActiveSearch('');
           setIsWatchlistModalOpen(false);
-          setTimeout(() => {
-            const elem = document.getElementById('stock-detail-workstation');
-            if (elem) {
-              elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }, 150);
         }}
         onAddToPortfolio={(pos) => savePortfolio([pos, ...portfolio])}
         onShowToast={onShowToast}
@@ -2392,7 +2465,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         isOpen={isCryptoWidgetsModalOpen}
         onClose={() => setIsCryptoWidgetsModalOpen(false)}
         onSelectStock={(sym) => {
-          setSelectedSymbol(sym);
+          handleSelectStock(sym);
           setIsCryptoWidgetsModalOpen(false);
         }}
       />
@@ -2405,7 +2478,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         analysesMap={analysesMap}
         market={market}
         selectedStock={selectedStock}
-        onSelectStock={(st) => setSelectedSymbol(st.symbol)}
+        onSelectStock={(st) => {
+          handleSelectStock(st.symbol);
+          setIsAIChatOpen(false);
+        }}
       />
 
       {/* Footer SPK Yasal Uyarı & Sorumluluk Reddi (YTD) */}
