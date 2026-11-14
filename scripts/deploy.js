@@ -4,7 +4,7 @@
 import { execSync } from 'child_process';
 
 const DEPLOY_HOOK_URL = 'https://api.render.com/deploy/srv-dbo9obp5efls73d8kfp0?key=OT41AzNOijg';
-const EXPECTED_VERSION = '2026.11.14.02';
+const EXPECTED_VERSION = '2026.11.14.03';
 const LIVE_VERSION_URL = 'https://proanaliz-ai.onrender.com/api/version';
 
 async function main() {

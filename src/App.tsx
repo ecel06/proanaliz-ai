@@ -328,7 +328,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.14.02';
+  const CLIENT_BUILD_VERSION = '2026.11.14.03';
   useEffect(() => {
     const handleSessionExpired = (e: any) => {
       setCurrentUser(null);
