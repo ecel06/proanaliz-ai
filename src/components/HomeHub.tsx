@@ -353,7 +353,10 @@ export const HomeHub: React.FC<HomeHubProps> = ({
       <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-emerald-500/10 blur-[90px]" />
       <div className="pointer-events-none absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-amber-500/10 blur-[90px]" />
 
-      <div className="w-full max-w-5xl h-full flex-1 min-h-0 flex flex-col space-y-2.5 sm:space-y-3 relative z-10 overflow-y-auto no-scrollbar pb-8">
+      <div
+        className="w-full max-w-5xl h-full flex-1 min-h-0 flex flex-col space-y-2 sm:space-y-2.5 relative z-10 overflow-y-auto no-scrollbar pb-6"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
         
         {/* Top Header: Brand & Quick Install Action (Compact) */}
         <div className="text-center space-y-1">

@@ -345,7 +345,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.14.07';
+  const CLIENT_BUILD_VERSION = '2026.11.14.08';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1025,7 +1025,10 @@ export const App: React.FC = () => {
 
   if (activeSection === 'home') {
     return (
-      <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col bg-slate-950 no-scrollbar">
+      <div
+        className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col bg-slate-950 no-scrollbar"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
         {newVersionAvailable && (
           <aside
             aria-label="Uygulama Güncellemesi"

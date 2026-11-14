@@ -10,7 +10,23 @@
   }
 }
 
-/* Hide scrollbar utility - Complete cross-browser override */
+/* Custom scrollbars ONLY when body DOES NOT have .no-scrollbar */
+body:not(.no-scrollbar) *::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+body:not(.no-scrollbar) *::-webkit-scrollbar-track {
+  background: #020617;
+}
+body:not(.no-scrollbar) *::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+body:not(.no-scrollbar) *::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Hide scrollbar utility - Complete cross-browser override with MAXIMUM cascade priority */
 html.no-scrollbar,
 body.no-scrollbar,
 .no-scrollbar,
@@ -29,7 +45,9 @@ body.no-scrollbar {
 html.no-scrollbar::-webkit-scrollbar,
 body.no-scrollbar::-webkit-scrollbar,
 .no-scrollbar::-webkit-scrollbar,
-.no-scrollbar *::-webkit-scrollbar {
+.no-scrollbar *::-webkit-scrollbar,
+html.no-scrollbar *::-webkit-scrollbar,
+body.no-scrollbar *::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
@@ -39,33 +57,26 @@ body.no-scrollbar::-webkit-scrollbar,
 html.no-scrollbar::-webkit-scrollbar-track,
 body.no-scrollbar::-webkit-scrollbar-track,
 .no-scrollbar::-webkit-scrollbar-track,
-.no-scrollbar *::-webkit-scrollbar-track {
+.no-scrollbar *::-webkit-scrollbar-track,
+html.no-scrollbar *::-webkit-scrollbar-track,
+body.no-scrollbar *::-webkit-scrollbar-track {
   display: none !important;
   background: transparent !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 html.no-scrollbar::-webkit-scrollbar-thumb,
 body.no-scrollbar::-webkit-scrollbar-thumb,
 .no-scrollbar::-webkit-scrollbar-thumb,
-.no-scrollbar *::-webkit-scrollbar-thumb {
+.no-scrollbar *::-webkit-scrollbar-thumb,
+html.no-scrollbar *::-webkit-scrollbar-thumb,
+body.no-scrollbar *::-webkit-scrollbar-thumb {
   display: none !important;
   background: transparent !important;
-}
-
-/* Custom scrollbars for elements without .no-scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #020617;
-}
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  width: 0 !important;
+  height: 0 !important;
+  border: none !important;
 }
 
 /* Glow effects */
@@ -150,4 +161,3 @@ body.no-scrollbar::-webkit-scrollbar-thumb,
 .animate-fadeIn {
   animation: fadeIn 0.1s ease-out;
 }
-
