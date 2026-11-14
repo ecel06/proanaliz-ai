@@ -577,6 +577,47 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
               ) : null}
             </button>
 
+            {/* 🧪 Hafta Sonu / Canlı Alarm Test Butonu */}
+            <button
+              onClick={() => {
+                const s =
+                  stocks.find((item) => item.symbol === 'THYAO') ||
+                  stocks[0] || {
+                    symbol: 'THYAO',
+                    name: 'Türk Hava Yolları',
+                    market: 'bist',
+                    close: 308,
+                  };
+                const cur = s.close || 308;
+                const sl = Number((cur * 1.05).toFixed(2));
+                const entry = Number((cur * 1.1).toFixed(2));
+                const newPos: StockPortfolioPosition = {
+                  id: `test-pos-${Date.now()}`,
+                  symbol: s.symbol,
+                  name: s.name,
+                  market: s.market as any,
+                  units: 100,
+                  entryPrice: entry,
+                  currentPrice: cur,
+                  stopLoss: sl,
+                  targetPrice: Number((entry * 1.2).toFixed(2)),
+                  entryDate: new Date().toISOString(),
+                  status: 'open',
+                  notes: 'Hafta Sonu Canlı Simülasyon Testi: Stop Kırılma Alarmı',
+                };
+                savePortfolio([newPos, ...portfolio.filter((p) => !p.id.startsWith('test-pos'))]);
+                playAlertSound();
+                onShowToast?.(
+                  `🚨 SEPET ALARMI: ${s.symbol} Stop seviyesini kırdı! (GÜÇLÜ SAT: ${sl} ₺)`
+                );
+              }}
+              className="px-3 py-2 rounded-xl bg-gradient-to-r from-rose-600/20 to-amber-600/20 hover:from-rose-600/30 hover:to-amber-600/30 border border-rose-500/40 text-rose-300 text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-sm"
+              title="Piyasa kapalıyken bile sesli ve görsel risk alarmını anında test edin"
+            >
+              <Zap className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+              <span className="hidden sm:inline">Alarmı Test Et</span>
+            </button>
+
             <button
               onClick={() => {
                 loadMarketData(market, activeSearch, true);

@@ -316,19 +316,23 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
                   <div className="pt-2">
                     <button
                       onClick={() => {
+                        const st = stocks.find((s) => s.symbol === 'THYAO') || stocks[0];
+                        const cur = st?.close || 308;
+                        const sl = Number((cur * 1.05).toFixed(2));
+                        const entry = Number((cur * 1.10).toFixed(2));
                         onAddPosition({
                           id: `test-pos-${Date.now()}`,
-                          symbol: 'THYAO',
-                          name: 'Türk Hava Yolları',
-                          market: 'bist',
+                          symbol: st?.symbol || 'THYAO',
+                          name: st?.name || 'Türk Hava Yolları',
+                          market: st?.market || 'bist',
                           units: 100,
-                          entryPrice: 310,
-                          currentPrice: 285.5,
-                          stopLoss: 295,
-                          targetPrice: 350,
+                          entryPrice: entry,
+                          currentPrice: cur,
+                          stopLoss: sl,
+                          targetPrice: Number((entry * 1.2).toFixed(2)),
                           entryDate: new Date().toISOString(),
                           status: 'open',
-                          notes: 'Test: Stop-Loss seviyesi kırıldı simülasyonu',
+                          notes: 'Test: Hafta sonu simülasyonu (Stop seviyesi güncel fiyatın üstünde bırakıldı)',
                         });
                       }}
                       className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-600/30 to-amber-600/30 hover:from-rose-600 hover:to-amber-600 border border-rose-500/50 text-white text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-md"
@@ -708,19 +712,23 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
+                const st = stocks.find((s) => s.symbol === 'THYAO') || stocks[0];
+                const cur = st?.close || 308;
+                const sl = Number((cur * 1.05).toFixed(2));
+                const entry = Number((cur * 1.10).toFixed(2));
                 onAddPosition({
                   id: `test-pos-${Date.now()}`,
-                  symbol: 'THYAO',
-                  name: 'Türk Hava Yolları',
-                  market: 'bist',
+                  symbol: st?.symbol || 'THYAO',
+                  name: st?.name || 'Türk Hava Yolları',
+                  market: st?.market || 'bist',
                   units: 100,
-                  entryPrice: 310,
-                  currentPrice: 285.5,
-                  stopLoss: 295,
-                  targetPrice: 350,
+                  entryPrice: entry,
+                  currentPrice: cur,
+                  stopLoss: sl,
+                  targetPrice: Number((entry * 1.2).toFixed(2)),
                   entryDate: new Date().toISOString(),
                   status: 'open',
-                  notes: 'Test: Stop-Loss seviyesi kırıldı simülasyonu',
+                  notes: 'Test: Hafta sonu simülasyonu (Stop seviyesi güncel fiyatın üstünde bırakıldı)',
                 });
               }}
               className="px-2.5 py-1.5 rounded-lg text-xs bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
