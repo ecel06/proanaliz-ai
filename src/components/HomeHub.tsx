@@ -348,12 +348,12 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full flex-1 bg-slate-950 text-slate-100 flex flex-col items-center px-3 sm:px-6 py-2 sm:py-3 md:py-4 relative overflow-x-hidden no-scrollbar">
+    <div className="h-full w-full flex-1 min-h-0 bg-slate-950 text-slate-100 flex flex-col items-center px-3 sm:px-6 py-1.5 sm:py-2.5 relative overflow-hidden no-scrollbar">
       {/* Subtle Ambient Glow */}
       <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-emerald-500/10 blur-[90px]" />
       <div className="pointer-events-none absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-amber-500/10 blur-[90px]" />
 
-      <div className="w-full max-w-5xl flex-1 flex flex-col space-y-2.5 sm:space-y-3 md:space-y-3.5 relative z-10 pb-6 sm:pb-8 no-scrollbar">
+      <div className="w-full max-w-5xl h-full flex-1 min-h-0 flex flex-col space-y-2.5 sm:space-y-3 relative z-10 overflow-y-auto no-scrollbar pb-8">
         
         {/* Top Header: Brand & Quick Install Action (Compact) */}
         <div className="text-center space-y-1">

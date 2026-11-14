@@ -11,12 +11,23 @@
 }
 
 /* Hide scrollbar utility - Complete cross-browser override */
+html.no-scrollbar,
+body.no-scrollbar,
 .no-scrollbar,
 .no-scrollbar * {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
 
+html.no-scrollbar,
+body.no-scrollbar {
+  overflow: hidden !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+html.no-scrollbar::-webkit-scrollbar,
+body.no-scrollbar::-webkit-scrollbar,
 .no-scrollbar::-webkit-scrollbar,
 .no-scrollbar *::-webkit-scrollbar {
   display: none !important;
@@ -25,12 +36,16 @@
   background: transparent !important;
 }
 
+html.no-scrollbar::-webkit-scrollbar-track,
+body.no-scrollbar::-webkit-scrollbar-track,
 .no-scrollbar::-webkit-scrollbar-track,
 .no-scrollbar *::-webkit-scrollbar-track {
   display: none !important;
   background: transparent !important;
 }
 
+html.no-scrollbar::-webkit-scrollbar-thumb,
+body.no-scrollbar::-webkit-scrollbar-thumb,
 .no-scrollbar::-webkit-scrollbar-thumb,
 .no-scrollbar *::-webkit-scrollbar-thumb {
   display: none !important;
