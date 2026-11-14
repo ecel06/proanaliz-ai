@@ -64,6 +64,7 @@ import { StockPerformanceModal } from './StockPerformanceModal';
 import { StockAlertsModal, playAlertSound } from './StockAlertsModal';
 import { StockPortfolioModal } from './StockPortfolioModal';
 import { StockIpoModal } from './StockIpoModal';
+import { INITIAL_IPOS } from '../../data/ipoData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
 type PresetFilter = 'all' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
@@ -548,9 +549,15 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
             >
               <Rocket className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
               <span>Halka Arz</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black animate-pulse">
-                2 Aktif
-              </span>
+              {INITIAL_IPOS.filter((i) => i.status === 'active').length > 0 ? (
+                <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black animate-pulse">
+                  {INITIAL_IPOS.filter((i) => i.status === 'active').length} Aktif
+                </span>
+              ) : (
+                <span className="px-1.5 py-0.2 rounded-full bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 text-[10px] font-bold">
+                  Takvim
+                </span>
+              )}
             </button>
 
             {/* 🏆 Başarı Karnesi */}

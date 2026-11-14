@@ -36,15 +36,15 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
   onAddToPortfolio,
   onShowToast,
 }) => {
-  const [activeTab, setActiveTab] = useState<IpoStatus>('active');
+  const ipos = INITIAL_IPOS;
+  const hasActive = useMemo(() => ipos.some((i) => i.status === 'active'), [ipos]);
+  const [activeTab, setActiveTab] = useState<IpoStatus>(hasActive ? 'active' : 'upcoming');
   const [searchQuery, setSearchQuery] = useState('');
   const [katilimFilterOnly, setKatilimFilterOnly] = useState(false);
-  const [selectedIpoId, setSelectedIpoId] = useState<string>(INITIAL_IPOS[0]?.id || '');
+  const [selectedIpoId, setSelectedIpoId] = useState<string>('');
 
   // Calculator custom participants state
   const [customParticipants, setCustomParticipants] = useState<number>(2500000);
-
-  const ipos = INITIAL_IPOS;
 
   const filteredIpos = useMemo(() => {
     return ipos.filter((ipo) => {
@@ -71,13 +71,10 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
   }, [ipos]);
 
   const selectedIpo: StockIpoItem | null = useMemo(() => {
-    return (
-      ipos.find((i) => i.id === selectedIpoId) ||
-      filteredIpos[0] ||
-      ipos[0] ||
-      null
-    );
-  }, [ipos, selectedIpoId, filteredIpos]);
+    if (filteredIpos.length === 0) return null;
+    const match = filteredIpos.find((i) => i.id === selectedIpoId);
+    return match || filteredIpos[0];
+  }, [selectedIpoId, filteredIpos]);
 
   const calcResult = useMemo(() => {
     if (!selectedIpo || selectedIpo.offerPrice <= 0) return { lots: 0, cost: 0 };
@@ -227,9 +224,21 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
           {/* LEFT: IPO Cards List */}
           <div className="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-slate-800 p-3 sm:p-4 space-y-2.5 bg-slate-950/40 shrink-0 overflow-y-auto max-h-[300px] lg:max-h-none">
             {filteredIpos.length === 0 ? (
-              <div className="p-6 text-center text-xs text-slate-400 space-y-2">
+              <div className="p-5 text-center text-xs text-slate-400 space-y-3">
                 <Rocket className="w-8 h-8 text-slate-600 mx-auto" />
-                <div>Bu kategoride halka arz kaydı bulunamadı.</div>
+                {activeTab === 'active' ? (
+                  <div className="space-y-1.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-left">
+                    <div className="font-bold text-amber-300 flex items-center gap-1.5 text-xs">
+                      <Info className="w-3.5 h-3.5 shrink-0" />
+                      <span>Aktif Talep Toplama Yok</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Borsa İstanbul ve SPK kurallarına göre hafta sonu talep toplama yapılmaz. İşlemler yalnızca hafta içi iş günlerinde gerçekleşir.
+                    </p>
+                  </div>
+                ) : (
+                  <div>Bu kategoride halka arz kaydı bulunamadı.</div>
+                )}
               </div>
             ) : (
               filteredIpos.map((ipo) => {
@@ -638,7 +647,44 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
                   </div>
                 )}
               </div>
-            ) : null}
+            ) : (
+              <div className="h-full min-h-[380px] flex flex-col items-center justify-center text-center p-6 sm:p-10 space-y-4">
+                <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-inner">
+                  <Calendar className="w-8 h-8 text-amber-400" />
+                </div>
+                <div className="max-w-md space-y-2">
+                  <h3 className="text-base font-black text-white">
+                    Şu Anda Aktif Talep Toplayan Halka Arz Bulunmuyor
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Borsa İstanbul ve SPK mevzuatı gereği talep toplama işlemleri <strong className="text-amber-300">yalnızca hafta içi resmi iş günlerinde</strong> (10:30-13:00 veya 09:00-17:00) gerçekleştirilir. Hafta sonu talep toplama yapılmaz.
+                  </p>
+                  <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 text-left space-y-1.5 mt-3">
+                    <div className="text-cyan-300 font-bold flex items-center gap-1.5">
+                      <Info className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <span>SPK Onay ve Bülten Süreci</span>
+                    </div>
+                    <p className="text-slate-400 leading-relaxed">
+                      SPK bültenleri genellikle Perşembe akşamları yayımlanır. Onay alan yeni şirketler onaylandığı an bu takvimde yerini alır ve talep toplama tarihleri duyurulur.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    onClick={() => setActiveTab('upcoming')}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-950/40 cursor-pointer"
+                  >
+                    📅 Yaklaşan Halka Arzları Gör ({activeCounts.upcoming})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('recent')}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all border border-slate-700 cursor-pointer"
+                  >
+                    📈 Son İşlem Gören Tavan Serileri ({activeCounts.recent})
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
