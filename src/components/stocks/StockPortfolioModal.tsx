@@ -64,8 +64,6 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
   const [targetPrice, setTargetPrice] = useState<number | ''>('');
   const [notes, setNotes] = useState('');
 
-  if (!isOpen) return null;
-
   const openPositions = positions.filter((p) => p.status === 'open');
   const closedPositions = positions.filter((p) => p.status === 'closed');
 
@@ -149,6 +147,8 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
     onClosePosition(id, exitPriceInput);
     setClosingPosId(null);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
