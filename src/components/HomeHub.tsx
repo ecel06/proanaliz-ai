@@ -322,12 +322,12 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   };
 
   return (
-    <div className="h-full w-full flex-1 min-h-0 bg-slate-950 text-slate-100 flex flex-col justify-between items-center px-3 sm:px-6 py-1.5 sm:py-2.5 relative overflow-hidden">
+    <div className="min-h-screen w-full flex-1 bg-slate-950 text-slate-100 flex flex-col items-center px-3 sm:px-6 py-3 sm:py-5 relative overflow-x-hidden">
       {/* Subtle Ambient Glow */}
       <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-emerald-500/10 blur-[130px]" />
       <div className="pointer-events-none absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-amber-500/10 blur-[130px]" />
 
-      <div className="w-full max-w-5xl h-full flex-1 min-h-0 flex flex-col justify-between space-y-1.5 sm:space-y-2 relative z-10 overflow-y-auto no-scrollbar">
+      <div className="w-full max-w-5xl flex-1 flex flex-col space-y-3.5 sm:space-y-4 relative z-10 pb-20">
         
         {/* Top Header: Brand & Quick Install Action (Compact) */}
         <div className="text-center space-y-1">
@@ -542,7 +542,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         </div>
 
         {/* Clean Portal Cards: Futbol, At Yarışı & Borsa (Proportioned to fit screen) */}
-        <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3.5">
+        <div className="w-full shrink-0 grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3.5">
           {/* FUTBOL CARD */}
           <button
             onClick={onSelectFootball}
@@ -605,33 +605,33 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         </div>
 
         {/* 📱 TELEFONA İNDİR BANNERI (Responsive & Never Squashed on Mobile) */}
-        <div className="w-full rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 border border-slate-800 hover:border-emerald-500/40 p-3 sm:p-3.5 md:p-4 transition-all shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 relative overflow-hidden group">
-          <div className="flex items-center gap-2.5 sm:gap-3 text-left min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center shrink-0 text-emerald-400 shadow">
-              <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
+        <div className="w-full shrink-0 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 border border-slate-800 hover:border-emerald-500/40 p-4 sm:p-5 transition-all shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 relative overflow-hidden group">
+          <div className="flex items-center gap-3 text-left min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center shrink-0 text-emerald-400 shadow">
+              <Smartphone className="w-5 h-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                <span className="text-xs sm:text-sm font-black text-white">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm sm:text-base font-black text-white">
                   ProAnaliz AI Cebinizde
                 </span>
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
                   ÜCRETSİZ PWA
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 line-clamp-1 sm:line-clamp-none">
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                 Tek dokunuşla ana ekrana ekleyin, canlı gol ve kupon bildirimlerini anında alın.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-0.5 sm:pt-0">
+          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-1 sm:pt-0">
             {deferredPrompt && !isInstalled && (
               <button
                 onClick={handleInstallApp}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-xs transition-all shadow cursor-pointer animate-pulse"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-xs sm:text-sm transition-all shadow cursor-pointer animate-pulse"
               >
-                <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+                <Download className="w-4 h-4 stroke-[2.5]" />
                 <span>Hemen Kur</span>
               </button>
             )}
@@ -639,16 +639,16 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               onClick={() => {
                 if (onOpenInstallModal) onOpenInstallModal();
               }}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 hover:border-emerald-400/60 border border-slate-700 active:scale-95 text-white font-black text-xs transition-all shadow-xs cursor-pointer group"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 hover:border-emerald-400/60 border border-slate-700 active:scale-95 text-white font-black text-xs sm:text-sm transition-all shadow-xs cursor-pointer group"
             >
-              <QrCode className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+              <QrCode className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
               <span>Telefona İndir &amp; Karekod</span>
             </button>
           </div>
         </div>
 
         {/* 🌟 GÜNÜN ALTIN FIRSATLARI & AI RADAR CARD (Compact & Dynamic) */}
-        <div className="w-full rounded-2xl bg-slate-900/70 border border-slate-800/80 p-3 sm:p-3.5 space-y-2 shadow-xl">
+        <div className="w-full shrink-0 rounded-2xl bg-slate-900/70 border border-slate-800/80 p-3.5 sm:p-4 space-y-2.5 shadow-xl">
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">

@@ -328,7 +328,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.14.03';
+  const CLIENT_BUILD_VERSION = '2026.11.14.04';
   useEffect(() => {
     const handleSessionExpired = (e: any) => {
       setCurrentUser(null);
@@ -981,7 +981,7 @@ export const App: React.FC = () => {
 
   if (activeSection === 'home') {
     return (
-      <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col bg-slate-950">
+      <div className="min-h-screen w-full flex flex-col bg-slate-950 overflow-x-hidden">
         {newVersionAvailable && (
           <aside
             aria-label="Uygulama Güncellemesi"
