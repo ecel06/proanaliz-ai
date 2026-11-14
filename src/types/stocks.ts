@@ -308,7 +308,7 @@ export interface StockIpoItem {
   totalSizeTl: number; // Toplam Halka Arz Büyüklüğü ₺
   bookBuildingDates: string; // örn: "13 - 14 - 15 Kasım 2026"
   firstTradingDate?: string; // örn: "20 Kasım 2026"
-  distributionMethod: 'Eşit Dağıtım (Tamamı)' | 'Bireysele Eşit' | 'Oransal';
+  distributionMethod: 'Eşit Dağıtım (Tamamı)' | 'Bireysele Eşit' | 'Oransal' | 'Borsada Satış - Eşit Dağıtım';
   katilimEndeksineUygun: boolean; // Helal / Faizsiz finans
   katilimNotu?: string; // Diyanet / BIST Katılım kriterleri açıklaması
   t1t2Kullanilabilir: boolean; // T1 / T2 kullanılabilir mi

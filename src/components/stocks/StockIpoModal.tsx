@@ -37,8 +37,12 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
   onShowToast,
 }) => {
   const ipos = INITIAL_IPOS;
-  const hasActive = useMemo(() => ipos.some((i) => i.status === 'active'), [ipos]);
-  const [activeTab, setActiveTab] = useState<IpoStatus>(hasActive ? 'active' : 'upcoming');
+  const initialTab: IpoStatus = ipos.some((i) => i.status === 'active')
+    ? 'active'
+    : ipos.some((i) => i.status === 'upcoming')
+    ? 'upcoming'
+    : 'recent';
+  const [activeTab, setActiveTab] = useState<IpoStatus>(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
   const [katilimFilterOnly, setKatilimFilterOnly] = useState(false);
   const [selectedIpoId, setSelectedIpoId] = useState<string>('');
@@ -234,6 +238,16 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
                     </div>
                     <p className="text-[11px] text-slate-400 leading-relaxed">
                       Borsa İstanbul ve SPK kurallarına göre hafta sonu talep toplama yapılmaz. İşlemler yalnızca hafta içi iş günlerinde gerçekleşir.
+                    </p>
+                  </div>
+                ) : activeTab === 'upcoming' ? (
+                  <div className="space-y-1.5 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-left">
+                    <div className="font-bold text-indigo-300 flex items-center gap-1.5 text-xs">
+                      <Info className="w-3.5 h-3.5 shrink-0" />
+                      <span>Tarih Bekleyen Yok</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Şu anda SPK onaylı takvim bekleyen şirket bulunmuyor. Yeni onaylar haftalık SPK bülteninde açıklanır.
                     </p>
                   </div>
                 ) : (
@@ -654,33 +668,37 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
                 </div>
                 <div className="max-w-md space-y-2">
                   <h3 className="text-base font-black text-white">
-                    Şu Anda Aktif Talep Toplayan Halka Arz Bulunmuyor
+                    {activeTab === 'upcoming'
+                      ? 'Şu Anda SPK Onaylı Tarih Bekleyen Halka Arz Bulunmuyor'
+                      : 'Şu Anda Aktif Talep Toplayan Halka Arz Bulunmuyor'}
                   </h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Borsa İstanbul ve SPK mevzuatı gereği talep toplama işlemleri <strong className="text-amber-300">yalnızca hafta içi resmi iş günlerinde</strong> (10:30-13:00 veya 09:00-17:00) gerçekleştirilir. Hafta sonu talep toplama yapılmaz.
+                    {activeTab === 'upcoming'
+                      ? 'SPK haftalık bülteninde onay alan şirketler onaylandığı gün burada listelenir ve talep toplama takvimi ilan edilir.'
+                      : 'Borsa İstanbul ve SPK mevzuatı gereği talep toplama işlemleri yalnızca hafta içi resmi iş günlerinde (10:30-13:00 veya 09:00-17:00) gerçekleştirilir. Hafta sonu talep toplama yapılmaz.'}
                   </p>
                   <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 text-left space-y-1.5 mt-3">
                     <div className="text-cyan-300 font-bold flex items-center gap-1.5">
                       <Info className="w-4 h-4 text-cyan-400 shrink-0" />
-                      <span>SPK Onay ve Bülten Süreci</span>
+                      <span>SPK Onay ve Takvim Takibi</span>
                     </div>
                     <p className="text-slate-400 leading-relaxed">
-                      SPK bültenleri genellikle Perşembe akşamları yayımlanır. Onay alan yeni şirketler onaylandığı an bu takvimde yerini alır ve talep toplama tarihleri duyurulur.
+                      SPK bültenleri her hafta Perşembe gecesi yayımlanır. Onay alan yeni şirketler onaylandığı an takvime eklenir. Borsada işlem gören güncel halka arzların tavan karnelerini ve taslak izahnameleri inceleyebilirsiniz.
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button
-                    onClick={() => setActiveTab('upcoming')}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-950/40 cursor-pointer"
-                  >
-                    📅 Yaklaşan Halka Arzları Gör ({activeCounts.upcoming})
-                  </button>
-                  <button
                     onClick={() => setActiveTab('recent')}
-                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all border border-slate-700 cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white text-xs font-bold transition-all shadow-lg shadow-cyan-950/40 cursor-pointer"
                   >
                     📈 Son İşlem Gören Tavan Serileri ({activeCounts.recent})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('draft')}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all border border-slate-700 cursor-pointer"
+                  >
+                    📋 SPK Taslak İzahnameler ({activeCounts.draft})
                   </button>
                 </div>
               </div>
