@@ -107,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectSection
 }) => {
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl w-full max-w-full overflow-x-clip">
+    <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl w-full max-w-full overflow-x-clip mt-12">
       {/* 🚀 Beta / Geliştirme Aşaması Bilgilendirme Şeridi */}
       <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-b border-amber-500/25 px-2.5 py-1 text-center text-[10px] sm:text-xs text-amber-200 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
         <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 font-black text-[9px] uppercase tracking-wider">
@@ -131,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       </div>
 
-      <div className="w-full max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 min-w-0">
+      <div className="w-full max-w-full mx-0 px-0 min-w-0">
         
         {/* ROW 1: Brand Logo & Top Action Tools (Clean, Spacious, Zero Overflow) */}
         <div className="flex items-center justify-between h-12 sm:h-13 gap-2 min-w-0 w-full py-1">

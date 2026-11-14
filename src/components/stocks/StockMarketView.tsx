@@ -1337,7 +1337,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             {/* LEFT: SCREENER LIST */}
             <div
               id="stock-screener-list"
-              className={`w-full xl:w-[440px] shrink-0 rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl scroll-mt-24 ${
+              className={`w-full xl:w-[440px] shrink-0 rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl scroll-mt-24 xl:sticky xl:top-4 ${
                 mobileViewTab === 'detail' ? 'hidden xl:block' : 'block'
               }`}
             >
@@ -1364,7 +1364,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                   </button>
                 </div>
               ) : (
-                <div className="divide-y divide-slate-800/80 max-h-[760px] overflow-y-auto">
+                <div className="divide-y divide-slate-800/80 max-h-[calc(100vh-180px)] overflow-y-auto">
                   {filteredStocks.map((st) => {
                     const qa = analysesMap.get(st.symbol) || { signal: 'TUT' as const, score: 70 };
                     const isSel = selectedStock?.symbol === st.symbol;
