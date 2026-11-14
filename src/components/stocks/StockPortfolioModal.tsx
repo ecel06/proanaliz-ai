@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Briefcase,
   TrendingUp,
@@ -12,8 +12,20 @@ import {
   X,
   History,
   ShieldCheck,
+  AlertTriangle,
+  ShieldAlert,
+  Zap,
 } from 'lucide-react';
-import { StockPortfolioPosition, StockMarketType } from '../../types/stocks';
+import {
+  StockPortfolioPosition,
+  StockMarketType,
+  StockItem,
+  StockQuantAnalysis,
+} from '../../types/stocks';
+import {
+  evaluatePortfolioPositionRisk,
+  PortfolioPositionRisk,
+} from '../../utils/stockAnalysisEngine';
 
 interface StockPortfolioModalProps {
   isOpen: boolean;
@@ -23,6 +35,8 @@ interface StockPortfolioModalProps {
   onDeletePosition: (id: string) => void;
   onAddPosition: (pos: StockPortfolioPosition) => void;
   onResetPortfolio: () => void;
+  stocks?: StockItem[];
+  analysesMap?: Map<string, StockQuantAnalysis>;
 }
 
 export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
@@ -33,6 +47,8 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
   onDeletePosition,
   onAddPosition,
   onResetPortfolio,
+  stocks = [],
+  analysesMap,
 }) => {
   const [activeTab, setActiveTab] = useState<'open' | 'history' | 'add'>('open');
   const [closingPosId, setClosingPosId] = useState<string | null>(null);
@@ -54,6 +70,23 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
   const closedPositions = positions.filter((p) => p.status === 'closed');
 
   const INITIAL_CASH = 100000;
+
+  // Evaluate risk for each open position
+  const risksByPosId = useMemo(() => {
+    const map = new Map<string, PortfolioPositionRisk>();
+    openPositions.forEach((pos) => {
+      const stock = stocks.find((s) => s.symbol === pos.symbol);
+      const quant = analysesMap?.get(pos.symbol);
+      map.set(pos.id, evaluatePortfolioPositionRisk(pos, stock, quant));
+    });
+    return map;
+  }, [openPositions, stocks, analysesMap]);
+
+  const urgentRisks = useMemo(() => {
+    return Array.from(risksByPosId.values()).filter(
+      (r) => r.alertType === 'GÜÇLÜ SAT' || r.alertType === 'SAT'
+    );
+  }, [risksByPosId]);
 
   // Compute Open PnL
   const openPnLTl = openPositions
@@ -246,6 +279,33 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
         <div className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1">
           {activeTab === 'open' && (
             <>
+              {urgentRisks.length > 0 && (
+                <div className="p-4 rounded-xl bg-gradient-to-r from-rose-950/80 via-red-900/50 to-slate-900 border border-rose-500/60 shadow-xl shadow-rose-950/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/40 shrink-0">
+                      <ShieldAlert className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-black text-white flex items-center gap-2">
+                        <span>🚨 PORTFÖY SATIŞ ALARMI:</span>
+                        <span className="text-rose-400 font-extrabold">
+                          {urgentRisks.length} Hisse Riske Girdi!
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300 mt-0.5">
+                        Stop seviyesi kırılan veya AI Quant modelinin <strong>SAT / GÜÇLÜ SAT</strong> ürettiği hisseler tespit edildi. Sermayenizi korumak için aşağıdaki hızlı işlem butonlarını kullanabilirsiniz.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-black">
+                      {urgentRisks.filter((r) => r.alertType === 'GÜÇLÜ SAT').length} GÜÇLÜ SAT •{' '}
+                      {urgentRisks.filter((r) => r.alertType === 'SAT').length} SAT
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {openPositions.length === 0 ? (
                 <div className="p-8 text-center rounded-xl bg-slate-800/20 border border-slate-800 space-y-3">
                   <Briefcase className="w-10 h-10 text-slate-600 mx-auto" />
@@ -253,6 +313,30 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
                   <p className="text-xs text-slate-400 max-w-md mx-auto">
                     Hisse detay sayfasındaki <strong>"Lot Mühendisi"</strong> panelinden tek tıkla sanal portföye pozisyon ekleyebilir veya yukarıdaki form ile manuel giriş yapabilirsiniz.
                   </p>
+                  <div className="pt-2">
+                    <button
+                      onClick={() => {
+                        onAddPosition({
+                          id: `test-pos-${Date.now()}`,
+                          symbol: 'THYAO',
+                          name: 'Türk Hava Yolları',
+                          market: 'bist',
+                          units: 100,
+                          entryPrice: 310,
+                          currentPrice: 285.5,
+                          stopLoss: 295,
+                          targetPrice: 350,
+                          entryDate: new Date().toISOString(),
+                          status: 'open',
+                          notes: 'Test: Stop-Loss seviyesi kırıldı simülasyonu',
+                        });
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-600/30 to-amber-600/30 hover:from-rose-600 hover:to-amber-600 border border-rose-500/50 text-white text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-md"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-rose-400" />
+                      <span>🧪 Risk Alarmını Test Et (Örnek THYAO Stop Kırılma Pozisyonu Ekle)</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/40">
@@ -265,6 +349,7 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
                         <th className="py-3 px-3">Güncel Fiyat</th>
                         <th className="py-3 px-3">Stop / Hedef</th>
                         <th className="py-3 px-3">Açık Kar / Zarar</th>
+                        <th className="py-3 px-3">AI Sinyali & Risk</th>
                         <th className="py-3 px-3 text-right">İşlem</th>
                       </tr>
                     </thead>
@@ -275,13 +360,28 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
                         const pnlPct = ((curPrice - pos.entryPrice) / pos.entryPrice) * 100;
                         const isProfit = pnlVal >= 0;
                         const currency = pos.market === 'bist' ? '₺' : '$';
+                        const risk = risksByPosId.get(pos.id);
 
                         const isClosingThis = closingPosId === pos.id;
 
                         return (
-                          <tr key={pos.id} className="hover:bg-slate-850/50 transition-colors">
+                          <tr
+                            key={pos.id}
+                            className={`transition-colors ${
+                              risk?.alertType === 'GÜÇLÜ SAT'
+                                ? 'bg-rose-950/30 hover:bg-rose-950/40 border-l-2 border-l-rose-500'
+                                : risk?.alertType === 'SAT'
+                                ? 'bg-amber-950/20 hover:bg-amber-950/30 border-l-2 border-l-amber-500'
+                                : 'hover:bg-slate-850/50'
+                            }`}
+                          >
                             <td className="py-3 px-3">
-                              <div className="font-bold text-white">{pos.symbol}</div>
+                              <div className="font-bold text-white flex items-center gap-1.5">
+                                <span>{pos.symbol}</span>
+                                {risk?.alertType === 'GÜÇLÜ SAT' && (
+                                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                                )}
+                              </div>
                               <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-semibold uppercase">
                                 {pos.market}
                               </span>
@@ -321,6 +421,42 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
                                 </span>
                               </div>
                             </td>
+                            <td className="py-3 px-3">
+                              {risk ? (
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span
+                                      className={`px-2 py-0.5 rounded text-[10px] font-black border ${
+                                        risk.alertType === 'GÜÇLÜ SAT'
+                                          ? 'bg-rose-500 text-white border-rose-400 animate-pulse shadow-sm shadow-rose-500/40'
+                                          : risk.alertType === 'SAT'
+                                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold'
+                                          : risk.alertType === 'DİKKAT'
+                                          ? 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30'
+                                          : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                                      }`}
+                                    >
+                                      {risk.alertType === 'GÜÇLÜ SAT' && '🚨 '}
+                                      {risk.alertType === 'SAT' && '⚠️ '}
+                                      {risk.alertType}
+                                    </span>
+                                    {risk.quant?.signal && (
+                                      <span className="text-[10px] text-slate-400 font-mono">
+                                        AI: {risk.quant.signal}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div
+                                    className="text-[10px] text-slate-300 font-medium truncate max-w-[190px]"
+                                    title={risk.primaryReason}
+                                  >
+                                    {risk.primaryReason}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-slate-500 text-[11px]">-</span>
+                              )}
+                            </td>
                             <td className="py-3 px-3 text-right">
                               {isClosingThis ? (
                                 <div className="flex items-center justify-end gap-1.5">
@@ -345,7 +481,21 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
                                   </button>
                                 </div>
                               ) : (
-                                <div className="flex items-center justify-end gap-2">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  {risk && (risk.alertType === 'GÜÇLÜ SAT' || risk.alertType === 'SAT') && (
+                                    <button
+                                      onClick={() => onClosePosition(pos.id, curPrice)}
+                                      className={`px-2.5 py-1 rounded-lg text-[11px] font-black text-white transition-all shadow-md flex items-center gap-1 cursor-pointer ${
+                                        risk.alertType === 'GÜÇLÜ SAT'
+                                          ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30 border border-rose-400'
+                                          : 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/30 border border-amber-400'
+                                      }`}
+                                      title={`${pos.symbol} pozisyonunu anlık ${curPrice.toFixed(2)} fiyatından kapat`}
+                                    >
+                                      <Zap className="w-3 h-3" />
+                                      {risk.recommendedAction === 'ZARAR KES (STOP)' ? 'Zarar Kes' : 'Hemen Sat'}
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() => startClosing(pos)}
                                     className="px-2.5 py-1 bg-sky-600/30 hover:bg-sky-600 text-sky-200 hover:text-white rounded-lg text-xs font-semibold transition-colors border border-sky-500/30"
@@ -556,6 +706,29 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
             <span>Sanal portföy verileriniz güvenle tarayıcınızda saklanır.</span>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                onAddPosition({
+                  id: `test-pos-${Date.now()}`,
+                  symbol: 'THYAO',
+                  name: 'Türk Hava Yolları',
+                  market: 'bist',
+                  units: 100,
+                  entryPrice: 310,
+                  currentPrice: 285.5,
+                  stopLoss: 295,
+                  targetPrice: 350,
+                  entryDate: new Date().toISOString(),
+                  status: 'open',
+                  notes: 'Test: Stop-Loss seviyesi kırıldı simülasyonu',
+                });
+              }}
+              className="px-2.5 py-1.5 rounded-lg text-xs bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="Stop-Loss seviyesi kırılmış örnek bir THYAO pozisyonu ekleyerek SAT/GÜÇLÜ SAT alarm sistemini test edin"
+            >
+              <Zap className="w-3.5 h-3.5 text-rose-400" />
+              <span>🧪 Test Pozisyonu Ekle</span>
+            </button>
             {positions.length > 0 && (
               <button
                 onClick={onResetPortfolio}

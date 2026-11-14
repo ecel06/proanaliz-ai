@@ -3,6 +3,7 @@ import {
   IndicatorSignalRow,
   StockDeepAnalysis,
   StockItem,
+  StockPortfolioPosition,
   StockQuantAnalysis,
   StockSignalType,
 } from '../types/stocks';
@@ -486,4 +487,112 @@ export function buildInstitutionalAIMemo(
     actionCallout,
   };
 }
+
+export interface PortfolioPositionRisk {
+  position: StockPortfolioPosition;
+  stock?: StockItem;
+  quant?: StockQuantAnalysis;
+  currentPrice: number;
+  pnlVal: number;
+  pnlPct: number;
+  alertType: 'GÜÇLÜ SAT' | 'SAT' | 'DİKKAT' | 'GÜVENLİ';
+  reasons: string[];
+  primaryReason: string;
+  recommendedAction: 'ZARAR KES (STOP)' | 'KÂR REALİZASYONU' | 'POZİSYONU BOŞALT' | 'İZLE';
+  isSevere: boolean;
+}
+
+export function evaluatePortfolioPositionRisk(
+  pos: StockPortfolioPosition,
+  stock?: StockItem,
+  quant?: StockQuantAnalysis
+): PortfolioPositionRisk {
+  const curPrice = stock?.close || pos.currentPrice || pos.entryPrice;
+  const pnlVal = (curPrice - pos.entryPrice) * pos.units;
+  const pnlPct = pos.entryPrice > 0 ? ((curPrice - pos.entryPrice) / pos.entryPrice) * 100 : 0;
+  const reasons: string[] = [];
+
+  const effectiveStop = pos.stopLoss ?? quant?.tradePlan?.stopLoss ?? null;
+  const effectiveTarget = pos.targetPrice ?? quant?.tradePlan?.tp1 ?? null;
+
+  let alertType: 'GÜÇLÜ SAT' | 'SAT' | 'DİKKAT' | 'GÜVENLİ' = 'GÜVENLİ';
+  let recommendedAction: 'ZARAR KES (STOP)' | 'KÂR REALİZASYONU' | 'POZİSYONU BOŞALT' | 'İZLE' = 'İZLE';
+
+  // 1. Critical Stop Breach
+  const isStopBreached = effectiveStop !== null && curPrice <= effectiveStop;
+  if (isStopBreached) {
+    reasons.push(`Stop-Loss seviyesi (${effectiveStop.toFixed(2)}) kırıldı (Güncel: ${curPrice.toFixed(2)})`);
+  }
+
+  // 2. Severe Drawdown
+  const isSevereLoss = pnlPct <= -5.0;
+  if (isSevereLoss && !isStopBreached) {
+    reasons.push(`%${Math.abs(pnlPct).toFixed(1)} derin kayıp eşiği aşıldı`);
+  }
+
+  // 3. AI Quant Signal deterioration
+  const quantSignal = quant?.signal;
+  if (quantSignal === 'GÜÇLÜ SAT') {
+    reasons.push('AI Quant algoritması GÜÇLÜ SAT üretti (Trend bozuldu)');
+  } else if (quantSignal === 'SAT') {
+    reasons.push('AI Quant algoritması SAT sinyaline döndü');
+  }
+
+  // 4. Target Reached (Take Profit)
+  const isTargetHit = effectiveTarget !== null && curPrice >= effectiveTarget;
+  if (isTargetHit) {
+    reasons.push(`Kâr alma hedefi (${effectiveTarget.toFixed(2)}) gerçekleşti (%+${pnlPct.toFixed(1)})`);
+  }
+
+  // 5. Momentum Exhaustion / Overbought Reversal
+  if (stock?.rsi && stock.rsi >= 75) {
+    reasons.push(`RSI ${stock.rsi.toFixed(0)} ile aşırı alım doyumunda, düzeltme riski yüksek`);
+  }
+
+  // 6. High Risk level with negative return
+  if (quant?.riskLevel === 'YÜKSEK' && pnlPct < 0) {
+    reasons.push('Yüksek risk seviyesi ve negatif getiri trendi');
+  }
+
+  // Decision Logic:
+  if (isStopBreached || quantSignal === 'GÜÇLÜ SAT' || pnlPct <= -7.0) {
+    alertType = 'GÜÇLÜ SAT';
+    recommendedAction = isStopBreached ? 'ZARAR KES (STOP)' : 'POZİSYONU BOŞALT';
+  } else if (quantSignal === 'SAT' || isSevereLoss || (isTargetHit && pnlPct > 0)) {
+    alertType = 'SAT';
+    recommendedAction = isTargetHit ? 'KÂR REALİZASYONU' : 'POZİSYONU BOŞALT';
+  } else if ((stock?.rsi && stock.rsi >= 75) || (quant?.riskLevel === 'YÜKSEK' && pnlPct < 0)) {
+    alertType = 'DİKKAT';
+    recommendedAction = 'İZLE';
+  }
+
+  return {
+    position: pos,
+    stock,
+    quant,
+    currentPrice: curPrice,
+    pnlVal,
+    pnlPct,
+    alertType,
+    reasons,
+    primaryReason: reasons[0] || 'Pozisyon normal seyrediyor',
+    recommendedAction,
+    isSevere: alertType === 'GÜÇLÜ SAT',
+  };
+}
+
+export function evaluateAllPortfolioRisks(
+  positions: StockPortfolioPosition[],
+  stocks: StockItem[],
+  analysesMap?: Map<string, StockQuantAnalysis>
+): PortfolioPositionRisk[] {
+  return positions
+    .filter((p) => p.status === 'open')
+    .map((pos) => {
+      const stock = stocks.find((s) => s.symbol === pos.symbol);
+      const quant = analysesMap?.get(pos.symbol) || (stock ? analyzeStockQuant(stock) : undefined);
+      return evaluatePortfolioPositionRisk(pos, stock, quant);
+    });
+}
+
 

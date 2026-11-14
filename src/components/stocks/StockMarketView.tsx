@@ -30,6 +30,7 @@ import {
   Trophy,
   Lock,
   Crown,
+  Zap,
 } from 'lucide-react';
 import { User } from '../../utils/authHelper';
 import {
@@ -50,8 +51,11 @@ import {
 import {
   analyzeStockQuant,
   buildInstitutionalAIMemo,
+  evaluateAllPortfolioRisks,
+  evaluatePortfolioPositionRisk,
   formatLargeNumber,
   formatStockPrice,
+  PortfolioPositionRisk,
 } from '../../utils/stockAnalysisEngine';
 import { StockChart } from './StockChart';
 import { StockAIChatModal } from './StockAIChatModal';
@@ -246,9 +250,47 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
     return map;
   }, [stocks]);
 
+  // Live Risk Monitoring for Open Positions in Basket / Portfolio
+  const portfolioRisks = useMemo(() => {
+    return evaluateAllPortfolioRisks(portfolio, stocks, analysesMap);
+  }, [portfolio, stocks, analysesMap]);
+
+  const urgentPortfolioRisks = useMemo(() => {
+    return portfolioRisks.filter((r) => r.alertType === 'GÜÇLÜ SAT' || r.alertType === 'SAT');
+  }, [portfolioRisks]);
+
+  const risksBySymbolMap = useMemo(() => {
+    const map = new Map<string, PortfolioPositionRisk>();
+    portfolioRisks.forEach((r) => {
+      map.set(r.position.symbol, r);
+    });
+    return map;
+  }, [portfolioRisks]);
+
+  // Alert Sound & Notification Trigger when an open basket stock triggers SAT or GÜÇLÜ SAT
+  const alertedPositionsRef = React.useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!stocks || stocks.length === 0 || portfolio.length === 0) return;
+    urgentPortfolioRisks.forEach((risk) => {
+      const alertKey = `${risk.position.id}_${risk.alertType}`;
+      if (!alertedPositionsRef.current.has(alertKey)) {
+        alertedPositionsRef.current.add(alertKey);
+        playAlertSound();
+        onShowToast?.(
+          `🚨 SEPET UYARISI: ${risk.position.symbol} hissesi riske girdi! (${risk.alertType}: ${risk.primaryReason})`
+        );
+      }
+    });
+  }, [urgentPortfolioRisks, stocks, portfolio]);
+
   const selectedStock: StockItem | null = useMemo(() => {
     return stocks.find((s) => s.symbol === selectedSymbol) || stocks[0] || null;
   }, [stocks, selectedSymbol]);
+
+  const selectedStockRisk = useMemo(() => {
+    if (!selectedStock) return null;
+    return risksBySymbolMap.get(selectedStock.symbol) || null;
+  }, [selectedStock, risksBySymbolMap]);
 
   const selectedAnalysis: StockQuantAnalysis | null = useMemo(() => {
     if (!selectedStock) return null;
@@ -515,16 +557,24 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
             {/* 💼 Sanal Portföy */}
             <button
               onClick={() => setIsPortfolioModalOpen(true)}
-              className="px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-sky-500/30 text-sky-300 text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-sm"
+              className={`px-3 py-2 rounded-xl border text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-sm ${
+                urgentPortfolioRisks.length > 0
+                  ? 'bg-rose-950/60 hover:bg-rose-900/60 border-rose-500/60 text-rose-300 ring-2 ring-rose-500/30'
+                  : 'bg-slate-800/90 hover:bg-slate-700 border-sky-500/30 text-sky-300'
+              }`}
               title="Sanal Portföy & İşlem Defteri (Paper Trading)"
             >
-              <Briefcase className="w-3.5 h-3.5 text-sky-400" />
+              <Briefcase className={`w-3.5 h-3.5 ${urgentPortfolioRisks.length > 0 ? 'text-rose-400' : 'text-sky-400'}`} />
               <span className="hidden sm:inline">Sanal Portföy</span>
-              {openPositionsCount > 0 && (
+              {urgentPortfolioRisks.length > 0 ? (
+                <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse flex items-center gap-1 shadow-md shadow-rose-500/40">
+                  🚨 {urgentPortfolioRisks.length} SAT
+                </span>
+              ) : openPositionsCount > 0 ? (
                 <span className="w-4 h-4 rounded-full bg-sky-500 text-slate-950 text-[10px] font-black flex items-center justify-center">
                   {openPositionsCount}
                 </span>
-              )}
+              ) : null}
             </button>
 
             <button
@@ -606,6 +656,127 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
             </div>
           </div>
         </div>
+
+        {/* 🚨 PORTFÖYDE RİSKLİ HİSSE ALARMI (SAT / GÜÇLÜ SAT) */}
+        {urgentPortfolioRisks.length > 0 && (
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-950/90 via-red-950/60 to-slate-900 border-2 border-rose-500/80 p-3.5 sm:p-4 shadow-2xl shadow-rose-950/50 space-y-3 animate-in fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/50 flex items-center justify-center text-rose-400 shrink-0">
+                  <ShieldAlert className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider animate-pulse shadow-md shadow-rose-600/40">
+                      🚨 PORTFÖY SATIŞ ALARMI
+                    </span>
+                    <span className="text-sm font-black text-white">
+                      Sepetinizdeki {urgentPortfolioRisks.length} Hisse Riske Girdi!
+                    </span>
+                  </div>
+                  <p className="text-xs text-rose-200/90 mt-0.5">
+                    Stop-Loss seviyesi kırılan veya AI Quant modelinin <strong>GÜÇLÜ SAT / SAT</strong> ürettiği açık pozisyonlar:
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPortfolioModalOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-rose-500/40 text-rose-300 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+              >
+                <Briefcase className="w-3.5 h-3.5 text-rose-400" />
+                <span>Portföyde İncele</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+              {urgentPortfolioRisks.map((risk) => {
+                const currency = risk.position.market === 'bist' ? '₺' : '$';
+                return (
+                  <div
+                    key={risk.position.id}
+                    className="p-3 rounded-xl bg-slate-950/80 border border-rose-500/40 flex flex-col justify-between gap-2.5 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-black text-white">{risk.position.symbol}</span>
+                          <span
+                            className={`px-1.5 py-0.2 rounded text-[10px] font-black border ${
+                              risk.alertType === 'GÜÇLÜ SAT'
+                                ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
+                                : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            }`}
+                          >
+                            {risk.alertType}
+                          </span>
+                        </div>
+                        <div
+                          className="text-[11px] text-rose-300 font-medium line-clamp-1 mt-0.5"
+                          title={risk.primaryReason}
+                        >
+                          {risk.primaryReason}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-xs font-mono font-black text-white">
+                          {risk.currentPrice.toFixed(2)} {currency}
+                        </div>
+                        <div
+                          className={`text-[10px] font-mono font-bold ${
+                            risk.pnlVal >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                          }`}
+                        >
+                          {risk.pnlVal >= 0 ? '+' : ''}
+                          {risk.pnlVal.toFixed(2)} {currency} ({risk.pnlPct >= 0 ? '+' : ''}
+                          {risk.pnlPct.toFixed(1)}%)
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1 border-t border-slate-800/80">
+                      <button
+                        onClick={() => setSelectedSymbol(risk.position.symbol)}
+                        className="flex-1 py-1 px-2 rounded-lg bg-slate-850 hover:bg-slate-800 text-[11px] font-semibold text-slate-300 hover:text-white transition-colors text-center cursor-pointer"
+                      >
+                        Grafiğe Git
+                      </button>
+                      <button
+                        onClick={() => {
+                          savePortfolio(
+                            portfolio.map((p) =>
+                              p.id === risk.position.id
+                                ? {
+                                    ...p,
+                                    status: 'closed',
+                                    exitPrice: risk.currentPrice,
+                                    exitDate: new Date().toISOString(),
+                                  }
+                                : p
+                            )
+                          );
+                          onShowToast?.(
+                            `🔴 ${risk.position.symbol} pozisyonu kapatıldı ve işlem geçmişine kaydedildi.`
+                          );
+                        }}
+                        className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-black text-white shadow transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                          risk.alertType === 'GÜÇLÜ SAT'
+                            ? 'bg-rose-600 hover:bg-rose-500 border border-rose-400'
+                            : 'bg-amber-600 hover:bg-amber-500 border border-amber-400'
+                        }`}
+                        title={`${risk.position.symbol} hissesini tek tıkla kapat`}
+                      >
+                        <Zap className="w-3 h-3" />
+                        <span>
+                          {risk.recommendedAction === 'ZARAR KES (STOP)' ? 'Zarar Kes' : 'Hemen Sat'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Quant Presets + Live Counts + Sort */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
@@ -765,8 +936,28 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
                           />
                         </button>
                         <div className="min-w-0">
-                          <div className="flex items-center space-x-1.5">
+                          <div className="flex items-center space-x-1.5 flex-wrap">
                             <span className="font-black text-xs text-white">{st.symbol}</span>
+                            {(() => {
+                              const openRisk = risksBySymbolMap.get(st.symbol);
+                              if (
+                                !openRisk ||
+                                (openRisk.alertType !== 'GÜÇLÜ SAT' && openRisk.alertType !== 'SAT')
+                              )
+                                return null;
+                              return (
+                                <span
+                                  className={`px-1.5 py-0.2 rounded text-[9px] font-black border ${
+                                    openRisk.alertType === 'GÜÇLÜ SAT'
+                                      ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 animate-pulse'
+                                      : 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                                  }`}
+                                  title={`Sepette: ${openRisk.alertType} (${openRisk.primaryReason})`}
+                                >
+                                  🚨 {openRisk.alertType}
+                                </span>
+                              );
+                            })()}
                             <span className="text-[10px] font-mono text-slate-400">
                               RSI:{st.rsi !== null ? st.rsi.toFixed(0) : '-'}
                             </span>
@@ -916,6 +1107,67 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
                     </div>
                   </div>
                 </div>
+
+                {/* Basket Risk Callout Banner for Selected Stock */}
+                {selectedStockRisk &&
+                  (selectedStockRisk.alertType === 'GÜÇLÜ SAT' ||
+                    selectedStockRisk.alertType === 'SAT') && (
+                    <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-rose-950/90 via-red-950/60 to-slate-900 border border-rose-500/70 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                      <div className="flex items-start sm:items-center gap-3">
+                        <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/40 shrink-0 mt-0.5 sm:mt-0">
+                          <ShieldAlert className="w-5 h-5 animate-pulse" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-black text-white flex items-center gap-2 flex-wrap">
+                            <span className="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] uppercase font-black">
+                              🚨 SEPET RİSKİ: {selectedStockRisk.alertType}
+                            </span>
+                            <span className="text-rose-200">{selectedStockRisk.primaryReason}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-300 font-mono mt-0.5">
+                            Giriş: {selectedStockRisk.position.entryPrice.toFixed(2)} &bull; Güncel:{' '}
+                            {selectedStockRisk.currentPrice.toFixed(2)} &bull; PnL: %
+                            {selectedStockRisk.pnlPct >= 0 ? '+' : ''}
+                            {selectedStockRisk.pnlPct.toFixed(2)} (
+                            {selectedStockRisk.pnlVal.toFixed(2)}{' '}
+                            {selectedStock.currency === 'TRY' ? '₺' : '$'})
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          savePortfolio(
+                            portfolio.map((p) =>
+                              p.id === selectedStockRisk.position.id
+                                ? {
+                                    ...p,
+                                    status: 'closed',
+                                    exitPrice: selectedStockRisk.currentPrice,
+                                    exitDate: new Date().toISOString(),
+                                  }
+                                : p
+                            )
+                          );
+                          onShowToast?.(
+                            `🔴 ${selectedStock.symbol} pozisyonu kapatıldı ve işlem geçmişine kaydedildi.`
+                          );
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black text-white shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+                          selectedStockRisk.alertType === 'GÜÇLÜ SAT'
+                            ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30 border border-rose-400'
+                            : 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/30 border border-amber-400'
+                        }`}
+                        title={`${selectedStock.symbol} hissesini tek tıkla kapat`}
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                        <span>
+                          {selectedStockRisk.recommendedAction === 'ZARAR KES (STOP)'
+                            ? 'Zarar Kes & Pozisyonu Kapat'
+                            : 'Hemen Sat & Çık'}
+                        </span>
+                      </button>
+                    </div>
+                  )}
 
                 {/* 3 Sub-Scores: Trend | Momentum | Temel */}
                 <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-800">
@@ -1767,6 +2019,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         isOpen={isPortfolioModalOpen}
         onClose={() => setIsPortfolioModalOpen(false)}
         positions={portfolio}
+        stocks={stocks}
+        analysesMap={analysesMap}
         onAddPosition={(pos) => {
           savePortfolio([pos, ...portfolio]);
           onShowToast?.(`💼 ${pos.symbol} pozisyonu sanal portföye eklendi!`);
