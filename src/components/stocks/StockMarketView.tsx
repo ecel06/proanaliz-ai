@@ -2225,6 +2225,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
       <StockIpoModal
         isOpen={isIpoModalOpen}
         onClose={() => setIsIpoModalOpen(false)}
+        stocks={stocks}
         onAddToPortfolio={(pos) => {
           savePortfolio([pos, ...portfolio]);
         }}

@@ -20,7 +20,7 @@ import {
   Building,
   Info,
 } from 'lucide-react';
-import { IpoStatus, StockIpoItem, StockPortfolioPosition } from '../../types/stocks';
+import { IpoStatus, StockIpoItem, StockItem, StockPortfolioPosition } from '../../types/stocks';
 import { calculateEstimatedLots, INITIAL_IPOS } from '../../data/ipoData';
 
 interface StockIpoModalProps {
@@ -28,6 +28,7 @@ interface StockIpoModalProps {
   onClose: () => void;
   onAddToPortfolio?: (pos: StockPortfolioPosition) => void;
   onShowToast?: (msg: string) => void;
+  stocks?: StockItem[];
 }
 
 export const StockIpoModal: React.FC<StockIpoModalProps> = ({
@@ -35,6 +36,7 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
   onClose,
   onAddToPortfolio,
   onShowToast,
+  stocks = [],
 }) => {
   const ipos = INITIAL_IPOS;
   const initialTab: IpoStatus = ipos.some((i) => i.status === 'active')
@@ -46,6 +48,18 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [katilimFilterOnly, setKatilimFilterOnly] = useState(false);
   const [selectedIpoId, setSelectedIpoId] = useState<string>('');
+
+  const getLivePrice = (ipo: StockIpoItem) => {
+    const live = stocks.find((s) => s.symbol.toUpperCase() === ipo.code.toUpperCase());
+    if (live && live.close > 0) return live.close;
+    return ipo.currentPrice || ipo.offerPrice;
+  };
+
+  const getLiveReturnPct = (ipo: StockIpoItem) => {
+    if (!ipo.offerPrice || ipo.offerPrice <= 0) return 0;
+    const curr = getLivePrice(ipo);
+    return Number((((curr - ipo.offerPrice) / ipo.offerPrice) * 100).toFixed(1));
+  };
 
   // Calculator custom participants state
   const [customParticipants, setCustomParticipants] = useState<number>(2500000);
@@ -302,9 +316,14 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
                           </span>
                         )}
                       </div>
-                      {ipo.status === 'recent' && ipo.returnFromIpoPct !== undefined ? (
-                        <span className="font-mono font-black text-emerald-400">
-                          +{ipo.returnFromIpoPct.toFixed(1)}% ({ipo.ceilingCount} Tavan)
+                      {ipo.status === 'recent' ? (
+                        <span
+                          className={`font-mono font-black ${
+                            getLiveReturnPct(ipo) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                          }`}
+                        >
+                          {getLiveReturnPct(ipo) >= 0 ? '+' : ''}
+                          {getLiveReturnPct(ipo)}% ({ipo.ceilingCount} Tavan)
                         </span>
                       ) : (
                         <span className="text-slate-400 font-mono text-[9px]">
@@ -488,7 +507,7 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
                       <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
                         <span className="text-[10px] text-slate-400 block">Güncel Borsa Fiyatı</span>
                         <span className="font-mono font-black text-cyan-300">
-                          {selectedIpo.currentPrice ? `${selectedIpo.currentPrice.toFixed(2)} ₺` : '-'}
+                          {getLivePrice(selectedIpo).toFixed(2)} ₺
                         </span>
                       </div>
                       <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
@@ -499,8 +518,13 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
                       </div>
                       <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
                         <span className="text-[10px] text-slate-400 block">Halka Arzdan Getiri</span>
-                        <span className="font-mono font-black text-emerald-400">
-                          +{selectedIpo.returnFromIpoPct?.toFixed(1)}%
+                        <span
+                          className={`font-mono font-black ${
+                            getLiveReturnPct(selectedIpo) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                          }`}
+                        >
+                          {getLiveReturnPct(selectedIpo) >= 0 ? '+' : ''}
+                          {getLiveReturnPct(selectedIpo)}%
                         </span>
                       </div>
                     </div>
