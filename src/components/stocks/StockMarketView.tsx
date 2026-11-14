@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   ArrowDownRight,
   ArrowLeft,
+  ArrowRight,
   ArrowUpRight,
   BarChart3,
   Bell,
@@ -481,6 +482,27 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
     }
   };
 
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const q = searchInput.trim().toUpperCase();
+    if (!q) return;
+
+    // Search exact symbol, prefix symbol, name match, or first filtered result
+    const exact = stocks.find((s) => s.symbol.toUpperCase() === q);
+    const starts = !exact ? stocks.find((s) => s.symbol.toUpperCase().startsWith(q)) : null;
+    const inName =
+      !exact && !starts ? stocks.find((s) => s.name.toUpperCase().includes(q)) : null;
+    const match = exact || starts || inName || filteredStocks[0];
+
+    if (match) {
+      handleSelectStock(match.symbol);
+      (document.activeElement as HTMLElement)?.blur();
+      onShowToast?.(`🔍 ${match.symbol} (${match.name}) detayına gidildi`);
+    } else {
+      onShowToast?.(`"${searchInput}" ile eşleşen hisse bulunamadı`);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* 1. MACRO INDICES & FX LIVE TICKER STRIP */}
@@ -553,12 +575,23 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
 
           {/* Live Search & Toolbar Actions */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 sm:w-60 min-w-[180px]">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <form
+              onSubmit={handleSearchSubmit}
+              action="."
+              className="relative flex-1 sm:w-60 min-w-[180px]"
+            >
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
-                type="text"
+                type="search"
+                enterKeyHint="go"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSearchSubmit();
+                  }
+                }}
                 placeholder={
                   market === 'bist'
                     ? 'Hisse ara (THYAO, ASELS...)'
@@ -566,9 +599,19 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
                     ? 'Ticker ara (NVDA, AAPL...)'
                     : 'Coin ara (BTC, SOL...)'
                 }
-                className="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                className="w-full pl-8 pr-12 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
               />
-            </div>
+              {searchInput.trim() && (
+                <button
+                  type="submit"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-[10px] flex items-center gap-0.5 transition-all shadow cursor-pointer active:scale-95"
+                  title="Hisseyi Aç"
+                >
+                  <span>Git</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              )}
+            </form>
 
             {/* ⭐ Takip Listem (Watchlist - Her Zaman Erişilebilir) */}
             <button
