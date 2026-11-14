@@ -261,6 +261,21 @@ export const App: React.FC = () => {
   // Active Portal Section: Home, Football, Horse Racing, Stocks
   const [activeSection, setActiveSection] = useState<'home' | 'football' | 'horseRacing' | 'stocks'>('home');
 
+  const handleNavigateSection = (sec: 'home' | 'football' | 'horseRacing' | 'stocks', replace = false) => {
+    if (sec === activeSection) return;
+    try {
+      if (replace) {
+        window.history.replaceState({ section: sec }, '', '');
+      } else {
+        window.history.pushState({ section: sec }, '', '');
+      }
+    } catch {}
+    setActiveSection(sec);
+    if (sec === 'football') {
+      setActiveTabMode('upcoming');
+    }
+  };
+
   // Team & Custom Theme State (Active only inside Football; At Yarışı & Borsa stay clean eye-resting dark slate)
   const [activeTheme, setActiveTheme] = useState<TeamTheme>(() => getStoredTheme());
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
@@ -347,7 +362,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.14.30';
+  const CLIENT_BUILD_VERSION = '2026.11.14.31';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -695,6 +710,70 @@ export const App: React.FC = () => {
   const [isCustomAnalyzerOpen, setIsCustomAnalyzerOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isStandingsOpen, setIsStandingsOpen] = useState(false);
+
+  // Global PopState Listener: Handles hardware back button on Android/iOS
+  useEffect(() => {
+    try {
+      if (!window.history.state) {
+        window.history.replaceState({ section: activeSection }, '', '');
+      }
+    } catch {}
+
+    const handleGlobalPopState = (e: PopStateEvent) => {
+      // 1. If any overlay modal or selected match detail is open, close it first
+      if (selectedMatch) { setSelectedMatch(null); return; }
+      if (isFeedbackModalOpen) { setIsFeedbackModalOpen(false); return; }
+      if (isAuthModalOpen) { setIsAuthModalOpen(false); return; }
+      if (isProfileModalOpen) { setIsProfileModalOpen(false); return; }
+      if (isVipModalOpen) { setIsVipModalOpen(false); return; }
+      if (isAdminModalOpen) { setIsAdminModalOpen(false); return; }
+      if (isOnboardingOpen) { setIsOnboardingOpen(false); return; }
+      if (isInstallModalOpen) { setIsInstallModalOpen(false); return; }
+      if (isCustomAnalyzerOpen) { setIsCustomAnalyzerOpen(false); return; }
+      if (isStandingsOpen) { setIsStandingsOpen(false); return; }
+      if (isInfoModalOpen) { setIsInfoModalOpen(false); return; }
+      if (isAIPerformanceOpen) { setIsAIPerformanceOpen(false); return; }
+      if (isShareModalOpen) { setIsShareModalOpen(false); return; }
+      if (isAIChatOpen) { setIsAIChatOpen(false); return; }
+      if (isBetslipOpen) { setIsBetslipOpen(false); return; }
+      if (isBankrollModalOpen) { setIsBankrollModalOpen(false); return; }
+      if (isThemeModalOpen) { setIsThemeModalOpen(false); return; }
+
+      // 2. Section navigation via history
+      const targetSection = e.state?.section;
+      if (targetSection && ['home', 'football', 'horseRacing', 'stocks'].includes(targetSection)) {
+        setActiveSection(targetSection);
+        if (targetSection === 'football') {
+          setActiveTabMode('upcoming');
+        }
+      } else {
+        // Fallback to home instead of closing app or leaving blank
+        setActiveSection('home');
+      }
+    };
+
+    window.addEventListener('popstate', handleGlobalPopState);
+    return () => window.removeEventListener('popstate', handleGlobalPopState);
+  }, [
+    activeSection,
+    selectedMatch,
+    isFeedbackModalOpen,
+    isAuthModalOpen,
+    isProfileModalOpen,
+    isVipModalOpen,
+    isAdminModalOpen,
+    isOnboardingOpen,
+    isInstallModalOpen,
+    isCustomAnalyzerOpen,
+    isStandingsOpen,
+    isInfoModalOpen,
+    isAIPerformanceOpen,
+    isShareModalOpen,
+    isAIChatOpen,
+    isBetslipOpen,
+    isBankrollModalOpen,
+    isThemeModalOpen,
+  ]);
 
   // 5. Compute category counts for active bulletin matches
   const counts = useMemo(() => {
@@ -1097,12 +1176,9 @@ export const App: React.FC = () => {
         )}
 
         <HomeHub
-          onSelectFootball={() => {
-            setActiveSection('football');
-            setActiveTabMode('upcoming');
-          }}
-          onSelectHorseRacing={() => setActiveSection('horseRacing')}
-          onSelectStocks={() => setActiveSection('stocks')}
+          onSelectFootball={() => handleNavigateSection('football')}
+          onSelectHorseRacing={() => handleNavigateSection('horseRacing')}
+          onSelectStocks={() => handleNavigateSection('stocks')}
           onOpenInstallModal={() => setIsInstallModalOpen(true)}
           onOpenVIP={() => setIsVipModalOpen(true)}
           onOpenAuth={() => setIsAuthModalOpen(true)}
@@ -1160,9 +1236,9 @@ export const App: React.FC = () => {
               onClose={() => setIsOnboardingOpen(false)}
               user={currentUser}
               onSelectInterest={(interest) => {
-                if (interest === 'football') setActiveSection('football');
-                else if (interest === 'horses') setActiveSection('horseRacing');
-                else if (interest === 'stocks') setActiveSection('stocks');
+                if (interest === 'football') handleNavigateSection('football');
+                else if (interest === 'horses') handleNavigateSection('horseRacing');
+                else if (interest === 'stocks') handleNavigateSection('stocks');
               }}
             />
           )}
@@ -1271,14 +1347,11 @@ export const App: React.FC = () => {
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onLogout={handleLogout}
         onGoHome={() => {
-          setActiveSection('home');
+          handleNavigateSection('home');
         }}
         activeSection={activeSection}
         onSelectSection={(sec) => {
-          setActiveSection(sec);
-          if (sec === 'football') {
-            setActiveTabMode('upcoming');
-          }
+          handleNavigateSection(sec);
         }}
         onOpenCustomAnalyzer={() => setIsCustomAnalyzerOpen(true)}
         onOpenStandings={() => setIsStandingsOpen(true)}
@@ -1372,6 +1445,7 @@ export const App: React.FC = () => {
                 setRefreshToast(msg);
                 setTimeout(() => setRefreshToast(null), 3500);
               }}
+              onGoHome={() => handleNavigateSection('home')}
             />
           </React.Suspense>
         ) : (
@@ -2201,9 +2275,9 @@ export const App: React.FC = () => {
             onClose={() => setIsOnboardingOpen(false)}
             user={currentUser}
             onSelectInterest={(interest) => {
-              if (interest === 'football') setActiveSection('football');
-              else if (interest === 'horses') setActiveSection('horseRacing');
-              else if (interest === 'stocks') setActiveSection('stocks');
+              if (interest === 'football') handleNavigateSection('football');
+              else if (interest === 'horses') handleNavigateSection('horseRacing');
+              else if (interest === 'stocks') handleNavigateSection('stocks');
             }}
           />
         )}

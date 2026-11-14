@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Flame,
   Globe,
+  Home,
   Layers,
   ListFilter,
   Megaphone,
@@ -85,9 +86,15 @@ interface StockMarketViewProps {
   user?: User | null;
   onOpenVIP?: () => void;
   onShowToast?: (msg: string) => void;
+  onGoHome?: () => void;
 }
 
-export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVIP, onShowToast }) => {
+export const StockMarketView: React.FC<StockMarketViewProps> = ({
+  user,
+  onOpenVIP,
+  onShowToast,
+  onGoHome,
+}) => {
   const [market, setMarket] = useState<StockMarketType>('bist');
   const [searchInput, setSearchInput] = useState<string>('');
   const [activeSearch, setActiveSearch] = useState<string>('');
@@ -213,6 +220,9 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
     }
     setSelectedSymbol(sym);
     setMobileViewTab('detail');
+    try {
+      window.history.pushState({ section: 'stocks', view: 'detail', symbol: sym }, '', '');
+    } catch {}
     setTimeout(() => {
       const elem = document.getElementById('stock-detail-workstation');
       if (elem) {
@@ -220,6 +230,78 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
       }
     }, 80);
   };
+
+  // Mobile Back Button (Popstate) listener for stock detail and modals
+  useEffect(() => {
+    const handleStockPopState = () => {
+      // 1. Close internal modals first if open
+      if (isWatchlistModalOpen) {
+        setIsWatchlistModalOpen(false);
+        return;
+      }
+      if (isIpoModalOpen) {
+        setIsIpoModalOpen(false);
+        return;
+      }
+      if (isDividendModalOpen) {
+        setIsDividendModalOpen(false);
+        return;
+      }
+      if (isKapModalOpen) {
+        setIsKapModalOpen(false);
+        return;
+      }
+      if (isMoneyFlowModalOpen) {
+        setIsMoneyFlowModalOpen(false);
+        return;
+      }
+      if (isPortfolioModalOpen) {
+        setIsPortfolioModalOpen(false);
+        return;
+      }
+      if (isAlertsModalOpen) {
+        setIsAlertsModalOpen(false);
+        return;
+      }
+      if (isPerformanceModalOpen) {
+        setIsPerformanceModalOpen(false);
+        return;
+      }
+      if (isAIChatOpen) {
+        setIsAIChatOpen(false);
+        return;
+      }
+      if (isCryptoWidgetsModalOpen) {
+        setIsCryptoWidgetsModalOpen(false);
+        return;
+      }
+
+      // 2. If in mobile detail view, go back to list view instead of closing app!
+      if (mobileViewTab === 'detail') {
+        setMobileViewTab('list');
+        setTimeout(() => {
+          const elem = document.getElementById('stock-screener-list');
+          if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+        return;
+      }
+    };
+
+    window.addEventListener('popstate', handleStockPopState);
+    return () => window.removeEventListener('popstate', handleStockPopState);
+  }, [
+    mobileViewTab,
+    isWatchlistModalOpen,
+    isIpoModalOpen,
+    isDividendModalOpen,
+    isKapModalOpen,
+    isMoneyFlowModalOpen,
+    isPortfolioModalOpen,
+    isAlertsModalOpen,
+    isPerformanceModalOpen,
+    isAIChatOpen,
+    isCryptoWidgetsModalOpen,
+  ]);
 
   useEffect(() => {
     loadMarketData(market, activeSearch, false);
@@ -1173,7 +1255,19 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
       ) : (
         <>
           {/* Mobile View Switcher Tab: List vs Detail */}
-          <div className="xl:hidden flex items-center p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg mb-3 gap-2">
+          <div className="xl:hidden flex items-center p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg mb-3 gap-1.5">
+            {onGoHome && (
+              <button
+                type="button"
+                onClick={onGoHome}
+                className="py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer text-slate-300 hover:text-white bg-slate-950/60 border border-slate-800 shrink-0 active:scale-95"
+                title="Ana Sayfaya Dön"
+              >
+                <Home className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden xs:inline">Ana Sayfa</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => {
@@ -1209,7 +1303,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
               }`}
             >
               <BarChart3 className="w-4 h-4" />
-              <span>{selectedStock?.symbol || 'Hisse'} Detay &amp; Grafik</span>
+              <span>{selectedStock?.symbol || 'Hisse'} Detay</span>
             </button>
           </div>
 
@@ -1360,22 +1454,37 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
                 }`}
               >
                 {/* Mobile Back-to-List Bar */}
-                <div className="xl:hidden flex items-center justify-between p-3 rounded-2xl bg-slate-950/90 border border-slate-800 shadow-md">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileViewTab('list');
-                      setTimeout(() => {
-                        const elem = document.getElementById('stock-screener-list');
-                        if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }, 50);
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>← Hisse Listesine Dön ({filteredStocks.length})</span>
-                  </button>
-                  <div className="text-right">
+                <div className="xl:hidden flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/90 border border-slate-800 shadow-md gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileViewTab('list');
+                        setTimeout(() => {
+                          const elem = document.getElementById('stock-screener-list');
+                          if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 50);
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-black text-xs flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      <span>← Liste</span>
+                    </button>
+
+                    {onGoHome && (
+                      <button
+                        type="button"
+                        onClick={onGoHome}
+                        className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+                        title="Ana Sayfaya Dön"
+                      >
+                        <Home className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Ana Sayfa</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="text-right truncate min-w-0">
                     <span className="text-xs font-black text-white">{selectedStock.symbol} </span>
                     <span className="text-xs font-bold text-cyan-400 font-mono">
                       {formatStockPrice(selectedStock.close, selectedStock.currency)}
