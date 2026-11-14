@@ -340,6 +340,7 @@ export interface StockDividendItem {
   paymentDate: string; // Nakit hesaba geçiş (T+2)
   status: 'confirmed' | 'expected' | 'paid';
   year: number;
+  basePrice?: number;
   notes?: string;
 }
 
