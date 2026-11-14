@@ -231,6 +231,17 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     }, 80);
   };
 
+  // Return to full stock screener list and clear search input
+  const handleReturnToList = () => {
+    setMobileViewTab('list');
+    setSearchInput('');
+    setActiveSearch('');
+    setTimeout(() => {
+      const elem = document.getElementById('stock-screener-list');
+      if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
+
   // Mobile Back Button (Popstate) listener for stock detail and modals
   useEffect(() => {
     const handleStockPopState = () => {
@@ -276,13 +287,9 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         return;
       }
 
-      // 2. If in mobile detail view, go back to list view instead of closing app!
+      // 2. If in mobile detail view, go back to list view and clear search!
       if (mobileViewTab === 'detail') {
-        setMobileViewTab('list');
-        setTimeout(() => {
-          const elem = document.getElementById('stock-screener-list');
-          if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 50);
+        handleReturnToList();
         return;
       }
     };
@@ -1259,7 +1266,11 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             {onGoHome && (
               <button
                 type="button"
-                onClick={onGoHome}
+                onClick={() => {
+                  setSearchInput('');
+                  setActiveSearch('');
+                  onGoHome();
+                }}
                 className="py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer text-slate-300 hover:text-white bg-slate-950/60 border border-slate-800 shrink-0 active:scale-95"
                 title="Ana Sayfaya Dön"
               >
@@ -1270,13 +1281,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
 
             <button
               type="button"
-              onClick={() => {
-                setMobileViewTab('list');
-                setTimeout(() => {
-                  const elem = document.getElementById('stock-screener-list');
-                  if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 50);
-              }}
+              onClick={handleReturnToList}
               className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 mobileViewTab === 'list'
                   ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 shadow-md shadow-cyan-950/40'
@@ -1459,11 +1464,12 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        setMobileViewTab('list');
-                        setTimeout(() => {
-                          const elem = document.getElementById('stock-screener-list');
-                          if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 50);
+                        handleReturnToList();
+                        try {
+                          if (window.history.state?.view === 'detail') {
+                            window.history.back();
+                          }
+                        } catch {}
                       }}
                       className="px-2.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-black text-xs flex items-center gap-1 transition-all cursor-pointer active:scale-95"
                     >
@@ -1474,7 +1480,11 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                     {onGoHome && (
                       <button
                         type="button"
-                        onClick={onGoHome}
+                        onClick={() => {
+                          setSearchInput('');
+                          setActiveSearch('');
+                          onGoHome();
+                        }}
                         className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1 transition-all cursor-pointer active:scale-95"
                         title="Ana Sayfaya Dön"
                       >
