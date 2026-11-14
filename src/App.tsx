@@ -38,6 +38,7 @@ const AIPerformanceModal = React.lazy(() => import('./components/AIPerformanceMo
 const ShareSlipModal = React.lazy(() => import('./components/ShareSlipModal').then(m => ({ default: m.ShareSlipModal })));
 const ShareAppModal = React.lazy(() => import('./components/ShareAppModal').then(m => ({ default: m.ShareAppModal })));
 const NesineBulletinView = React.lazy(() => import('./components/NesineBulletinView').then(m => ({ default: m.NesineBulletinView })));
+const FeedbackModal = React.lazy(() => import('./components/FeedbackModal').then(m => ({ default: m.FeedbackModal })));
 
 const SectionLoadingFallback: React.FC<{ label?: string }> = ({ label = 'Modül Yükleniyor...' }) => (
   <div className="flex flex-col items-center justify-center p-12 min-h-[320px] space-y-3">
@@ -324,6 +325,7 @@ export const App: React.FC = () => {
   // AI Accuracy Scorecard Modal State
   const [isAIPerformanceOpen, setIsAIPerformanceOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   // Social Coupon Share Modal State
   const [shareSlipCoupon, setShareSlipCoupon] = useState<any | null>(null);
@@ -345,7 +347,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.14.23';
+  const CLIENT_BUILD_VERSION = '2026.11.14.24';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1303,6 +1305,7 @@ export const App: React.FC = () => {
         onTogglePush={handleTogglePush}
         activeTheme={activeTheme}
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
+        onOpenFeedback={() => setIsFeedbackModalOpen(true)}
       />
 
       {/* Prominent Floating App Update Notification Banner - Fixed Top Position */}
@@ -2235,6 +2238,18 @@ export const App: React.FC = () => {
             onClose={() => setIsShareModalOpen(false)}
             user={currentUser}
             onOpenAuth={() => setIsAuthModalOpen(true)}
+          />
+        )}
+
+        {isFeedbackModalOpen && (
+          <FeedbackModal
+            isOpen={isFeedbackModalOpen}
+            onClose={() => setIsFeedbackModalOpen(false)}
+            onShowToast={(msg) => {
+              setRefreshToast(msg);
+              setTimeout(() => setRefreshToast(null), 3500);
+            }}
+            userEmail={currentUser?.email}
           />
         )}
       </React.Suspense>

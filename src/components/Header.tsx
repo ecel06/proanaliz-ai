@@ -25,7 +25,8 @@ import {
   User as UserIcon,
   Crown,
   LogOut,
-  Share2
+  Share2,
+  MessageSquare,
 } from 'lucide-react';
 import { TeamTheme } from '../utils/themeHelper';
 import { User } from '../utils/authHelper';
@@ -65,6 +66,7 @@ interface HeaderProps {
   onOpenThemeModal?: () => void;
   activeSection?: 'home' | 'football' | 'horseRacing' | 'stocks';
   onSelectSection?: (section: 'home' | 'football' | 'horseRacing' | 'stocks') => void;
+  onOpenFeedback?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -76,6 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenProfile,
   onLogout,
   onGoHome,
+  onOpenFeedback,
   onOpenCustomAnalyzer,
   onOpenStandings,
   onOpenAIPerformance,
@@ -131,8 +134,9 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="text-sm sm:text-base lg:text-lg font-black tracking-tight text-white whitespace-nowrap group-hover:text-emerald-300 transition-colors">
                   ProAnaliz <span className="text-emerald-400">AI</span>
                 </span>
-                <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Canlı Bülten
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/40 shadow-sm shadow-amber-950/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                  BETA
                 </span>
               </div>
             </div>
@@ -140,6 +144,18 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right Action Tools - Complete Suite with Zero Horizontal Overflow */}
           <div className="flex items-center gap-1 sm:gap-1.5 shrink min-w-0 overflow-x-auto no-scrollbar py-0.5">
+            
+            {/* 💬 Geri Bildirim (Beta Test) */}
+            {onOpenFeedback && (
+              <button
+                onClick={onOpenFeedback}
+                className="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center space-x-1 transition-all shadow-xs shrink-0 cursor-pointer active:scale-95"
+                title="Görüş, Öneri ve Hata Bildirimi Gönder"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden md:inline">Geri Bildirim</span>
+              </button>
+            )}
             
             {/* Direct Update Trigger in Header */}
             {hasNewUpdate && onUpdateApp && (

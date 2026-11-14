@@ -69,6 +69,8 @@ import { StockIpoModal } from './StockIpoModal';
 import { StockDividendModal } from './StockDividendModal';
 import { StockKapModal } from './StockKapModal';
 import { StockMoneyFlowModal } from './StockMoneyFlowModal';
+import { StockWatchlistModal } from './StockWatchlistModal';
+import { StockCryptoWidgetsModal } from './StockCryptoWidgetsModal';
 import { INITIAL_IPOS } from '../../data/ipoData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
@@ -113,6 +115,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
   const [isDividendModalOpen, setIsDividendModalOpen] = useState<boolean>(false);
   const [isKapModalOpen, setIsKapModalOpen] = useState<boolean>(false);
   const [isMoneyFlowModalOpen, setIsMoneyFlowModalOpen] = useState<boolean>(false);
+  const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState<boolean>(false);
+  const [isCryptoWidgetsModalOpen, setIsCryptoWidgetsModalOpen] = useState<boolean>(false);
 
   const [alerts, setAlerts] = useState<StockAlertItem[]>(() => {
     try {
@@ -548,6 +552,34 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
                 className="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
               />
             </div>
+
+            {/* ⭐ Takip Listem (Watchlist - Her Zaman Erişilebilir) */}
+            <button
+              onClick={() => setIsWatchlistModalOpen(true)}
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-amber-600/30 via-yellow-600/25 to-amber-600/30 hover:from-amber-600/40 hover:to-yellow-600/35 border border-amber-400/50 text-amber-200 text-xs font-black cursor-pointer flex items-center space-x-1.5 transition-all shadow-md shadow-amber-950/40 active:scale-95"
+              title="Favoriye Aldığınız Tüm Hisseleri Tek Ekranda Canlı İzleyin"
+            >
+              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+              <span>Takip Listem</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black">
+                {watchlist.length}
+              </span>
+            </button>
+
+            {/* 🪙 Kripto Piyasası Özel Butonu (Korku & ETF) */}
+            {market === 'crypto' && (
+              <button
+                onClick={() => setIsCryptoWidgetsModalOpen(true)}
+                className="px-2.5 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-orange-600/30 via-amber-600/25 to-orange-600/30 hover:from-orange-600/40 border border-orange-400/50 text-orange-200 text-xs font-black cursor-pointer flex items-center space-x-1.5 transition-all shadow-md shadow-orange-950/40 active:scale-95 animate-pulse"
+                title="Bitcoin Korku & Açgözlülük Endeksi ve Spot ETF Net Akışları"
+              >
+                <Flame className="w-3.5 h-3.5 text-orange-400" />
+                <span>Kripto Radarı</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/40 text-[10px] font-bold">
+                  ETF &amp; Korku
+                </span>
+              </button>
+            )}
 
             {/* 🚀 Halka Arz Merkezi */}
             <button
@@ -2307,6 +2339,32 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
         onSelectStock={(sym) => {
           setSelectedSymbol(sym);
           setIsMoneyFlowModalOpen(false);
+        }}
+      />
+
+      {/* ⭐ Takip Listem & Favori Hisselerim Modal */}
+      <StockWatchlistModal
+        isOpen={isWatchlistModalOpen}
+        onClose={() => setIsWatchlistModalOpen(false)}
+        watchlist={watchlist}
+        stocks={stocks}
+        analysesMap={analysesMap}
+        onToggleWatchlist={toggleWatchlist}
+        onSelectStock={(sym) => {
+          setSelectedSymbol(sym);
+          setIsWatchlistModalOpen(false);
+        }}
+        onAddToPortfolio={(pos) => savePortfolio([pos, ...portfolio])}
+        onShowToast={onShowToast}
+      />
+
+      {/* 🪙 Kripto Korku & Açgözlülük + Spot ETF Radarı Modal */}
+      <StockCryptoWidgetsModal
+        isOpen={isCryptoWidgetsModalOpen}
+        onClose={() => setIsCryptoWidgetsModalOpen(false)}
+        onSelectStock={(sym) => {
+          setSelectedSymbol(sym);
+          setIsCryptoWidgetsModalOpen(false);
         }}
       />
 
