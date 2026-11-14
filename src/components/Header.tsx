@@ -108,6 +108,29 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl w-full max-w-full overflow-x-clip">
+      {/* 🚀 Beta / Geliştirme Aşaması Bilgilendirme Şeridi */}
+      <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-b border-amber-500/25 px-2.5 py-1 text-center text-[10px] sm:text-xs text-amber-200 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 font-black text-[9px] uppercase tracking-wider">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-950 animate-pulse" />
+          TEST AŞAMASI
+        </span>
+        <span className="text-slate-200">
+          Uygulamamız şu anda <strong>Geliştirme &amp; Test Aşamasındadır</strong>.
+        </span>
+        <span className="hidden md:inline text-amber-300/80">
+          Görüş ve hata bildirimleriniz bizim için çok değerlidir.
+        </span>
+        {onOpenFeedback && (
+          <button
+            onClick={onOpenFeedback}
+            className="inline-flex items-center gap-1 text-amber-300 hover:text-white font-bold underline cursor-pointer ml-1 active:scale-95 transition-colors"
+          >
+            <MessageSquare className="w-3 h-3" />
+            <span>Geri Bildirim Yap</span>
+          </button>
+        )}
+      </div>
+
       <div className="w-full max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 min-w-0">
         
         {/* ROW 1: Brand Logo & Top Action Tools (Clean, Spacious, Zero Overflow) */}
