@@ -157,8 +157,11 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
         </div>
 
         {/* 4 Status Tabs Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 bg-slate-950/60 px-4 sm:px-6 pt-2">
-          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <div className="border-b border-slate-800 bg-slate-950/60 px-3 sm:px-6 pt-2 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
+          <div
+            className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             {[
               {
                 id: 'active',
@@ -192,7 +195,7 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
                   onClick={() => {
                     setActiveTab(t.id as IpoStatus);
                   }}
-                  className={`px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 border ${
+                  className={`px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 border shrink-0 whitespace-nowrap ${
                     active
                       ? 'border-cyan-500/50 text-cyan-300 bg-cyan-500/10 shadow-sm'
                       : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-850'
@@ -210,10 +213,10 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
           </div>
 
           {/* Quick Filters: Search + Katılım Endeksi */}
-          <div className="flex items-center gap-2 pb-2">
+          <div className="flex items-center gap-2 pb-2 shrink-0">
             <button
               onClick={() => setKatilimFilterOnly((prev) => !prev)}
-              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                 katilimFilterOnly
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm shadow-emerald-500/20'
                   : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200'
@@ -224,7 +227,7 @@ export const StockIpoModal: React.FC<StockIpoModalProps> = ({
               {katilimFilterOnly && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
             </button>
 
-            <div className="relative w-36 sm:w-44">
+            <div className="relative flex-1 sm:w-44">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"

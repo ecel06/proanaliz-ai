@@ -30,7 +30,9 @@ body:not(.no-scrollbar) *::-webkit-scrollbar-thumb:hover {
 html.no-scrollbar,
 body.no-scrollbar,
 .no-scrollbar,
-.no-scrollbar * {
+.no-scrollbar *,
+.scrollbar-none,
+.scrollbar-none * {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
@@ -46,6 +48,8 @@ html.no-scrollbar::-webkit-scrollbar,
 body.no-scrollbar::-webkit-scrollbar,
 .no-scrollbar::-webkit-scrollbar,
 .no-scrollbar *::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar,
+.scrollbar-none *::-webkit-scrollbar,
 html.no-scrollbar *::-webkit-scrollbar,
 body.no-scrollbar *::-webkit-scrollbar {
   display: none !important;
@@ -58,6 +62,8 @@ html.no-scrollbar::-webkit-scrollbar-track,
 body.no-scrollbar::-webkit-scrollbar-track,
 .no-scrollbar::-webkit-scrollbar-track,
 .no-scrollbar *::-webkit-scrollbar-track,
+.scrollbar-none::-webkit-scrollbar-track,
+.scrollbar-none *::-webkit-scrollbar-track,
 html.no-scrollbar *::-webkit-scrollbar-track,
 body.no-scrollbar *::-webkit-scrollbar-track {
   display: none !important;
@@ -70,6 +76,8 @@ html.no-scrollbar::-webkit-scrollbar-thumb,
 body.no-scrollbar::-webkit-scrollbar-thumb,
 .no-scrollbar::-webkit-scrollbar-thumb,
 .no-scrollbar *::-webkit-scrollbar-thumb,
+.scrollbar-none::-webkit-scrollbar-thumb,
+.scrollbar-none *::-webkit-scrollbar-thumb,
 html.no-scrollbar *::-webkit-scrollbar-thumb,
 body.no-scrollbar *::-webkit-scrollbar-thumb {
   display: none !important;
