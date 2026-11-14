@@ -33,6 +33,7 @@ import {
   Trophy,
   Lock,
   Crown,
+  X,
   Zap,
   Rocket,
   Coins,
@@ -418,6 +419,16 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
       list = list.filter((s) => isStockInIndex(s.symbol, indexFilter));
     }
 
+    // Instant real-time typing search filter (by ticker symbol or company name)
+    if (searchInput.trim()) {
+      const q = searchInput.trim().toLowerCase();
+      list = list.filter(
+        (s) =>
+          s.symbol.toLowerCase().includes(q) ||
+          s.name.toLowerCase().includes(q)
+      );
+    }
+
     if (preset === 'strong_buy') {
       list = list.filter((s) => analysesMap.get(s.symbol)?.signal === 'GÜÇLÜ AL');
     } else if (preset === 'buy') {
@@ -452,7 +463,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
       return (analysesMap.get(b.symbol)?.score || 0) - (analysesMap.get(a.symbol)?.score || 0);
     });
     return list;
-  }, [stocks, analysesMap, market, indexFilter, preset, sortBy, watchlist]);
+  }, [stocks, analysesMap, market, indexFilter, preset, sortBy, watchlist, searchInput]);
 
   const statsSummary = useMemo(() => {
     let strongBuy = 0;
@@ -585,7 +596,12 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
                 type="search"
                 enterKeyHint="go"
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  if (e.target.value.trim() && mobileViewTab === 'detail') {
+                    setMobileViewTab('list');
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -599,17 +615,30 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({ user, onOpenVI
                     ? 'Ticker ara (NVDA, AAPL...)'
                     : 'Coin ara (BTC, SOL...)'
                 }
-                className="w-full pl-8 pr-12 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                className="w-full pl-8 pr-16 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
               />
               {searchInput.trim() && (
-                <button
-                  type="submit"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-[10px] flex items-center gap-0.5 transition-all shadow cursor-pointer active:scale-95"
-                  title="Hisseyi Aç"
-                >
-                  <span>Git</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchInput('');
+                      setActiveSearch('');
+                    }}
+                    className="p-1 text-slate-400 hover:text-white rounded-md transition-colors cursor-pointer"
+                    title="Temizle"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-2 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-[10px] flex items-center gap-0.5 transition-all shadow cursor-pointer active:scale-95"
+                    title="Hisseyi Aç"
+                  >
+                    <span>Git</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
               )}
             </form>
 
