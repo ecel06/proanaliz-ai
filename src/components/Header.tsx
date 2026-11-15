@@ -27,6 +27,7 @@ import {
   LogOut,
   Share2,
   MessageSquare,
+  Tv,
 } from 'lucide-react';
 import { TeamTheme } from '../utils/themeHelper';
 import { User } from '../utils/authHelper';
@@ -67,6 +68,7 @@ interface HeaderProps {
   activeSection?: 'home' | 'football' | 'horseRacing' | 'stocks';
   onSelectSection?: (section: 'home' | 'football' | 'horseRacing' | 'stocks') => void;
   onOpenFeedback?: () => void;
+  onOpenLiveTV?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -79,6 +81,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   onGoHome,
   onOpenFeedback,
+  onOpenLiveTV,
   onOpenCustomAnalyzer,
   onOpenStandings,
   onOpenAIPerformance,
@@ -437,6 +440,22 @@ export const Header: React.FC<HeaderProps> = ({
                   {activeTabMode !== 'coupons' && (
                     <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 font-black">3</span>
                   )}
+                </button>
+              )}
+
+              {/* 📺 Canlı TV & Maç İzle */}
+              {onOpenLiveTV && (
+                <button
+                  onClick={onOpenLiveTV}
+                  className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs border border-rose-500/40 transition-all cursor-pointer shadow-md shadow-rose-500/15 active:scale-95 shrink-0 group"
+                  title="Canlı Maç & Spor TV Yayınlarını İzle (TRT Spor, TRT Yıldız, A Spor, HT Spor)"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                  </span>
+                  <Tv className="w-3.5 h-3.5 text-rose-400 group-hover:scale-110 transition-transform" />
+                  <span>Canlı İzle</span>
                 </button>
               )}
 

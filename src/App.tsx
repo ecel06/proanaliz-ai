@@ -39,6 +39,7 @@ const ShareSlipModal = React.lazy(() => import('./components/ShareSlipModal').th
 const ShareAppModal = React.lazy(() => import('./components/ShareAppModal').then(m => ({ default: m.ShareAppModal })));
 const NesineBulletinView = React.lazy(() => import('./components/NesineBulletinView').then(m => ({ default: m.NesineBulletinView })));
 const FeedbackModal = React.lazy(() => import('./components/FeedbackModal').then(m => ({ default: m.FeedbackModal })));
+const LiveTVModal = React.lazy(() => import('./components/LiveTVModal').then(m => ({ default: m.LiveTVModal })));
 
 const SectionLoadingFallback: React.FC<{ label?: string }> = ({ label = 'Modül Yükleniyor...' }) => (
   <div className="flex flex-col items-center justify-center p-12 min-h-[320px] space-y-3">
@@ -363,6 +364,7 @@ export const App: React.FC = () => {
   const [isAIPerformanceOpen, setIsAIPerformanceOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [isLiveTVModalOpen, setIsLiveTVModalOpen] = useState(false);
 
   // Social Coupon Share Modal State
   const [shareSlipCoupon, setShareSlipCoupon] = useState<any | null>(null);
@@ -384,7 +386,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.15.22';
+  const CLIENT_BUILD_VERSION = '2026.11.15.23';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -758,6 +760,7 @@ export const App: React.FC = () => {
       // 2. If any overlay modal or selected match detail is open, close it first
       if (selectedMatch) { setSelectedMatch(null); return; }
       if (isFeedbackModalOpen) { setIsFeedbackModalOpen(false); return; }
+      if (isLiveTVModalOpen) { setIsLiveTVModalOpen(false); return; }
       if (isAuthModalOpen) { setIsAuthModalOpen(false); return; }
       if (isProfileModalOpen) { setIsProfileModalOpen(false); return; }
       if (isVipModalOpen) { setIsVipModalOpen(false); return; }
@@ -795,6 +798,7 @@ export const App: React.FC = () => {
     activeSection,
     selectedMatch,
     isFeedbackModalOpen,
+    isLiveTVModalOpen,
     isAuthModalOpen,
     isProfileModalOpen,
     isVipModalOpen,
@@ -1398,6 +1402,7 @@ export const App: React.FC = () => {
         onOpenCoupons={() => setActiveTabMode('coupons')}
         onOpenInstallApp={() => setIsInstallModalOpen(true)}
         onOpenAIChat={() => setIsAIChatOpen(true)}
+        onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
         onRefreshLiveBulletin={handleRefreshBulletin}
         isRefreshing={isRefreshing}
         lastUpdatedText={lastUpdatedDisplay}
@@ -2362,6 +2367,13 @@ export const App: React.FC = () => {
               setTimeout(() => setRefreshToast(null), 3500);
             }}
             userEmail={currentUser?.email}
+          />
+        )}
+
+        {isLiveTVModalOpen && (
+          <LiveTVModal
+            isOpen={isLiveTVModalOpen}
+            onClose={() => setIsLiveTVModalOpen(false)}
           />
         )}
       </React.Suspense>
