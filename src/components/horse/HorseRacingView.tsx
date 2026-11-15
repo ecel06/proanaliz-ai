@@ -52,6 +52,7 @@ import {
   IkiliPick,
   analyzeRaceHorses,
   calculateCouponCombinations,
+  checkGameClosedStatus,
   generateAICoupons,
   generateDailyIkiliAndCifte,
   getAvailableGames,
@@ -1461,6 +1462,11 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
     [detail, activeGame]
   );
 
+  const activeGameStatus = useMemo(
+    () => checkGameClosedStatus(detail, activeGame, availableGames),
+    [detail, activeGame, availableGames]
+  );
+
   const ikiliPicks = useMemo(
     () => generateDailyIkiliAndCifte(detail),
     [detail]
@@ -1468,6 +1474,18 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
 
   const applyGeneratedCoupon = (coupon: GeneratedAltiliCoupon) => {
     if (!selectedProgramId) return;
+
+    // 🛑 Koşu & Bahis Kontrolü: 1. ayak başladıysa veya bittiyse kuponu yükleme, kullanıcıyı uyar!
+    const targetGame = availableGames.find((g) => g.id === coupon.gameType) || activeGame;
+    const gameStatus = checkGameClosedStatus(detail, targetGame, availableGames);
+    if (gameStatus.isClosed) {
+      onShowToast?.(
+        `⚠️ ${gameStatus.message || 'Bu oyunun 1. ayağı başladığı için TJK bahis kabulü kapandı! Kupon yapılamaz.'}`,
+        'warning'
+      );
+      return;
+    }
+
     setSelectedGameId(coupon.gameType);
     setSelectionsByProgram((prev) => {
       const progMap: Record<number, number[]> = { ...(prev[selectedProgramId] || {}) };
@@ -1934,125 +1952,169 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
 
           {/* SUBTAB 2: AI ALTILI TEMPLATES */}
           {subTab === 'ai_coupons' && (
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {aiCoupons.map((c) => {
-                const isHorseLocked = c.strategy !== 'EKONOMİK' && !user?.isVip;
-                const visibleLegs = isHorseLocked ? c.legs.slice(0, 2) : c.legs;
-
-                return (
-                <div
-                  key={c.id}
-                  className="rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-amber-400/50 p-4 flex flex-col justify-between space-y-4 transition-all"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-black ${
-                              c.strategy === 'EKONOMİK'
-                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                : c.strategy === 'İDEAL'
-                                ? 'bg-amber-400 text-slate-950'
-                                : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                            }`}
-                          >
-                            {c.strategy} KURGU
-                          </span>
-                          {isHorseLocked && (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black text-[9px] flex items-center gap-1 shadow-xs">
-                              <Lock className="w-2.5 h-2.5" />
-                              <span>VIP</span>
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="font-black text-base text-white">{c.title}</h3>
+            <section className="space-y-4">
+              {activeGameStatus.isClosed && (
+                <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-200 animate-in fade-in duration-200">
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 shrink-0">
+                      <AlertTriangle className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="font-black text-sm text-white flex items-center gap-2">
+                        <span>Bahis Alımı Kapandı ({activeGame?.label})</span>
+                        <span className="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[10px] font-black border border-amber-400/30">
+                          {activeGameStatus.startedLegCount}/{activeGameStatus.totalLegs} Ayak Koşuldu
+                        </span>
                       </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-[10px] text-slate-400">Güven</div>
-                        <div className="text-sm font-black text-emerald-400">%{c.avgConfidence}</div>
+                      <p className="text-xs text-amber-200/80 mt-1 leading-relaxed">
+                        1. Ayak ({activeGameStatus.firstLegRace?.number}. Koşu • {activeGameStatus.firstLegRace?.hour}) başlamış veya tamamlanmış olduğu için TJK kuralları gereği bu oyuna müşterek bahis kabulü kapanmıştır.
+                      </p>
+                    </div>
+                  </div>
+                  {activeGameStatus.nextOpenGame && (
+                    <button
+                      onClick={() => {
+                        setSelectedGameId(activeGameStatus.nextOpenGame!.id);
+                        setSelectedRaceNo(activeGameStatus.nextOpenGame!.startRace);
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shrink-0 cursor-pointer shadow-lg shadow-amber-500/20 flex items-center space-x-1.5 transition-all active:scale-95"
+                    >
+                      <Zap className="w-4 h-4 fill-current" />
+                      <span>Henüz Başlamayan {activeGameStatus.nextOpenGame.label}'a Geç</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {aiCoupons.map((c) => {
+                  const isHorseLocked = c.strategy !== 'EKONOMİK' && !user?.isVip;
+                  const visibleLegs = isHorseLocked ? c.legs.slice(0, 2) : c.legs;
+
+                  return (
+                  <div
+                    key={c.id}
+                    className="rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-amber-400/50 p-4 flex flex-col justify-between space-y-4 transition-all"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-[10px] font-black ${
+                                c.strategy === 'EKONOMİK'
+                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                  : c.strategy === 'İDEAL'
+                                  ? 'bg-amber-400 text-slate-950'
+                                  : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                              }`}
+                            >
+                              {c.strategy} KURGU
+                            </span>
+                            {isHorseLocked && (
+                              <span className="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black text-[9px] flex items-center gap-1 shadow-xs">
+                                <Lock className="w-2.5 h-2.5" />
+                                <span>VIP</span>
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="font-black text-base text-white">{c.title}</h3>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-[10px] text-slate-400">Güven</div>
+                          <div className="text-sm font-black text-emerald-400">%{c.avgConfidence}</div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-400 leading-relaxed">{c.subtitle}</p>
+
+                      <div className="space-y-1.5 bg-slate-950/70 rounded-xl p-3 border border-slate-800/80">
+                        {visibleLegs.map((leg) => (
+                          <div
+                            key={leg.legIndex}
+                            className="flex items-center justify-between text-xs py-1 border-b border-slate-800/60 last:border-0"
+                          >
+                            <span className="font-bold text-slate-400">
+                              {leg.legIndex}. Ayak <span className="text-[10px]">({leg.raceNumber}. Koşu)</span>
+                            </span>
+                            <div className="flex items-center gap-1 flex-wrap justify-end">
+                              {leg.horses.map((hNo) => (
+                                <span
+                                  key={hNo}
+                                  className={`px-2 py-0.5 rounded font-mono font-black text-[11px] ${
+                                    leg.banko === hNo
+                                      ? 'bg-amber-400 text-slate-950'
+                                      : 'bg-slate-800 text-white border border-slate-700'
+                                  }`}
+                                >
+                                  {hNo}
+                                  {leg.banko === hNo ? ' TEK' : ''}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+
+                        {isHorseLocked && (
+                          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-400/30 text-center space-y-1.5 mt-2">
+                            <div className="flex items-center justify-center gap-1 text-amber-300 font-bold text-xs">
+                              <Lock className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Kalan {c.legs.length - 2} Ayak &amp; Cazip Tekler VIP Özel</span>
+                            </div>
+                            {onOpenVIP && (
+                              <button
+                                onClick={onOpenVIP}
+                                className="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] shadow cursor-pointer transition-colors"
+                              >
+                                Şablonu Aç &amp; VIP Ol
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed">{c.subtitle}</p>
 
-                    <div className="space-y-1.5 bg-slate-950/70 rounded-xl p-3 border border-slate-800/80">
-                      {visibleLegs.map((leg) => (
-                        <div
-                          key={leg.legIndex}
-                          className="flex items-center justify-between text-xs py-1 border-b border-slate-800/60 last:border-0"
+                    <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+                      <div>
+                        <div className="text-[10px] text-slate-400">
+                          {c.totalCombinations.toLocaleString('tr-TR')} Kolon
+                        </div>
+                        <div className="text-base font-black text-amber-400 font-mono">
+                          {c.estimatedCost.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                        </div>
+                      </div>
+                      {isHorseLocked ? (
+                        onOpenVIP && (
+                          <button
+                            onClick={onOpenVIP}
+                            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs cursor-pointer transition-all flex items-center space-x-1 shadow-lg shadow-amber-500/20"
+                          >
+                            <Crown className="w-3.5 h-3.5 text-slate-950" />
+                            <span>VIP Kulübüne Katıl</span>
+                          </button>
+                        )
+                      ) : activeGameStatus.isClosed ? (
+                        <button
+                          disabled
+                          className="px-3.5 py-2 rounded-xl bg-slate-800/80 text-slate-500 font-bold text-xs flex items-center space-x-1.5 cursor-not-allowed border border-slate-700/50"
+                          title="Koşu başladığı için bahise kapandı"
                         >
-                          <span className="font-bold text-slate-400">
-                            {leg.legIndex}. Ayak <span className="text-[10px]">({leg.raceNumber}. Koşu)</span>
-                          </span>
-                          <div className="flex items-center gap-1 flex-wrap justify-end">
-                            {leg.horses.map((hNo) => (
-                              <span
-                                key={hNo}
-                                className={`px-2 py-0.5 rounded font-mono font-black text-[11px] ${
-                                  leg.banko === hNo
-                                    ? 'bg-amber-400 text-slate-950'
-                                    : 'bg-slate-800 text-white border border-slate-700'
-                                }`}
-                              >
-                                {hNo}
-                                {leg.banko === hNo ? ' TEK' : ''}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-
-                      {isHorseLocked && (
-                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-400/30 text-center space-y-1.5 mt-2">
-                          <div className="flex items-center justify-center gap-1 text-amber-300 font-bold text-xs">
-                            <Lock className="w-3.5 h-3.5 text-amber-400" />
-                            <span>Kalan {c.legs.length - 2} Ayak &amp; Cazip Tekler VIP Özel</span>
-                          </div>
-                          {onOpenVIP && (
-                            <button
-                              onClick={onOpenVIP}
-                              className="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] shadow cursor-pointer transition-colors"
-                            >
-                              Şablonu Aç &amp; VIP Ol
-                            </button>
-                          )}
-                        </div>
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Bahise Kapalı</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => loadAICouponToSlip(c.id)}
+                          className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs cursor-pointer transition-all flex items-center space-x-1 shadow-lg shadow-amber-500/20"
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                          <span>Kuponuma Aktar</span>
+                        </button>
                       )}
                     </div>
                   </div>
-
-                  <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
-                    <div>
-                      <div className="text-[10px] text-slate-400">
-                        {c.totalCombinations.toLocaleString('tr-TR')} Kolon
-                      </div>
-                      <div className="text-base font-black text-amber-400 font-mono">
-                        {c.estimatedCost.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                      </div>
-                    </div>
-                    {isHorseLocked ? (
-                      onOpenVIP && (
-                        <button
-                          onClick={onOpenVIP}
-                          className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs cursor-pointer transition-all flex items-center space-x-1 shadow-lg shadow-amber-500/20"
-                        >
-                          <Crown className="w-3.5 h-3.5 text-slate-950" />
-                          <span>VIP Kulübüne Katıl</span>
-                        </button>
-                      )
-                    ) : (
-                      <button
-                        onClick={() => loadAICouponToSlip(c.id)}
-                        className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs cursor-pointer transition-all flex items-center space-x-1 shadow-lg shadow-amber-500/20"
-                      >
-                        <Zap className="w-3.5 h-3.5" />
-                        <span>Kuponuma Aktar</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+              </div>
             </section>
           )}
 

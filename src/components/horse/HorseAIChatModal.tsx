@@ -1,6 +1,7 @@
 // src/components/horse/HorseAIChatModal.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  AlertTriangle,
   Bot,
   Check,
   RotateCcw,
@@ -18,6 +19,7 @@ import {
 import {
   GameConfig,
   analyzeRaceHorses,
+  checkGameClosedStatus,
   generateBudgetHorseCoupon,
   getHorsePrimaryAgf,
   getProgramHighlights,
@@ -60,10 +62,15 @@ export const HorseAIChatModal: React.FC<HorseAIChatModalProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (activeGame?.id) {
-      setWizardGameId(activeGame.id);
+    if (availableGames.length > 0 && detail) {
+      const activeStatus = checkGameClosedStatus(detail, activeGame, availableGames);
+      if (activeStatus.isClosed && activeStatus.nextOpenGame) {
+        setWizardGameId(activeStatus.nextOpenGame.id);
+      } else if (activeGame?.id) {
+        setWizardGameId(activeGame.id);
+      }
     }
-  }, [activeGame?.id]);
+  }, [activeGame?.id, detail, availableGames]);
 
   const buildWelcomeMessage = (): HorseChatMessage => ({
     id: 'hr_welcome',
@@ -216,6 +223,45 @@ export const HorseAIChatModal: React.FC<HorseAIChatModalProps> = ({
       }
     }
 
+    // 🛑 KOŞU & BAHİS KONTROLÜ: Oyunun 1. ayağı başladıysa veya koşulduysa kupon YAPMA, net uyarı ver!
+    const gameStatus = checkGameClosedStatus(detail, targetGame, availableGames);
+    if (gameStatus.isClosed) {
+      const firstHour = gameStatus.firstLegRace?.hour ? ` (${gameStatus.firstLegRace.hour})` : '';
+      if (gameStatus.nextOpenGame) {
+        return {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant' as const,
+          timestamp: nowTime,
+          text:
+            `⚠️ **${targetGame?.label || 'Seçili Oyun'} Başladı / Bahise Kapandı!**\n\n` +
+            `• **${detail.program.place}** programında **${targetGame?.label}** 1. ayağı (**${gameStatus.firstLegRace?.number}. Koşu${firstHour}**) başlamış veya tamamlanmıştır (${gameStatus.startedLegCount}/${gameStatus.totalLegs} ayak koşuldu).\n` +
+            `• TJK Müşterek Bahis kuralları gereği 1. ayağı başlayan oyunlara kupon kabul edilmemektedir.\n\n` +
+            `👉 **Dilerseniz henüz başlamamış olan ${gameStatus.nextOpenGame.label} (${gameStatus.nextOpenGame.startRace}. Koşudan başlar) için kupon hazırlayabilirim.**`,
+          quickSuggestions: [
+            `🎯 ${gameStatus.nextOpenGame.label} Kuponu Yap`,
+            '⚡ Günün Bankosu Kim?',
+            '🏆 Koşu Sonuçlarını Gör',
+          ],
+        };
+      } else {
+        return {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant' as const,
+          timestamp: nowTime,
+          text:
+            `⚠️ **${detail.program.place} Programında Koşular Başladı / Tamamlandı!**\n\n` +
+            `• ${targetGame?.label || 'Seçili oyun'} (${gameStatus.firstLegRace?.number}. Koşu${firstHour}) ve bu hipodromdaki 6'lı ganyan koşuları başlamış veya sonuçlanmıştır.\n` +
+            `• TJK kuralları gereği başlayan veya tamamlanan ayaklara kupon yapılamaz.\n\n` +
+            `💡 Henüz koşuları başlamayan başka bir hipodrom seçebilir veya tamamlanan koşu sonuçlarını ve ikramiyeleri inceleyebilirsiniz.`,
+          quickSuggestions: [
+            '🏆 Koşu Sonuçlarını Gör',
+            '⚡ Günün Bankosu Kim?',
+            '🏇 1. Koşu Analizi',
+          ],
+        };
+      }
+    }
+
     const coupon = generateBudgetHorseCoupon(detail, targetGame, budget, risk);
     if (!coupon) {
       return {
@@ -322,11 +368,14 @@ export const HorseAIChatModal: React.FC<HorseAIChatModalProps> = ({
             className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-bold text-white cursor-pointer"
             aria-label="Oyun Türü"
           >
-            {availableGames.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.label}
-              </option>
-            ))}
+            {availableGames.map((g) => {
+              const status = checkGameClosedStatus(detail, g, availableGames);
+              return (
+                <option key={g.id} value={g.id}>
+                  {g.label} {status.isClosed ? '🚫 (Koşuldu)' : '✅ (Açık)'}
+                </option>
+              );
+            })}
           </select>
 
           <select
@@ -353,13 +402,32 @@ export const HorseAIChatModal: React.FC<HorseAIChatModalProps> = ({
             <option value={500}>500 ₺ Geniş</option>
           </select>
 
-          <button
-            onClick={handleWizardRun}
-            className="ml-auto px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs cursor-pointer transition-all flex items-center space-x-1 shadow-md shadow-amber-500/20"
-          >
-            <Zap className="w-3.5 h-3.5" />
-            <span>Altılı Yap</span>
-          </button>
+          {(() => {
+            const selectedGame = availableGames.find((g) => g.id === wizardGameId) || activeGame;
+            const status = checkGameClosedStatus(detail, selectedGame, availableGames);
+            return (
+              <button
+                onClick={handleWizardRun}
+                className={`ml-auto px-3 py-1.5 rounded-xl font-black text-xs cursor-pointer transition-all flex items-center space-x-1 shadow-md ${
+                  status.isClosed
+                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
+                    : 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-amber-500/20'
+                }`}
+              >
+                {status.isClosed ? (
+                  <>
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>Bahise Kapalı</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>Altılı Yap</span>
+                  </>
+                )}
+              </button>
+            );
+          })()}
         </div>
 
         {/* Chat Messages */}

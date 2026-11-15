@@ -147,6 +147,95 @@ export function getLegBadgeForRace(raceNo: number, game: GameConfig | null): num
   return null;
 }
 
+export function isRaceStartedOrFinished(race: RaceCard | null | undefined, programDateStr?: string): boolean {
+  if (!race) return false;
+  if (race.isFinished) return true;
+  if (race.status === 'RESMİ' || race.status === 'BİTTİ' || race.isUnofficialResult) return true;
+  if (race.horses && race.horses.some((h) => Number(h.order) > 0)) return true;
+
+  const hourStr = String(race.hour || '').trim();
+  if (hourStr && hourStr.includes(':')) {
+    const [h, m] = hourStr.split(':').map((x) => parseInt(x, 10));
+    if (!isNaN(h) && !isNaN(m)) {
+      // Türkiye saati ile karşılaştırma (TJK saatleri İstanbul saatidir)
+      const nowTr = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Istanbul' }));
+      const target = new Date(nowTr);
+
+      if (programDateStr && programDateStr.includes('-')) {
+        const [y, mon, d] = programDateStr.split('-').map((x) => parseInt(x, 10));
+        if (!isNaN(y) && !isNaN(mon) && !isNaN(d)) {
+          target.setFullYear(y, mon - 1, d);
+        }
+      }
+      target.setHours(h, m, 0, 0);
+
+      if (nowTr.getTime() >= target.getTime()) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+export interface GameClosedStatus {
+  isClosed: boolean;
+  firstLegRace?: RaceCard;
+  startedLegCount: number;
+  totalLegs: number;
+  nextOpenGame?: GameConfig | null;
+  message: string;
+}
+
+export function checkGameClosedStatus(
+  detail: ProgramDetail | null,
+  game: GameConfig | null,
+  availableGames: GameConfig[] = []
+): GameClosedStatus {
+  if (!detail || !game) {
+    return { isClosed: false, startedLegCount: 0, totalLegs: 6, message: '' };
+  }
+
+  const legRaceNums = getLegRaceNumbers(game);
+  const legRaces = legRaceNums
+    .map((no) => detail.races.find((r) => r.number === no))
+    .filter((r): r is RaceCard => Boolean(r));
+
+  const firstRace = legRaces[0];
+  const closedLegs = legRaces.filter((r) => isRaceStartedOrFinished(r, detail.program.date));
+  const isClosed = closedLegs.length > 0;
+
+  let nextOpenGame: GameConfig | null = null;
+  if (isClosed && availableGames.length > 0) {
+    nextOpenGame =
+      availableGames.find((g) => {
+        if (g.id === game.id) return false;
+        const gFirstRace = detail.races.find((r) => r.number === g.startRace);
+        return gFirstRace && !isRaceStartedOrFinished(gFirstRace, detail.program.date);
+      }) || null;
+  }
+
+  let message = '';
+  if (isClosed) {
+    const isAllFinished = closedLegs.length === legRaces.length;
+    if (isAllFinished) {
+      message = `${game.label} tamamlandı (Tüm koşular koşuldu).`;
+    } else {
+      const firstHour = firstRace?.hour ? ` (${firstRace.hour})` : '';
+      message = `${game.label} başladı (${closedLegs.length}/${legRaces.length} ayak koşuldu/başladı, 1. Ayak: ${firstRace?.number}. Koşu${firstHour}). TJK müşterek bahis kabulü kapanmıştır.`;
+    }
+  }
+
+  return {
+    isClosed,
+    firstLegRace: firstRace,
+    startedLegCount: closedLegs.length,
+    totalLegs: legRaces.length,
+    nextOpenGame,
+    message,
+  };
+}
+
 export function getHorsePrimaryAgf(horse: HorseRunner): { percentage: number; position: number; isFavorite: boolean } {
   if (!horse.agf || horse.agf.length === 0) {
     return { percentage: 0, position: 0, isFavorite: false };
