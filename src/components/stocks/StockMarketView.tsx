@@ -1390,7 +1390,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                   </button>
                 </div>
               ) : (
-                <div className="divide-y divide-slate-800/80 overflow-y-auto flex-1 overscroll-contain">
+                <div className="divide-y divide-slate-800/80 xl:overflow-y-auto flex-1 overscroll-auto touch-pan-y">
                   {filteredStocks.map((st) => {
                     const qa = analysesMap.get(st.symbol) || { signal: 'TUT' as const, score: 70 };
                     const isSel = selectedStock?.symbol === st.symbol;

@@ -37,11 +37,11 @@ body.no-scrollbar,
   scrollbar-width: none !important;
 }
 
-html.no-scrollbar,
-body.no-scrollbar {
-  overflow: hidden !important;
-  height: 100% !important;
-  max-height: 100% !important;
+/* Touch scrolling enhancement: ensure horizontal tab strips allow fluid vertical page swiping */
+.overflow-x-auto {
+  touch-action: pan-x pan-y !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: auto;
 }
 
 html.no-scrollbar::-webkit-scrollbar,

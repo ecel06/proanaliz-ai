@@ -1810,7 +1810,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                   </div>
 
                   {/* Coupon Legs */}
-                  <div className="p-3 space-y-2 overflow-y-auto flex-1 overscroll-contain">
+                  <div className="p-3 space-y-2 xl:overflow-y-auto flex-1 overscroll-auto touch-pan-y">
                     {legRaceNumbers.map((rNo, idx) => {
                       const raceObj = detail.races.find((r) => r.number === rNo);
                       const picked = currentSelections[rNo] || [];
