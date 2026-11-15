@@ -354,7 +354,12 @@ app.get('/api/stream-proxy', async (req, res) => {
           const trimmed = line.trim();
           if (trimmed && !trimmed.startsWith('#')) {
             const absoluteUrl = trimmed.startsWith('http') ? trimmed : new URL(trimmed, baseUrl).href;
-            return `/api/stream-proxy?url=${encodeURIComponent(absoluteUrl)}`;
+            // Only proxy .m3u8 sub-playlists (to pass referer headers).
+            // Direct .ts media chunks must be fetched directly by client browser in Turkey to avoid overseas datacenter 403 blocks.
+            if (absoluteUrl.includes('.m3u8')) {
+              return `/api/stream-proxy?url=${encodeURIComponent(absoluteUrl)}`;
+            }
+            return absoluteUrl;
           }
           return line;
         })
@@ -748,7 +753,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.15.24';
+const APP_VERSION = '2026.11.15.25';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
