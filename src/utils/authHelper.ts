@@ -29,6 +29,10 @@ export interface EditorMatch {
   odds: number;
   confidence: number;
   reason?: string;
+  status?: 'pending' | 'live' | 'won' | 'lost';
+  homeScore?: number;
+  awayScore?: number;
+  liveMinute?: string;
 }
 
 export interface EditorCoupon {

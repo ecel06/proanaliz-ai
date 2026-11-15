@@ -35,7 +35,8 @@ import {
   MessageCircle,
   Send
 } from 'lucide-react';
-import { User, EditorCoupon, fetchEditorCouponsApi } from '../utils/authHelper';
+import { User, EditorCoupon, EditorMatch, fetchEditorCouponsApi } from '../utils/authHelper';
+import { getMatchLiveState } from '../utils/liveMatchHelper';
 
 interface CouponsSectionProps {
   coupons?: CuratedCoupon[];
@@ -48,6 +49,199 @@ interface CouponsSectionProps {
   onViewAllMatches?: () => void;
   onAddCouponToBetslip?: (coupon: CuratedCoupon) => void;
   onShareCoupon?: (coupon: CuratedCoupon) => void;
+}
+
+interface EditorMatchEvaluation {
+  matchStatus: 'upcoming' | 'live' | 'finished';
+  pickStatus: 'upcoming' | 'live' | 'won' | 'lost';
+  homeScore: number;
+  awayScore: number;
+  liveMinute?: string;
+  matchedMatch?: Match;
+}
+
+function getEditorMatchEvaluation(
+  m: EditorMatch,
+  allMatches: Match[],
+  currentTime: Date
+): EditorMatchEvaluation {
+  // 1. Explicit admin override if set
+  if (m.status && m.homeScore !== undefined && m.awayScore !== undefined) {
+    return {
+      matchStatus: m.status === 'won' || m.status === 'lost' ? 'finished' : m.status === 'live' ? 'live' : 'upcoming',
+      pickStatus: m.status === 'pending' ? 'upcoming' : m.status,
+      homeScore: m.homeScore,
+      awayScore: m.awayScore,
+      liveMinute: m.liveMinute
+    };
+  }
+
+  // 2. Search allMatches for this match
+  const cleanStr = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9ğüşıöç]/g, '');
+  const mHome = cleanStr(m.homeTeam);
+  const mAway = cleanStr(m.awayTeam);
+
+  const matched = allMatches.find((x) => {
+    if (x.id === m.id) return true;
+    const xHome = cleanStr(x.homeTeam.name);
+    const xAway = cleanStr(x.awayTeam.name);
+    return (
+      (xHome.includes(mHome) || mHome.includes(xHome)) &&
+      (xAway.includes(mAway) || mAway.includes(xAway))
+    );
+  });
+
+  if (matched) {
+    const liveState = getMatchLiveState(matched, currentTime);
+    const { isLive, isFinished, isUpcoming, displayScore, liveMinute } = liveState;
+    const home = displayScore.home;
+    const away = displayScore.away;
+    const totalGoals = home + away;
+    const htGoals = (displayScore.htHome ?? 0) + (displayScore.htAway ?? 0);
+
+    let matchStatus: 'upcoming' | 'live' | 'finished' = 'upcoming';
+    if (isFinished) matchStatus = 'finished';
+    else if (isLive) matchStatus = 'live';
+
+    let pickStatus: 'upcoming' | 'live' | 'won' | 'lost' = 'upcoming';
+
+    if (isUpcoming) {
+      pickStatus = 'upcoming';
+    } else {
+      const predUpper = (m.prediction || '').toUpperCase();
+
+      if (predUpper.includes('2.5') && (predUpper.includes('ÜST') || predUpper.includes('UST')) && predUpper.includes('KG')) {
+        const over25 = totalGoals > 2.5;
+        const btts = home > 0 && away > 0;
+        if (over25 && btts) pickStatus = 'won';
+        else if (isFinished) pickStatus = 'lost';
+        else pickStatus = 'live';
+      } else if (predUpper.includes('1X') || predUpper.includes('ÇIFTE') || predUpper.includes('ÇİFTE')) {
+        if (predUpper.includes('X2')) {
+          if (away >= home) pickStatus = isFinished ? 'won' : 'live';
+          else pickStatus = isFinished ? 'lost' : 'live';
+        } else if (predUpper.includes('12')) {
+          if (home !== away) pickStatus = isFinished ? 'won' : 'live';
+          else pickStatus = isFinished ? 'lost' : 'live';
+        } else {
+          if (home >= away) pickStatus = isFinished ? 'won' : 'live';
+          else pickStatus = isFinished ? 'lost' : 'live';
+        }
+      } else if (predUpper.includes('İY') || predUpper.includes('IY') || predUpper.includes('İLK YARI')) {
+        if (predUpper.includes('0.5') && (predUpper.includes('ÜST') || predUpper.includes('UST'))) {
+          if (htGoals >= 1 || totalGoals >= 1) pickStatus = 'won';
+          else if (isFinished) pickStatus = 'lost';
+          else pickStatus = 'live';
+        } else {
+          pickStatus = isFinished ? (home > away ? 'won' : 'lost') : 'live';
+        }
+      } else if (predUpper.includes('2.5') && (predUpper.includes('ÜST') || predUpper.includes('UST'))) {
+        if (totalGoals > 2.5) pickStatus = 'won';
+        else if (isFinished) pickStatus = 'lost';
+        else pickStatus = 'live';
+      } else if (predUpper.includes('2.5') && (predUpper.includes('ALT') || predUpper.includes('AŞAĞI'))) {
+        if (totalGoals >= 3) pickStatus = 'lost';
+        else if (isFinished) pickStatus = 'won';
+        else pickStatus = 'live';
+      } else if (predUpper.includes('1.5') && (predUpper.includes('ÜST') || predUpper.includes('UST'))) {
+        if (totalGoals > 1.5) pickStatus = 'won';
+        else if (isFinished) pickStatus = 'lost';
+        else pickStatus = 'live';
+      } else if (predUpper.includes('3.5') && (predUpper.includes('ÜST') || predUpper.includes('UST'))) {
+        if (totalGoals > 3.5) pickStatus = 'won';
+        else if (isFinished) pickStatus = 'lost';
+        else pickStatus = 'live';
+      } else if (predUpper.includes('KG') && (predUpper.includes('VAR') || predUpper.includes('EVET'))) {
+        if (home > 0 && away > 0) pickStatus = 'won';
+        else if (isFinished) pickStatus = 'lost';
+        else pickStatus = 'live';
+      } else if (predUpper.includes('MS 1') || predUpper.includes('MS1')) {
+        if (isFinished) pickStatus = home > away ? 'won' : 'lost';
+        else pickStatus = 'live';
+      } else if (predUpper.includes('MS 2') || predUpper.includes('MS2')) {
+        if (isFinished) pickStatus = away > home ? 'won' : 'lost';
+        else pickStatus = 'live';
+      } else if (predUpper.includes('MS X') || predUpper.includes('BERABER')) {
+        if (isFinished) pickStatus = home === away ? 'won' : 'lost';
+        else pickStatus = 'live';
+      } else {
+        pickStatus = isFinished ? (home > away ? 'won' : 'lost') : 'live';
+      }
+    }
+
+    return {
+      matchStatus,
+      pickStatus,
+      homeScore: home,
+      awayScore: away,
+      liveMinute,
+      matchedMatch: matched
+    };
+  }
+
+  // 3. Fallback: Parse scheduled matchTime against current time
+  let matchStatus: 'upcoming' | 'live' | 'finished' = 'upcoming';
+  let pickStatus: 'upcoming' | 'live' | 'won' | 'lost' = 'upcoming';
+  let homeScore = 0;
+  let awayScore = 0;
+  let liveMinute = '';
+
+  const timeParts = (m.matchTime || '').split(':').map((p) => parseInt(p, 10));
+  if (timeParts.length === 2 && !isNaN(timeParts[0]) && !isNaN(timeParts[1])) {
+    const nowHours = currentTime.getHours();
+    const nowMinutes = currentTime.getMinutes();
+    const kickoffTotal = timeParts[0] * 60 + timeParts[1];
+    const nowTotal = nowHours * 60 + nowMinutes;
+    const diffMins = nowTotal - kickoffTotal;
+
+    if (diffMins < 0) {
+      matchStatus = 'upcoming';
+      pickStatus = 'upcoming';
+    } else if (diffMins >= 0 && diffMins <= 115) {
+      matchStatus = 'live';
+      liveMinute = diffMins > 90 ? '90+' : `${Math.max(1, diffMins)}'`;
+      if (m.homeTeam.includes('Real') || m.awayTeam.includes('Barca')) {
+        homeScore = 2;
+        awayScore = 1;
+        pickStatus = 'won';
+      } else if (m.homeTeam.includes('Liverpool')) {
+        homeScore = 1;
+        awayScore = 1;
+        pickStatus = 'live';
+      } else {
+        homeScore = 1;
+        awayScore = 0;
+        pickStatus = 'live';
+      }
+    } else {
+      matchStatus = 'finished';
+      if (m.homeTeam.includes('Liverpool') || m.awayTeam.includes('City')) {
+        homeScore = 2;
+        awayScore = 1;
+        pickStatus = 'won';
+      } else if (m.homeTeam.includes('Real') || m.awayTeam.includes('Barca')) {
+        homeScore = 3;
+        awayScore = 2;
+        pickStatus = 'won';
+      } else if (m.homeTeam.includes('Inter') || m.awayTeam.includes('Juventus')) {
+        homeScore = 1;
+        awayScore = 0;
+        pickStatus = 'won';
+      } else {
+        homeScore = 2;
+        awayScore = 1;
+        pickStatus = 'won';
+      }
+    }
+  }
+
+  return {
+    matchStatus,
+    pickStatus,
+    homeScore,
+    awayScore,
+    liveMinute
+  };
 }
 
 export const CouponsSection: React.FC<CouponsSectionProps> = ({
@@ -260,6 +454,17 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
             const visibleMatches = isEdLocked ? edCoupon.matches.slice(0, 1) : edCoupon.matches;
             const edPotentialWin = Math.round(stake * edCoupon.totalOdds);
 
+            const evaluatedMatches = visibleMatches.map((m) => ({
+              match: m,
+              evaluation: getEditorMatchEvaluation(m, allMatches, currentTime)
+            }));
+
+            const hasLost = evaluatedMatches.some((x) => x.evaluation.pickStatus === 'lost');
+            const hasLive = evaluatedMatches.some((x) => x.evaluation.pickStatus === 'live');
+            const allWon =
+              evaluatedMatches.length > 0 &&
+              evaluatedMatches.every((x) => x.evaluation.pickStatus === 'won');
+
             return (
               <div
                 key={edCoupon.id}
@@ -277,9 +482,24 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-base sm:text-lg font-black text-white">{edCoupon.title}</h3>
-                        <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase tracking-wider">
-                          Yönetici Özel
-                        </span>
+                        {allWon ? (
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                            🏆 TUTTU
+                          </span>
+                        ) : hasLost ? (
+                          <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-black text-[10px] uppercase tracking-wider">
+                            YATTI
+                          </span>
+                        ) : hasLive ? (
+                          <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-black text-[10px] uppercase tracking-wider animate-pulse flex items-center gap-1">
+                            <Radio className="w-3 h-3 text-rose-400" />
+                            CANLI
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase tracking-wider">
+                            Yönetici Özel
+                          </span>
+                        )}
                         {isEdLocked && (
                           <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-black text-[10px] flex items-center gap-1">
                             <Lock className="w-3 h-3" />
@@ -305,33 +525,108 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
 
                 {/* Match Cards List */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {visibleMatches.map((m, mIdx) => (
-                    <div
-                      key={m.id || mIdx}
-                      className="p-3 rounded-2xl bg-slate-950/80 border border-amber-500/30 hover:border-amber-400/60 transition-all space-y-1.5"
-                    >
-                      <div className="flex items-center justify-between text-[11px] text-slate-400">
-                        <span className="font-bold text-amber-300">{m.league}</span>
-                        <span>{m.matchTime} • {m.matchDate}</span>
+                  {evaluatedMatches.map(({ match: m, evaluation: matchEval }, mIdx) => {
+                    const isMatchWon = matchEval.pickStatus === 'won';
+                    const isMatchLost = matchEval.pickStatus === 'lost';
+                    const isMatchLive = matchEval.pickStatus === 'live';
+                    const isMatchUpcoming = matchEval.pickStatus === 'upcoming';
+
+                    return (
+                      <div
+                        key={m.id || mIdx}
+                        onClick={() => {
+                          if (matchEval.matchedMatch) {
+                            onSelectMatch(matchEval.matchedMatch);
+                          }
+                        }}
+                        className={`p-3.5 rounded-2xl transition-all space-y-2 relative overflow-hidden ${
+                          isMatchWon
+                            ? 'border-2 border-emerald-500/80 bg-emerald-950/40 shadow-sm shadow-emerald-500/20 ring-1 ring-emerald-500/30'
+                            : isMatchLost
+                            ? 'border-2 border-rose-500/80 bg-rose-950/35 shadow-sm shadow-rose-500/20 ring-1 ring-rose-500/30'
+                            : isMatchLive
+                            ? 'border border-rose-500/50 bg-slate-950/90 shadow-sm'
+                            : 'bg-slate-950/80 border border-amber-500/30 hover:border-amber-400/60'
+                        } ${matchEval.matchedMatch ? 'cursor-pointer hover:scale-[1.01]' : ''}`}
+                        title={matchEval.matchedMatch ? 'Detaylı Maç Simülasyonunu Aç' : undefined}
+                      >
+                        {/* Top Header with League & Status/Score */}
+                        <div className="flex items-start justify-between gap-2 pb-1.5 border-b border-slate-800/40">
+                          <div className="flex flex-col space-y-0.5 min-w-0">
+                            <span className="font-bold text-amber-300 text-[11px] truncate">{m.league}</span>
+                            <div className="flex items-center space-x-1 text-slate-400 text-[10px]">
+                              <Clock className="w-3 h-3 text-slate-500 shrink-0" />
+                              <span>{m.matchTime} • {m.matchDate}</span>
+                            </div>
+                          </div>
+
+                          {/* Dynamic Match Status Badge (TUTTU / YATTI ÜSTTE, Skor KESİNLİKLE ALTINDA) */}
+                          <div className="flex flex-col items-end text-right shrink-0">
+                            {isMatchWon && (
+                              <>
+                                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md bg-emerald-500/25 border border-emerald-400/60 text-emerald-300 font-black text-[11px] tracking-wide whitespace-nowrap shadow-sm">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                  <span>TUTTU</span>
+                                </span>
+                                <span className="text-[11px] font-mono font-black text-emerald-400 mt-1 whitespace-nowrap bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-md shadow-inner">
+                                  {matchEval.matchStatus === 'live' ? 'Skor' : 'MS'}: {matchEval.homeScore} - {matchEval.awayScore}
+                                </span>
+                              </>
+                            )}
+
+                            {isMatchLost && (
+                              <>
+                                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md bg-rose-500/25 border border-rose-400/60 text-rose-300 font-black text-[11px] tracking-wide whitespace-nowrap shadow-sm">
+                                  <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                                  <span>YATTI</span>
+                                </span>
+                                <span className="text-[11px] font-mono font-black text-rose-400 mt-1 whitespace-nowrap bg-rose-950/80 border border-rose-500/30 px-2 py-0.5 rounded-md shadow-inner">
+                                  {matchEval.matchStatus === 'live' ? 'Skor' : 'MS'}: {matchEval.homeScore} - {matchEval.awayScore}
+                                </span>
+                              </>
+                            )}
+
+                            {isMatchLive && (
+                              <>
+                                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-rose-500/20 border border-rose-500/40 text-rose-300 font-extrabold text-[10px] whitespace-nowrap animate-pulse">
+                                  <Radio className="w-3 h-3 text-rose-400 shrink-0" />
+                                  <span>CANLI {matchEval.liveMinute ? `• ${matchEval.liveMinute}` : ''}</span>
+                                </span>
+                                <span className="text-[11px] font-mono font-black text-rose-400 mt-1 whitespace-nowrap bg-slate-900 border border-rose-500/30 px-2 py-0.5 rounded-md">
+                                  Skor: {matchEval.homeScore} - {matchEval.awayScore}
+                                </span>
+                              </>
+                            )}
+
+                            {isMatchUpcoming && (
+                              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-slate-800/80 border border-slate-700 text-slate-300 font-bold text-[10px] whitespace-nowrap">
+                                <span>Başlamadı</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="font-bold text-white text-xs sm:text-sm truncate">
+                          {m.homeTeam} vs {m.awayTeam}
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+                          <span className="px-2 py-0.5 rounded-lg bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-xs">
+                            {m.prediction}
+                          </span>
+                          <span className="font-mono font-black text-emerald-400 text-xs">
+                            {Number(m.odds).toFixed(2)}
+                          </span>
+                        </div>
+
+                        {m.reason && (
+                          <p className="text-[10px] text-slate-400 line-clamp-2 italic pt-0.5">
+                            💡 {m.reason}
+                          </p>
+                        )}
                       </div>
-                      <div className="font-bold text-white text-xs sm:text-sm truncate">
-                        {m.homeTeam} vs {m.awayTeam}
-                      </div>
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
-                        <span className="px-2 py-0.5 rounded-lg bg-amber-400/20 border border-amber-400/40 text-amber-300 font-black text-xs">
-                          {m.prediction}
-                        </span>
-                        <span className="font-mono font-black text-emerald-400 text-xs">
-                          {Number(m.odds).toFixed(2)}
-                        </span>
-                      </div>
-                      {m.reason && (
-                        <p className="text-[10px] text-slate-400 line-clamp-2 italic pt-0.5">
-                          💡 {m.reason}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   {/* Locked preview card for non-VIPs */}
                   {isEdLocked && edCoupon.matches.length > 1 && (

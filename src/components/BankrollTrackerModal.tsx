@@ -218,24 +218,47 @@ export const BankrollTrackerModal: React.FC<BankrollTrackerModalProps> = ({
                     {slip.items.map((it, idx) => {
                       const isBankoLeg = slip.systemConfig?.bankoMatchIds?.includes(String(it.matchId));
                       const legStatus = slip.itemStatuses?.[String(it.matchId)] || 'pending';
+                      const score = slip.itemScores?.[String(it.matchId)];
+
                       return (
-                        <div key={idx} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-slate-900/80 gap-2">
-                          <div className="flex items-center space-x-1.5 min-w-0">
-                            {legStatus === 'won' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
-                            {legStatus === 'lost' && <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />}
-                            {legStatus === 'pending' && <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />}
+                        <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between text-xs py-2 px-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80 gap-1.5">
+                          <div className="flex items-center space-x-2 min-w-0">
+                            {legStatus === 'won' && (
+                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-black shrink-0">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>TUTTU</span>
+                              </span>
+                            )}
+                            {legStatus === 'lost' && (
+                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/40 text-[10px] font-black shrink-0">
+                                <XCircle className="w-3 h-3" />
+                                <span>YATTI</span>
+                              </span>
+                            )}
+                            {legStatus === 'pending' && (
+                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold shrink-0">
+                                <Clock className="w-3 h-3" />
+                                <span>Canlı / Bekliyor</span>
+                              </span>
+                            )}
                             {isBankoLeg && (
                               <span className="px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-black shrink-0">
                                 B
                               </span>
                             )}
-                            <span className="font-bold text-slate-200 truncate max-w-[180px] sm:max-w-xs">
+                            <span className="font-bold text-white truncate max-w-[200px] sm:max-w-xs">
                               {it.match.homeTeam.name} vs {it.match.awayTeam.name}
                             </span>
                           </div>
-                          <div className="flex items-center space-x-2 shrink-0">
-                            <span className="text-emerald-400 font-semibold">{it.pickLabel}</span>
-                            <span className="font-mono font-bold text-slate-400">@{it.odd.toFixed(2)}</span>
+
+                          <div className="flex items-center justify-between sm:justify-end space-x-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-800/60">
+                            {score && (
+                              <span className="font-mono font-bold text-[11px] text-slate-300 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                                MS: {score.home} - {score.away} {score.htHome !== undefined ? `(İY: ${score.htHome}-${score.htAway})` : ''}
+                              </span>
+                            )}
+                            <span className="text-amber-300 font-bold bg-amber-400/10 px-2 py-0.5 rounded text-xs border border-amber-400/20">{it.pickLabel}</span>
+                            <span className="font-mono font-black text-emerald-400 text-xs">@{it.odd.toFixed(2)}</span>
                           </div>
                         </div>
                       );
