@@ -384,7 +384,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.15.07';
+  const CLIENT_BUILD_VERSION = '2026.11.15.08';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -468,11 +468,13 @@ export const App: React.FC = () => {
   }, []);
 
   const handleUpdateApp = async () => {
-    if (serverVersion) {
-      try {
+    try {
+      localStorage.setItem('proanaliz_active_section', activeSection);
+      if (serverVersion) {
         localStorage.setItem('proanaliz_dismissed_version', serverVersion);
-      } catch (e) { }
-    }
+      }
+    } catch (e) { }
+
     // 1. Unregister and notify service worker
     if ('serviceWorker' in navigator) {
       try {
@@ -485,17 +487,14 @@ export const App: React.FC = () => {
         }
       } catch (e) { }
     }
-    // 2. Delete all client caches
+    // 2. Delete all client runtime asset caches so fresh bundle is fetched
     if ('caches' in window) {
       try {
         const keys = await caches.keys();
         await Promise.all(keys.map(k => caches.delete(k)));
       } catch (e) { }
     }
-    try {
-      sessionStorage.clear();
-    } catch (e) { }
-    // 3. Force clean reload bypassing disk cache with timestamp query
+    // 3. Force clean reload bypassing disk cache with timestamp query, preserving active section and session
     window.location.replace(window.location.origin + window.location.pathname + '?_t=' + Date.now());
   };
 
