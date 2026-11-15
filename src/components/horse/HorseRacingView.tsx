@@ -744,23 +744,31 @@ export const LiveRaceStreamModal: React.FC<{
   race: RaceCard | null;
   programPlace?: string;
 }> = ({ isOpen, onClose, race, programPlace }) => {
-  const [streamSource, setStreamSource] = useState<'tjktv' | 'replay'>('tjktv');
+  const [streamSource, setStreamSource] = useState<'tjktv1' | 'tjktv2' | 'youtube' | 'replay'>('tjktv1');
 
   if (!isOpen) return null;
 
   const hasReplayVideo = Boolean(race?.video);
 
+  const openPopupStream = (url: string) => {
+    try {
+      window.open(url, 'tjk_live_stream', 'width=1024,height=640,menubar=no,toolbar=no,location=no,status=no');
+    } catch {
+      window.open(url, '_blank', 'noreferrer');
+    }
+  };
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-4xl max-h-[92vh] rounded-3xl bg-slate-900 border border-red-500/40 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+        className="w-full max-w-4xl max-h-[92vh] rounded-3xl bg-slate-900 border border-red-500/50 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-3.5 sm:p-4 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div className="p-3.5 sm:p-4 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2.5">
             <div className="w-9 h-9 rounded-2xl bg-red-600/20 border border-red-500/40 flex items-center justify-center text-red-400">
               <Tv className="w-5 h-5" />
@@ -770,7 +778,7 @@ export const LiveRaceStreamModal: React.FC<{
                 <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-1.5">
                   <span>📺 TJK TV Canlı Yayın &amp; Koşu İzle</span>
                 </h3>
-                <span className="px-2 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-black uppercase flex items-center space-x-1 animate-pulse">
+                <span className="px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-black uppercase flex items-center space-x-1 animate-pulse">
                   <span className="w-1.5 h-1.5 rounded-full bg-white inline-block mr-0.5" />
                   <span>CANLI YAYIN</span>
                 </span>
@@ -781,42 +789,72 @@ export const LiveRaceStreamModal: React.FC<{
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            {hasReplayVideo && (
-              <div className="flex rounded-xl bg-slate-900 p-0.5 border border-slate-800 text-xs">
-                <button
-                  onClick={() => setStreamSource('tjktv')}
-                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                    streamSource === 'tjktv'
-                      ? 'bg-red-600 text-white'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  TJK TV Canlı
-                </button>
-                <button
-                  onClick={() => setStreamSource('replay')}
-                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                    streamSource === 'replay'
-                      ? 'bg-emerald-500 text-slate-950'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Koşu Tekrarı
-                </button>
-              </div>
-            )}
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
             <button
               onClick={onClose}
               className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-colors"
+              title="Kapat"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Video Player Container */}
-        <div className="relative w-full bg-black aspect-video flex items-center justify-center overflow-hidden">
+        {/* Channel & Stream Selector Tabs */}
+        <div className="px-3 sm:px-4 py-2 bg-slate-950/70 border-b border-slate-800/80 flex items-center gap-1.5 overflow-x-auto scrollbar-thin shrink-0">
+          <button
+            onClick={() => setStreamSource('tjktv1')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+              streamSource === 'tjktv1'
+                ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                : 'bg-slate-900/90 text-slate-400 hover:text-white border border-slate-800'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${streamSource === 'tjktv1' ? 'bg-white animate-pulse' : 'bg-red-500'}`} />
+            <span>TJK TV 1 (Ana Kanal)</span>
+          </button>
+
+          <button
+            onClick={() => setStreamSource('tjktv2')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+              streamSource === 'tjktv2'
+                ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                : 'bg-slate-900/90 text-slate-400 hover:text-white border border-slate-800'
+            }`}
+          >
+            <Tv className="w-3.5 h-3.5" />
+            <span>TJK TV 2 (Yurt Dışı / Yedek)</span>
+          </button>
+
+          <button
+            onClick={() => setStreamSource('youtube')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+              streamSource === 'youtube'
+                ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
+                : 'bg-slate-900/90 text-slate-400 hover:text-white border border-slate-800'
+            }`}
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>YouTube Canlı</span>
+          </button>
+
+          {hasReplayVideo && (
+            <button
+              onClick={() => setStreamSource('replay')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                streamSource === 'replay'
+                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30'
+                  : 'bg-slate-900/90 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Koşu Tekrarı (Replay)</span>
+            </button>
+          )}
+        </div>
+
+        {/* Video Player / Stream Action Container */}
+        <div className="relative w-full bg-slate-950 aspect-video flex flex-col items-center justify-center overflow-hidden p-4 sm:p-8 text-center">
           {streamSource === 'replay' && race?.video ? (
             <video
               src={race.video}
@@ -825,13 +863,76 @@ export const LiveRaceStreamModal: React.FC<{
               className="w-full h-full object-contain"
             />
           ) : (
-            <iframe
-              src="https://www.youtube-nocookie.com/embed/live_stream?channel=UC4g1eGkP3Z9wK1JkO1yC49Q"
-              title="TJK TV Canlı Yayın"
-              className="w-full h-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
+            <div className="max-w-md w-full space-y-4 animate-in fade-in duration-150">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-red-600/20 border border-red-500/40 text-red-400 text-xs font-black">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span>
+                  {streamSource === 'tjktv2'
+                    ? 'TJK TV 2 • YURT DIŞI & YEDEK YAYIN'
+                    : streamSource === 'youtube'
+                    ? 'YOUTUBE CANLI YAYIN AKIŞI'
+                    : 'TJK TV 1 • RESMİ CANLI YARIŞ YAYINI'}
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <h4 className="text-base sm:text-lg font-black text-white">
+                  {streamSource === 'tjktv2'
+                    ? 'TJK TV 2 Canlı Yayını'
+                    : streamSource === 'youtube'
+                    ? 'TJK YouTube Canlı Yayını'
+                    : 'TJK TV 1 Canlı Yayını'}
+                </h4>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  TJK yayın politikası gereği koşuyu en yüksek HD kalitede, donmadan ve kesintisiz izlemek için aşağıdaki butonla hemen başlatın:
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2.5 justify-center pt-2">
+                {streamSource === 'tjktv2' ? (
+                  <button
+                    onClick={() => openPopupStream('https://www.tjk.org/TR/YarisSever/CanliYayin/TJKTV2')}
+                    className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs sm:text-sm cursor-pointer shadow-lg shadow-red-600/30 flex items-center justify-center space-x-2 transition-all active:scale-95"
+                  >
+                    <Play className="w-4 h-4 fill-current" />
+                    <span>TJK TV 2 Yayını Başlat</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                ) : streamSource === 'youtube' ? (
+                  <button
+                    onClick={() => openPopupStream('https://www.youtube.com/@TJKTV/live')}
+                    className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs sm:text-sm cursor-pointer shadow-lg shadow-red-600/30 flex items-center justify-center space-x-2 transition-all active:scale-95"
+                  >
+                    <Play className="w-4 h-4 fill-current" />
+                    <span>YouTube'da Canlı İzle</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => openPopupStream('https://www.tjk.org/TR/YarisSever/CanliYayin/TJKTV')}
+                      className="flex-1 px-5 py-3 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-500 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs sm:text-sm cursor-pointer shadow-lg shadow-red-600/30 flex items-center justify-center space-x-2 transition-all active:scale-95"
+                    >
+                      <Play className="w-4 h-4 fill-current" />
+                      <span>🔴 TJK TV 1 Canlı Başlat</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => openPopupStream('https://www.youtube.com/@TJKTV/live')}
+                      className="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 font-black text-xs sm:text-sm cursor-pointer flex items-center justify-center space-x-2 transition-all"
+                    >
+                      <Tv className="w-4 h-4 text-red-400" />
+                      <span>YouTube Alternatifi</span>
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <p className="text-[11px] text-slate-500 italic">
+                💡 Canlı yayın ayrı bir pencerede kesintisiz oynatılırken, siz bu ekranı kapatmadan alt kısımdan koşu atlarını ve canlı ganyanları takip edebilirsiniz.
+              </p>
+            </div>
           )}
         </div>
 
@@ -950,6 +1051,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
   });
   const [isSavedCouponsModalOpen, setIsSavedCouponsModalOpen] = useState<boolean>(false);
   const [mobileDrawerTab, setMobileDrawerTab] = useState<'current' | 'saved'>('current');
+  const [sidebarTab, setSidebarTab] = useState<'active' | 'saved'>('active');
 
   // Automatically persist race coupon selections to survive pull-to-refresh
   useEffect(() => {
@@ -1348,6 +1450,8 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
     if (coupon.programId && coupon.programId !== selectedProgramId) {
       handleSelectProgram(coupon.programId);
     }
+    setSidebarTab('active');
+    setMobileDrawerTab('current');
     onShowToast?.(`"${coupon.title}" kuponu bültene yüklendi!`, 'success');
     setIsSavedCouponsModalOpen(false);
     setIsMobileCouponDrawerOpen(false);
@@ -2932,8 +3036,8 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
               </div>
 
               {/* RIGHT SIDEBAR: STICKY NESINE KUPON HESAPLAYICI */}
-              <aside className="w-full xl:w-[360px] shrink-0 xl:sticky xl:top-[6.5rem] xl:h-[calc(100vh-7.5rem)] flex flex-col space-y-3">
-                <div className="rounded-2xl bg-slate-900/95 border border-amber-500/30 shadow-2xl overflow-hidden flex flex-col flex-1">
+              <aside className="w-full xl:w-[360px] shrink-0 xl:sticky xl:top-[6.5rem] xl:h-[calc(100vh-7.5rem)] min-h-[580px] flex flex-col">
+                <div className="rounded-2xl bg-slate-900/95 border border-amber-500/30 shadow-2xl overflow-hidden flex flex-col flex-1 min-h-0">
                   {/* Coupon Header */}
                   <div className="px-4 py-3 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 text-slate-950 flex items-center justify-between shrink-0">
                     <div className="flex items-center space-x-2">
@@ -2956,189 +3060,254 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                     </button>
                   </div>
 
-                  {/* Coupon Legs */}
-                  <div className="p-3 space-y-2 xl:overflow-y-auto flex-1 overscroll-auto touch-pan-y">
-                    {legRaceNumbers.map((rNo, idx) => {
-                      const raceObj = detail.races.find((r) => r.number === rNo);
-                      const picked = currentSelections[rNo] || [];
-                      const isCurrentRace = selectedRaceNo === rNo;
-                      const winner = raceObj?.horses.find((h) => h.order === 1);
-                      const isLegWon = winner && picked.includes(winner.number);
-                      const isLegLost = winner && picked.length > 0 && !picked.includes(winner.number);
+                  {/* Sidebar Navigation Tabs */}
+                  <div className="flex bg-slate-950/90 p-1 border-b border-slate-800 gap-1 shrink-0">
+                    <button
+                      onClick={() => setSidebarTab('active')}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                        sidebarTab === 'active'
+                          ? 'bg-amber-400 text-slate-950 shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Ticket className="w-3.5 h-3.5" />
+                      <span>Aktif Kupon {totalCombinations > 0 ? `(${totalCombinations} Kolon)` : ''}</span>
+                    </button>
+                    <button
+                      onClick={() => setSidebarTab('saved')}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                        sidebarTab === 'saved'
+                          ? 'bg-amber-400 text-slate-950 shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Award className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Kayıtlı ({savedCoupons.length})</span>
+                    </button>
+                  </div>
 
-                      return (
-                        <div
-                          key={rNo}
-                          onClick={() => setSelectedRaceNo(rNo)}
-                          className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
-                            isCurrentRace
-                              ? 'bg-emerald-500/10 border-emerald-400/60'
-                              : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between text-xs mb-1.5">
-                            <div className="flex items-center space-x-1.5">
-                              <span className="font-black text-amber-400">{idx + 1}. Ayak</span>
-                              <span className="text-[11px] text-slate-400">
-                                ({rNo}. Koşu {raceObj?.hour})
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              {isLegWon && (
-                                <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-black">
-                                  TUTTU ({winner.number})
-                                </span>
-                              )}
-                              {isLegLost && (
-                                <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 text-[9px] font-black">
-                                  YATTI ({winner.number})
-                                </span>
-                              )}
-                              <span className="text-[10px] font-bold text-slate-400">
-                                {picked.length === 1 ? 'TEK' : `${picked.length} At`}
-                              </span>
-                            </div>
-                          </div>
-
-                          {picked.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {picked.map((hNo) => (
-                                <button
-                                  key={hNo}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleHorsePick(rNo, hNo);
-                                  }}
-                                  className={`px-2 py-0.5 rounded-md text-xs font-mono font-black cursor-pointer transition-all ${
-                                    picked.length === 1
-                                      ? 'bg-amber-400 text-slate-950'
-                                      : 'bg-slate-800 hover:bg-rose-500/30 text-white border border-slate-700'
-                                  }`}
-                                  title="Kaldırmak için tıklayın"
-                                >
-                                  {hNo}
-                                </button>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="text-[11px] text-slate-500 italic flex items-center justify-between">
-                              <span>Bu ayaktan at seçin</span>
-                              <ChevronRight className="w-3.5 h-3.5" />
-                            </div>
+                  {sidebarTab === 'saved' ? (
+                    <div className="p-3 space-y-2.5 overflow-y-auto flex-1 min-h-0 overscroll-auto touch-pan-y">
+                      <div className="flex items-center justify-between pb-1 border-b border-slate-800">
+                        <span className="text-xs font-black text-slate-300">
+                          Kayıtlı Kuponlarım ({savedCoupons.length})
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => setIsSavedCouponsModalOpen(true)}
+                            className="text-[11px] text-amber-400 hover:text-amber-300 font-bold cursor-pointer"
+                          >
+                            Tam Ekran ↗
+                          </button>
+                          {savedCoupons.length > 0 && (
+                            <button
+                              onClick={handleClearAllSavedCoupons}
+                              className="text-[11px] text-slate-400 hover:text-rose-400 cursor-pointer"
+                            >
+                              Temizle
+                            </button>
                           )}
                         </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Misli, Birim & Totals */}
-                  <div className="p-3.5 bg-slate-950/90 border-t border-slate-800 space-y-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Birim (₺)</label>
-                        <select
-                          value={unitPrice}
-                          onChange={(e) => setUnitPrice(Number(e.target.value))}
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-white"
-                        >
-                          <option value={1}>1.00 ₺ (TJK)</option>
-                          <option value={0.5}>0.50 ₺</option>
-                          <option value={0.8}>0.80 ₺</option>
-                        </select>
                       </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Misli</label>
-                        <div className="flex items-center rounded-lg bg-slate-900 border border-slate-700 overflow-hidden">
+
+                      {savedCoupons.length === 0 ? (
+                        <div className="py-12 text-center space-y-2">
+                          <Award className="w-8 h-8 mx-auto text-slate-600" />
+                          <p className="text-xs text-slate-400">Henüz kayıtlı bir kuponunuz yok.</p>
                           <button
-                            onClick={() => setMisli((m) => Math.max(1, m - 1))}
-                            className="px-2.5 py-1.5 text-slate-300 hover:bg-slate-800 font-black text-xs cursor-pointer"
+                            onClick={() => setSidebarTab('active')}
+                            className="text-xs text-amber-400 hover:underline font-bold"
                           >
-                            -
-                          </button>
-                          <span className="flex-1 text-center font-mono font-black text-xs text-white">
-                            {misli}x
-                          </span>
-                          <button
-                            onClick={() => setMisli((m) => Math.min(100, m + 1))}
-                            className="px-2.5 py-1.5 text-slate-300 hover:bg-slate-800 font-black text-xs cursor-pointer"
-                          >
-                            +
+                            Aktif Kupona Dön →
                           </button>
                         </div>
+                      ) : (
+                        savedCoupons.map((coupon) => (
+                          <SavedCouponCard
+                            key={coupon.id}
+                            coupon={coupon}
+                            currentDetail={detail}
+                            activeLegRaceNumbers={legRaceNumbers}
+                            onSelectProgram={handleSelectProgram}
+                            onLoadCoupon={handleLoadCouponIntoWorkspace}
+                            onDelete={handleDeleteSavedCoupon}
+                          />
+                        ))
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {/* Coupon Legs - Full Roomy Scrollable Height */}
+                      <div className="p-3 space-y-2.5 overflow-y-auto flex-1 min-h-0 overscroll-auto touch-pan-y">
+                        {legRaceNumbers.map((rNo, idx) => {
+                          const raceObj = detail.races.find((r) => r.number === rNo);
+                          const picked = currentSelections[rNo] || [];
+                          const isCurrentRace = selectedRaceNo === rNo;
+                          const winner = raceObj?.horses.find((h) => h.order === 1);
+                          const isLegWon = winner && picked.includes(winner.number);
+                          const isLegLost = winner && picked.length > 0 && !picked.includes(winner.number);
+
+                          return (
+                            <div
+                              key={rNo}
+                              onClick={() => setSelectedRaceNo(rNo)}
+                              className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
+                                isCurrentRace
+                                  ? 'bg-emerald-500/10 border-emerald-400/60 shadow-sm'
+                                  : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between text-xs mb-1.5">
+                                <div className="flex items-center space-x-1.5">
+                                  <span className="font-black text-amber-400">{idx + 1}. Ayak</span>
+                                  <span className="text-[11px] text-slate-400">
+                                    ({rNo}. Koşu {raceObj?.hour})
+                                  </span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  {isLegWon && (
+                                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-black">
+                                      TUTTU ({winner.number})
+                                    </span>
+                                  )}
+                                  {isLegLost && (
+                                    <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-black">
+                                      YATTI ({winner.number})
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] font-bold text-slate-400">
+                                    {picked.length === 1 ? 'TEK' : `${picked.length} At`}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {picked.length > 0 ? (
+                                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                  {picked.map((hNo) => {
+                                    const hObj = raceObj?.horses.find((h) => h.number === hNo);
+                                    const isSingle = picked.length === 1;
+                                    const isWinnerHorse = winner && winner.number === hNo;
+
+                                    return (
+                                      <button
+                                        key={hNo}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleHorsePick(rNo, hNo);
+                                        }}
+                                        className={`px-2 py-1 rounded-lg text-xs font-mono font-black cursor-pointer transition-all flex items-center space-x-1 ${
+                                          isWinnerHorse
+                                            ? 'bg-emerald-500 text-slate-950 ring-2 ring-emerald-300 shadow-md font-black'
+                                            : isSingle
+                                            ? 'bg-amber-400 text-slate-950 shadow-sm'
+                                            : 'bg-slate-800 hover:bg-rose-500/30 text-white border border-slate-700'
+                                        }`}
+                                        title="Kaldırmak için tıklayın"
+                                      >
+                                        <span>#{hNo}</span>
+                                        {hObj && (
+                                          <span className="font-sans font-bold text-[10px] max-w-[75px] truncate">
+                                            {hObj.name}
+                                          </span>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="text-[11px] text-slate-500 italic flex items-center justify-between py-1">
+                                  <span>Bu ayaktan at seçin</span>
+                                  <ChevronRight className="w-3.5 h-3.5 text-amber-500/70" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
 
-                    <div className="flex items-center justify-between text-xs pt-1">
-                      <span className="text-slate-400 font-semibold">Toplam Kolon:</span>
-                      <span className="font-mono font-black text-white">
-                        {totalCombinations.toLocaleString('tr-TR')} Kolon
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-300 font-extrabold">Kupon Bedeli:</span>
-                      <span className="font-mono font-black text-lg text-amber-400">
-                        {totalCouponCost.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                      </span>
-                    </div>
+                      {/* Misli, Birim & Totals Footer */}
+                      <div className="p-3.5 bg-slate-950/95 border-t border-slate-800 space-y-3 shrink-0">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 mb-1">Birim (₺)</label>
+                            <select
+                              value={unitPrice}
+                              onChange={(e) => setUnitPrice(Number(e.target.value))}
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-white"
+                            >
+                              <option value={1}>1.00 ₺ (TJK)</option>
+                              <option value={0.5}>0.50 ₺</option>
+                              <option value={0.8}>0.80 ₺</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 mb-1">Misli</label>
+                            <div className="flex items-center rounded-lg bg-slate-900 border border-slate-700 overflow-hidden">
+                              <button
+                                onClick={() => setMisli((m) => Math.max(1, m - 1))}
+                                className="px-2.5 py-1.5 text-slate-300 hover:bg-slate-800 font-black text-xs cursor-pointer"
+                              >
+                                -
+                              </button>
+                              <span className="flex-1 text-center font-mono font-black text-xs text-white">
+                                {misli}x
+                              </span>
+                              <button
+                                onClick={() => setMisli((m) => Math.min(100, m + 1))}
+                                className="px-2.5 py-1.5 text-slate-300 hover:bg-slate-800 font-black text-xs cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => setSubTab('ai_coupons')}
-                        className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-400/30 font-black text-xs cursor-pointer transition-all flex items-center justify-center space-x-1"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>AI Şablonlar</span>
-                      </button>
-                      <button
-                        disabled={totalCombinations === 0}
-                        onClick={handleSaveCoupon}
-                        className="px-3 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black text-xs cursor-pointer disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-1 shadow-lg shadow-emerald-500/20"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Kuponu Kaydet</span>
-                      </button>
-                    </div>
-                  </div>
+                        <div className="flex items-center justify-between text-xs pt-1">
+                          <span className="text-slate-400 font-semibold">Toplam Kolon:</span>
+                          <span className="font-mono font-black text-white">
+                            {totalCombinations.toLocaleString('tr-TR')} Kolon
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-300 font-extrabold">Kupon Bedeli:</span>
+                          <span className="font-mono font-black text-lg text-amber-400">
+                            {totalCouponCost.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => setSubTab('ai_coupons')}
+                            className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-400/30 font-black text-xs cursor-pointer transition-all flex items-center justify-center space-x-1"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>AI Şablonlar</span>
+                          </button>
+                          <button
+                            disabled={totalCombinations === 0}
+                            onClick={handleSaveCoupon}
+                            className="px-3 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black text-xs cursor-pointer disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-1 shadow-lg shadow-emerald-500/20"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Kuponu Kaydet</span>
+                          </button>
+                        </div>
+
+                        {savedCoupons.length > 0 && (
+                          <div className="pt-0.5 text-center">
+                            <button
+                              onClick={() => setSidebarTab('saved')}
+                              className="text-[11px] text-amber-400/90 hover:text-amber-300 font-bold hover:underline flex items-center justify-center space-x-1 mx-auto cursor-pointer"
+                            >
+                              <Award className="w-3 h-3" />
+                              <span>Kayıtlı {savedCoupons.length} kuponunuz var → İncele</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
-
-                {/* Saved Horse Coupons History */}
-                {savedCoupons.length > 0 && (
-                  <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-3 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-white flex items-center space-x-1.5">
-                        <Award className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Kayıtlı Kuponlarım ({savedCoupons.length})</span>
-                      </span>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => setIsSavedCouponsModalOpen(true)}
-                          className="text-[10px] text-amber-400 hover:text-amber-300 font-bold cursor-pointer"
-                        >
-                          Tam Ekran ↗
-                        </button>
-                        <button
-                          onClick={handleClearAllSavedCoupons}
-                          className="text-[10px] text-slate-400 hover:text-rose-400 cursor-pointer"
-                        >
-                          Temizle
-                        </button>
-                      </div>
-                    </div>
-                    <div className="space-y-2 max-h-96 overflow-y-auto overscroll-auto touch-pan-y pr-0.5">
-                      {savedCoupons.map((coupon) => (
-                        <SavedCouponCard
-                          key={coupon.id}
-                          coupon={coupon}
-                          currentDetail={detail}
-                          activeLegRaceNumbers={legRaceNumbers}
-                          onSelectProgram={handleSelectProgram}
-                          onLoadCoupon={handleLoadCouponIntoWorkspace}
-                          onDelete={handleDeleteSavedCoupon}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
               </aside>
             </div>
           )}
@@ -3275,11 +3444,15 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
             ) : (
               <>
                 {/* Legs List */}
-                <div className="p-3 space-y-2 overflow-y-auto flex-1 overscroll-auto touch-pan-y">
+                <div className="p-3 space-y-2 overflow-y-auto flex-1 min-h-0 overscroll-auto touch-pan-y">
                   {legRaceNumbers.map((rNo, idx) => {
                     const raceObj = detail?.races.find((r) => r.number === rNo);
                     const picked = currentSelections[rNo] || [];
                     const isCurrentRace = selectedRaceNo === rNo;
+                    const winner = raceObj?.horses.find((h) => h.order === 1);
+                    const isLegWon = winner && picked.includes(winner.number);
+                    const isLegLost = winner && picked.length > 0 && !picked.includes(winner.number);
+
                     return (
                       <div
                         key={rNo}
@@ -3289,7 +3462,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                         }}
                         className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
                           isCurrentRace
-                            ? 'bg-emerald-500/10 border-emerald-400/60'
+                            ? 'bg-emerald-500/10 border-emerald-400/60 shadow-sm'
                             : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
                         }`}
                       >
@@ -3300,25 +3473,41 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                               ({rNo}. Koşu {raceObj?.hour})
                             </span>
                           </div>
-                          <span className="text-[10px] font-bold text-slate-400">
-                            {picked.length} At Seçildi
-                          </span>
+                          <div className="flex items-center space-x-1">
+                            {isLegWon && (
+                              <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-black">
+                                TUTTU ({winner.number})
+                              </span>
+                            )}
+                            {isLegLost && (
+                              <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-black">
+                                YATTI ({winner.number})
+                              </span>
+                            )}
+                            <span className="text-[10px] font-bold text-slate-400">
+                              {picked.length === 1 ? 'TEK' : `${picked.length} At`}
+                            </span>
+                          </div>
                         </div>
 
                         {picked.length === 0 ? (
-                          <div className="text-[11px] text-amber-400/80 italic font-semibold">
+                          <div className="text-[11px] text-amber-400/80 italic font-semibold py-1">
                             ⚠️ Henüz at seçilmedi (Koşuya gitmek için tıklayın)
                           </div>
                         ) : (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1.5 pt-0.5">
                             {picked.map((hNo) => {
                               const hObj = raceObj?.horses.find((h) => h.number === hNo);
                               const isSingle = picked.length === 1;
+                              const isWinnerHorse = winner && winner.number === hNo;
+
                               return (
                                 <span
                                   key={hNo}
-                                  className={`px-2 py-0.5 rounded-lg text-xs font-mono font-black flex items-center space-x-1 ${
-                                    isSingle
+                                  className={`px-2 py-1 rounded-lg text-xs font-mono font-black flex items-center space-x-1 ${
+                                    isWinnerHorse
+                                      ? 'bg-emerald-500 text-slate-950 ring-2 ring-emerald-300 shadow-md font-black'
+                                      : isSingle
                                       ? 'bg-amber-400 text-slate-950 shadow-sm'
                                       : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                                   }`}
