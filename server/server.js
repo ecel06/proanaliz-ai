@@ -309,6 +309,68 @@ app.get('/api/horse-racing/live-stream', async (req, res) => {
   }
 });
 
+// 📺 High-Performance Live Sports Stream Proxy (Bypasses browser CORS & hotlink referer blocks)
+app.get('/api/stream-proxy', async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl || typeof targetUrl !== 'string') {
+    return res.status(400).send('Missing url parameter');
+  }
+
+  let referer = 'https://www.trtspor.com.tr/';
+  if (targetUrl.includes('ht-spor') || targetUrl.includes('ciner')) {
+    referer = 'https://www.htspor.com/';
+  } else if (targetUrl.includes('aspor')) {
+    referer = 'https://www.aspor.com.tr/';
+  }
+
+  try {
+    const upstreamRes = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Referer': referer,
+        'Origin': new URL(referer).origin
+      }
+    });
+
+    if (!upstreamRes.ok) {
+      return res.status(upstreamRes.status).send(`Upstream error: ${upstreamRes.statusText}`);
+    }
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+
+    const contentType = upstreamRes.headers.get('content-type') || 'application/vnd.apple.mpegurl';
+    res.setHeader('Content-Type', contentType);
+
+    const isPlaylist = targetUrl.includes('.m3u8') || contentType.includes('mpegurl') || contentType.includes('application/x-mpegURL');
+
+    if (isPlaylist) {
+      const text = await upstreamRes.text();
+      const baseUrl = targetUrl.substring(0, targetUrl.lastIndexOf('/') + 1);
+      const rewritten = text
+        .split('\n')
+        .map((line) => {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith('#')) {
+            const absoluteUrl = trimmed.startsWith('http') ? trimmed : new URL(trimmed, baseUrl).href;
+            return `/api/stream-proxy?url=${encodeURIComponent(absoluteUrl)}`;
+          }
+          return line;
+        })
+        .join('\n');
+      return res.send(rewritten);
+    }
+
+    // Binary media chunk (.ts, .aac, .m4s)
+    const arrayBuffer = await upstreamRes.arrayBuffer();
+    return res.send(Buffer.from(arrayBuffer));
+  } catch (err) {
+    console.error('[StreamProxy Error]:', err.message);
+    return res.status(502).send('Stream proxy failure: ' + err.message);
+  }
+});
+
 // 5d. Live Stock Market Screener & Historical OHLCV Chart (BIST / NASDAQ / NYSE / Crypto)
 app.get('/api/stocks/screener', async (req, res) => {
   try {
@@ -686,7 +748,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.15.23';
+const APP_VERSION = '2026.11.15.24';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

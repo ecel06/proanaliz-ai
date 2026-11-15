@@ -122,7 +122,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
       hlsRef.current = null;
     }
 
-    const streamUrl = currentChannel.streamUrl;
+    const streamUrl = `/api/stream-proxy?url=${encodeURIComponent(currentChannel.streamUrl)}`;
 
     const attemptPlay = () => {
       const playPromise = video.play();
