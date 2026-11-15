@@ -154,14 +154,14 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     setAlerts(next);
     try {
       localStorage.setItem('proanaliz_stock_alerts_v1', JSON.stringify(next));
-    } catch {}
+    } catch { }
   };
 
   const savePortfolio = (next: StockPortfolioPosition[]) => {
     setPortfolio(next);
     try {
       localStorage.setItem('proanaliz_stock_portfolio_v1', JSON.stringify(next));
-    } catch {}
+    } catch { }
   };
 
   const activeAlertsCount = alerts.filter((a) => !a.triggered).length;
@@ -182,7 +182,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       const next = prev.includes(sym) ? prev.filter((x) => x !== sym) : [...prev, sym];
       try {
         localStorage.setItem('proanaliz_stock_watchlist', JSON.stringify(next));
-      } catch {}
+      } catch { }
       return next;
     });
   };
@@ -224,7 +224,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     setMobileViewTab('detail');
     try {
       window.history.pushState({ section: 'stocks', view: 'detail', symbol: sym }, '', '');
-    } catch {}
+    } catch { }
     setTimeout(() => {
       const elem = document.getElementById('stock-detail-workstation');
       if (elem) {
@@ -245,7 +245,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
   };
 
   // Track whether any stock modal is open to cooperate with hardware back button
-  const isAnyStockModalOpen = 
+  const isAnyStockModalOpen =
     isWatchlistModalOpen ||
     isIpoModalOpen ||
     isDividendModalOpen ||
@@ -680,11 +680,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                 </div>
               </div>
               <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black ${
-                  m.changePct >= 0
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black ${m.changePct >= 0
                     ? 'bg-emerald-500/15 text-emerald-300'
                     : 'bg-rose-500/15 text-rose-300'
-                }`}
+                  }`}
               >
                 {m.changePct >= 0 ? '+' : ''}
                 {m.changePct.toFixed(2)}%
@@ -714,17 +713,15 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                     setActiveSearch('');
                     setPreset('all');
                   }}
-                  className={`px-3 py-2 rounded-xl text-xs font-black border transition-all cursor-pointer flex items-center space-x-1.5 ${
-                    active
+                  className={`px-3 py-2 rounded-xl text-xs font-black border transition-all cursor-pointer flex items-center space-x-1.5 ${active
                       ? 'bg-cyan-400 text-slate-950 border-cyan-300 shadow-lg shadow-cyan-500/20'
                       : 'bg-slate-950/70 hover:bg-slate-800 text-slate-300 border-slate-800'
-                  }`}
+                    }`}
                 >
                   <span>{m.label}</span>
                   <span
-                    className={`text-[9px] px-1.5 py-0.2 rounded ${
-                      active ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'
-                    }`}
+                    className={`text-[9px] px-1.5 py-0.2 rounded ${active ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'
+                      }`}
                   >
                     {m.sub}
                   </span>
@@ -761,8 +758,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                   market === 'bist'
                     ? 'Hisse ara (THYAO, ASELS...)'
                     : market === 'us'
-                    ? 'Ticker ara (NVDA, AAPL...)'
-                    : 'Coin ara (BTC, SOL...)'
+                      ? 'Ticker ara (NVDA, AAPL...)'
+                      : 'Coin ara (BTC, SOL...)'
                 }
                 className="w-full pl-8 pr-16 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
               />
@@ -915,11 +912,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             {/* 💼 Sanal Portföy */}
             <button
               onClick={() => setIsPortfolioModalOpen(true)}
-              className={`px-3 py-2 rounded-xl border text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-sm ${
-                urgentPortfolioRisks.length > 0
+              className={`px-3 py-2 rounded-xl border text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-sm ${urgentPortfolioRisks.length > 0
                   ? 'bg-rose-950/60 hover:bg-rose-900/60 border-rose-500/60 text-rose-300 ring-2 ring-rose-500/30'
                   : 'bg-slate-800/90 hover:bg-slate-700 border-sky-500/30 text-sky-300'
-              }`}
+                }`}
               title="Sanal Portföy & İşlem Defteri (Paper Trading)"
             >
               <Briefcase className={`w-3.5 h-3.5 ${urgentPortfolioRisks.length > 0 ? 'text-rose-400' : 'text-sky-400'}`} />
@@ -1002,12 +998,12 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             market === 'crypto'
               ? '7/24 Kesintisiz Canlı Piyasa (Anlık)'
               : market === 'bist'
-              ? bistOpen
-                ? 'BIST Seansı Açık (10:00–18:10) • Gün Boyu Canlı Akış'
-                : 'BIST Seansı Kapalı (10:00–18:10 arası canlı güncellenir)'
-              : usOpen
-              ? 'ABD Borsaları Açık (16:30–23:00 TRT) • Anlık Akış'
-              : 'ABD Borsaları Kapalı (16:30–23:00 TRT)';
+                ? bistOpen
+                  ? 'BIST Seansı Açık (10:00–18:10) • Gün Boyu Canlı Akış'
+                  : 'BIST Seansı Kapalı (10:00–18:10 arası canlı güncellenir)'
+                : usOpen
+                  ? 'ABD Borsaları Açık (16:30–23:00 TRT) • Anlık Akış'
+                  : 'ABD Borsaları Kapalı (16:30–23:00 TRT)';
           const latencyNote =
             market === 'bist'
               ? '15 dk BIST yasal akış • 45sn otomatik tarama'
@@ -1016,9 +1012,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-slate-950/75 border border-slate-800/80 text-[10px]">
               <div className="flex items-center space-x-2">
                 <span
-                  className={`w-2 h-2 rounded-full ${
-                    isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-                  }`}
+                  className={`w-2 h-2 rounded-full ${isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                    }`}
                 />
                 <span className={isOpen ? 'font-bold text-emerald-300' : 'font-bold text-amber-300'}>
                   {label}
@@ -1073,11 +1068,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                         <div className="flex items-center gap-1.5">
                           <span className="text-sm font-black text-white">{risk.position.symbol}</span>
                           <span
-                            className={`px-1.5 py-0.2 rounded text-[10px] font-black border ${
-                              risk.alertType === 'GÜÇLÜ SAT'
+                            className={`px-1.5 py-0.2 rounded text-[10px] font-black border ${risk.alertType === 'GÜÇLÜ SAT'
                                 ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
                                 : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                            }`}
+                              }`}
                           >
                             {risk.alertType}
                           </span>
@@ -1094,9 +1088,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                           {risk.currentPrice.toFixed(2)} {currency}
                         </div>
                         <div
-                          className={`text-[10px] font-mono font-bold ${
-                            risk.pnlVal >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                          }`}
+                          className={`text-[10px] font-mono font-bold ${risk.pnlVal >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                            }`}
                         >
                           {risk.pnlVal >= 0 ? '+' : ''}
                           {risk.pnlVal.toFixed(2)} {currency} ({risk.pnlPct >= 0 ? '+' : ''}
@@ -1118,11 +1111,11 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                             portfolio.map((p) =>
                               p.id === risk.position.id
                                 ? {
-                                    ...p,
-                                    status: 'closed',
-                                    exitPrice: risk.currentPrice,
-                                    exitDate: new Date().toISOString(),
-                                  }
+                                  ...p,
+                                  status: 'closed',
+                                  exitPrice: risk.currentPrice,
+                                  exitDate: new Date().toISOString(),
+                                }
                                 : p
                             )
                           );
@@ -1130,11 +1123,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                             `🔴 ${risk.position.symbol} pozisyonu kapatıldı ve işlem geçmişine kaydedildi.`
                           );
                         }}
-                        className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-black text-white shadow transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                          risk.alertType === 'GÜÇLÜ SAT'
+                        className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-black text-white shadow transition-all flex items-center justify-center gap-1 cursor-pointer ${risk.alertType === 'GÜÇLÜ SAT'
                             ? 'bg-rose-600 hover:bg-rose-500 border border-rose-400'
                             : 'bg-amber-600 hover:bg-amber-500 border border-amber-400'
-                        }`}
+                          }`}
                         title={`${risk.position.symbol} hissesini tek tıkla kapat`}
                       >
                         <Zap className="w-3 h-3" />
@@ -1177,20 +1169,18 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                   <button
                     key={idx.id}
                     onClick={() => setIndexFilter(idx.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 shadow-sm ${
-                      active
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 shadow-sm ${active
                         ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 border-cyan-300 font-black shadow-md shadow-cyan-500/20 scale-[1.02]'
                         : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     <span>{idx.icon}</span>
                     <span>{idx.label}</span>
                     <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                        active
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${active
                           ? 'bg-slate-950 text-cyan-300'
                           : 'bg-slate-850 text-slate-400'
-                      }`}
+                        }`}
                     >
                       {idx.count}
                     </span>
@@ -1218,11 +1208,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                 <button
                   key={p.id}
                   onClick={() => setPreset(p.id as PresetFilter)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${
-                    active
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${active
                       ? 'bg-emerald-500 text-slate-950 border-emerald-400'
                       : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
-                  }`}
+                    }`}
                 >
                   {p.label}
                 </button>
@@ -1328,11 +1317,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             <button
               type="button"
               onClick={handleReturnToList}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                mobileViewTab === 'list'
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${mobileViewTab === 'list'
                   ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 shadow-md shadow-cyan-950/40'
                   : 'text-slate-400 hover:text-white bg-slate-950/40'
-              }`}
+                }`}
             >
               <ListFilter className="w-4 h-4" />
               <span>Hisse Listesi ({filteredStocks.length})</span>
@@ -1347,11 +1335,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                   if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 50);
               }}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                mobileViewTab === 'detail'
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${mobileViewTab === 'detail'
                   ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 shadow-md shadow-cyan-950/40'
                   : 'text-slate-400 hover:text-white bg-slate-950/40'
-              }`}
+                }`}
             >
               <BarChart3 className="w-4 h-4" />
               <span>{selectedStock?.symbol || 'Hisse'} Detay</span>
@@ -1363,9 +1350,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             {/* LEFT: SCREENER LIST */}
             <div
               id="stock-screener-list"
-              className={`w-full xl:w-[420px] shrink-0 rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl scroll-mt-24 xl:sticky xl:top-[6.5rem] xl:h-[calc(100vh-7.5rem)] flex flex-col ${
-                mobileViewTab === 'detail' ? 'hidden xl:flex' : 'flex'
-              }`}
+              className={`w-full xl:w-[420px] shrink-0 rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl scroll-mt-24 xl:sticky xl:top-[6.5rem] xl:h-[calc(100vh-7.5rem)] flex flex-col ${mobileViewTab === 'detail' ? 'hidden xl:flex' : 'flex'
+                }`}
             >
               <div className="px-3.5 py-2.5 bg-slate-950/70 border-b border-slate-800 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400 shrink-0">
                 <span>Hisse / Varlık ({filteredStocks.length})</span>
@@ -1399,11 +1385,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                       <div
                         key={st.symbol}
                         onClick={() => handleSelectStock(st.symbol)}
-                        className={`px-3 py-2.5 cursor-pointer transition-all flex items-center justify-between gap-2 ${
-                          isSel
+                        className={`px-3 py-2.5 cursor-pointer transition-all flex items-center justify-between gap-2 ${isSel
                             ? 'bg-cyan-500/20 border-l-4 border-l-cyan-400 ring-1 ring-cyan-400/50 shadow-inner'
                             : 'hover:bg-slate-800/60 border-l-4 border-l-transparent'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center space-x-2 min-w-0">
                           <button
@@ -1432,11 +1417,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                                   return null;
                                 return (
                                   <span
-                                    className={`px-1.5 py-0.2 rounded text-[9px] font-black border ${
-                                      openRisk.alertType === 'GÜÇLÜ SAT'
+                                    className={`px-1.5 py-0.2 rounded text-[9px] font-black border ${openRisk.alertType === 'GÜÇLÜ SAT'
                                         ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 animate-pulse'
                                         : 'bg-amber-500/20 text-amber-300 border-amber-500/50'
-                                    }`}
+                                      }`}
                                     title={`Sepette: ${openRisk.alertType} (${openRisk.primaryReason})`}
                                   >
                                     🚨 {openRisk.alertType}
@@ -1464,9 +1448,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                               {formatStockPrice(st.close, st.currency)}
                             </div>
                             <div
-                              className={`text-[10px] font-mono font-bold flex items-center justify-end ${
-                                st.changePct >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                              }`}
+                              className={`text-[10px] font-mono font-bold flex items-center justify-end ${st.changePct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                                }`}
                             >
                               {st.changePct >= 0 ? (
                                 <ArrowUpRight className="w-3 h-3" />
@@ -1505,9 +1488,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             {selectedStock && selectedAnalysis && (
               <div
                 id="stock-detail-workstation"
-                className={`flex-1 w-full min-w-0 space-y-4 scroll-mt-24 ${
-                  mobileViewTab === 'list' ? 'hidden xl:block' : 'block'
-                }`}
+                className={`flex-1 w-full min-w-0 space-y-4 scroll-mt-24 ${mobileViewTab === 'list' ? 'hidden xl:block' : 'block'
+                  }`}
               >
                 {/* Mobile Back-to-List Bar */}
                 <div className="xl:hidden flex items-center justify-between p-2.5 rounded-2xl bg-slate-950/90 border border-slate-800 shadow-md gap-2">
@@ -1520,7 +1502,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                           if (window.history.state?.view === 'detail') {
                             window.history.back();
                           }
-                        } catch {}
+                        } catch { }
                       }}
                       className="px-2.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-black text-xs flex items-center gap-1 transition-all cursor-pointer active:scale-95"
                     >
@@ -1552,1024 +1534,1012 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                     </span>
                   </div>
                 </div>
-              {/* Top Signal & Price Header */}
-              <div className="rounded-2xl bg-slate-900/95 border border-slate-800 p-4 sm:p-5 shadow-xl space-y-4">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                        {selectedStock.symbol}
-                      </span>
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-bold">
-                        {selectedStock.exchange || market.toUpperCase()}
-                      </span>
-                      {selectedStock.sector && (
-                        <span className="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold">
-                          {selectedStock.sector}
+                {/* Top Signal & Price Header */}
+                <div className="rounded-2xl bg-slate-900/95 border border-slate-800 p-4 sm:p-5 shadow-xl space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                          {selectedStock.symbol}
                         </span>
-                      )}
-                    </div>
-                    <h2 className="text-xs sm:text-sm text-slate-400 font-semibold mt-0.5">
-                      {selectedStock.name}
-                    </h2>
-
-                    {/* Quick Stock Actions: Portföye Ekle, Alarm Kur, Takip Et, AI Raporu */}
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                      <button
-                        onClick={() => {
-                          const existing = portfolio.find(
-                            (p) => p.symbol === selectedStock.symbol && p.status === 'open'
-                          );
-                          if (existing) {
-                            setIsPortfolioModalOpen(true);
-                            return;
-                          }
-                          const units =
-                            positionCalc && positionCalc.units > 0 ? positionCalc.units : 100;
-                          const newPos: StockPortfolioPosition = {
-                            id: `pos-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-                            symbol: selectedStock.symbol,
-                            name: selectedStock.name,
-                            market: selectedStock.market,
-                            units,
-                            entryPrice: selectedStock.close,
-                            currentPrice: selectedStock.close,
-                            stopLoss: selectedAnalysis?.tradePlan.stopLoss || null,
-                            targetPrice: selectedAnalysis?.tradePlan.tp1 || null,
-                            entryDate: new Date().toISOString(),
-                            status: 'open',
-                            notes: `${selectedAnalysis?.signal || 'AI'} analizi ile eklendi`,
-                          };
-                          savePortfolio([newPos, ...portfolio]);
-                          onShowToast?.(
-                            `💼 ${selectedStock.symbol} (${units.toLocaleString()} Lot) Sanal Portföye Eklendi!`
-                          );
-                        }}
-                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
-                          portfolio.some(
-                            (p) => p.symbol === selectedStock.symbol && p.status === 'open'
-                          )
-                            ? 'bg-sky-500/20 border-sky-400/40 text-sky-300'
-                            : 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 text-emerald-300'
-                        }`}
-                        title="Bu hisseyi sanal portföye ekle veya durumunu incele"
-                      >
-                        <Briefcase className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>
-                          {portfolio.some(
-                            (p) => p.symbol === selectedStock.symbol && p.status === 'open'
-                          )
-                            ? 'Portföyde Açık'
-                            : 'Portföye Ekle'}
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-bold">
+                          {selectedStock.exchange || market.toUpperCase()}
                         </span>
-                      </button>
-
-                      <button
-                        onClick={() => setIsAlertsModalOpen(true)}
-                        className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                        title="Bu hisse için fiyat / RSI alarmı kur"
-                      >
-                        <Bell className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Alarm Kur</span>
-                      </button>
-
-                      <button
-                        onClick={(e) => toggleWatchlist(selectedStock.symbol, e)}
-                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
-                          watchlist.includes(selectedStock.symbol)
-                            ? 'bg-amber-500/20 border-amber-400/40 text-amber-300'
-                            : 'bg-slate-800/90 border-slate-700 text-slate-300 hover:text-white'
-                        }`}
-                      >
-                        <Star
-                          className={`w-3.5 h-3.5 ${
-                            watchlist.includes(selectedStock.symbol)
-                              ? 'fill-amber-400 text-amber-400'
-                              : ''
-                          }`}
-                        />
-                        <span>
-                          {watchlist.includes(selectedStock.symbol) ? 'Takipte' : 'Takibe Al'}
-                        </span>
-                      </button>
-
-                      <button
-                        onClick={() => setIsAIChatOpen(true)}
-                        className="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                      >
-                        <Bot className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Kurumsal AI Raporu</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <div className="text-right">
-                      <div className="text-xl sm:text-2xl font-mono font-black text-white">
-                        {formatStockPrice(selectedStock.close, selectedStock.currency)}
+                        {selectedStock.sector && (
+                          <span className="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold">
+                            {selectedStock.sector}
+                          </span>
+                        )}
                       </div>
-                      <div
-                        className={`text-xs font-mono font-black ${
-                          selectedStock.changePct >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                        }`}
-                      >
-                        {selectedStock.changePct >= 0 ? '+' : ''}
-                        {selectedStock.changePct.toFixed(2)}% Bugün
-                      </div>
-                    </div>
+                      <h2 className="text-xs sm:text-sm text-slate-400 font-semibold mt-0.5">
+                        {selectedStock.name}
+                      </h2>
 
-                    <div
-                      className={`px-3.5 py-2 rounded-2xl border text-center ${getSignalStyle(
-                        selectedAnalysis.signal
-                      )}`}
-                    >
-                      <div className="text-xs font-black tracking-wide">{selectedAnalysis.signal}</div>
-                      <div className="text-[10px] opacity-90 font-mono">
-                        AI Skor: {selectedAnalysis.score}/100
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Basket Risk Callout Banner for Selected Stock */}
-                {selectedStockRisk &&
-                  (selectedStockRisk.alertType === 'GÜÇLÜ SAT' ||
-                    selectedStockRisk.alertType === 'SAT') && (
-                    <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-rose-950/90 via-red-950/60 to-slate-900 border border-rose-500/70 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
-                      <div className="flex items-start sm:items-center gap-3">
-                        <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/40 shrink-0 mt-0.5 sm:mt-0">
-                          <ShieldAlert className="w-5 h-5 animate-pulse" />
-                        </div>
-                        <div>
-                          <div className="text-xs font-black text-white flex items-center gap-2 flex-wrap">
-                            <span className="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] uppercase font-black">
-                              🚨 SEPET RİSKİ: {selectedStockRisk.alertType}
-                            </span>
-                            <span className="text-rose-200">{selectedStockRisk.primaryReason}</span>
-                          </div>
-                          <div className="text-[11px] text-slate-300 font-mono mt-0.5">
-                            Giriş: {selectedStockRisk.position.entryPrice.toFixed(2)} &bull; Güncel:{' '}
-                            {selectedStockRisk.currentPrice.toFixed(2)} &bull; PnL: %
-                            {selectedStockRisk.pnlPct >= 0 ? '+' : ''}
-                            {selectedStockRisk.pnlPct.toFixed(2)} (
-                            {selectedStockRisk.pnlVal.toFixed(2)}{' '}
-                            {selectedStock.currency === 'TRY' ? '₺' : '$'})
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          savePortfolio(
-                            portfolio.map((p) =>
-                              p.id === selectedStockRisk.position.id
-                                ? {
-                                    ...p,
-                                    status: 'closed',
-                                    exitPrice: selectedStockRisk.currentPrice,
-                                    exitDate: new Date().toISOString(),
-                                  }
-                                : p
-                            )
-                          );
-                          onShowToast?.(
-                            `🔴 ${selectedStock.symbol} pozisyonu kapatıldı ve işlem geçmişine kaydedildi.`
-                          );
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black text-white shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 ${
-                          selectedStockRisk.alertType === 'GÜÇLÜ SAT'
-                            ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30 border border-rose-400'
-                            : 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/30 border border-amber-400'
-                        }`}
-                        title={`${selectedStock.symbol} hissesini tek tıkla kapat`}
-                      >
-                        <Zap className="w-3.5 h-3.5" />
-                        <span>
-                          {selectedStockRisk.recommendedAction === 'ZARAR KES (STOP)'
-                            ? 'Zarar Kes & Pozisyonu Kapat'
-                            : 'Hemen Sat & Çık'}
-                        </span>
-                      </button>
-                    </div>
-                  )}
-
-                {/* 3 Sub-Scores: Trend | Momentum | Temel */}
-                <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-800">
-                  {[
-                    { label: 'Trend Gücü', val: selectedAnalysis.trendScore, col: 'bg-cyan-400' },
-                    { label: 'Momentum', val: selectedAnalysis.momentumScore, col: 'bg-emerald-400' },
-                    { label: 'Temel / Bilanço', val: selectedAnalysis.fundamentalScore, col: 'bg-amber-400' },
-                  ].map((b) => (
-                    <div key={b.label} className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-slate-400 font-bold">{b.label}</span>
-                        <span className="font-mono font-black text-white">%{b.val}</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                        <div className={`h-full rounded-full ${b.col}`} style={{ width: `${b.val}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Interactive Candlestick / EMA / BB / RSI Chart */}
-                <StockChart
-                  candles={chartData?.candles || []}
-                  currency={selectedStock.currency}
-                  stopLoss={selectedAnalysis.tradePlan.stopLoss}
-                  tp1={selectedAnalysis.tradePlan.tp1}
-                  analystTarget={deepData?.financials?.targetMeanPrice ?? null}
-                  range={chartRange}
-                  onChangeRange={setChartRange}
-                  loading={chartLoading}
-                />
-
-                {/* MULTI-TIMEFRAME CONFLUENCE STRIP (1S / 1G / 1H) */}
-                <div className="rounded-xl bg-slate-950/75 border border-slate-800 p-3 space-y-2.5">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-[11px] font-black uppercase tracking-wider text-cyan-300 flex items-center space-x-1.5">
-                      <Layers className="w-3.5 h-3.5" />
-                      <span>Çoklu Zaman Dilimi Uyum Radarı (MTF)</span>
-                    </div>
-                    {deepLoading ? (
-                      <span className="text-[10px] text-slate-400 animate-pulse">
-                        1S / 1G / 1H taranıyor...
-                      </span>
-                    ) : deepData ? (
-                      <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-[10px] font-black text-cyan-200">
-                        {deepData.mtfSummary.alignment} &bull; MTF Skor: {deepData.mtfSummary.mtfScore}/100
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {deepData && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {deepData.mtf.map((tf) => {
-                        const isBull = tf.signal === 'GÜÇLÜ AL' || tf.signal === 'AL';
-                        const isBear = tf.signal === 'GÜÇLÜ SAT' || tf.signal === 'SAT';
-                        return (
-                          <div
-                            key={tf.timeframe}
-                            className="px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between"
-                          >
-                            <div>
-                              <div className="text-[10px] font-bold text-slate-400">{tf.timeframe}</div>
-                              <div className="text-[11px] font-mono text-slate-300">
-                                RSI: <strong>{tf.rsi ?? '-'}</strong> &bull; Trend:{' '}
-                                <strong
-                                  className={
-                                    tf.trend === 'YÜKSELİŞ'
-                                      ? 'text-emerald-400'
-                                      : tf.trend === 'DÜŞÜŞ'
-                                      ? 'text-rose-400'
-                                      : 'text-slate-300'
-                                  }
-                                >
-                                  {tf.trend}
-                                </strong>
-                              </div>
-                            </div>
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-black border ${
-                                isBull
-                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                                  : isBear
-                                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                                  : 'bg-slate-800 text-slate-300 border-slate-700'
-                              }`}
-                            >
-                              {tf.signal}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Candlestick Patterns & Volume Ratio */}
-                  {deepData && (
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-800/80">
-                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono text-slate-300">
-                        <CandlestickChart className="w-3 h-3 text-cyan-400" />
-                        <span>
-                          Hacim Oranı: <strong className="text-white">{deepData.volumeRatio}x</strong>
-                        </span>
-                      </span>
-                      {deepData.patterns.map((p, idx) => (
-                        <span
-                          key={idx}
-                          title={p.description}
-                          className={`px-2 py-0.5 rounded border text-[10px] font-bold ${
-                            p.bias === 'bull'
-                              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                              : p.bias === 'bear'
-                              ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
-                              : 'bg-slate-800 text-slate-300 border-slate-700'
-                          }`}
-                        >
-                          {p.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Institutional AI Research Memo */}
-                {aiMemo && (
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/25 border border-cyan-500/30 space-y-2.5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center space-x-2">
-                        <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
-                        <span className="text-xs font-black text-white">{aiMemo.headline}</span>
-                      </div>
-                      <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-[10px] font-bold text-cyan-200">
-                        {aiMemo.convictionBadge}
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {aiMemo.sections.map((sec) => (
-                        <div key={sec.title} className="text-xs leading-relaxed">
-                          <div className="font-bold text-cyan-300">{sec.title}</div>
-                          <div className="text-slate-300">{sec.body}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-slate-950/90 border border-emerald-500/30 text-[11px] font-bold text-emerald-200">
-                      {aiMemo.actionCallout}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* TRADE PLAN + PIVOTS GRID */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* AI Trade Setup */}
-                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
-                      <Target className="w-4 h-4" />
-                      <span>AI İşlem Planı ({selectedAnalysis.tradePlan.bias})</span>
-                    </h3>
-                    <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-300">
-                      Risk: {selectedAnalysis.riskLevel} &bull; R/R 1:{selectedAnalysis.tradePlan.riskReward}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                      <div className="text-[10px] text-slate-400">Optimal Giriş</div>
-                      <div className="font-mono font-black text-white mt-0.5">
-                        {formatStockPrice(selectedAnalysis.tradePlan.entryLow, '')} –{' '}
-                        {formatStockPrice(selectedAnalysis.tradePlan.entryHigh, selectedStock.currency)}
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-rose-950/25 border border-rose-500/30">
-                      <div className="text-[10px] text-rose-300">Stop-Loss (Zarar Kes)</div>
-                      <div className="font-mono font-black text-rose-400 mt-0.5">
-                        {formatStockPrice(selectedAnalysis.tradePlan.stopLoss, selectedStock.currency)}{' '}
-                        <span className="text-[10px]">({selectedAnalysis.tradePlan.stopLossPct}%)</span>
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-emerald-950/25 border border-emerald-500/30">
-                      <div className="text-[10px] text-emerald-300">Hedef 1 (TP1)</div>
-                      <div className="font-mono font-black text-emerald-400 mt-0.5">
-                        {formatStockPrice(selectedAnalysis.tradePlan.tp1, selectedStock.currency)}{' '}
-                        <span className="text-[10px]">
-                          ({selectedAnalysis.tradePlan.tp1Pct >= 0 ? '+' : ''}
-                          {selectedAnalysis.tradePlan.tp1Pct}%)
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-400/40">
-                      <div className="text-[10px] text-emerald-200">Hedef 2 (TP2)</div>
-                      <div className="font-mono font-black text-emerald-300 mt-0.5">
-                        {formatStockPrice(selectedAnalysis.tradePlan.tp2, selectedStock.currency)}{' '}
-                        <span className="text-[10px]">
-                          ({selectedAnalysis.tradePlan.tp2Pct >= 0 ? '+' : ''}
-                          {selectedAnalysis.tradePlan.tp2Pct}%)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Position Size & Risk Calculator */}
-                  <div className="pt-2 border-t border-slate-800 space-y-2">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-cyan-300 flex items-center space-x-1">
-                      <Calculator className="w-3.5 h-3.5" />
-                      <span>Pozisyon &amp; Lot Mühendisi (Stop-Loss Riskine Göre)</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-[9px] text-slate-400 mb-0.5">
-                          Sermaye ({selectedStock.currency})
-                        </label>
-                        <input
-                          type="number"
-                          value={capitalInput}
-                          onChange={(e) => setCapitalInput(e.target.value)}
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] text-slate-400 mb-0.5">
-                          Maks Risk (%)
-                        </label>
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={riskPctInput}
-                          onChange={(e) => setRiskPctInput(e.target.value)}
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-white"
-                        />
-                      </div>
-                    </div>
-                    {positionCalc && (
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-3 gap-1.5 text-[10px] bg-slate-950/80 p-2 rounded-xl border border-slate-800">
-                          <div>
-                            <div className="text-slate-400">Önerilen Adet</div>
-                            <div className="font-mono font-black text-white">
-                              {positionCalc.units.toLocaleString('tr-TR')} Lot
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-slate-400">İşlem Tutarı</div>
-                            <div className="font-mono font-black text-cyan-300">
-                              {formatStockPrice(positionCalc.totalCost, selectedStock.currency)}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-slate-400">TP1 Kâr / Stop</div>
-                            <div className="font-mono font-black">
-                              <span className="text-emerald-400">
-                                +{formatStockPrice(positionCalc.tp1Profit, '')}
-                              </span>{' '}
-                              /{' '}
-                              <span className="text-rose-400">
-                                -{formatStockPrice(positionCalc.slLoss, '')}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Add to Virtual Portfolio Button */}
+                      {/* Quick Stock Actions: Portföye Ekle, Alarm Kur, Takip Et, AI Raporu */}
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
                         <button
-                          type="button"
                           onClick={() => {
+                            const existing = portfolio.find(
+                              (p) => p.symbol === selectedStock.symbol && p.status === 'open'
+                            );
+                            if (existing) {
+                              setIsPortfolioModalOpen(true);
+                              return;
+                            }
+                            const units =
+                              positionCalc && positionCalc.units > 0 ? positionCalc.units : 100;
                             const newPos: StockPortfolioPosition = {
                               id: `pos-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
                               symbol: selectedStock.symbol,
                               name: selectedStock.name,
                               market: selectedStock.market,
-                              units: positionCalc.units,
+                              units,
                               entryPrice: selectedStock.close,
                               currentPrice: selectedStock.close,
                               stopLoss: selectedAnalysis?.tradePlan.stopLoss || null,
                               targetPrice: selectedAnalysis?.tradePlan.tp1 || null,
                               entryDate: new Date().toISOString(),
                               status: 'open',
-                              notes: `${selectedAnalysis?.signal} sinyaliyle Lot Mühendisinden eklendi`,
+                              notes: `${selectedAnalysis?.signal || 'AI'} analizi ile eklendi`,
                             };
                             savePortfolio([newPos, ...portfolio]);
-                            onShowToast?.(`💼 ${selectedStock.symbol} (${positionCalc.units} lot) Sanal Portföye Eklendi!`);
+                            onShowToast?.(
+                              `💼 ${selectedStock.symbol} (${units.toLocaleString()} Lot) Sanal Portföye Eklendi!`
+                            );
                           }}
-                          className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-sky-600 via-sky-500 to-cyan-500 hover:brightness-110 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-sky-600/20 transition-all cursor-pointer"
+                          className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${portfolio.some(
+                            (p) => p.symbol === selectedStock.symbol && p.status === 'open'
+                          )
+                              ? 'bg-sky-500/20 border-sky-400/40 text-sky-300'
+                              : 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 text-emerald-300'
+                            }`}
+                          title="Bu hisseyi sanal portföye ekle veya durumunu incele"
                         >
-                          <Briefcase className="w-3.5 h-3.5" />
-                          <span>💼 Sanal Portföye Ekle ({positionCalc.units.toLocaleString('tr-TR')} Lot)</span>
+                          <Briefcase className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>
+                            {portfolio.some(
+                              (p) => p.symbol === selectedStock.symbol && p.status === 'open'
+                            )
+                              ? 'Portföyde Açık'
+                              : 'Portföye Ekle'}
+                          </span>
+                        </button>
+
+                        <button
+                          onClick={() => setIsAlertsModalOpen(true)}
+                          className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                          title="Bu hisse için fiyat / RSI alarmı kur"
+                        >
+                          <Bell className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Alarm Kur</span>
+                        </button>
+
+                        <button
+                          onClick={(e) => toggleWatchlist(selectedStock.symbol, e)}
+                          className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${watchlist.includes(selectedStock.symbol)
+                              ? 'bg-amber-500/20 border-amber-400/40 text-amber-300'
+                              : 'bg-slate-800/90 border-slate-700 text-slate-300 hover:text-white'
+                            }`}
+                        >
+                          <Star
+                            className={`w-3.5 h-3.5 ${watchlist.includes(selectedStock.symbol)
+                                ? 'fill-amber-400 text-amber-400'
+                                : ''
+                              }`}
+                          />
+                          <span>
+                            {watchlist.includes(selectedStock.symbol) ? 'Takipte' : 'Takibe Al'}
+                          </span>
+                        </button>
+
+                        <button
+                          onClick={() => setIsAIChatOpen(true)}
+                          className="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                        >
+                          <Bot className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Kurumsal AI Raporu</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <div className="text-right">
+                        <div className="text-xl sm:text-2xl font-mono font-black text-white">
+                          {formatStockPrice(selectedStock.close, selectedStock.currency)}
+                        </div>
+                        <div
+                          className={`text-xs font-mono font-black ${selectedStock.changePct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                            }`}
+                        >
+                          {selectedStock.changePct >= 0 ? '+' : ''}
+                          {selectedStock.changePct.toFixed(2)}% Bugün
+                        </div>
+                      </div>
+
+                      <div
+                        className={`px-3.5 py-2 rounded-2xl border text-center ${getSignalStyle(
+                          selectedAnalysis.signal
+                        )}`}
+                      >
+                        <div className="text-xs font-black tracking-wide">{selectedAnalysis.signal}</div>
+                        <div className="text-[10px] opacity-90 font-mono">
+                          AI Skor: {selectedAnalysis.score}/100
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Basket Risk Callout Banner for Selected Stock */}
+                  {selectedStockRisk &&
+                    (selectedStockRisk.alertType === 'GÜÇLÜ SAT' ||
+                      selectedStockRisk.alertType === 'SAT') && (
+                      <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-rose-950/90 via-red-950/60 to-slate-900 border border-rose-500/70 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                        <div className="flex items-start sm:items-center gap-3">
+                          <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/40 shrink-0 mt-0.5 sm:mt-0">
+                            <ShieldAlert className="w-5 h-5 animate-pulse" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-black text-white flex items-center gap-2 flex-wrap">
+                              <span className="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] uppercase font-black">
+                                🚨 SEPET RİSKİ: {selectedStockRisk.alertType}
+                              </span>
+                              <span className="text-rose-200">{selectedStockRisk.primaryReason}</span>
+                            </div>
+                            <div className="text-[11px] text-slate-300 font-mono mt-0.5">
+                              Giriş: {selectedStockRisk.position.entryPrice.toFixed(2)} &bull; Güncel:{' '}
+                              {selectedStockRisk.currentPrice.toFixed(2)} &bull; PnL: %
+                              {selectedStockRisk.pnlPct >= 0 ? '+' : ''}
+                              {selectedStockRisk.pnlPct.toFixed(2)} (
+                              {selectedStockRisk.pnlVal.toFixed(2)}{' '}
+                              {selectedStock.currency === 'TRY' ? '₺' : '$'})
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            savePortfolio(
+                              portfolio.map((p) =>
+                                p.id === selectedStockRisk.position.id
+                                  ? {
+                                    ...p,
+                                    status: 'closed',
+                                    exitPrice: selectedStockRisk.currentPrice,
+                                    exitDate: new Date().toISOString(),
+                                  }
+                                  : p
+                              )
+                            );
+                            onShowToast?.(
+                              `🔴 ${selectedStock.symbol} pozisyonu kapatıldı ve işlem geçmişine kaydedildi.`
+                            );
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-black text-white shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 ${selectedStockRisk.alertType === 'GÜÇLÜ SAT'
+                              ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30 border border-rose-400'
+                              : 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/30 border border-amber-400'
+                            }`}
+                          title={`${selectedStock.symbol} hissesini tek tıkla kapat`}
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                          <span>
+                            {selectedStockRisk.recommendedAction === 'ZARAR KES (STOP)'
+                              ? 'Zarar Kes & Pozisyonu Kapat'
+                              : 'Hemen Sat & Çık'}
+                          </span>
                         </button>
                       </div>
                     )}
-                  </div>
-                </div>
 
-                {/* Supports, Resistances & 52W Range */}
-                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center space-x-1.5">
-                    <BarChart3 className="w-4 h-4" />
-                    <span>Pivot Destek / Direnç &amp; 52H Aralık</span>
-                  </h3>
-
-                  <div className="grid grid-cols-5 gap-1.5 text-center">
+                  {/* 3 Sub-Scores: Trend | Momentum | Temel */}
+                  <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-800">
                     {[
-                      { k: 'S2', v: selectedAnalysis.pivots.s2, c: 'text-emerald-400' },
-                      { k: 'S1', v: selectedAnalysis.pivots.s1, c: 'text-emerald-300' },
-                      { k: 'PIVOT', v: selectedAnalysis.pivots.pivot, c: 'text-white' },
-                      { k: 'R1', v: selectedAnalysis.pivots.r1, c: 'text-rose-300' },
-                      { k: 'R2', v: selectedAnalysis.pivots.r2, c: 'text-rose-400' },
-                    ].map((p) => (
-                      <div key={p.k} className="p-2 rounded-xl bg-slate-950/70 border border-slate-800">
-                        <div className="text-[9px] font-bold text-slate-400">{p.k}</div>
-                        <div className={`text-[11px] font-mono font-black ${p.c}`}>
-                          {formatStockPrice(p.v, '')}
+                      { label: 'Trend Gücü', val: selectedAnalysis.trendScore, col: 'bg-cyan-400' },
+                      { label: 'Momentum', val: selectedAnalysis.momentumScore, col: 'bg-emerald-400' },
+                      { label: 'Temel / Bilanço', val: selectedAnalysis.fundamentalScore, col: 'bg-amber-400' },
+                    ].map((b) => (
+                      <div key={b.label} className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-slate-400 font-bold">{b.label}</span>
+                          <span className="font-mono font-black text-white">%{b.val}</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                          <div className={`h-full rounded-full ${b.col}`} style={{ width: `${b.val}%` }} />
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  {selectedStock.low52W && selectedStock.high52W && (
-                    <div className="space-y-1 pt-1">
-                      <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                        <span>52H Dip: {formatStockPrice(selectedStock.low52W, '')}</span>
-                        <span>52H Zirve: {formatStockPrice(selectedStock.high52W, '')}</span>
+                  {/* Interactive Candlestick / EMA / BB / RSI Chart */}
+                  <StockChart
+                    candles={chartData?.candles || []}
+                    currency={selectedStock.currency}
+                    stopLoss={selectedAnalysis.tradePlan.stopLoss}
+                    tp1={selectedAnalysis.tradePlan.tp1}
+                    analystTarget={deepData?.financials?.targetMeanPrice ?? null}
+                    range={chartRange}
+                    onChangeRange={setChartRange}
+                    loading={chartLoading}
+                  />
+
+                  {/* MULTI-TIMEFRAME CONFLUENCE STRIP (1S / 1G / 1H) */}
+                  <div className="rounded-xl bg-slate-950/75 border border-slate-800 p-3 space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-[11px] font-black uppercase tracking-wider text-cyan-300 flex items-center space-x-1.5">
+                        <Layers className="w-3.5 h-3.5" />
+                        <span>Çoklu Zaman Dilimi Uyum Radarı (MTF)</span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-slate-800 relative overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full"
-                          style={{
-                            width: `${Math.max(
-                              4,
-                              Math.min(
-                                100,
-                                ((selectedStock.close - selectedStock.low52W) /
-                                  Math.max(0.01, selectedStock.high52W - selectedStock.low52W)) *
-                                  100
-                              )
-                            )}%`,
-                          }}
-                        />
-                      </div>
+                      {deepLoading ? (
+                        <span className="text-[10px] text-slate-400 animate-pulse">
+                          1S / 1G / 1H taranıyor...
+                        </span>
+                      ) : deepData ? (
+                        <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-[10px] font-black text-cyan-200">
+                          {deepData.mtfSummary.alignment} &bull; MTF Skor: {deepData.mtfSummary.mtfScore}/100
+                        </span>
+                      ) : null}
                     </div>
-                  )}
-                </div>
-              </div>
 
-              {/* FUNDAMENTALS + TECHNICAL INDICATORS MATRIX */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Fundamentals */}
-                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center space-x-1.5">
-                    <Globe className="w-4 h-4" />
-                    <span>Temel Analiz &amp; Performans</span>
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    {[
-                      { k: 'Piyasa Değeri', v: formatLargeNumber(selectedStock.marketCap, selectedStock.currency) },
-                      { k: 'İşlem Hacmi', v: formatLargeNumber(selectedStock.valueTraded, selectedStock.currency) },
-                      { k: 'F/K (P/E)', v: selectedStock.pe ? `${selectedStock.pe.toFixed(2)}x` : '-' },
-                      { k: 'PD/DD (P/B)', v: selectedStock.pb ? `${selectedStock.pb.toFixed(2)}x` : '-' },
-                      { k: 'Özsermaye Kâr. (ROE)', v: selectedStock.roe ? `%${selectedStock.roe.toFixed(1)}` : '-' },
-                      { k: 'Temettü Verimi', v: selectedStock.dividendYield ? `%${selectedStock.dividendYield.toFixed(2)}` : '-' },
-                    ].map((row) => (
-                      <div
-                        key={row.k}
-                        className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between"
-                      >
-                        <span className="text-[11px] text-slate-400">{row.k}</span>
-                        <span className="font-mono font-black text-white">{row.v}</span>
+                    {deepData && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {deepData.mtf.map((tf) => {
+                          const isBull = tf.signal === 'GÜÇLÜ AL' || tf.signal === 'AL';
+                          const isBear = tf.signal === 'GÜÇLÜ SAT' || tf.signal === 'SAT';
+                          return (
+                            <div
+                              key={tf.timeframe}
+                              className="px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between"
+                            >
+                              <div>
+                                <div className="text-[10px] font-bold text-slate-400">{tf.timeframe}</div>
+                                <div className="text-[11px] font-mono text-slate-300">
+                                  RSI: <strong>{tf.rsi ?? '-'}</strong> &bull; Trend:{' '}
+                                  <strong
+                                    className={
+                                      tf.trend === 'YÜKSELİŞ'
+                                        ? 'text-emerald-400'
+                                        : tf.trend === 'DÜŞÜŞ'
+                                          ? 'text-rose-400'
+                                          : 'text-slate-300'
+                                    }
+                                  >
+                                    {tf.trend}
+                                  </strong>
+                                </div>
+                              </div>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-black border ${isBull
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                    : isBear
+                                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                                      : 'bg-slate-800 text-slate-300 border-slate-700'
+                                  }`}
+                              >
+                                {tf.signal}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
-                    ))}
-                  </div>
+                    )}
 
-                  {/* Multi-Period Returns */}
-                  <div className="grid grid-cols-4 gap-1.5 pt-1">
-                    {[
-                      { k: '1 Hafta', v: selectedStock.perfW },
-                      { k: '1 Ay', v: selectedStock.perf1M },
-                      { k: '6 Ay', v: selectedStock.perf6M },
-                      { k: '1 Yıl', v: selectedStock.perf1Y },
-                    ].map((p) => (
-                      <div
-                        key={p.k}
-                        className="p-2 rounded-xl bg-slate-950/70 border border-slate-800 text-center"
-                      >
-                        <div className="text-[9px] text-slate-400">{p.k}</div>
-                        <div
-                          className={`text-[11px] font-mono font-black ${
-                            (p.v ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                          }`}
-                        >
-                          {p.v !== null ? `${p.v >= 0 ? '+' : ''}${p.v.toFixed(1)}%` : '-'}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Technical Indicators Matrix */}
-                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
-                    <Activity className="w-4 h-4" />
-                    <span>Teknik İndikatör Matrisi</span>
-                  </h3>
-                  <div className="space-y-1.5">
-                    {selectedAnalysis.indicators.map((ind) => (
-                      <div
-                        key={ind.name}
-                        className="px-3 py-2 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between gap-2 text-xs"
-                      >
-                        <div>
-                          <div className="font-bold text-slate-200">{ind.name}</div>
-                          <div className="text-[10px] text-slate-500">{ind.note}</div>
-                        </div>
-                        <div className="flex items-center space-x-2 shrink-0">
-                          <span className="font-mono text-slate-300 font-bold">{ind.value}</span>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                              ind.action === 'AL'
-                                ? 'bg-emerald-500/20 text-emerald-300'
-                                : ind.action === 'SAT'
-                                ? 'bg-rose-500/20 text-rose-300'
-                                : 'bg-slate-800 text-slate-400'
-                            }`}
-                          >
-                            {ind.action}
+                    {/* Candlestick Patterns & Volume Ratio */}
+                    {deepData && (
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-800/80">
+                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono text-slate-300">
+                          <CandlestickChart className="w-3 h-3 text-cyan-400" />
+                          <span>
+                            Hacim Oranı: <strong className="text-white">{deepData.volumeRatio}x</strong>
                           </span>
-                        </div>
+                        </span>
+                        {deepData.patterns.map((p, idx) => (
+                          <span
+                            key={idx}
+                            title={p.description}
+                            className={`px-2 py-0.5 rounded border text-[10px] font-bold ${p.bias === 'bull'
+                                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                                : p.bias === 'bear'
+                                  ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                                  : 'bg-slate-800 text-slate-300 border-slate-700'
+                              }`}
+                          >
+                            {p.name}
+                          </span>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* BULL VS BEAR REASONS */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-2xl bg-emerald-950/20 border border-emerald-500/25 p-4 space-y-2">
-                  <div className="text-xs font-black text-emerald-300 flex items-center space-x-1.5">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Güçlü Yönler &amp; Alım Katalizörleri</span>
-                  </div>
-                  <ul className="space-y-1.5 text-xs text-slate-200">
-                    {selectedAnalysis.bullReasons.map((r, i) => (
-                      <li key={i} className="flex items-start space-x-1.5">
-                        <TrendingUp className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                        <span>{r}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="rounded-2xl bg-rose-950/20 border border-rose-500/25 p-4 space-y-2">
-                  <div className="text-xs font-black text-rose-300 flex items-center space-x-1.5">
-                    <ShieldAlert className="w-4 h-4" />
-                    <span>Riskler &amp; Dikkat Noktaları</span>
-                  </div>
-                  <ul className="space-y-1.5 text-xs text-slate-200">
-                    {selectedAnalysis.bearReasons.map((r, i) => (
-                      <li key={i} className="flex items-start space-x-1.5">
-                        <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
-                        <span>{r}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* ANALYST CONSENSUS + 1Y REAL BACKTEST LAB */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Wall Street / Institutional Analyst Consensus */}
-                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center space-x-1.5">
-                      <Target className="w-4 h-4" />
-                      <span>Kurumsal Analist Hedefleri &amp; Bilanço</span>
-                    </h3>
-                    {deepData?.financials?.recommendationKey && (
-                      <span className="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-black uppercase text-emerald-300">
-                        {deepData.financials.recommendationKey.replace(/_/g, ' ')} (
-                        {deepData.financials.numberOfAnalystOpinions ?? '-'} Kurum)
-                      </span>
                     )}
                   </div>
 
-                  {deepData?.financials?.targetMeanPrice ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">Ortalama Analist Hedefi</span>
-                        <span className="font-mono font-black text-white">
-                          {formatStockPrice(deepData.financials.targetMeanPrice, selectedStock.currency)}{' '}
-                          {deepData.financials.upsidePct !== null && (
-                            <span
-                              className={
-                                deepData.financials.upsidePct >= 0
-                                  ? 'text-emerald-400'
-                                  : 'text-rose-400'
-                              }
-                            >
-                              ({deepData.financials.upsidePct >= 0 ? '+' : ''}
-                              {deepData.financials.upsidePct}%)
-                            </span>
-                          )}
+                  {/* Institutional AI Research Memo */}
+                  {aiMemo && (
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/25 border border-cyan-500/30 space-y-2.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center space-x-2">
+                          <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+                          <span className="text-xs font-black text-white">{aiMemo.headline}</span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-[10px] font-bold text-cyan-200">
+                          {aiMemo.convictionBadge}
                         </span>
                       </div>
-                      <div className="grid grid-cols-3 gap-1.5 text-center text-[10px]">
-                        <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
-                          <div className="text-slate-500">En Düşük</div>
-                          <div className="font-mono font-bold text-slate-300">
-                            {formatStockPrice(deepData.financials.targetLowPrice ?? 0, '')}
+                      <div className="space-y-2">
+                        {aiMemo.sections.map((sec) => (
+                          <div key={sec.title} className="text-xs leading-relaxed">
+                            <div className="font-bold text-cyan-300">{sec.title}</div>
+                            <div className="text-slate-300">{sec.body}</div>
                           </div>
+                        ))}
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-950/90 border border-emerald-500/30 text-[11px] font-bold text-emerald-200">
+                        {aiMemo.actionCallout}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* TRADE PLAN + PIVOTS GRID */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* AI Trade Setup */}
+                  <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
+                        <Target className="w-4 h-4" />
+                        <span>AI İşlem Planı ({selectedAnalysis.tradePlan.bias})</span>
+                      </h3>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-300">
+                        Risk: {selectedAnalysis.riskLevel} &bull; R/R 1:{selectedAnalysis.tradePlan.riskReward}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                        <div className="text-[10px] text-slate-400">Optimal Giriş</div>
+                        <div className="font-mono font-black text-white mt-0.5">
+                          {formatStockPrice(selectedAnalysis.tradePlan.entryLow, '')} –{' '}
+                          {formatStockPrice(selectedAnalysis.tradePlan.entryHigh, selectedStock.currency)}
                         </div>
-                        <div className="p-2 rounded-lg bg-cyan-950/30 border border-cyan-500/30">
-                          <div className="text-cyan-400">Mevcut</div>
-                          <div className="font-mono font-black text-white">
-                            {formatStockPrice(selectedStock.close, '')}
-                          </div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-rose-950/25 border border-rose-500/30">
+                        <div className="text-[10px] text-rose-300">Stop-Loss (Zarar Kes)</div>
+                        <div className="font-mono font-black text-rose-400 mt-0.5">
+                          {formatStockPrice(selectedAnalysis.tradePlan.stopLoss, selectedStock.currency)}{' '}
+                          <span className="text-[10px]">({selectedAnalysis.tradePlan.stopLossPct}%)</span>
                         </div>
-                        <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
-                          <div className="text-slate-500">En Yüksek</div>
-                          <div className="font-mono font-bold text-emerald-300">
-                            {formatStockPrice(deepData.financials.targetHighPrice ?? 0, '')}
-                          </div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-emerald-950/25 border border-emerald-500/30">
+                        <div className="text-[10px] text-emerald-300">Hedef 1 (TP1)</div>
+                        <div className="font-mono font-black text-emerald-400 mt-0.5">
+                          {formatStockPrice(selectedAnalysis.tradePlan.tp1, selectedStock.currency)}{' '}
+                          <span className="text-[10px]">
+                            ({selectedAnalysis.tradePlan.tp1Pct >= 0 ? '+' : ''}
+                            {selectedAnalysis.tradePlan.tp1Pct}%)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-400/40">
+                        <div className="text-[10px] text-emerald-200">Hedef 2 (TP2)</div>
+                        <div className="font-mono font-black text-emerald-300 mt-0.5">
+                          {formatStockPrice(selectedAnalysis.tradePlan.tp2, selectedStock.currency)}{' '}
+                          <span className="text-[10px]">
+                            ({selectedAnalysis.tradePlan.tp2Pct >= 0 ? '+' : ''}
+                            {selectedAnalysis.tradePlan.tp2Pct}%)
+                          </span>
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    <div className="text-xs text-slate-400">
-                      {deepLoading
-                        ? 'Kurumsal analist hedefleri sorgulanıyor...'
-                        : 'Bu varlık için analist konsensüsü bulunmuyor (veya kripto varlık).'}
-                    </div>
-                  )}
 
-                  {deepData?.financials && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-[11px]">
+                    {/* Position Size & Risk Calculator */}
+                    <div className="pt-2 border-t border-slate-800 space-y-2">
+                      <div className="text-[10px] font-black uppercase tracking-wider text-cyan-300 flex items-center space-x-1">
+                        <Calculator className="w-3.5 h-3.5" />
+                        <span>Pozisyon &amp; Lot Mühendisi (Stop-Loss Riskine Göre)</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[9px] text-slate-400 mb-0.5">
+                            Sermaye ({selectedStock.currency})
+                          </label>
+                          <input
+                            type="number"
+                            value={capitalInput}
+                            onChange={(e) => setCapitalInput(e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-slate-400 mb-0.5">
+                            Maks Risk (%)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.5"
+                            value={riskPctInput}
+                            onChange={(e) => setRiskPctInput(e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-white"
+                          />
+                        </div>
+                      </div>
+                      {positionCalc && (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-3 gap-1.5 text-[10px] bg-slate-950/80 p-2 rounded-xl border border-slate-800">
+                            <div>
+                              <div className="text-slate-400">Önerilen Adet</div>
+                              <div className="font-mono font-black text-white">
+                                {positionCalc.units.toLocaleString('tr-TR')} Lot
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-slate-400">İşlem Tutarı</div>
+                              <div className="font-mono font-black text-cyan-300">
+                                {formatStockPrice(positionCalc.totalCost, selectedStock.currency)}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-slate-400">TP1 Kâr / Stop</div>
+                              <div className="font-mono font-black">
+                                <span className="text-emerald-400">
+                                  +{formatStockPrice(positionCalc.tp1Profit, '')}
+                                </span>{' '}
+                                /{' '}
+                                <span className="text-rose-400">
+                                  -{formatStockPrice(positionCalc.slLoss, '')}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Add to Virtual Portfolio Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newPos: StockPortfolioPosition = {
+                                id: `pos-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                                symbol: selectedStock.symbol,
+                                name: selectedStock.name,
+                                market: selectedStock.market,
+                                units: positionCalc.units,
+                                entryPrice: selectedStock.close,
+                                currentPrice: selectedStock.close,
+                                stopLoss: selectedAnalysis?.tradePlan.stopLoss || null,
+                                targetPrice: selectedAnalysis?.tradePlan.tp1 || null,
+                                entryDate: new Date().toISOString(),
+                                status: 'open',
+                                notes: `${selectedAnalysis?.signal} sinyaliyle Lot Mühendisinden eklendi`,
+                              };
+                              savePortfolio([newPos, ...portfolio]);
+                              onShowToast?.(`💼 ${selectedStock.symbol} (${positionCalc.units} lot) Sanal Portföye Eklendi!`);
+                            }}
+                            className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-sky-600 via-sky-500 to-cyan-500 hover:brightness-110 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-sky-600/20 transition-all cursor-pointer"
+                          >
+                            <Briefcase className="w-3.5 h-3.5" />
+                            <span>💼 Sanal Portföye Ekle ({positionCalc.units.toLocaleString('tr-TR')} Lot)</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Supports, Resistances & 52W Range */}
+                  <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center space-x-1.5">
+                      <BarChart3 className="w-4 h-4" />
+                      <span>Pivot Destek / Direnç &amp; 52H Aralık</span>
+                    </h3>
+
+                    <div className="grid grid-cols-5 gap-1.5 text-center">
                       {[
-                        {
-                          k: 'ROE',
-                          v:
-                            deepData.financials.returnOnEquityPct !== null
-                              ? `%${deepData.financials.returnOnEquityPct}`
-                              : '-',
-                        },
-                        {
-                          k: 'Net Kâr Marjı',
-                          v:
-                            deepData.financials.profitMarginsPct !== null
-                              ? `%${deepData.financials.profitMarginsPct}`
-                              : '-',
-                        },
-                        {
-                          k: 'Gelir Büyümesi',
-                          v:
-                            deepData.financials.revenueGrowthPct !== null
-                              ? `%${deepData.financials.revenueGrowthPct}`
-                              : '-',
-                        },
-                        {
-                          k: 'İleri F/K',
-                          v: deepData.financials.forwardPE ? `${deepData.financials.forwardPE}x` : '-',
-                        },
-                        {
-                          k: 'Borç / Özkaynak',
-                          v:
-                            deepData.financials.debtToEquity !== null
-                              ? `%${deepData.financials.debtToEquity}`
-                              : '-',
-                        },
-                        {
-                          k: 'Beta',
-                          v: deepData.financials.beta !== null ? `${deepData.financials.beta}` : '-',
-                        },
-                      ].map((item) => (
-                        <div
-                          key={item.k}
-                          className="p-2 rounded-lg bg-slate-950/70 border border-slate-800 flex justify-between"
-                        >
-                          <span className="text-slate-400">{item.k}</span>
-                          <strong className="font-mono text-white">{item.v}</strong>
+                        { k: 'S2', v: selectedAnalysis.pivots.s2, c: 'text-emerald-400' },
+                        { k: 'S1', v: selectedAnalysis.pivots.s1, c: 'text-emerald-300' },
+                        { k: 'PIVOT', v: selectedAnalysis.pivots.pivot, c: 'text-white' },
+                        { k: 'R1', v: selectedAnalysis.pivots.r1, c: 'text-rose-300' },
+                        { k: 'R2', v: selectedAnalysis.pivots.r2, c: 'text-rose-400' },
+                      ].map((p) => (
+                        <div key={p.k} className="p-2 rounded-xl bg-slate-950/70 border border-slate-800">
+                          <div className="text-[9px] font-bold text-slate-400">{p.k}</div>
+                          <div className={`text-[11px] font-mono font-black ${p.c}`}>
+                            {formatStockPrice(p.v, '')}
+                          </div>
                         </div>
                       ))}
                     </div>
-                  )}
+
+                    {selectedStock.low52W && selectedStock.high52W && (
+                      <div className="space-y-1 pt-1">
+                        <div className="flex justify-between text-[10px] font-mono text-slate-400">
+                          <span>52H Dip: {formatStockPrice(selectedStock.low52W, '')}</span>
+                          <span>52H Zirve: {formatStockPrice(selectedStock.high52W, '')}</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-slate-800 relative overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full"
+                            style={{
+                              width: `${Math.max(
+                                4,
+                                Math.min(
+                                  100,
+                                  ((selectedStock.close - selectedStock.low52W) /
+                                    Math.max(0.01, selectedStock.high52W - selectedStock.low52W)) *
+                                  100
+                                )
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Real 1-Year Strategy Backtest Lab */}
-                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                {/* FUNDAMENTALS + TECHNICAL INDICATORS MATRIX */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Fundamentals */}
+                  <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center space-x-1.5">
+                      <Globe className="w-4 h-4" />
+                      <span>Temel Analiz &amp; Performans</span>
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      {[
+                        { k: 'Piyasa Değeri', v: formatLargeNumber(selectedStock.marketCap, selectedStock.currency) },
+                        { k: 'İşlem Hacmi', v: formatLargeNumber(selectedStock.valueTraded, selectedStock.currency) },
+                        { k: 'F/K (P/E)', v: selectedStock.pe ? `${selectedStock.pe.toFixed(2)}x` : '-' },
+                        { k: 'PD/DD (P/B)', v: selectedStock.pb ? `${selectedStock.pb.toFixed(2)}x` : '-' },
+                        { k: 'Özsermaye Kâr. (ROE)', v: selectedStock.roe ? `%${selectedStock.roe.toFixed(1)}` : '-' },
+                        { k: 'Temettü Verimi', v: selectedStock.dividendYield ? `%${selectedStock.dividendYield.toFixed(2)}` : '-' },
+                      ].map((row) => (
+                        <div
+                          key={row.k}
+                          className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between"
+                        >
+                          <span className="text-[11px] text-slate-400">{row.k}</span>
+                          <span className="font-mono font-black text-white">{row.v}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Multi-Period Returns */}
+                    <div className="grid grid-cols-4 gap-1.5 pt-1">
+                      {[
+                        { k: '1 Hafta', v: selectedStock.perfW },
+                        { k: '1 Ay', v: selectedStock.perf1M },
+                        { k: '6 Ay', v: selectedStock.perf6M },
+                        { k: '1 Yıl', v: selectedStock.perf1Y },
+                      ].map((p) => (
+                        <div
+                          key={p.k}
+                          className="p-2 rounded-xl bg-slate-950/70 border border-slate-800 text-center"
+                        >
+                          <div className="text-[9px] text-slate-400">{p.k}</div>
+                          <div
+                            className={`text-[11px] font-mono font-black ${(p.v ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                              }`}
+                          >
+                            {p.v !== null ? `${p.v >= 0 ? '+' : ''}${p.v.toFixed(1)}%` : '-'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Technical Indicators Matrix */}
+                  <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
                     <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
                       <Activity className="w-4 h-4" />
-                      <span>1 Yıllık Gerçek Backtest Laboratuvarı</span>
+                      <span>Teknik İndikatör Matrisi</span>
                     </h3>
-                    {deepData?.backtest && (
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {deepData.backtest.totalTrades} İşlem Test Edildi
-                      </span>
-                    )}
+                    <div className="space-y-1.5">
+                      {selectedAnalysis.indicators.map((ind) => (
+                        <div
+                          key={ind.name}
+                          className="px-3 py-2 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between gap-2 text-xs"
+                        >
+                          <div>
+                            <div className="font-bold text-slate-200">{ind.name}</div>
+                            <div className="text-[10px] text-slate-500">{ind.note}</div>
+                          </div>
+                          <div className="flex items-center space-x-2 shrink-0">
+                            <span className="font-mono text-slate-300 font-bold">{ind.value}</span>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-black ${ind.action === 'AL'
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : ind.action === 'SAT'
+                                    ? 'bg-rose-500/20 text-rose-300'
+                                    : 'bg-slate-800 text-slate-400'
+                                }`}
+                            >
+                              {ind.action}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* BULL VS BEAR REASONS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="rounded-2xl bg-emerald-950/20 border border-emerald-500/25 p-4 space-y-2">
+                    <div className="text-xs font-black text-emerald-300 flex items-center space-x-1.5">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Güçlü Yönler &amp; Alım Katalizörleri</span>
+                    </div>
+                    <ul className="space-y-1.5 text-xs text-slate-200">
+                      {selectedAnalysis.bullReasons.map((r, i) => (
+                        <li key={i} className="flex items-start space-x-1.5">
+                          <TrendingUp className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                          <span>{r}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
-                  {deepData?.backtest ? (
-                    <>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                          <div className="text-[9px] text-slate-400">Kazanma Oranı</div>
-                          <div className="font-mono font-black text-sm text-emerald-400">
-                            %{deepData.backtest.winRate}
-                          </div>
+                  <div className="rounded-2xl bg-rose-950/20 border border-rose-500/25 p-4 space-y-2">
+                    <div className="text-xs font-black text-rose-300 flex items-center space-x-1.5">
+                      <ShieldAlert className="w-4 h-4" />
+                      <span>Riskler &amp; Dikkat Noktaları</span>
+                    </div>
+                    <ul className="space-y-1.5 text-xs text-slate-200">
+                      {selectedAnalysis.bearReasons.map((r, i) => (
+                        <li key={i} className="flex items-start space-x-1.5">
+                          <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+                          <span>{r}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* ANALYST CONSENSUS + 1Y REAL BACKTEST LAB */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Wall Street / Institutional Analyst Consensus */}
+                  <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center space-x-1.5">
+                        <Target className="w-4 h-4" />
+                        <span>Kurumsal Analist Hedefleri &amp; Bilanço</span>
+                      </h3>
+                      {deepData?.financials?.recommendationKey && (
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-black uppercase text-emerald-300">
+                          {deepData.financials.recommendationKey.replace(/_/g, ' ')} (
+                          {deepData.financials.numberOfAnalystOpinions ?? '-'} Kurum)
+                        </span>
+                      )}
+                    </div>
+
+                    {deepData?.financials?.targetMeanPrice ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-400">Ortalama Analist Hedefi</span>
+                          <span className="font-mono font-black text-white">
+                            {formatStockPrice(deepData.financials.targetMeanPrice, selectedStock.currency)}{' '}
+                            {deepData.financials.upsidePct !== null && (
+                              <span
+                                className={
+                                  deepData.financials.upsidePct >= 0
+                                    ? 'text-emerald-400'
+                                    : 'text-rose-400'
+                                }
+                              >
+                                ({deepData.financials.upsidePct >= 0 ? '+' : ''}
+                                {deepData.financials.upsidePct}%)
+                              </span>
+                            )}
+                          </span>
                         </div>
-                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                          <div className="text-[9px] text-slate-400">Strateji Getiri</div>
-                          <div
-                            className={`font-mono font-black text-sm ${
-                              deepData.backtest.strategyReturnPct >= 0
-                                ? 'text-emerald-400'
-                                : 'text-rose-400'
-                            }`}
-                          >
-                            {deepData.backtest.strategyReturnPct >= 0 ? '+' : ''}
-                            {deepData.backtest.strategyReturnPct}%
+                        <div className="grid grid-cols-3 gap-1.5 text-center text-[10px]">
+                          <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
+                            <div className="text-slate-500">En Düşük</div>
+                            <div className="font-mono font-bold text-slate-300">
+                              {formatStockPrice(deepData.financials.targetLowPrice ?? 0, '')}
+                            </div>
                           </div>
-                        </div>
-                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                          <div className="text-[9px] text-slate-400">Al-Tut Kıyas</div>
-                          <div className="font-mono font-black text-sm text-slate-200">
-                            {deepData.backtest.buyHoldReturnPct >= 0 ? '+' : ''}
-                            {deepData.backtest.buyHoldReturnPct}%
+                          <div className="p-2 rounded-lg bg-cyan-950/30 border border-cyan-500/30">
+                            <div className="text-cyan-400">Mevcut</div>
+                            <div className="font-mono font-black text-white">
+                              {formatStockPrice(selectedStock.close, '')}
+                            </div>
                           </div>
-                        </div>
-                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                          <div className="text-[9px] text-slate-400">Profit Factor</div>
-                          <div className="font-mono font-black text-sm text-cyan-300">
-                            {deepData.backtest.profitFactor}
+                          <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
+                            <div className="text-slate-500">En Yüksek</div>
+                            <div className="font-mono font-bold text-emerald-300">
+                              {formatStockPrice(deepData.financials.targetHighPrice ?? 0, '')}
+                            </div>
                           </div>
                         </div>
                       </div>
+                    ) : (
+                      <div className="text-xs text-slate-400">
+                        {deepLoading
+                          ? 'Kurumsal analist hedefleri sorgulanıyor...'
+                          : 'Bu varlık için analist konsensüsü bulunmuyor (veya kripto varlık).'}
+                      </div>
+                    )}
 
-                      {deepData.backtest.recentTrades.length > 0 && (
-                        <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
-                          {deepData.backtest.recentTrades.map((tr, i) => (
-                            <div
-                              key={i}
-                              className="px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-slate-800 flex items-center justify-between text-[10px] font-mono"
-                            >
-                              <div className="text-slate-300">
-                                {tr.entryDate} &rarr; {tr.exitDate}{' '}
-                                <span className="text-slate-500">({tr.reason})</span>
-                              </div>
-                              <span
-                                className={`font-black ${
-                                  tr.returnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                                }`}
-                              >
-                                {tr.returnPct >= 0 ? '+' : ''}
-                                {tr.returnPct}%
-                              </span>
+                    {deepData?.financials && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-[11px]">
+                        {[
+                          {
+                            k: 'ROE',
+                            v:
+                              deepData.financials.returnOnEquityPct !== null
+                                ? `%${deepData.financials.returnOnEquityPct}`
+                                : '-',
+                          },
+                          {
+                            k: 'Net Kâr Marjı',
+                            v:
+                              deepData.financials.profitMarginsPct !== null
+                                ? `%${deepData.financials.profitMarginsPct}`
+                                : '-',
+                          },
+                          {
+                            k: 'Gelir Büyümesi',
+                            v:
+                              deepData.financials.revenueGrowthPct !== null
+                                ? `%${deepData.financials.revenueGrowthPct}`
+                                : '-',
+                          },
+                          {
+                            k: 'İleri F/K',
+                            v: deepData.financials.forwardPE ? `${deepData.financials.forwardPE}x` : '-',
+                          },
+                          {
+                            k: 'Borç / Özkaynak',
+                            v:
+                              deepData.financials.debtToEquity !== null
+                                ? `%${deepData.financials.debtToEquity}`
+                                : '-',
+                          },
+                          {
+                            k: 'Beta',
+                            v: deepData.financials.beta !== null ? `${deepData.financials.beta}` : '-',
+                          },
+                        ].map((item) => (
+                          <div
+                            key={item.k}
+                            className="p-2 rounded-lg bg-slate-950/70 border border-slate-800 flex justify-between"
+                          >
+                            <span className="text-slate-400">{item.k}</span>
+                            <strong className="font-mono text-white">{item.v}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Real 1-Year Strategy Backtest Lab */}
+                  <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
+                        <Activity className="w-4 h-4" />
+                        <span>1 Yıllık Gerçek Backtest Laboratuvarı</span>
+                      </h3>
+                      {deepData?.backtest && (
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {deepData.backtest.totalTrades} İşlem Test Edildi
+                        </span>
+                      )}
+                    </div>
+
+                    {deepData?.backtest ? (
+                      <>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                          <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                            <div className="text-[9px] text-slate-400">Kazanma Oranı</div>
+                            <div className="font-mono font-black text-sm text-emerald-400">
+                              %{deepData.backtest.winRate}
                             </div>
-                          ))}
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                            <div className="text-[9px] text-slate-400">Strateji Getiri</div>
+                            <div
+                              className={`font-mono font-black text-sm ${deepData.backtest.strategyReturnPct >= 0
+                                  ? 'text-emerald-400'
+                                  : 'text-rose-400'
+                                }`}
+                            >
+                              {deepData.backtest.strategyReturnPct >= 0 ? '+' : ''}
+                              {deepData.backtest.strategyReturnPct}%
+                            </div>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                            <div className="text-[9px] text-slate-400">Al-Tut Kıyas</div>
+                            <div className="font-mono font-black text-sm text-slate-200">
+                              {deepData.backtest.buyHoldReturnPct >= 0 ? '+' : ''}
+                              {deepData.backtest.buyHoldReturnPct}%
+                            </div>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                            <div className="text-[9px] text-slate-400">Profit Factor</div>
+                            <div className="font-mono font-black text-sm text-cyan-300">
+                              {deepData.backtest.profitFactor}
+                            </div>
+                          </div>
+                        </div>
+
+                        {deepData.backtest.recentTrades.length > 0 && (
+                          <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                            {deepData.backtest.recentTrades.map((tr, i) => (
+                              <div
+                                key={i}
+                                className="px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-slate-800 flex items-center justify-between text-[10px] font-mono"
+                              >
+                                <div className="text-slate-300">
+                                  {tr.entryDate} &rarr; {tr.exitDate}{' '}
+                                  <span className="text-slate-500">({tr.reason})</span>
+                                </div>
+                                <span
+                                  className={`font-black ${tr.returnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                                    }`}
+                                >
+                                  {tr.returnPct >= 0 ? '+' : ''}
+                                  {tr.returnPct}%
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-xs text-slate-400">
+                        {deepLoading
+                          ? 'Son 1 yıllık tarihsel sinyaller test ediliyor...'
+                          : 'Backtest için yeterli tarihsel mum bulunamadı.'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* LIVE FINANCIAL NEWS & SENTIMENT */}
+                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center space-x-1.5">
+                      <Newspaper className="w-4 h-4" />
+                      <span>Canlı Piyasa Haberleri &amp; Duygu Analizi</span>
+                    </h3>
+                    <span className="text-[10px] text-slate-500">Otomatik Başlık Taraması</span>
+                  </div>
+                  {deepLoading && !deepData ? (
+                    <div className="text-xs text-slate-400 animate-pulse">Haber akışı çekiliyor...</div>
+                  ) : deepData && deepData.news.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      {deepData.news.map((n, idx) => (
+                        <a
+                          key={idx}
+                          href={n.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-3 rounded-xl bg-slate-950/75 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col justify-between gap-2 group"
+                        >
+                          <div className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 leading-snug line-clamp-2">
+                            {n.title}
+                          </div>
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="text-slate-500 truncate max-w-[160px]">
+                              {n.publisher} &bull;{' '}
+                              {new Date(n.publishedAt).toLocaleDateString('tr-TR')}
+                            </span>
+                            <div className="flex items-center space-x-1.5 shrink-0">
+                              <span
+                                className={`px-1.5 py-0.5 rounded font-black ${n.sentiment === 'Pozitif'
+                                    ? 'bg-emerald-500/20 text-emerald-300'
+                                    : n.sentiment === 'Negatif'
+                                      ? 'bg-rose-500/20 text-rose-300'
+                                      : 'bg-slate-800 text-slate-400'
+                                  }`}
+                              >
+                                {n.sentiment}
+                              </span>
+                              <ExternalLink className="w-3 h-3 text-slate-500 group-hover:text-cyan-400" />
+                            </div>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-slate-400">Güncel haber başlığı bulunamadı.</div>
+                  )}
+                </div>
+
+                {/* LIVE KAP PUBLIC DISCLOSURES & CORPORATE CALENDAR */}
+                <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                        <Megaphone className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                          <span>📢 Canlı KAP Bildirimleri &amp; Kurumsal Takvim</span>
+                          <span className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-emerald-500/20 text-emerald-300">
+                            RESMİ AKIŞ
+                          </span>
+                        </h3>
+                        <p className="text-[10px] text-slate-400">
+                          {selectedStock.symbol} için Kamuyu Aydınlatma Platformu bildirimleri ve bilanço/temettü takvimi
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Calendar Badges: Next Earnings Date & Ex-Dividend Date */}
+                    <div className="flex items-center gap-2">
+                      {deepData?.calendar?.nextEarningsDate && (
+                        <div className="px-2.5 py-1 rounded-xl bg-slate-950 border border-cyan-500/30 flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                          <div className="text-[10px]">
+                            <span className="text-slate-400 block text-[9px]">Sonraki Bilanço</span>
+                            <span className="font-bold text-white font-mono">
+                              {deepData.calendar.nextEarningsDate}
+                            </span>
+                          </div>
                         </div>
                       )}
-                    </>
+                      {deepData?.calendar?.exDividendDate && (
+                        <div className="px-2.5 py-1 rounded-xl bg-slate-950 border border-emerald-500/30 flex items-center gap-1.5">
+                          <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                          <div className="text-[10px]">
+                            <span className="text-slate-400 block text-[9px]">Temettü Tarihi</span>
+                            <span className="font-bold text-emerald-300 font-mono">
+                              {deepData.calendar.exDividendDate}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {deepLoading && !deepData ? (
+                    <div className="text-xs text-slate-400 animate-pulse">KAP bildirimleri ve kurumsal takvim taranıyor...</div>
+                  ) : deepData?.kap && deepData.kap.length > 0 ? (
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {deepData.kap.map((item) => {
+                        const catBadge =
+                          item.category === 'Özel Durum'
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                            : item.category === 'Finansal Rapor'
+                              ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                              : item.category === 'Temettü / Sermaye'
+                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                : item.category === 'Genel Kurul'
+                                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                                  : 'bg-slate-800 text-slate-300 border-slate-700';
+
+                        return (
+                          <a
+                            key={item.id}
+                            href={item.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2.5 rounded-xl bg-slate-950/70 hover:bg-slate-850 border border-slate-800/80 hover:border-emerald-500/40 transition-all flex items-start justify-between gap-3 group"
+                          >
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${catBadge}`}>
+                                  {item.category}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-medium truncate">
+                                  {item.publisher}
+                                </span>
+                              </div>
+                              <div className="text-xs font-semibold text-slate-200 group-hover:text-emerald-300 transition-colors leading-snug">
+                                {item.title}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0 text-slate-500 group-hover:text-emerald-400 text-[10px]">
+                              <span>{new Date(item.publishedAt).toLocaleDateString('tr-TR')}</span>
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </div>
+                          </a>
+                        );
+                      })}
+                    </div>
                   ) : (
-                    <div className="text-xs text-slate-400">
-                      {deepLoading
-                        ? 'Son 1 yıllık tarihsel sinyaller test ediliyor...'
-                        : 'Backtest için yeterli tarihsel mum bulunamadı.'}
+                    <div className="p-4 text-center rounded-xl bg-slate-950/50 border border-slate-800/60 text-xs text-slate-400">
+                      Son 30 güne ait özel KAP bildirimi veya şirket açıklaması bulunamadı.
                     </div>
                   )}
                 </div>
               </div>
-
-              {/* LIVE FINANCIAL NEWS & SENTIMENT */}
-              <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center space-x-1.5">
-                    <Newspaper className="w-4 h-4" />
-                    <span>Canlı Piyasa Haberleri &amp; Duygu Analizi</span>
-                  </h3>
-                  <span className="text-[10px] text-slate-500">Otomatik Başlık Taraması</span>
-                </div>
-                {deepLoading && !deepData ? (
-                  <div className="text-xs text-slate-400 animate-pulse">Haber akışı çekiliyor...</div>
-                ) : deepData && deepData.news.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                    {deepData.news.map((n, idx) => (
-                      <a
-                        key={idx}
-                        href={n.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-3 rounded-xl bg-slate-950/75 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col justify-between gap-2 group"
-                      >
-                        <div className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 leading-snug line-clamp-2">
-                          {n.title}
-                        </div>
-                        <div className="flex items-center justify-between text-[10px]">
-                          <span className="text-slate-500 truncate max-w-[160px]">
-                            {n.publisher} &bull;{' '}
-                            {new Date(n.publishedAt).toLocaleDateString('tr-TR')}
-                          </span>
-                          <div className="flex items-center space-x-1.5 shrink-0">
-                            <span
-                              className={`px-1.5 py-0.5 rounded font-black ${
-                                n.sentiment === 'Pozitif'
-                                  ? 'bg-emerald-500/20 text-emerald-300'
-                                  : n.sentiment === 'Negatif'
-                                  ? 'bg-rose-500/20 text-rose-300'
-                                  : 'bg-slate-800 text-slate-400'
-                              }`}
-                            >
-                              {n.sentiment}
-                            </span>
-                            <ExternalLink className="w-3 h-3 text-slate-500 group-hover:text-cyan-400" />
-                          </div>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-xs text-slate-400">Güncel haber başlığı bulunamadı.</div>
-                )}
-              </div>
-
-              {/* LIVE KAP PUBLIC DISCLOSURES & CORPORATE CALENDAR */}
-              <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                      <Megaphone className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-                        <span>📢 Canlı KAP Bildirimleri &amp; Kurumsal Takvim</span>
-                        <span className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-emerald-500/20 text-emerald-300">
-                          RESMİ AKIŞ
-                        </span>
-                      </h3>
-                      <p className="text-[10px] text-slate-400">
-                        {selectedStock.symbol} için Kamuyu Aydınlatma Platformu bildirimleri ve bilanço/temettü takvimi
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Calendar Badges: Next Earnings Date & Ex-Dividend Date */}
-                  <div className="flex items-center gap-2">
-                    {deepData?.calendar?.nextEarningsDate && (
-                      <div className="px-2.5 py-1 rounded-xl bg-slate-950 border border-cyan-500/30 flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                        <div className="text-[10px]">
-                          <span className="text-slate-400 block text-[9px]">Sonraki Bilanço</span>
-                          <span className="font-bold text-white font-mono">
-                            {deepData.calendar.nextEarningsDate}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    {deepData?.calendar?.exDividendDate && (
-                      <div className="px-2.5 py-1 rounded-xl bg-slate-950 border border-emerald-500/30 flex items-center gap-1.5">
-                        <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-                        <div className="text-[10px]">
-                          <span className="text-slate-400 block text-[9px]">Temettü Tarihi</span>
-                          <span className="font-bold text-emerald-300 font-mono">
-                            {deepData.calendar.exDividendDate}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {deepLoading && !deepData ? (
-                  <div className="text-xs text-slate-400 animate-pulse">KAP bildirimleri ve kurumsal takvim taranıyor...</div>
-                ) : deepData?.kap && deepData.kap.length > 0 ? (
-                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                    {deepData.kap.map((item) => {
-                      const catBadge =
-                        item.category === 'Özel Durum'
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                          : item.category === 'Finansal Rapor'
-                          ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
-                          : item.category === 'Temettü / Sermaye'
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                          : item.category === 'Genel Kurul'
-                          ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
-                          : 'bg-slate-800 text-slate-300 border-slate-700';
-
-                      return (
-                        <a
-                          key={item.id}
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2.5 rounded-xl bg-slate-950/70 hover:bg-slate-850 border border-slate-800/80 hover:border-emerald-500/40 transition-all flex items-start justify-between gap-3 group"
-                        >
-                          <div className="space-y-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${catBadge}`}>
-                                {item.category}
-                              </span>
-                              <span className="text-[10px] text-slate-400 font-medium truncate">
-                                {item.publisher}
-                              </span>
-                            </div>
-                            <div className="text-xs font-semibold text-slate-200 group-hover:text-emerald-300 transition-colors leading-snug">
-                              {item.title}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0 text-slate-500 group-hover:text-emerald-400 text-[10px]">
-                            <span>{new Date(item.publishedAt).toLocaleDateString('tr-TR')}</span>
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </div>
-                        </a>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="p-4 text-center rounded-xl bg-slate-950/50 border border-slate-800/60 text-xs text-slate-400">
-                    Son 30 güne ait özel KAP bildirimi veya şirket açıklaması bulunamadı.
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         </>
       )}
 
@@ -2614,11 +2584,11 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             portfolio.map((p) =>
               p.id === id
                 ? {
-                    ...p,
-                    status: 'closed',
-                    exitPrice,
-                    exitDate: new Date().toISOString(),
-                  }
+                  ...p,
+                  status: 'closed',
+                  exitPrice,
+                  exitDate: new Date().toISOString(),
+                }
                 : p
             )
           );

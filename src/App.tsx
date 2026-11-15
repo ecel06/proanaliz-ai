@@ -384,7 +384,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.15.09';
+  const CLIENT_BUILD_VERSION = '2026.11.15.10';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1468,7 +1468,7 @@ export const App: React.FC = () => {
             <HorseRacingView
               user={currentUser}
               onOpenVIP={() => setIsVipModalOpen(true)}
-              onShowToast={(msg) => {
+              onShowToast={(msg: string) => {
                 setRefreshToast(msg);
                 setTimeout(() => setRefreshToast(null), 3500);
               }}

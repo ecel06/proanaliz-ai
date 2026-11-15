@@ -355,6 +355,7 @@ function authMiddleware(req, res, next) {
     return res.status(401).json({ success: false, error: 'Oturum süresi dolmuş veya geçersiz.' });
   }
   req.userId = payload.id;
+  req.userPayload = payload;
   next();
 }
 
@@ -489,7 +490,7 @@ app.get('/api/editor-coupons', (req, res) => {
 });
 
 app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const user = getUserById(req.userId);
+  const user = getUserById(req.userId, req.userPayload);
   if (!user) {
     return res.status(404).json({ success: false, error: 'Kullanıcı bulunamadı.' });
   }
@@ -514,7 +515,7 @@ app.post('/api/auth/vip-activate', authMiddleware, (req, res) => {
 // --- 🛡️ Admin Panel Endpoints (Admin Only) ---
 function adminMiddleware(req, res, next) {
   authMiddleware(req, res, () => {
-    const user = getUserById(req.userId);
+    const user = getUserById(req.userId, req.userPayload);
     if (!user || user.role !== 'admin') {
       try {
         logActivity('SECURITY_ALERT', 'Engellenen yetkisiz Admin erişimi', { ip: req.ip, userId: req.userId || 'anon' });
@@ -667,7 +668,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.15.09';
+const APP_VERSION = '2026.11.15.10';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

@@ -118,23 +118,7 @@ export async function fetchCurrentUser(): Promise<User | null> {
       }
     });
     if (!res.ok) {
-      if (res.status === 401) {
-        try {
-          const errData = await res.json();
-          if (errData && errData.error) {
-            clearAuthSession();
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('proanaliz_session_expired', {
-                detail: { message: 'Oturum süreniz doldu veya oturumunuz başka bir cihazdan kapatıldı. Lütfen tekrar giriş yapın.' }
-              }));
-            }
-            return null;
-          }
-        } catch {
-          // If response body is not valid JSON (e.g. gateway error/offline), preserve user session!
-          return getStoredUser();
-        }
-      }
+      // Never aggressively wipe stored user during background redeploys, cold starts, or transient errors
       return getStoredUser();
     }
     const data = await res.json();

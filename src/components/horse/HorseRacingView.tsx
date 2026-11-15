@@ -23,6 +23,7 @@ import {
   Crown,
   X,
   ChevronDown,
+  ChevronUp,
   Check,
 } from 'lucide-react';
 import { User } from '../../utils/authHelper';
@@ -55,7 +56,685 @@ import {
 type HRSubTab = 'bulletin' | 'ai_coupons' | 'ikili_cifte' | 'results' | 'changes';
 type SortMode = 'number' | 'agf' | 'ganyan' | 'ai' | 'handicap';
 
-interface HorseRacingViewProps {
+export interface SavedHorseCouponLeg {
+  raceNo: number;
+  picks: number[];
+}
+
+export interface SavedHorseCoupon {
+  id: string;
+  programId?: number;
+  programPlace?: string;
+  programDate?: string;
+  gameKey?: string;
+  gameLabel?: string;
+  title: string;
+  combos: number;
+  cost: number;
+  misli?: number;
+  stakeStr: string;
+  time: string;
+  createdAt?: number;
+  legs?: SavedHorseCouponLeg[];
+}
+
+export function normalizeCouponLegs(
+  coupon: SavedHorseCoupon,
+  activeLegRaceNumbers?: number[]
+): SavedHorseCouponLeg[] {
+  if (Array.isArray(coupon.legs) && coupon.legs.length > 0) {
+    return coupon.legs;
+  }
+  if (!coupon.stakeStr) return [];
+  const parts = String(coupon.stakeStr).split('/').map((p) => p.trim());
+  return parts.map((part, idx) => {
+    const picks = part
+      .split(',')
+      .map((n) => parseInt(n.trim(), 10))
+      .filter((n) => !isNaN(n));
+    const raceNo =
+      activeLegRaceNumbers && activeLegRaceNumbers[idx]
+        ? activeLegRaceNumbers[idx]
+        : idx + 1;
+    return { raceNo, picks };
+  });
+}
+
+// 🏁 Toplu Altılı Ganyan Canlı Sonuçları & Ganyan Paneli
+export const AltiliResultsSummaryBoard: React.FC<{
+  detail: ProgramDetail | null;
+  availableGames: GameConfig[];
+  activeGame: GameConfig | null;
+  onSelectRace: (raceNo: number) => void;
+  onSelectGame: (gameId: any) => void;
+}> = ({ detail, availableGames, activeGame, onSelectRace, onSelectGame }) => {
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+
+  // Filter games that are Altılı or fallback to availableGames
+  const altiliGames = useMemo(() => {
+    const altilis = availableGames.filter(
+      (g) => g.id === 'ALTILI_1' || g.id === 'ALTILI_2' || g.legCount === 6
+    );
+    return altilis.length > 0 ? altilis : availableGames;
+  }, [availableGames]);
+
+  // Selected board game
+  const currentBoardGame = useMemo(() => {
+    if (activeGame && altiliGames.some((g) => g.id === activeGame.id)) {
+      return activeGame;
+    }
+    return altiliGames[0] || null;
+  }, [altiliGames, activeGame]);
+
+  // Compute 6 legs and their results
+  const legsInfo = useMemo(() => {
+    if (!detail || !currentBoardGame) return [];
+    const legs = [];
+    for (let i = 0; i < currentBoardGame.legCount; i++) {
+      const raceNo = currentBoardGame.startRace + i;
+      const race = detail.races.find((r) => r.number === raceNo);
+      const winner = race?.horses.find((h) => Number(h.order) === 1);
+      const second = race?.horses.find((h) => Number(h.order) === 2);
+      const isFinished = Boolean(winner) || race?.isFinished;
+      legs.push({
+        legIndex: i + 1,
+        raceNo,
+        raceHour: race?.hour || '',
+        raceDistance: race?.distance || '',
+        raceCourseType: race?.raceCourseType || '',
+        isFinished,
+        winner,
+        second,
+        race,
+      });
+    }
+    return legs;
+  }, [detail, currentBoardGame]);
+
+  const finishedLegs = useMemo(
+    () => legsInfo.filter((l) => Boolean(l.winner)),
+    [legsInfo]
+  );
+  const isAllFinished =
+    legsInfo.length > 0 && finishedLegs.length === legsInfo.length;
+
+  const totalGanyanProduct = useMemo(() => {
+    if (finishedLegs.length === 0) return 0;
+    return finishedLegs.reduce((acc, l) => {
+      const g = l.winner?.ganyan && l.winner.ganyan > 0 ? l.winner.ganyan : 1;
+      return acc * g;
+    }, 1);
+  }, [finishedLegs]);
+
+  const officialPayout = useMemo(() => {
+    if (!detail?.summary?.altiliResults || !currentBoardGame) return null;
+    return detail.summary.altiliResults.find(
+      (a) =>
+        a.name?.toLowerCase().includes(currentBoardGame.shortLabel.toLowerCase()) ||
+        a.name?.toLowerCase().includes('altılı')
+    );
+  }, [detail, currentBoardGame]);
+
+  if (!detail || legsInfo.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-amber-500/40 p-3 sm:p-4 shadow-xl space-y-3">
+      {/* Top Header */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <div className="flex items-center space-x-2 flex-wrap gap-1.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 flex items-center justify-center font-black shadow-md shadow-amber-500/20">
+            <Trophy className="w-4 h-4 fill-current" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-1.5">
+                <span>🏆 {detail.program.place} Canlı Altılı Sonuçları</span>
+              </h3>
+              <span
+                className={`px-2 py-0.2 rounded-full text-[10px] font-black border ${
+                  isAllFinished
+                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 animate-pulse'
+                    : finishedLegs.length > 0
+                    ? 'bg-amber-400/20 text-amber-300 border-amber-400/40'
+                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                }`}
+              >
+                {isAllFinished
+                  ? 'TAMAMLANDI'
+                  : finishedLegs.length > 0
+                  ? `${finishedLegs.length}/${legsInfo.length} Ayak Koşuldu`
+                  : 'Koşular Başlamadı'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 hidden sm:block">
+              Tüm ayakların gelen atları, resmi ganyanları ve toplu ikramiye tablosu
+            </p>
+          </div>
+        </div>
+
+        {/* Action Controls & Game Selector */}
+        <div className="flex items-center space-x-2 shrink-0">
+          {altiliGames.length > 1 && (
+            <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 gap-1">
+              {altiliGames.map((g) => {
+                const isSel = currentBoardGame?.id === g.id;
+                return (
+                  <button
+                    key={g.id}
+                    onClick={() => onSelectGame(g.id)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                      isSel
+                        ? 'bg-amber-400 text-slate-950 shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {g.shortLabel || g.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-colors"
+            title={isCollapsed ? 'Genişlet' : 'Küçült'}
+          >
+            {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+
+      {!isCollapsed && (
+        <>
+          {/* 6 Legs Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1">
+            {legsInfo.map((leg) => {
+              const winner = leg.winner;
+              return (
+                <div
+                  key={leg.raceNo}
+                  onClick={() => onSelectRace(leg.raceNo)}
+                  className={`p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between space-y-2 hover:scale-[1.02] ${
+                    winner
+                      ? 'bg-gradient-to-b from-emerald-950/40 to-slate-950 border-emerald-500/50 shadow-md shadow-emerald-950/30'
+                      : 'bg-slate-950/80 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  {/* Leg Header */}
+                  <div className="flex items-center justify-between text-[11px] pb-1 border-b border-slate-800/80">
+                    <span className="font-black text-amber-400">{leg.legIndex}. Ayak</span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {leg.raceNo}. Koşu {leg.raceHour ? `• ${leg.raceHour}` : ''}
+                    </span>
+                  </div>
+
+                  {/* Winner Content */}
+                  {winner ? (
+                    <div className="space-y-1.5 py-0.5">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500 text-slate-950 flex flex-col items-center justify-center font-black shadow-md shadow-emerald-500/20 shrink-0">
+                          <span className="text-sm font-black leading-none">#{winner.number}</span>
+                          <span className="text-[7px] font-black uppercase tracking-tighter">1. GELDİ</span>
+                        </div>
+                        <div className="min-w-0">
+                          <div
+                            className="font-black text-xs text-white truncate max-w-[95px]"
+                            title={winner.name}
+                          >
+                            {winner.name}
+                          </div>
+                          <div className="text-[10px] text-slate-400 truncate max-w-[95px]">
+                            {winner.jockey?.name || 'Jokey'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Ganyan Badge */}
+                      <div className="flex items-center justify-between pt-1 border-t border-emerald-500/20">
+                        <span className="text-[10px] text-slate-400 font-semibold">GANYAN:</span>
+                        <span className="font-mono font-black text-xs text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/30">
+                          {winner.ganyan > 0 ? `${winner.ganyan.toFixed(2)} ₺` : '1.00 ₺'}
+                        </span>
+                      </div>
+
+                      {leg.second && (
+                        <div className="text-[9px] text-slate-400 truncate">
+                          2. #{leg.second.number} {leg.second.name}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="py-3 text-center space-y-1">
+                      <div className="text-xs text-slate-400 font-bold flex items-center justify-center space-x-1">
+                        <Clock className="w-3 h-3 text-amber-400/80" />
+                        <span>{leg.raceHour || 'Koşulmadı'}</span>
+                      </div>
+                      <span className="inline-block px-2 py-0.5 rounded text-[9px] font-semibold bg-slate-900 text-slate-500 border border-slate-800">
+                        Bekleniyor ⏳
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Bottom Summary Strip */}
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/90 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center space-x-2 flex-wrap gap-1">
+              <span className="font-bold text-slate-400 text-[11px]">🏁 Gelen Sıralama:</span>
+              {legsInfo.map((l, i) => (
+                <span
+                  key={l.raceNo}
+                  className={`px-2 py-0.5 rounded-lg font-mono font-black text-xs flex items-center space-x-1 ${
+                    l.winner
+                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                      : 'bg-slate-900 text-slate-500 border border-slate-800'
+                  }`}
+                >
+                  <span>{i + 1}.A:</span>
+                  <span>{l.winner ? `#${l.winner.number}` : '⏳'}</span>
+                </span>
+              ))}
+            </div>
+
+            <div className="flex items-center space-x-4 ml-auto">
+              {totalGanyanProduct > 0 && (
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 block font-semibold">Bileşik Ganyan:</span>
+                  <span className="font-mono font-black text-amber-400 text-xs sm:text-sm">
+                    {totalGanyanProduct.toFixed(2)} ₺
+                  </span>
+                </div>
+              )}
+              {officialPayout && (
+                <div className="text-right pl-3 border-l border-slate-800">
+                  <span className="text-[10px] text-emerald-400 font-semibold block">TJK Resmi İkramiye:</span>
+                  <span className="font-mono font-black text-emerald-400 text-sm sm:text-base">
+                    {officialPayout.unitPrize ? `${officialPayout.unitPrize} ₺` : 'Hesaplanıyor'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// 📋 Zenginleştirilmiş Kayıtlı Kupon Kartı (Gelen Atlar, Canlı Durum & Sonuçlar)
+export const SavedCouponCard: React.FC<{
+  coupon: SavedHorseCoupon;
+  currentDetail: ProgramDetail | null;
+  activeLegRaceNumbers: number[];
+  onSelectProgram: (pid: number) => void;
+  onLoadCoupon: (coupon: SavedHorseCoupon) => void;
+  onDelete: (id: string) => void;
+}> = ({
+  coupon,
+  currentDetail,
+  activeLegRaceNumbers,
+  onSelectProgram,
+  onLoadCoupon,
+  onDelete,
+}) => {
+  const [isExpanded, setIsExpanded] = useState<boolean>(true);
+
+  const isCurrentProgram = Boolean(
+    currentDetail &&
+      ((coupon.programId && currentDetail.program.id === coupon.programId) ||
+        (coupon.programPlace &&
+          currentDetail.program.place.toLowerCase() ===
+            coupon.programPlace.toLowerCase()))
+  );
+
+  const legsData = useMemo(() => {
+    return normalizeCouponLegs(
+      coupon,
+      isCurrentProgram ? activeLegRaceNumbers : undefined
+    );
+  }, [coupon, isCurrentProgram, activeLegRaceNumbers]);
+
+  const evaluation = useMemo(() => {
+    if (!isCurrentProgram || !currentDetail || !currentDetail.races) {
+      return null;
+    }
+
+    const totalLegs = legsData.length;
+    let wonLegCount = 0;
+    let lostLegCount = 0;
+    let pendingLegCount = 0;
+    let lostAtLegNumber: number | null = null;
+
+    const evaluatedLegs = legsData.map((leg, idx) => {
+      const race = currentDetail.races.find((r) => r.number === leg.raceNo);
+      const winner = race?.horses.find((h) => Number(h.order) === 1);
+
+      if (winner) {
+        const isWon = leg.picks.includes(winner.number);
+        if (isWon) {
+          wonLegCount++;
+          return {
+            raceNo: leg.raceNo,
+            raceHour: race?.hour,
+            picks: leg.picks,
+            winnerHorse: winner,
+            isWon: true,
+            isLost: false,
+            isPending: false,
+          };
+        } else {
+          lostLegCount++;
+          if (lostAtLegNumber === null) {
+            lostAtLegNumber = idx + 1;
+          }
+          return {
+            raceNo: leg.raceNo,
+            raceHour: race?.hour,
+            picks: leg.picks,
+            winnerHorse: winner,
+            isWon: false,
+            isLost: true,
+            isPending: false,
+          };
+        }
+      } else {
+        pendingLegCount++;
+        return {
+          raceNo: leg.raceNo,
+          raceHour: race?.hour,
+          picks: leg.picks,
+          winnerHorse: undefined,
+          isWon: false,
+          isLost: false,
+          isPending: true,
+        };
+      }
+    });
+
+    let status: 'won' | 'lost' | 'in_progress' | 'pending' = 'pending';
+    let statusLabel = 'Koşular Başlamadı ⏳';
+    let statusBadgeClass = 'bg-slate-800 text-slate-300 border-slate-700';
+
+    if (lostLegCount > 0) {
+      status = 'lost';
+      statusLabel = lostAtLegNumber
+        ? `${lostAtLegNumber}. Ayakta Tutmadı ❌`
+        : 'TUTMADI ❌';
+      statusBadgeClass =
+        'bg-rose-500/20 text-rose-300 border-rose-500/40 font-black';
+    } else if (wonLegCount === totalLegs && totalLegs > 0) {
+      status = 'won';
+      statusLabel = "TUTTU! 🏆 6'DA 6 (KAZANDI)";
+      statusBadgeClass =
+        'bg-gradient-to-r from-amber-400 to-emerald-400 text-slate-950 border-amber-300 font-black shadow-lg shadow-emerald-500/20 animate-pulse';
+    } else if (wonLegCount > 0 && pendingLegCount > 0) {
+      status = 'in_progress';
+      statusLabel = `${wonLegCount}/${totalLegs} Ayak Geldi • Devam Ediyor 🟢`;
+      statusBadgeClass =
+        'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold';
+    }
+
+    return {
+      evaluatedLegs,
+      status,
+      statusLabel,
+      statusBadgeClass,
+      wonLegCount,
+      lostLegCount,
+      pendingLegCount,
+      totalLegs,
+      lostAtLegNumber,
+    };
+  }, [isCurrentProgram, currentDetail, legsData]);
+
+  return (
+    <div
+      className={`p-3 rounded-2xl border transition-all space-y-2.5 ${
+        evaluation?.status === 'won'
+          ? 'bg-gradient-to-b from-emerald-950/40 to-slate-900/90 border-emerald-500/50 shadow-lg shadow-emerald-500/10'
+          : evaluation?.status === 'lost'
+          ? 'bg-slate-950/80 border-slate-800 hover:border-slate-700'
+          : evaluation?.status === 'in_progress'
+          ? 'bg-gradient-to-b from-amber-950/30 to-slate-900/90 border-amber-500/40'
+          : 'bg-slate-950/80 border-slate-800'
+      }`}
+    >
+      {/* Top Header */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center space-x-1.5 flex-wrap gap-1">
+            <span className="font-black text-sm text-white truncate">
+              {coupon.title}
+            </span>
+            {coupon.misli && coupon.misli > 1 && (
+              <span className="px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 text-[10px] font-black border border-amber-400/30">
+                {coupon.misli}x Misli
+              </span>
+            )}
+          </div>
+          <div className="text-[11px] text-slate-400 flex items-center space-x-2 mt-0.5">
+            <span>{coupon.combos} Kolon</span>
+            <span>•</span>
+            <span className="font-mono font-bold text-amber-400">
+              {coupon.cost.toFixed(2)} ₺
+            </span>
+            <span>•</span>
+            <span>{coupon.time}</span>
+          </div>
+        </div>
+
+        {/* Status Badge */}
+        <div className="flex items-center space-x-1.5 shrink-0">
+          {evaluation ? (
+            <span
+              className={`px-2.5 py-1 rounded-xl text-[11px] border flex items-center space-x-1 ${evaluation.statusBadgeClass}`}
+            >
+              {evaluation.status === 'won' && (
+                <Crown className="w-3.5 h-3.5 fill-current" />
+              )}
+              {evaluation.status === 'lost' && (
+                <X className="w-3.5 h-3.5 stroke-[3]" />
+              )}
+              {evaluation.status === 'in_progress' && (
+                <Zap className="w-3.5 h-3.5 fill-current" />
+              )}
+              {evaluation.status === 'pending' && (
+                <Clock className="w-3.5 h-3.5" />
+              )}
+              <span>{evaluation.statusLabel}</span>
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-400 text-[10px] font-semibold border border-slate-700">
+              {coupon.programPlace || 'Farklı Hipodrom'}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Stake String Summary (if not current program or collapsed) */}
+      {(!isCurrentProgram || !isExpanded) && (
+        <div className="p-2 rounded-xl bg-slate-900/70 border border-slate-800/80 font-mono text-xs text-emerald-300 break-words">
+          {coupon.stakeStr}
+        </div>
+      )}
+
+
+
+      {/* Different Program Switch Banner */}
+      {!isCurrentProgram && coupon.programId && (
+        <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-2">
+          <div className="text-[11px] text-amber-300 font-medium">
+            Bu kupon{' '}
+            <strong>{coupon.programPlace || 'farklı bir hipodroma'}</strong>{' '}
+            aittir. Gelen atları ve kazanç durumunu canlı görmek için programa
+            geçin.
+          </div>
+          <button
+            onClick={() => onSelectProgram(coupon.programId!)}
+            className="px-2.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shrink-0 cursor-pointer transition-colors shadow-sm"
+          >
+            Hipodroma Git
+          </button>
+        </div>
+      )}
+
+
+
+      {/* Live Leg Breakdown (when current program) */}
+      {isCurrentProgram && evaluation && (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[11px] text-slate-400 font-bold px-0.5">
+            <span>
+              Ayak Detayları & Gelen Atlar ({evaluation.wonLegCount}/
+              {evaluation.totalLegs} Başarılı)
+            </span>
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-amber-400 hover:text-amber-300 flex items-center space-x-1 cursor-pointer"
+            >
+              <span>{isExpanded ? 'Gizle' : 'Detayları Göster'}</span>
+              {isExpanded ? (
+                <ChevronUp className="w-3 h-3" />
+              ) : (
+                <ChevronDown className="w-3 h-3" />
+              )}
+            </button>
+          </div>
+
+          {isExpanded && (
+            <div className="space-y-1.5 max-h-80 overflow-y-auto overscroll-auto touch-pan-y pr-0.5">
+              {evaluation.evaluatedLegs.map((leg, idx) => {
+                return (
+                  <div
+                    key={leg.raceNo}
+                    className={`p-2 rounded-xl border text-xs transition-all ${
+                      leg.isWon
+                        ? 'bg-emerald-950/30 border-emerald-500/40 shadow-sm'
+                        : leg.isLost
+                        ? 'bg-rose-950/25 border-rose-500/30'
+                        : 'bg-slate-900/60 border-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-black text-amber-400">
+                          {idx + 1}. Ayak
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          ({leg.raceNo}. Koşu{' '}
+                          {leg.raceHour ? `• ${leg.raceHour}` : ''})
+                        </span>
+                      </div>
+                      <div>
+                        {leg.isWon && (
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-500 text-slate-950 text-[10px] font-black flex items-center space-x-1 shadow-sm">
+                            <Check className="w-3 h-3 stroke-[3]" />
+                            <span>GELDİ (#{leg.winnerHorse?.number})</span>
+                          </span>
+                        )}
+                        {leg.isLost && (
+                          <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-black flex items-center space-x-1">
+                            <X className="w-3 h-3 stroke-[3]" />
+                            <span>YATTI (Gelen: #{leg.winnerHorse?.number})</span>
+                          </span>
+                        )}
+                        {leg.isPending && (
+                          <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 text-[10px] font-medium flex items-center space-x-1">
+                            <Clock className="w-3 h-3" />
+                            <span>Bekliyor</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Selected Horses List */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[10px] text-slate-400 font-semibold mr-0.5">
+                        Seçimler:
+                      </span>
+                      {leg.picks.map((hNo) => {
+                        const isWinnerHorse =
+                          leg.winnerHorse && leg.winnerHorse.number === hNo;
+                        return (
+                          <span
+                            key={hNo}
+                            className={`px-2 py-0.5 rounded-lg text-xs font-mono font-black flex items-center space-x-1 transition-all ${
+                              isWinnerHorse
+                                ? 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-slate-950 border border-emerald-300 shadow-md shadow-emerald-500/30 scale-105'
+                                : leg.isLost
+                                ? 'bg-slate-900 text-slate-400 border border-slate-800'
+                                : 'bg-slate-800 text-white border border-slate-700'
+                            }`}
+                          >
+                            <span>#{hNo}</span>
+                            {isWinnerHorse && (
+                              <span className="flex items-center space-x-0.5 text-[9px] font-black uppercase text-slate-950 bg-amber-300 px-1 rounded ml-0.5">
+                                <Crown className="w-2.5 h-2.5 inline fill-current" />
+                                <span>GELDİ</span>
+                              </span>
+                            )}
+                          </span>
+                        );
+                      })}
+                    </div>
+
+                    {/* If lost, display the winner that actually came */}
+                    {leg.isLost && leg.winnerHorse && (
+                      <div className="mt-1.5 pt-1.5 border-t border-rose-500/20 flex items-center justify-between text-[11px] text-rose-300 font-medium">
+                        <div className="flex items-center space-x-1">
+                          <span className="text-rose-400 font-bold">
+                            ⚠️ 1. Gelen At:
+                          </span>
+                          <span className="font-mono font-black text-white bg-rose-500/30 px-1.5 py-0.2 rounded border border-rose-500/40">
+                            #{leg.winnerHorse.number}
+                          </span>
+                          <span className="font-bold text-white truncate max-w-[130px]">
+                            {leg.winnerHorse.name}
+                          </span>
+                        </div>
+                        {leg.winnerHorse.ganyan ? (
+                          <span className="font-mono text-amber-300 text-[10px]">
+                            Ganyan: {leg.winnerHorse.ganyan}
+                          </span>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+
+
+      {/* Action Buttons */}
+      <div className="flex items-center justify-between pt-1 border-t border-slate-800/80 gap-2">
+        <button
+          onClick={() => onLoadCoupon(coupon)}
+          className="flex-1 py-1.5 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-xs flex items-center justify-center space-x-1.5 cursor-pointer transition-colors border border-slate-700"
+        >
+          <RefreshCw className="w-3 h-3 text-emerald-400" />
+          <span>Kuponu Bültene Yükle</span>
+        </button>
+        <button
+          onClick={() => onDelete(coupon.id)}
+          className="p-1.5 rounded-xl bg-slate-900 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-800 cursor-pointer transition-colors"
+          title="Kuponu Sil"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
+export interface HorseRacingViewProps {
   user?: User | null;
   onOpenVIP?: () => void;
   onShowToast?: (msg: string, type?: 'success' | 'info' | 'warning') => void;
@@ -104,9 +783,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
   });
   const [misli, setMisli] = useState<number>(1);
   const [unitPrice, setUnitPrice] = useState<number>(1.0);
-  const [savedCoupons, setSavedCoupons] = useState<
-    { id: string; title: string; combos: number; cost: number; stakeStr: string; time: string }[]
-  >(() => {
+  const [savedCoupons, setSavedCoupons] = useState<SavedHorseCoupon[]>(() => {
     try {
       const raw = localStorage.getItem('proanaliz_hr_coupons');
       return raw ? JSON.parse(raw) : [];
@@ -114,6 +791,8 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
       return [];
     }
   });
+  const [isSavedCouponsModalOpen, setIsSavedCouponsModalOpen] = useState<boolean>(false);
+  const [mobileDrawerTab, setMobileDrawerTab] = useState<'current' | 'saved'>('current');
 
   // Automatically persist race coupon selections to survive pull-to-refresh
   useEffect(() => {
@@ -446,15 +1125,27 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
     const legStr = legRaceNumbers
       .map((rNo) => (currentSelections[rNo] || []).join(','))
       .join(' / ');
-    const entry = {
+    const legs: SavedHorseCouponLeg[] = legRaceNumbers.map((rNo) => ({
+      raceNo: rNo,
+      picks: [...(currentSelections[rNo] || [])],
+    }));
+    const entry: SavedHorseCoupon = {
       id: `${Date.now()}`,
+      programId: detail.program.id,
+      programPlace: detail.program.place,
+      programDate: detail.program.date,
+      gameKey: activeGame.id,
+      gameLabel: activeGame.label,
       title: `${detail.program.place} • ${activeGame.label}`,
       combos: totalCombinations,
       cost: totalCouponCost,
+      misli,
       stakeStr: legStr,
       time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+      createdAt: Date.now(),
+      legs,
     };
-    const next = [entry, ...savedCoupons].slice(0, 15);
+    const next = [entry, ...savedCoupons].slice(0, 25);
     setSavedCoupons(next);
     try {
       localStorage.setItem('proanaliz_hr_coupons', JSON.stringify(next));
@@ -463,6 +1154,46 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
       `${entry.title} kaydedildi (${totalCombinations} kolon • ${totalCouponCost.toFixed(2)} ₺)`,
       'success'
     );
+  };
+
+  const handleDeleteSavedCoupon = (id: string) => {
+    const next = savedCoupons.filter((c) => c.id !== id);
+    setSavedCoupons(next);
+    try {
+      localStorage.setItem('proanaliz_hr_coupons', JSON.stringify(next));
+    } catch {}
+    onShowToast?.('Kupon silindi.', 'info');
+  };
+
+  const handleClearAllSavedCoupons = () => {
+    if (window.confirm('Tüm kayıtlı kuponlarınızı silmek istediğinize emin misiniz?')) {
+      setSavedCoupons([]);
+      try {
+        localStorage.removeItem('proanaliz_hr_coupons');
+      } catch {}
+      onShowToast?.('Tüm kayıtlı kuponlar temizlendi.', 'info');
+    }
+  };
+
+  const handleLoadCouponIntoWorkspace = (coupon: SavedHorseCoupon) => {
+    const legs = normalizeCouponLegs(coupon, legRaceNumbers);
+    const newSelections: { [raceNo: number]: number[] } = {};
+    legs.forEach((leg) => {
+      newSelections[leg.raceNo] = [...leg.picks];
+    });
+    setSelectionsByProgram((prev) => ({
+      ...prev,
+      [coupon.programId || selectedProgramId || 0]: newSelections,
+    }));
+    if (coupon.misli) {
+      setMisli(coupon.misli);
+    }
+    if (coupon.programId && coupon.programId !== selectedProgramId) {
+      handleSelectProgram(coupon.programId);
+    }
+    onShowToast?.(`"${coupon.title}" kuponu bültene yüklendi!`, 'success');
+    setIsSavedCouponsModalOpen(false);
+    setIsMobileCouponDrawerOpen(false);
   };
 
   const trPrograms = useMemo(() => programs.filter((p) => !p.isForeign), [programs]);
@@ -533,12 +1264,24 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
               Nesine / TJK Resmi Program, Canlı AGF &amp; AI Altılı Motoru
             </span>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-wrap gap-1.5">
             {detail?.updatedAt && (
               <span className="text-[11px] text-slate-400 font-mono hidden md:inline">
                 Güncelleme: {new Date(detail.updatedAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             )}
+            <button
+              onClick={() => setIsSavedCouponsModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-300 font-bold text-xs cursor-pointer transition-all"
+            >
+              <Award className="w-3.5 h-3.5 text-amber-400" />
+              <span>Kayıtlı Kuponlar</span>
+              {savedCoupons.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black">
+                  {savedCoupons.length}
+                </span>
+              )}
+            </button>
             <button
               onClick={handleManualRefresh}
               disabled={programLoading}
@@ -777,6 +1520,22 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
               </div>
             )}
           </section>
+
+          {/* 🏁 Toplu Altılı Ganyan Canlı Sonuçları & Ganyan Paneli */}
+          <AltiliResultsSummaryBoard
+            detail={detail}
+            availableGames={availableGames}
+            activeGame={activeGame}
+            onSelectRace={(rNo) => {
+              setSelectedRaceNo(rNo);
+              setSubTab('bulletin');
+            }}
+            onSelectGame={(gId) => {
+              setSelectedGameId(gId);
+              const g = availableGames.find((ag) => ag.id === gId);
+              if (g) setSelectedRaceNo(g.startRace);
+            }}
+          />
 
           {/* SUBTAB 2: AI ALTILI TEMPLATES */}
           {subTab === 'ai_coupons' && (
@@ -2154,38 +2913,38 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
 
                 {/* Saved Horse Coupons History */}
                 {savedCoupons.length > 0 && (
-                  <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-3 space-y-2">
+                  <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-3 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-white flex items-center space-x-1.5">
                         <Award className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Kayıtlı At Yarışı Kuponlarım</span>
+                        <span>Kayıtlı Kuponlarım ({savedCoupons.length})</span>
                       </span>
-                      <button
-                        onClick={() => {
-                          setSavedCoupons([]);
-                          localStorage.removeItem('proanaliz_hr_coupons');
-                        }}
-                        className="text-[10px] text-slate-400 hover:text-rose-400 cursor-pointer"
-                      >
-                        Temizle
-                      </button>
-                    </div>
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                      {savedCoupons.map((sc) => (
-                        <div
-                          key={sc.id}
-                          className="p-2 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] space-y-0.5"
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setIsSavedCouponsModalOpen(true)}
+                          className="text-[10px] text-amber-400 hover:text-amber-300 font-bold cursor-pointer"
                         >
-                          <div className="flex items-center justify-between font-bold text-slate-200">
-                            <span>{sc.title}</span>
-                            <span className="font-mono text-amber-400">{sc.cost.toFixed(2)} ₺</span>
-                          </div>
-                          <div className="text-[10px] font-mono text-emerald-300 truncate">{sc.stakeStr}</div>
-                          <div className="text-[9px] text-slate-500 flex justify-between">
-                            <span>{sc.combos} Kolon</span>
-                            <span>{sc.time}</span>
-                          </div>
-                        </div>
+                          Tam Ekran ↗
+                        </button>
+                        <button
+                          onClick={handleClearAllSavedCoupons}
+                          className="text-[10px] text-slate-400 hover:text-rose-400 cursor-pointer"
+                        >
+                          Temizle
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-2 max-h-96 overflow-y-auto overscroll-auto touch-pan-y pr-0.5">
+                      {savedCoupons.map((coupon) => (
+                        <SavedCouponCard
+                          key={coupon.id}
+                          coupon={coupon}
+                          currentDetail={detail}
+                          activeLegRaceNumbers={legRaceNumbers}
+                          onSelectProgram={handleSelectProgram}
+                          onLoadCoupon={handleLoadCouponIntoWorkspace}
+                          onDelete={handleDeleteSavedCoupon}
+                        />
                       ))}
                     </div>
                   </div>
@@ -2236,6 +2995,8 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
         </div>
       )}
 
+
+
       {/* 📱 Mobile Coupon Bottom Sheet Drawer Modal */}
       {isMobileCouponDrawerOpen && (
         <div
@@ -2276,113 +3037,248 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
               </div>
             </div>
 
-            {/* Legs List */}
-            <div className="p-3 space-y-2 overflow-y-auto flex-1 overscroll-contain">
-              {legRaceNumbers.map((rNo, idx) => {
-                const raceObj = detail?.races.find((r) => r.number === rNo);
-                const picked = currentSelections[rNo] || [];
-                const isCurrentRace = selectedRaceNo === rNo;
-                return (
-                  <div
-                    key={rNo}
-                    onClick={() => {
-                      setSelectedRaceNo(rNo);
-                      setIsMobileCouponDrawerOpen(false);
-                    }}
-                    className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
-                      isCurrentRace
-                        ? 'bg-emerald-500/10 border-emerald-400/60'
-                        : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs mb-1.5">
-                      <div className="flex items-center space-x-1.5">
-                        <span className="font-black text-amber-400">{idx + 1}. Ayak</span>
-                        <span className="text-[11px] text-slate-400">
-                          ({rNo}. Koşu {raceObj?.hour})
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-bold text-slate-400">
-                        {picked.length} At Seçildi
-                      </span>
-                    </div>
-
-                    {picked.length === 0 ? (
-                      <div className="text-[11px] text-amber-400/80 italic font-semibold">
-                        ⚠️ Henüz at seçilmedi (Koşuya gitmek için tıklayın)
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-1">
-                        {picked.map((hNo) => {
-                          const hObj = raceObj?.horses.find((h) => h.number === hNo);
-                          const isSingle = picked.length === 1;
-                          return (
-                            <span
-                              key={hNo}
-                              className={`px-2 py-0.5 rounded-lg text-xs font-mono font-black flex items-center space-x-1 ${
-                                isSingle
-                                  ? 'bg-amber-400 text-slate-950 shadow-sm'
-                                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                              }`}
-                            >
-                              <span>#{hNo}</span>
-                              {hObj && <span className="font-sans font-bold text-[10px] max-w-[80px] truncate">{hObj.name}</span>}
-                              {isSingle && <span className="text-[9px] font-black uppercase ml-0.5">TEK</span>}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            {/* Mobile Drawer Tabs */}
+            <div className="flex bg-slate-950 p-1 border-b border-slate-800 shrink-0 gap-1">
+              <button
+                onClick={() => setMobileDrawerTab('current')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all ${
+                  mobileDrawerTab === 'current'
+                    ? 'bg-amber-400 text-slate-950 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Aktif Kupon ({totalPicksInCoupon} At)
+              </button>
+              <button
+                onClick={() => setMobileDrawerTab('saved')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all flex items-center justify-center space-x-1.5 ${
+                  mobileDrawerTab === 'saved'
+                    ? 'bg-amber-400 text-slate-950 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Award className="w-3.5 h-3.5" />
+                <span>Kayıtlı Kuponlar ({savedCoupons.length})</span>
+              </button>
             </div>
 
-            {/* Misli, Total & Action Buttons */}
-            <div className="p-3.5 bg-slate-950 border-t border-slate-800 space-y-3 shrink-0">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs font-bold text-slate-400">Misli:</span>
-                  <div className="flex items-center rounded-lg bg-slate-900 border border-slate-700 overflow-hidden">
+            {mobileDrawerTab === 'saved' ? (
+              <div className="p-3 space-y-2 overflow-y-auto flex-1 overscroll-auto touch-pan-y">
+                {savedCoupons.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400">
+                    Henüz kayıtlı kuponunuz bulunmuyor.
+                  </div>
+                ) : (
+                  savedCoupons.map((coupon) => (
+                    <SavedCouponCard
+                      key={coupon.id}
+                      coupon={coupon}
+                      currentDetail={detail}
+                      activeLegRaceNumbers={legRaceNumbers}
+                      onSelectProgram={handleSelectProgram}
+                      onLoadCoupon={handleLoadCouponIntoWorkspace}
+                      onDelete={handleDeleteSavedCoupon}
+                    />
+                  ))
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Legs List */}
+                <div className="p-3 space-y-2 overflow-y-auto flex-1 overscroll-auto touch-pan-y">
+                  {legRaceNumbers.map((rNo, idx) => {
+                    const raceObj = detail?.races.find((r) => r.number === rNo);
+                    const picked = currentSelections[rNo] || [];
+                    const isCurrentRace = selectedRaceNo === rNo;
+                    return (
+                      <div
+                        key={rNo}
+                        onClick={() => {
+                          setSelectedRaceNo(rNo);
+                          setIsMobileCouponDrawerOpen(false);
+                        }}
+                        className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
+                          isCurrentRace
+                            ? 'bg-emerald-500/10 border-emerald-400/60'
+                            : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1.5">
+                          <div className="flex items-center space-x-1.5">
+                            <span className="font-black text-amber-400">{idx + 1}. Ayak</span>
+                            <span className="text-[11px] text-slate-400">
+                              ({rNo}. Koşu {raceObj?.hour})
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-bold text-slate-400">
+                            {picked.length} At Seçildi
+                          </span>
+                        </div>
+
+                        {picked.length === 0 ? (
+                          <div className="text-[11px] text-amber-400/80 italic font-semibold">
+                            ⚠️ Henüz at seçilmedi (Koşuya gitmek için tıklayın)
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {picked.map((hNo) => {
+                              const hObj = raceObj?.horses.find((h) => h.number === hNo);
+                              const isSingle = picked.length === 1;
+                              return (
+                                <span
+                                  key={hNo}
+                                  className={`px-2 py-0.5 rounded-lg text-xs font-mono font-black flex items-center space-x-1 ${
+                                    isSingle
+                                      ? 'bg-amber-400 text-slate-950 shadow-sm'
+                                      : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                  }`}
+                                >
+                                  <span>#{hNo}</span>
+                                  {hObj && <span className="font-sans font-bold text-[10px] max-w-[80px] truncate">{hObj.name}</span>}
+                                  {isSingle && <span className="text-[9px] font-black uppercase ml-0.5">TEK</span>}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Misli, Total & Action Buttons */}
+                <div className="p-3.5 bg-slate-950 border-t border-slate-800 space-y-3 shrink-0">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs font-bold text-slate-400">Misli:</span>
+                      <div className="flex items-center rounded-lg bg-slate-900 border border-slate-700 overflow-hidden">
+                        <button
+                          onClick={() => setMisli((m) => Math.max(1, m - 1))}
+                          className="px-2.5 py-1 text-slate-300 hover:bg-slate-800 font-black text-xs cursor-pointer"
+                        >
+                          -
+                        </button>
+                        <span className="px-2 font-mono font-black text-xs text-white">{misli}x</span>
+                        <button
+                          onClick={() => setMisli((m) => Math.min(100, m + 1))}
+                          className="px-2.5 py-1 text-slate-300 hover:bg-slate-800 font-black text-xs cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] text-slate-400">{totalCombinations} Kolon</div>
+                      <div className="text-base font-black font-mono text-amber-400">{totalCouponCost.toFixed(2)} ₺</div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => setMisli((m) => Math.max(1, m - 1))}
-                      className="px-2.5 py-1 text-slate-300 hover:bg-slate-800 font-black text-xs cursor-pointer"
+                      onClick={() => {
+                        handleSaveCoupon();
+                        setIsMobileCouponDrawerOpen(false);
+                      }}
+                      disabled={totalCombinations === 0}
+                      className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 cursor-pointer disabled:opacity-40 transition-all"
                     >
-                      -
+                      Kuponu Kaydet
                     </button>
-                    <span className="px-2 font-mono font-black text-xs text-white">{misli}x</span>
                     <button
-                      onClick={() => setMisli((m) => Math.min(100, m + 1))}
-                      className="px-2.5 py-1 text-slate-300 hover:bg-slate-800 font-black text-xs cursor-pointer"
+                      onClick={() => setIsMobileCouponDrawerOpen(false)}
+                      className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs cursor-pointer"
                     >
-                      +
+                      Kapat
                     </button>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-[10px] text-slate-400">{totalCombinations} Kolon</div>
-                  <div className="text-base font-black font-mono text-amber-400">{totalCouponCost.toFixed(2)} ₺</div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 📋 Dedicated Full-Screen Saved Coupons Modal */}
+      {isSavedCouponsModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setIsSavedCouponsModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[85vh] rounded-3xl bg-slate-900 border border-amber-500/30 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between shrink-0 bg-slate-950/70">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400">
+                  <Award className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <span>Kayıtlı At Yarışı Kuponlarım</span>
+                    <span className="px-2 py-0.2 rounded-full bg-amber-400 text-slate-950 text-xs font-black">
+                      {savedCoupons.length}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Gelen atlar, tuttu/tutmadı sonuçları ve canlı ayak durumu
+                  </p>
                 </div>
               </div>
-
-              <div className="flex gap-2">
+              <div className="flex items-center space-x-2">
+                {savedCoupons.length > 0 && (
+                  <button
+                    onClick={handleClearAllSavedCoupons}
+                    className="text-xs text-slate-400 hover:text-rose-400 font-semibold px-2 py-1 rounded-lg hover:bg-rose-500/10 cursor-pointer transition-colors"
+                  >
+                    Tümünü Temizle
+                  </button>
+                )}
                 <button
-                  onClick={() => {
-                    handleSaveCoupon();
-                    setIsMobileCouponDrawerOpen(false);
-                  }}
-                  disabled={totalCombinations === 0}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 cursor-pointer disabled:opacity-40 transition-all"
+                  onClick={() => setIsSavedCouponsModalOpen(false)}
+                  className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
                 >
-                  Kuponu Kaydet
-                </button>
-                <button
-                  onClick={() => setIsMobileCouponDrawerOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs cursor-pointer"
-                >
-                  Kapat
+                  <X className="w-5 h-5" />
                 </button>
               </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 overscroll-auto touch-pan-y">
+              {savedCoupons.length === 0 ? (
+                <div className="py-12 text-center space-y-3">
+                  <div className="w-14 h-14 mx-auto rounded-3xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-500">
+                    <Ticket className="w-7 h-7" />
+                  </div>
+                  <div className="text-sm font-bold text-slate-300">Henüz Kayıtlı Kuponunuz Yok</div>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    Bültenden at seçip &quot;Kuponu Kaydet&quot; butonuna bastığınızda kuponlarınız burada saklanır ve yarışlar bittikçe gelen atlar yeşil renkle otomatik işaretlenir.
+                  </p>
+                </div>
+              ) : (
+                savedCoupons.map((coupon) => (
+                  <SavedCouponCard
+                    key={coupon.id}
+                    coupon={coupon}
+                    currentDetail={detail}
+                    activeLegRaceNumbers={legRaceNumbers}
+                    onSelectProgram={handleSelectProgram}
+                    onLoadCoupon={handleLoadCouponIntoWorkspace}
+                    onDelete={handleDeleteSavedCoupon}
+                  />
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3.5 border-t border-slate-800 bg-slate-950/80 flex justify-end shrink-0">
+              <button
+                onClick={() => setIsSavedCouponsModalOpen(false)}
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs cursor-pointer transition-colors"
+              >
+                Kapat
+              </button>
             </div>
           </div>
         </div>
