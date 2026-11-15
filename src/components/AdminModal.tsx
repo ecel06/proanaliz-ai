@@ -122,26 +122,26 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     reason: string;
   }>>([
     {
-      homeTeam: 'Real Madrid',
-      awayTeam: 'Barcelona',
-      league: 'İspanya La Liga',
-      matchTime: '21:00',
+      homeTeam: 'Fransa',
+      awayTeam: 'Türkiye',
+      league: 'UEFA Uluslar Ligi',
+      matchTime: '22:45',
       matchDate: 'Bugün',
       prediction: '2.5 ÜST & KG VAR',
-      odds: 1.72,
+      odds: 1.75,
       confidence: 93,
-      reason: 'El Clasico xG analizi en az 3 golü işaret ediyor.'
+      reason: 'A Milli Takım hücum temposu ve Fransa ofansif gücü en az 3 golü işaret ediyor.'
     },
     {
-      homeTeam: 'Liverpool',
-      awayTeam: 'Man City',
-      league: 'İngiltere Premier Lig',
-      matchTime: '19:30',
+      homeTeam: 'İspanya',
+      awayTeam: 'İngiltere',
+      league: 'UEFA Uluslar Ligi',
+      matchTime: '22:45',
       matchDate: 'Bugün',
       prediction: 'MS 1X',
-      odds: 1.48,
-      confidence: 89,
-      reason: 'Anfield saha avantajı ve Liverpool pres gücü.'
+      odds: 1.44,
+      confidence: 90,
+      reason: 'İspanya saha avantajı ve pas organizasyonuyla galibiyete yakın.'
     }
   ]);
 
@@ -1203,7 +1203,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                         <input
                           type="text"
-                          placeholder="Ev Sahibi (Örn: Real Madrid)"
+                          placeholder="Ev Sahibi (Örn: Fransa)"
                           value={m.homeTeam}
                           onChange={(e) => {
                             const val = e.target.value;

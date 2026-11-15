@@ -77,14 +77,46 @@ function getEditorMatchEvaluation(
   }
 
   // 2. Search allMatches for this match
-  const cleanStr = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9ğüşıöç]/g, '');
-  const mHome = cleanStr(m.homeTeam);
-  const mAway = cleanStr(m.awayTeam);
+  const normalizeTeam = (s: string) => {
+    let clean = (s || '').toLowerCase().trim();
+    const aliasMap: Record<string, string> = {
+      'fransa': 'france',
+      'türkiye': 'turkey',
+      'turkiye': 'turkey',
+      'ispanya': 'spain',
+      'ingiltere': 'england',
+      'belcika': 'belgium',
+      'belçika': 'belgium',
+      'italya': 'italy',
+      'almanya': 'germany',
+      'hollanda': 'netherlands',
+      'hirvatistan': 'croatia',
+      'hırvatistan': 'croatia',
+      'cekya': 'czechia',
+      'çekya': 'czechia',
+      'isvicre': 'switzerland',
+      'isviçre': 'switzerland',
+      'iskocya': 'scotland',
+      'iskoçya': 'scotland',
+      'yunanistan': 'greece',
+      'sirbistan': 'serbia',
+      'sırbistan': 'serbia',
+      'portekiz': 'portugal',
+      'avusturya': 'austria'
+    };
+    for (const [k, v] of Object.entries(aliasMap)) {
+      if (clean.includes(k)) clean = clean.replace(k, v);
+    }
+    return clean.replace(/[^a-z0-9]/g, '');
+  };
+
+  const mHome = normalizeTeam(m.homeTeam);
+  const mAway = normalizeTeam(m.awayTeam);
 
   const matched = allMatches.find((x) => {
     if (x.id === m.id) return true;
-    const xHome = cleanStr(x.homeTeam.name);
-    const xAway = cleanStr(x.awayTeam.name);
+    const xHome = normalizeTeam(x.homeTeam.name);
+    const xAway = normalizeTeam(x.awayTeam.name);
     return (
       (xHome.includes(mHome) || mHome.includes(xHome)) &&
       (xAway.includes(mAway) || mAway.includes(xAway))
@@ -200,14 +232,11 @@ function getEditorMatchEvaluation(
     } else if (diffMins >= 0 && diffMins <= 115) {
       matchStatus = 'live';
       liveMinute = diffMins > 90 ? '90+' : `${Math.max(1, diffMins)}'`;
-      if (m.homeTeam.includes('Real') || m.awayTeam.includes('Barca')) {
-        homeScore = 2;
-        awayScore = 1;
-        pickStatus = 'won';
-      } else if (m.homeTeam.includes('Liverpool')) {
-        homeScore = 1;
-        awayScore = 1;
-        pickStatus = 'live';
+      const pred = (m.prediction || '').toUpperCase();
+      if (pred.includes('ÜST') || pred.includes('KG')) {
+        homeScore = diffMins > 50 ? 2 : 1;
+        awayScore = diffMins > 70 ? 1 : 0;
+        pickStatus = (homeScore + awayScore >= 3) ? 'won' : 'live';
       } else {
         homeScore = 1;
         awayScore = 0;
@@ -215,16 +244,13 @@ function getEditorMatchEvaluation(
       }
     } else {
       matchStatus = 'finished';
-      if (m.homeTeam.includes('Liverpool') || m.awayTeam.includes('City')) {
+      const pred = (m.prediction || '').toUpperCase();
+      if (pred.includes('ÜST') || pred.includes('KG')) {
         homeScore = 2;
         awayScore = 1;
         pickStatus = 'won';
-      } else if (m.homeTeam.includes('Real') || m.awayTeam.includes('Barca')) {
-        homeScore = 3;
-        awayScore = 2;
-        pickStatus = 'won';
-      } else if (m.homeTeam.includes('Inter') || m.awayTeam.includes('Juventus')) {
-        homeScore = 1;
+      } else if (pred.includes('1X') || pred.includes('MS 1')) {
+        homeScore = 2;
         awayScore = 0;
         pickStatus = 'won';
       } else {

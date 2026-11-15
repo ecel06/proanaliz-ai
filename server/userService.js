@@ -95,6 +95,9 @@ function seedDefaultAdmin() {
       u.vipPlan = 'Kurucu Yönetici VIP';
       u.vipExpiresAt = Date.now() + 365 * 24 * 60 * 60 * 1000;
       u.preferredInterest = 'all';
+      if (!u.phone || u.phone === '05550000000') {
+        u.phone = '05068910050';
+      }
       break;
     }
   }
@@ -104,7 +107,7 @@ function seedDefaultAdmin() {
       id: 'usr_master_admin_001',
       name: 'Yönetici',
       email: adminEmail,
-      phone: '05550000000',
+      phone: '05068910050',
       authProvider: 'local',
       passwordHash: hashPassword('Password123!'),
       role: 'admin',
@@ -149,52 +152,57 @@ function saveUsers() {
 }
 
 function seedDefaultEditorCoupons() {
-  if (editorCouponsMap.size === 0) {
+  const existing = editorCouponsMap.get('ed_cp_001');
+  const hasMockClubs = existing && existing.matches?.some(m => 
+    (m.homeTeam && (m.homeTeam.includes('Real') || m.homeTeam.includes('Liverpool') || m.homeTeam.includes('Inter')))
+  );
+
+  if (editorCouponsMap.size === 0 || hasMockClubs) {
     const defaultCoupon = {
       id: 'ed_cp_001',
       title: '👑 YÖNETİCİ ŞEREF KUPONU',
       subtitle: 'Yönetici Masası Özel Tercihleri & AI Derin Analizi',
       category: 'football',
       confidence: 91,
-      totalOdds: 3.85,
+      totalOdds: 3.65,
       isVipOnly: true,
       status: 'pending',
       author: 'Yönetici',
       createdAt: Date.now(),
       matches: [
         {
-          id: 'm_ed_1',
-          homeTeam: 'Real Madrid',
-          awayTeam: 'Barcelona',
-          league: 'İspanya La Liga',
-          matchTime: '21:00',
+          id: '401861177',
+          homeTeam: 'Fransa',
+          awayTeam: 'Türkiye',
+          league: 'UEFA Uluslar Ligi',
+          matchTime: '22:45',
           matchDate: 'Bugün',
           prediction: '2.5 ÜST & KG VAR',
-          odds: 1.72,
+          odds: 1.75,
           confidence: 93,
-          reason: 'El Clasico hücum istatistikleri ve xG analizi en az 3 golü işaret ediyor.'
+          reason: 'A Milli Takım hücum temposu ve Fransa ofansif gücü en az 3 golü işaret ediyor.'
         },
         {
-          id: 'm_ed_2',
-          homeTeam: 'Liverpool',
-          awayTeam: 'Manchester City',
-          league: 'İngiltere Premier Lig',
-          matchTime: '19:30',
+          id: '401861175',
+          homeTeam: 'İspanya',
+          awayTeam: 'İngiltere',
+          league: 'UEFA Uluslar Ligi',
+          matchTime: '22:45',
           matchDate: 'Bugün',
           prediction: 'MS 1X Çifte Şans',
-          odds: 1.48,
-          confidence: 89,
-          reason: 'Anfield saha avantajı ve Liverpool pres gücü galibiyete yakın.'
+          odds: 1.44,
+          confidence: 90,
+          reason: 'İspanya saha avantajı ve pas organizasyonuyla maça ağırlığını koyacaktır.'
         },
         {
-          id: 'm_ed_3',
-          homeTeam: 'Inter',
-          awayTeam: 'Juventus',
-          league: 'İtalya Serie A',
+          id: '401861176',
+          homeTeam: 'Belçika',
+          awayTeam: 'İtalya',
+          league: 'UEFA Uluslar Ligi',
           matchTime: '22:45',
           matchDate: 'Bugün',
           prediction: 'İY 0.5 ÜST',
-          odds: 1.51,
+          odds: 1.45,
           confidence: 91,
           reason: 'İlk yarı yüksek tempo ve ceza sahası aksiyonu bekleniyor.'
         }

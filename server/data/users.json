@@ -1,0 +1,17 @@
+[
+  {
+    "id": "usr_master_admin_001",
+    "name": "Yönetici",
+    "email": "admin@proanaliz.ai",
+    "phone": "05068910050",
+    "authProvider": "local",
+    "passwordHash": "17d6eb76139edf506e0a8c53c8cb394a:3db7cc05e654e3bbff53afdfdd39076d3172a4d85b8480d9ebcdb67e4fe8b378dae32c06b35db7b9cdd202b47e386323c3f6e8f7b1cd50b659a0b781c548c128",
+    "role": "admin",
+    "isVip": true,
+    "vipPlan": "Kurucu Yönetici VIP",
+    "vipExpiresAt": 1826307156431,
+    "preferredInterest": "all",
+    "createdAt": 1794771156431,
+    "lastLoginAt": 1794771156431
+  }
+]

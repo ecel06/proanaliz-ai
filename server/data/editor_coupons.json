@@ -1,0 +1,52 @@
+[
+  {
+    "id": "ed_cp_001",
+    "title": "👑 YÖNETİCİ ŞEREF KUPONU",
+    "subtitle": "Yönetici Masası Özel Tercihleri & AI Derin Analizi",
+    "category": "football",
+    "confidence": 91,
+    "totalOdds": 3.65,
+    "isVipOnly": true,
+    "status": "pending",
+    "author": "Yönetici",
+    "createdAt": 1794771156439,
+    "matches": [
+      {
+        "id": "401861177",
+        "homeTeam": "Fransa",
+        "awayTeam": "Türkiye",
+        "league": "UEFA Uluslar Ligi",
+        "matchTime": "22:45",
+        "matchDate": "Bugün",
+        "prediction": "2.5 ÜST & KG VAR",
+        "odds": 1.75,
+        "confidence": 93,
+        "reason": "A Milli Takım hücum temposu ve Fransa ofansif gücü en az 3 golü işaret ediyor."
+      },
+      {
+        "id": "401861175",
+        "homeTeam": "İspanya",
+        "awayTeam": "İngiltere",
+        "league": "UEFA Uluslar Ligi",
+        "matchTime": "22:45",
+        "matchDate": "Bugün",
+        "prediction": "MS 1X Çifte Şans",
+        "odds": 1.44,
+        "confidence": 90,
+        "reason": "İspanya saha avantajı ve pas organizasyonuyla maça ağırlığını koyacaktır."
+      },
+      {
+        "id": "401861176",
+        "homeTeam": "Belçika",
+        "awayTeam": "İtalya",
+        "league": "UEFA Uluslar Ligi",
+        "matchTime": "22:45",
+        "matchDate": "Bugün",
+        "prediction": "İY 0.5 ÜST",
+        "odds": 1.45,
+        "confidence": 91,
+        "reason": "İlk yarı yüksek tempo ve ceza sahası aksiyonu bekleniyor."
+      }
+    ]
+  }
+]
