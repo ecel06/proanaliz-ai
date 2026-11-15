@@ -25,6 +25,9 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
+  Play,
+  Tv,
+  ExternalLink,
 } from 'lucide-react';
 import { User } from '../../utils/authHelper';
 import {
@@ -734,6 +737,159 @@ export const SavedCouponCard: React.FC<{
 };
 
 
+// 📺 TJK TV Canlı Yayın & Koşu Tekrarı Modalı
+export const LiveRaceStreamModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  race: RaceCard | null;
+  programPlace?: string;
+}> = ({ isOpen, onClose, race, programPlace }) => {
+  const [streamSource, setStreamSource] = useState<'tjktv' | 'replay'>('tjktv');
+
+  if (!isOpen) return null;
+
+  const hasReplayVideo = Boolean(race?.video);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-4xl max-h-[92vh] rounded-3xl bg-slate-900 border border-red-500/40 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="p-3.5 sm:p-4 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between shrink-0">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-red-600/20 border border-red-500/40 flex items-center justify-center text-red-400">
+              <Tv className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-1.5">
+                  <span>📺 TJK TV Canlı Yayın &amp; Koşu İzle</span>
+                </h3>
+                <span className="px-2 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-black uppercase flex items-center space-x-1 animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white inline-block mr-0.5" />
+                  <span>CANLI YAYIN</span>
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                {programPlace} • {race ? `${race.number}. Koşu (${race.hour})` : 'TJK TV Canlı Akış'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {hasReplayVideo && (
+              <div className="flex rounded-xl bg-slate-900 p-0.5 border border-slate-800 text-xs">
+                <button
+                  onClick={() => setStreamSource('tjktv')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                    streamSource === 'tjktv'
+                      ? 'bg-red-600 text-white'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  TJK TV Canlı
+                </button>
+                <button
+                  onClick={() => setStreamSource('replay')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                    streamSource === 'replay'
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Koşu Tekrarı
+                </button>
+              </div>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Video Player Container */}
+        <div className="relative w-full bg-black aspect-video flex items-center justify-center overflow-hidden">
+          {streamSource === 'replay' && race?.video ? (
+            <video
+              src={race.video}
+              controls
+              autoPlay
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <iframe
+              src="https://www.youtube-nocookie.com/embed/live_stream?channel=UC4g1eGkP3Z9wK1JkO1yC49Q"
+              title="TJK TV Canlı Yayın"
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          )}
+        </div>
+
+        {/* Live Race Runners & Ganyan Ticker Bar */}
+        {race && race.horses && (
+          <div className="p-3 bg-slate-950/95 border-t border-slate-800 space-y-2 shrink-0">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-black text-amber-400 flex items-center space-x-1">
+                <span>🏇 {race.number}. Koşu Atları &amp; Oranları</span>
+                <span className="text-slate-500">({race.distance}m {race.raceCourseType})</span>
+              </span>
+              <a
+                href="https://www.tjk.org/TR/YarisSever/CanliYayin/TJKTV"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center space-x-1 font-bold underline"
+              >
+                <span>TJK.org Canlı Sayfası</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+              {race.horses.map((h) => {
+                const isScr = h.status === false;
+                return (
+                  <div
+                    key={h.number}
+                    className={`shrink-0 px-2.5 py-1.5 rounded-xl border text-xs flex items-center space-x-2 ${
+                      isScr
+                        ? 'bg-rose-950/20 border-rose-500/20 text-rose-400 line-through opacity-60'
+                        : h.order === 1
+                        ? 'bg-emerald-500/20 border-emerald-400/50 text-white font-black'
+                        : 'bg-slate-900 border-slate-800 text-slate-200'
+                    }`}
+                  >
+                    <span className="w-6 h-6 rounded-lg bg-slate-800 text-amber-400 font-mono font-black flex items-center justify-center text-xs">
+                      #{h.number}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-bold truncate max-w-[100px] text-white leading-tight">
+                        {h.name}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono">
+                        {h.ganyan > 0 ? `${h.ganyan.toFixed(2)} ₺` : '1.00 ₺'}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export interface HorseRacingViewProps {
   user?: User | null;
   onOpenVIP?: () => void;
@@ -769,6 +925,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
   const [isHorseAIChatOpen, setIsHorseAIChatOpen] = useState<boolean>(false);
   const [hippodromeTab, setHippodromeTab] = useState<'tr' | 'foreign'>('tr');
   const [isMobileCouponDrawerOpen, setIsMobileCouponDrawerOpen] = useState<boolean>(false);
+  const [isLiveStreamOpen, setIsLiveStreamOpen] = useState<boolean>(false);
 
   // Kupon state: programId -> { raceNo -> horseNumbers[] } (persisted across pull-to-refresh & app reloads)
   const [selectionsByProgram, setSelectionsByProgram] = useState<
@@ -1281,6 +1438,14 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                   {savedCoupons.length}
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => setIsLiveStreamOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600/25 to-rose-600/15 hover:from-red-600/35 hover:to-rose-600/25 border border-red-500/40 text-red-300 font-extrabold text-xs cursor-pointer transition-all"
+            >
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <Tv className="w-3.5 h-3.5 text-red-400" />
+              <span>TJK TV Canlı</span>
             </button>
             <button
               onClick={handleManualRefresh}
@@ -2158,6 +2323,15 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                         {/* Quick Actions & Sort */}
                         <div className="flex flex-wrap items-center gap-1.5">
                           <button
+                            onClick={() => setIsLiveStreamOpen(true)}
+                            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-600 via-rose-600 to-red-500 hover:from-red-500 hover:to-rose-500 text-white font-black text-[11px] cursor-pointer transition-all flex items-center space-x-1 shadow-md shadow-rose-600/30 active:scale-95 border border-rose-400/50"
+                            title="TJK TV Canlı Yayın & Koşuyu İzle"
+                          >
+                            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                            <Play className="w-3 h-3 fill-current" />
+                            <span>CANLI İZLE</span>
+                          </button>
+                          <button
                             onClick={() => pickAITopNInRace(1)}
                             className="px-2.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] cursor-pointer transition-colors"
                             title="AI Banko Seçimini Ekle"
@@ -2185,7 +2359,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                           >
                             <option value="number">Sıra: Numara / Sonuç</option>
                             <option value="agf">Sıra: AGF % (Yüksekten)</option>
-                            <option value="ai">Sıra: AI Skor (Yüksekten)</option>
+                            <option value="ai">Sıra: ⚡ HPI Güç Puanı</option>
                             <option value="ganyan">Sıra: Ganyan (Favoriden)</option>
                             <option value="handicap">Sıra: Handikap Puanı</option>
                           </select>
@@ -2420,13 +2594,20 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                                   {ai && !isScratched && (
                                     <div className="flex items-center gap-1 mt-1">
                                       <span className={`px-1.5 py-0.2 rounded border text-[9px] font-bold ${getTagBadgeClass(ai.tag)}`}>
-                                        {ai.score} • {ai.tag}
+                                        {ai.tag}
+                                      </span>
+                                      <span className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-black ${
+                                        ai.score >= 80
+                                          ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
+                                          : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                                      }`}>
+                                        ⚡ HPI {ai.score}
                                       </span>
                                       {ai.score >= 68 && agf.percentage <= 12 && agf.percentage > 0 && (
-                                        <span className="px-1.5 py-0.2 rounded bg-purple-500/25 border border-purple-400/40 text-purple-300 text-[9px] font-black animate-pulse">
-                                          🎯 RADAR
-                                        </span>
-                                      )}
+                                         <span className="px-1.5 py-0.2 rounded bg-purple-500/25 border border-purple-400/40 text-purple-300 text-[9px] font-black animate-pulse">
+                                           🎯 RADAR
+                                         </span>
+                                       )}
                                     </div>
                                   )}
                                 </div>
@@ -2659,11 +2840,20 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                                 {ai && !isScratched && (
                                   <div className="flex items-center gap-1">
                                     <span
-                                      className={`px-1.5 py-0.2 rounded border text-[9px] ${getTagBadgeClass(
+                                      className={`px-1.5 py-0.2 rounded border text-[9px] font-bold ${getTagBadgeClass(
                                         ai.tag
                                       )}`}
                                     >
-                                      {ai.score} • {ai.tag}
+                                      {ai.tag}
+                                    </span>
+                                    <span
+                                      className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-black ${
+                                        ai.score >= 80
+                                          ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
+                                          : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                                      }`}
+                                    >
+                                      ⚡ HPI {ai.score}
                                     </span>
                                     {ai.score >= 68 && agf.percentage <= 12 && agf.percentage > 0 && (
                                       <span
@@ -3283,6 +3473,14 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
           </div>
         </div>
       )}
+
+      {/* 📺 TJK TV Canlı Yayın & Koşu Tekrarı Modalı */}
+      <LiveRaceStreamModal
+        isOpen={isLiveStreamOpen}
+        onClose={() => setIsLiveStreamOpen(false)}
+        race={activeRace}
+        programPlace={detail?.program.place}
+      />
 
       {/* Footer Yasal Uyarı / Sorumluluk Reddi */}
       <div className={`w-full mt-6 pt-4 border-t border-slate-800/80 text-center space-y-1 text-slate-500 text-[11px] ${
