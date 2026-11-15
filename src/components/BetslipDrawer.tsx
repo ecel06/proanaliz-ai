@@ -246,7 +246,7 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                     )}
                   </h3>
                   <div className="text-[11px] text-slate-400">
-                    Nesine / İddaa uyumlu sistem, banko ve kazanç simülasyonu
+                    Resmi İddaa uyumlu sistem, banko ve kazanç simülasyonu
                   </div>
                 </div>
               </div>

@@ -384,7 +384,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.15.20';
+  const CLIENT_BUILD_VERSION = '2026.11.15.21';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1781,10 +1781,10 @@ export const App: React.FC = () => {
                             ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
                             : 'text-slate-400 hover:text-white'
                           }`}
-                        title="Nesine.com Tarzı Sade Bülten Görünümü"
+                        title="Resmi İddaa Bülteni Liste Görünümü"
                       >
                         <LayoutList className="w-3.5 h-3.5" />
-                        <span>Bülten (Nesine)</span>
+                        <span>İddaa Bülteni</span>
                       </button>
                       <button
                         type="button"
