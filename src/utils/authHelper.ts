@@ -87,16 +87,12 @@ export function getStoredUser(): User | null {
 export function saveAuthSession(token: string, user: User, rememberMe: boolean = true): void {
   if (typeof window === 'undefined') return;
   try {
-    if (rememberMe) {
-      localStorage.setItem(TOKEN_KEY, token);
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
-      sessionStorage.removeItem(TOKEN_KEY);
-      sessionStorage.removeItem(USER_KEY);
-    } else {
+    // Always persist to localStorage so mobile pull-to-refresh or tab reload never drops the session
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    if (!rememberMe) {
       sessionStorage.setItem(TOKEN_KEY, token);
       sessionStorage.setItem(USER_KEY, JSON.stringify(user));
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
     }
   } catch {}
 }
@@ -123,21 +119,30 @@ export async function fetchCurrentUser(): Promise<User | null> {
     });
     if (!res.ok) {
       if (res.status === 401) {
-        clearAuthSession();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('proanaliz_session_expired', {
-            detail: { message: 'Oturum süreniz doldu veya oturumunuz başka bir cihazdan kapatıldı. Lütfen tekrar giriş yapın.' }
-          }));
+        try {
+          const errData = await res.json();
+          if (errData && errData.error) {
+            clearAuthSession();
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('proanaliz_session_expired', {
+                detail: { message: 'Oturum süreniz doldu veya oturumunuz başka bir cihazdan kapatıldı. Lütfen tekrar giriş yapın.' }
+              }));
+            }
+            return null;
+          }
+        } catch {
+          // If response body is not valid JSON (e.g. gateway error/offline), preserve user session!
+          return getStoredUser();
         }
       }
-      return null;
+      return getStoredUser();
     }
     const data = await res.json();
     if (data.success && data.user) {
       saveAuthSession(token, data.user);
       return data.user;
     }
-    return null;
+    return getStoredUser();
   } catch {
     return getStoredUser();
   }

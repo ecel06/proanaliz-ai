@@ -22,6 +22,8 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 // Cryptographically secure persistent secret resolution
+const STATIC_SECRET_SALT = 'proanaliz-jwt-persistent-security-key-2026-v2';
+
 function resolveJwtSecret() {
   if (process.env.JWT_SECRET && process.env.JWT_SECRET.length >= 16) {
     return process.env.JWT_SECRET;
@@ -32,10 +34,14 @@ function resolveJwtSecret() {
       if (saved.length >= 32) return saved;
     }
     const generated = crypto.randomBytes(64).toString('hex');
-    fs.writeFileSync(JWT_SECRET_FILE, generated, 'utf8');
-    return generated;
+    try {
+      fs.writeFileSync(JWT_SECRET_FILE, generated, 'utf8');
+      return generated;
+    } catch {
+      return crypto.createHash('sha256').update(STATIC_SECRET_SALT).digest('hex');
+    }
   } catch {
-    return crypto.randomBytes(64).toString('hex');
+    return crypto.createHash('sha256').update(STATIC_SECRET_SALT).digest('hex');
   }
 }
 

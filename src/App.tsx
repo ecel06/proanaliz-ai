@@ -120,8 +120,21 @@ export const App: React.FC = () => {
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   // User Betslip (Kullanıcı Kuponu & Hesaplayıcı)
-  const [betslipItems, setBetslipItems] = useState<UserBetslipItem[]>([]);
+  const [betslipItems, setBetslipItems] = useState<UserBetslipItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('proanaliz_betslip_items');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
   const [isBetslipOpen, setIsBetslipOpen] = useState(false);
+
+  // Automatically persist betslip changes to survive pull-to-refresh & app restarts
+  useEffect(() => {
+    try {
+      localStorage.setItem('proanaliz_betslip_items', JSON.stringify(betslipItems));
+    } catch {}
+  }, [betslipItems]);
 
   // View Mode: 'bulletin' (Nesine Tarzı Sade Liste) vs 'cards' (Detaylı Geniş Kartlar)
   const [viewMode, setViewMode] = useState<'bulletin' | 'cards'>(() => {
@@ -258,12 +271,21 @@ export const App: React.FC = () => {
     }
   };
 
-  // Active Portal Section: Home, Football, Horse Racing, Stocks
-  const [activeSection, setActiveSection] = useState<'home' | 'football' | 'horseRacing' | 'stocks'>('home');
+  // Active Portal Section: Home, Football, Horse Racing, Stocks (persisted across pull-to-refresh & reload)
+  const [activeSection, setActiveSection] = useState<'home' | 'football' | 'horseRacing' | 'stocks'>(() => {
+    try {
+      const saved = localStorage.getItem('proanaliz_active_section');
+      if (saved && ['home', 'football', 'horseRacing', 'stocks'].includes(saved)) {
+        return saved as 'home' | 'football' | 'horseRacing' | 'stocks';
+      }
+    } catch {}
+    return 'home';
+  });
 
   const handleNavigateSection = (sec: 'home' | 'football' | 'horseRacing' | 'stocks', replace = false) => {
     if (sec === activeSection) return;
     try {
+      localStorage.setItem('proanaliz_active_section', sec);
       if (replace) {
         window.history.replaceState({ section: sec }, '', '');
       } else {
@@ -362,7 +384,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.15.05';
+  const CLIENT_BUILD_VERSION = '2026.11.15.06';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -757,12 +779,14 @@ export const App: React.FC = () => {
       const targetSection = e.state?.section;
       if (targetSection && ['home', 'football', 'horseRacing', 'stocks'].includes(targetSection)) {
         setActiveSection(targetSection);
+        try { localStorage.setItem('proanaliz_active_section', targetSection); } catch {}
         if (targetSection === 'football') {
           setActiveTabMode('upcoming');
         }
       } else {
         // Fallback to home instead of closing app or leaving blank
         setActiveSection('home');
+        try { localStorage.setItem('proanaliz_active_section', 'home'); } catch {}
       }
     };
 

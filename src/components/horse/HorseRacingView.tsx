@@ -60,9 +60,23 @@ interface HorseRacingViewProps {
 
 export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVIP, onShowToast }) => {
   const [programs, setPrograms] = useState<HippodromeProgram[]>([]);
-  const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null);
+  const [selectedProgramId, setSelectedProgramId] = useState<number | null>(() => {
+    try {
+      const saved = localStorage.getItem('proanaliz_hr_selected_pid');
+      return saved ? Number(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [detail, setDetail] = useState<ProgramDetail | null>(null);
-  const [selectedRaceNo, setSelectedRaceNo] = useState<number>(1);
+  const [selectedRaceNo, setSelectedRaceNo] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('proanaliz_hr_selected_raceno');
+      return saved ? Number(saved) : 1;
+    } catch {
+      return 1;
+    }
+  });
   const [selectedGameId, setSelectedGameId] = useState<string>('ALTILI_1');
   const [subTab, setSubTab] = useState<HRSubTab>('bulletin');
   const [sortMode, setSortMode] = useState<SortMode>('number');
@@ -72,10 +86,17 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
   const [expandedHorse, setExpandedHorse] = useState<number | null>(null);
   const [isHorseAIChatOpen, setIsHorseAIChatOpen] = useState<boolean>(false);
 
-  // Kupon state: programId -> { raceNo -> horseNumbers[] }
+  // Kupon state: programId -> { raceNo -> horseNumbers[] } (persisted across pull-to-refresh & app reloads)
   const [selectionsByProgram, setSelectionsByProgram] = useState<
     Record<number, Record<number, number[]>>
-  >({});
+  >(() => {
+    try {
+      const saved = localStorage.getItem('proanaliz_hr_active_selections');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const [misli, setMisli] = useState<number>(1);
   const [unitPrice, setUnitPrice] = useState<number>(1.0);
   const [savedCoupons, setSavedCoupons] = useState<
@@ -89,6 +110,29 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
     }
   });
 
+  // Automatically persist race coupon selections to survive pull-to-refresh
+  useEffect(() => {
+    try {
+      localStorage.setItem('proanaliz_hr_active_selections', JSON.stringify(selectionsByProgram));
+    } catch {}
+  }, [selectionsByProgram]);
+
+  useEffect(() => {
+    if (selectedProgramId) {
+      try {
+        localStorage.setItem('proanaliz_hr_selected_pid', String(selectedProgramId));
+      } catch {}
+    }
+  }, [selectedProgramId]);
+
+  useEffect(() => {
+    if (selectedRaceNo) {
+      try {
+        localStorage.setItem('proanaliz_hr_selected_raceno', String(selectedRaceNo));
+      } catch {}
+    }
+  }, [selectedRaceNo]);
+
   // Initial bulletin fetch + auto live poll every 30s if active races exist
   const loadBulletin = async (targetPid?: number | null, force = false) => {
     try {
@@ -96,15 +140,21 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
       setErrorMsg(null);
       const resp = await fetchHorseRacingBulletin(targetPid, force);
       setPrograms(resp.programs || []);
-      const pid = resp.selectedProgramId || resp.programs?.[0]?.id || null;
+      const pid = targetPid || resp.selectedProgramId || resp.programs?.[0]?.id || null;
       setSelectedProgramId(pid);
       if (resp.activeProgramDetail) {
         setDetail(resp.activeProgramDetail);
-        const firstOpen =
-          resp.activeProgramDetail.races.find((r) => !r.isFinished) ||
-          resp.activeProgramDetail.races[0];
-        if (firstOpen && force === false && selectedRaceNo === 1) {
-          setSelectedRaceNo(firstOpen.number);
+        const savedRace = (() => {
+          try {
+            const r = localStorage.getItem('proanaliz_hr_selected_raceno');
+            return r ? Number(r) : null;
+          } catch { return null; }
+        })();
+        const targetRace = savedRace && resp.activeProgramDetail.races.some((r) => r.number === savedRace)
+          ? savedRace
+          : (resp.activeProgramDetail.races.find((r) => !r.isFinished)?.number || resp.activeProgramDetail.races[0]?.number || 1);
+        if (force === false) {
+          setSelectedRaceNo(targetRace);
         }
       }
     } catch (err: any) {
@@ -115,7 +165,15 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
   };
 
   useEffect(() => {
-    loadBulletin(null, false);
+    const savedPid = (() => {
+      try {
+        const saved = localStorage.getItem('proanaliz_hr_selected_pid');
+        return saved ? Number(saved) : null;
+      } catch {
+        return null;
+      }
+    })();
+    loadBulletin(savedPid, false);
     const timer = setInterval(() => {
       if (selectedProgramId) {
         fetchHorseRacingProgram(selectedProgramId, false)
