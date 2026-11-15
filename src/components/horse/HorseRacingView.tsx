@@ -1,5 +1,6 @@
 // src/components/horse/HorseRacingView.tsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import Hls from 'hls.js';
 import {
   Award,
   CheckCircle2,
@@ -740,6 +741,130 @@ export const SavedCouponCard: React.FC<{
 };
 
 
+// 📺 TJK TV Resmi Canlı Yayın Oynatıcısı (Native HLS / HTML5 Video)
+const TJKVideoPlayer: React.FC<{
+  streamUrl: string;
+  autoPlay?: boolean;
+  className?: string;
+}> = ({ streamUrl, autoPlay = true, className = 'w-full h-full object-contain' }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasError, setHasError] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !streamUrl) return;
+
+    setHasError(false);
+    setIsLoading(true);
+    let hlsInstance: Hls | null = null;
+
+    const attemptPlay = () => {
+      if (!autoPlay || !video) return;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Tarayıcı sesli otomatik oynatmaya izin vermezse sessize alarak akışı başlat
+          video.muted = true;
+          video.play().catch(() => {});
+        });
+      }
+    };
+
+    if (streamUrl.endsWith('.mp4')) {
+      video.src = streamUrl;
+      attemptPlay();
+      return;
+    }
+
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Native HLS (Safari / iOS / Mac)
+      video.src = streamUrl;
+      attemptPlay();
+    } else if (Hls.isSupported()) {
+      // Chrome, Edge, Firefox, Android (Hls.js Engine)
+      hlsInstance = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 30,
+      });
+      hlsInstance.loadSource(streamUrl);
+      hlsInstance.attachMedia(video);
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+        attemptPlay();
+      });
+      hlsInstance.on(Hls.Events.ERROR, (_e, data) => {
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              hlsInstance?.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              hlsInstance?.recoverMediaError();
+              break;
+            default:
+              setHasError(true);
+              break;
+          }
+        }
+      });
+    } else {
+      video.src = streamUrl;
+    }
+
+    const handleLoadedData = () => setIsLoading(false);
+    const handlePlaying = () => setIsLoading(false);
+    const handleWaiting = () => setIsLoading(true);
+
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('playing', handlePlaying);
+    video.addEventListener('waiting', handleWaiting);
+
+    return () => {
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('playing', handlePlaying);
+      video.removeEventListener('waiting', handleWaiting);
+      if (hlsInstance) {
+        hlsInstance.destroy();
+      }
+    };
+  }, [streamUrl, autoPlay]);
+
+  return (
+    <div className="relative w-full h-full bg-black flex items-center justify-center">
+      <video
+        ref={videoRef}
+        controls
+        playsInline
+        autoPlay={autoPlay}
+        className={className}
+      />
+      {isLoading && !hasError && (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+          <div className="flex flex-col items-center space-y-2">
+            <RefreshCw className="w-6 h-6 text-red-500 animate-spin" />
+            <span className="text-[11px] font-bold text-slate-300">Canlı Akış Yükleniyor...</span>
+          </div>
+        </div>
+      )}
+      {hasError && (
+        <div className="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-4 text-center space-y-2 z-10">
+          <p className="text-xs text-rose-400 font-bold">Canlı akış yüklenirken hata oluştu.</p>
+          <a
+            href="https://www.youtube.com/@TJKTVCANLIYAYIN"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-black flex items-center space-x-1"
+          >
+            <span>YouTube'da Aç</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // 📺 TJK TV Canlı Yayın Oynatıcısı (Sayfada Küçük Ekran & Tam Ekran Modalı)
 export const LiveRacePlayer: React.FC<{
   mode: 'off' | 'mini' | 'modal';
@@ -747,27 +872,23 @@ export const LiveRacePlayer: React.FC<{
   race: RaceCard | null;
   programPlace?: string;
 }> = ({ mode, onSetMode, race, programPlace }) => {
-  const [streamSource, setStreamSource] = useState<'live' | 'replay'>('live');
-  const [liveVideoId, setLiveVideoId] = useState<string>('Lq4RbOueIL0');
-
-  useEffect(() => {
-    let active = true;
-    fetchLiveRaceStream()
-      .then((res) => {
-        if (active && res?.videoId) {
-          setLiveVideoId(res.videoId);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, []);
+  const [streamSource, setStreamSource] = useState<'tjktv1' | 'tjktv2' | 'replay'>('tjktv1');
 
   if (mode === 'off') return null;
 
   const hasReplayVideo = Boolean(race?.video);
-  const liveEmbedSrc = `https://www.youtube.com/embed/${liveVideoId || 'Lq4RbOueIL0'}?autoplay=1&mute=0&rel=0`;
+
+  const getStreamUrl = () => {
+    if (streamSource === 'replay' && race?.video) {
+      return race.video;
+    }
+    if (streamSource === 'tjktv2') {
+      return 'https://tjktv-live.tjk.org/tjktv2/tjktv2_1080p.m3u8';
+    }
+    return 'https://tjktv-live.tjk.org/tjktv_1080p.m3u8';
+  };
+
+  const activeStreamUrl = getStreamUrl();
 
   // 1. KÜÇÜK EKRAN MODU (Sayfada Köşede Kayan Mini Oynatıcı)
   if (mode === 'mini') {
@@ -777,7 +898,9 @@ export const LiveRacePlayer: React.FC<{
         <div className="px-3 py-2 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xs font-black text-white">TJK TV Canlı</span>
+            <span className="text-xs font-black text-white">
+              {streamSource === 'tjktv2' ? 'TJK TV 2 Canlı' : streamSource === 'replay' ? 'Koşu Tekrarı' : 'TJK TV 1 Canlı'}
+            </span>
             {race && (
               <span className="text-[10px] text-amber-400 font-mono font-bold">
                 {race.number}. Koşu ({race.hour})
@@ -804,40 +927,28 @@ export const LiveRacePlayer: React.FC<{
 
         {/* Mini Video Embed */}
         <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
-          {streamSource === 'replay' && race?.video ? (
-            <video
-              src={race.video}
-              controls
-              autoPlay
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <iframe
-              src={liveEmbedSrc}
-              title="TJK TV Canlı Yayın"
-              className="w-full h-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          )}
+          <TJKVideoPlayer streamUrl={activeStreamUrl} />
         </div>
 
         {/* Mini Footer Bar */}
         <div className="px-3 py-1.5 bg-slate-950/90 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-          <span className="text-slate-400 truncate max-w-[170px]">
-            {programPlace || 'Canlı Akış'} • Küçük Ekran
-          </span>
-          <div className="flex items-center space-x-2">
-            <a
-              href="https://www.youtube.com/@TJKTVCANLIYAYIN"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] text-slate-400 hover:text-red-400 flex items-center space-x-0.5"
-              title="YouTube'da Aç"
+          <div className="flex items-center space-x-1.5">
+            <button
+              onClick={() => setStreamSource(s => s === 'tjktv1' ? 'tjktv2' : 'tjktv1')}
+              className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300"
             >
-              <span>YouTube</span>
-              <ExternalLink className="w-2.5 h-2.5" />
-            </a>
+              {streamSource === 'tjktv1' ? 'TJK 2’ye Geç' : 'TJK 1’e Geç'}
+            </button>
+            {hasReplayVideo && (
+              <button
+                onClick={() => setStreamSource(s => s === 'replay' ? 'tjktv1' : 'replay')}
+                className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 text-[10px] font-bold"
+              >
+                {streamSource === 'replay' ? 'Canlıya Dön' : 'Tekrar'}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => onSetMode('modal')}
               className="text-amber-400 hover:text-amber-300 font-bold flex items-center space-x-1 cursor-pointer"
@@ -884,18 +995,28 @@ export const LiveRacePlayer: React.FC<{
           </div>
 
           <div className="flex items-center space-x-2">
-            {hasReplayVideo && (
-              <div className="flex rounded-xl bg-slate-900 p-0.5 border border-slate-800 text-xs">
-                <button
-                  onClick={() => setStreamSource('live')}
-                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                    streamSource === 'live'
-                      ? 'bg-red-600 text-white'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  TJK TV Canlı
-                </button>
+            <div className="flex rounded-xl bg-slate-950 p-0.5 border border-slate-800 text-xs">
+              <button
+                onClick={() => setStreamSource('tjktv1')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                  streamSource === 'tjktv1'
+                    ? 'bg-red-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                TJK TV 1
+              </button>
+              <button
+                onClick={() => setStreamSource('tjktv2')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                  streamSource === 'tjktv2'
+                    ? 'bg-red-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                TJK TV 2
+              </button>
+              {hasReplayVideo && (
                 <button
                   onClick={() => setStreamSource('replay')}
                   className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
@@ -906,8 +1027,9 @@ export const LiveRacePlayer: React.FC<{
                 >
                   Koşu Tekrarı
                 </button>
-              </div>
-            )}
+              )}
+            </div>
+
             <button
               onClick={() => onSetMode('mini')}
               className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center space-x-1 cursor-pointer transition-colors"
@@ -928,22 +1050,7 @@ export const LiveRacePlayer: React.FC<{
 
         {/* Video Player Container */}
         <div className="relative w-full bg-black aspect-video flex items-center justify-center overflow-hidden">
-          {streamSource === 'replay' && race?.video ? (
-            <video
-              src={race.video}
-              controls
-              autoPlay
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <iframe
-              src={liveEmbedSrc}
-              title="TJK TV Canlı Yayın"
-              className="w-full h-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          )}
+          <TJKVideoPlayer streamUrl={activeStreamUrl} />
         </div>
 
         {/* Live Race Runners & Ganyan Ticker Bar */}
@@ -961,7 +1068,7 @@ export const LiveRacePlayer: React.FC<{
                   rel="noopener noreferrer"
                   className="text-[11px] text-slate-400 hover:text-red-400 flex items-center space-x-1 font-bold"
                 >
-                  <span>YouTube'da Aç</span>
+                  <span>YouTube Yayını</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
                 <button
