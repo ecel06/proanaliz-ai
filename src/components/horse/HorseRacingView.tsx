@@ -28,6 +28,8 @@ import {
   Play,
   Tv,
   ExternalLink,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { User } from '../../utils/authHelper';
 import {
@@ -737,23 +739,94 @@ export const SavedCouponCard: React.FC<{
 };
 
 
-// 📺 TJK TV Canlı Yayın & Koşu Tekrarı Modalı
-export const LiveRaceStreamModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
+// 📺 TJK TV Canlı Yayın Oynatıcısı (Sayfada Küçük Ekran & Tam Ekran Modalı)
+export const LiveRacePlayer: React.FC<{
+  mode: 'off' | 'mini' | 'modal';
+  onSetMode: (mode: 'off' | 'mini' | 'modal') => void;
   race: RaceCard | null;
   programPlace?: string;
-}> = ({ isOpen, onClose, race, programPlace }) => {
-  const [streamSource, setStreamSource] = useState<'youtube' | 'tjkmobil' | 'nesine' | 'replay'>('youtube');
+}> = ({ mode, onSetMode, race, programPlace }) => {
+  const [streamSource, setStreamSource] = useState<'live' | 'replay'>('live');
 
-  if (!isOpen) return null;
+  if (mode === 'off') return null;
 
   const hasReplayVideo = Boolean(race?.video);
 
+  // 1. KÜÇÜK EKRAN MODU (Sayfada Köşede Kayan Mini Oynatıcı)
+  if (mode === 'mini') {
+    return (
+      <div className="fixed bottom-20 sm:bottom-4 right-3 sm:right-4 z-50 w-72 sm:w-96 rounded-2xl bg-slate-900/95 border border-red-500/60 shadow-2xl overflow-hidden backdrop-blur-xl flex flex-col animate-in slide-in-from-bottom-4 duration-200">
+        {/* Mini Player Header */}
+        <div className="px-3 py-2 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-xs font-black text-white">TJK TV Canlı</span>
+            {race && (
+              <span className="text-[10px] text-amber-400 font-mono font-bold">
+                {race.number}. Koşu ({race.hour})
+              </span>
+            )}
+          </div>
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => onSetMode('modal')}
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Büyüt (Büyük Ekran Modalı)"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => onSetMode('off')}
+              className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Kapat"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mini Video Embed */}
+        <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
+          {streamSource === 'replay' && race?.video ? (
+            <video
+              src={race.video}
+              controls
+              autoPlay
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <iframe
+              src="https://www.youtube.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1"
+              title="TJK TV Canlı Yayın"
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          )}
+        </div>
+
+        {/* Mini Footer Bar */}
+        <div className="px-3 py-1.5 bg-slate-950/90 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+          <span className="text-slate-400 truncate max-w-[180px]">
+            {programPlace || 'Canlı Akış'} • Küçük Ekran
+          </span>
+          <button
+            onClick={() => onSetMode('modal')}
+            className="text-amber-400 hover:text-amber-300 font-bold flex items-center space-x-1 cursor-pointer"
+          >
+            <span>Büyüt</span>
+            <Maximize2 className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. BÜYÜK EKRAN MODAL MODU (Genişletilmiş Ekran + Koşu Atları Panosu)
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-200"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={() => onSetMode('off')}
     >
       <div
         className="w-full max-w-4xl max-h-[92vh] rounded-3xl bg-slate-900 border border-red-500/50 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
@@ -781,9 +854,41 @@ export const LiveRaceStreamModal: React.FC<{
             </div>
           </div>
 
-          <div className="flex items-center space-x-1.5 sm:space-x-2">
+          <div className="flex items-center space-x-2">
+            {hasReplayVideo && (
+              <div className="flex rounded-xl bg-slate-900 p-0.5 border border-slate-800 text-xs">
+                <button
+                  onClick={() => setStreamSource('live')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                    streamSource === 'live'
+                      ? 'bg-red-600 text-white'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  TJK TV Canlı
+                </button>
+                <button
+                  onClick={() => setStreamSource('replay')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                    streamSource === 'replay'
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Koşu Tekrarı
+                </button>
+              </div>
+            )}
             <button
-              onClick={onClose}
+              onClick={() => onSetMode('mini')}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center space-x-1 cursor-pointer transition-colors"
+              title="Sayfada Küçük Ekrana Al"
+            >
+              <Minimize2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Küçük Ekran</span>
+            </button>
+            <button
+              onClick={() => onSetMode('off')}
               className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-colors"
               title="Kapat"
             >
@@ -792,62 +897,8 @@ export const LiveRaceStreamModal: React.FC<{
           </div>
         </div>
 
-        {/* Channel & Stream Selector Tabs */}
-        <div className="px-3 sm:px-4 py-2 bg-slate-950/70 border-b border-slate-800/80 flex items-center gap-1.5 overflow-x-auto scrollbar-thin shrink-0">
-          <button
-            onClick={() => setStreamSource('youtube')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-              streamSource === 'youtube'
-                ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                : 'bg-slate-900/90 text-slate-400 hover:text-white border border-slate-800'
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${streamSource === 'youtube' ? 'bg-white animate-pulse' : 'bg-red-500'}`} />
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>TJK TV (Resmi YouTube)</span>
-          </button>
-
-          <button
-            onClick={() => setStreamSource('tjkmobil')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-              streamSource === 'tjkmobil'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
-                : 'bg-slate-900/90 text-slate-400 hover:text-white border border-slate-800'
-            }`}
-          >
-            <Tv className="w-3.5 h-3.5" />
-            <span>TJK Mobil e-Bayi</span>
-          </button>
-
-          <button
-            onClick={() => setStreamSource('nesine')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-              streamSource === 'nesine'
-                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30'
-                : 'bg-slate-900/90 text-slate-400 hover:text-white border border-slate-800'
-            }`}
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span>Nesine TV Canlı</span>
-          </button>
-
-          {hasReplayVideo && (
-            <button
-              onClick={() => setStreamSource('replay')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
-                streamSource === 'replay'
-                  ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30'
-                  : 'bg-slate-900/90 text-cyan-400 hover:text-cyan-300 border border-cyan-500/30'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Koşu Tekrarı (Replay)</span>
-            </button>
-          )}
-        </div>
-
-        {/* Video Player / Stream Action Container */}
-        <div className="relative w-full bg-slate-950 aspect-video flex flex-col items-center justify-center overflow-hidden p-4 sm:p-8 text-center">
+        {/* Video Player Container */}
+        <div className="relative w-full bg-black aspect-video flex items-center justify-center overflow-hidden">
           {streamSource === 'replay' && race?.video ? (
             <video
               src={race.video}
@@ -856,88 +907,13 @@ export const LiveRaceStreamModal: React.FC<{
               className="w-full h-full object-contain"
             />
           ) : (
-            <div className="max-w-lg w-full space-y-4 animate-in fade-in duration-150">
-              <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-red-600/20 border border-red-500/40 text-red-400 text-xs font-black">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span>
-                  {streamSource === 'tjkmobil'
-                    ? 'TJK MOBİL e-BAYİ CANLI YAYINI'
-                    : streamSource === 'nesine'
-                    ? 'NESİNE TJK TV CANLI İZLE'
-                    : 'TJK TV RESMİ CANLI YAYIN AKIŞI'}
-                </span>
-              </div>
-
-              <div className="space-y-1.5">
-                <h4 className="text-base sm:text-xl font-black text-white">
-                  {streamSource === 'tjkmobil'
-                    ? 'TJK Resmi Mobil Portalı'
-                    : streamSource === 'nesine'
-                    ? 'Nesine.com Canlı Yarış Yayını'
-                    : 'TJK TV Resmi Canlı Yayını'}
-                </h4>
-                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                  {streamSource === 'tjkmobil'
-                    ? 'TJK Mobil platformunda yayın ve kupon işlemlerini doğrudan açabilirsiniz.'
-                    : streamSource === 'nesine'
-                    ? 'Yasal at yarışı bayisi Nesine üzerinden koşuyu donmadan canlı takip edebilirsiniz.'
-                    : 'TJK TV resmi canlı yayınını HD kalitede, donmadan ve reklamsız olarak YouTube uygulamasında veya tarayıcıda hemen başlatın:'}
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                {streamSource === 'tjkmobil' ? (
-                  <a
-                    href="https://mobil.tjk.org/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95"
-                  >
-                    <Tv className="w-4 h-4" />
-                    <span>TJK Mobil e-Bayi'yi Aç</span>
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                ) : streamSource === 'nesine' ? (
-                  <a
-                    href="https://www.nesine.com/at-yarisi/canli-yayin"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-400 hover:to-green-400 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95"
-                  >
-                    <Play className="w-4 h-4 fill-current" />
-                    <span>Nesine Canlı Yayını Aç</span>
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                ) : (
-                  <>
-                    <a
-                      href="https://www.youtube.com/@TJKTVCANLIYAYIN"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-500 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-red-600/30 flex items-center justify-center space-x-2 transition-all active:scale-95"
-                    >
-                      <Play className="w-4 h-4 fill-current" />
-                      <span>🔴 TJK TV Canlı Yayınını Başlat</span>
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                    <a
-                      href="https://mobil.tjk.org/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-5 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 font-black text-xs sm:text-sm flex items-center justify-center space-x-2 transition-all"
-                    >
-                      <Tv className="w-4 h-4 text-amber-400" />
-                      <span>TJK Mobil</span>
-                    </a>
-                  </>
-                )}
-              </div>
-
-              <p className="text-[11px] text-slate-500 italic pt-1">
-                💡 Canlı yayın açıldığında bu pencereyi kapatmadan alttaki canlı oranları ve kupon durumunuzu takip edebilirsiniz.
-              </p>
-            </div>
+            <iframe
+              src="https://www.youtube.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1"
+              title="TJK TV Canlı Yayın"
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
           )}
         </div>
 
@@ -949,15 +925,13 @@ export const LiveRaceStreamModal: React.FC<{
                 <span>🏇 {race.number}. Koşu Atları &amp; Oranları</span>
                 <span className="text-slate-500">({race.distance}m {race.raceCourseType})</span>
               </span>
-              <a
-                href="https://www.youtube.com/@TJKTVCANLIYAYIN"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center space-x-1 font-bold underline"
+              <button
+                onClick={() => onSetMode('mini')}
+                className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center space-x-1 font-bold cursor-pointer"
               >
-                <span>TJK TV Resmi Kanal</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
+                <span>Sayfada Küçük Ekrana İndir</span>
+                <Minimize2 className="w-3 h-3" />
+              </button>
             </div>
 
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
@@ -1031,7 +1005,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
   const [isHorseAIChatOpen, setIsHorseAIChatOpen] = useState<boolean>(false);
   const [hippodromeTab, setHippodromeTab] = useState<'tr' | 'foreign'>('tr');
   const [isMobileCouponDrawerOpen, setIsMobileCouponDrawerOpen] = useState<boolean>(false);
-  const [isLiveStreamOpen, setIsLiveStreamOpen] = useState<boolean>(false);
+  const [livePlayerMode, setLivePlayerMode] = useState<'off' | 'mini' | 'modal'>('off');
 
   // Kupon state: programId -> { raceNo -> horseNumbers[] } (persisted across pull-to-refresh & app reloads)
   const [selectionsByProgram, setSelectionsByProgram] = useState<
@@ -1549,12 +1523,12 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
               )}
             </button>
             <button
-              onClick={() => setIsLiveStreamOpen(true)}
+              onClick={() => setLivePlayerMode((m) => (m === 'off' ? 'mini' : 'off'))}
               className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600/25 to-rose-600/15 hover:from-red-600/35 hover:to-rose-600/25 border border-red-500/40 text-red-300 font-extrabold text-xs cursor-pointer transition-all"
             >
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className={`w-2 h-2 rounded-full ${livePlayerMode !== 'off' ? 'bg-red-500 animate-ping' : 'bg-red-500 animate-pulse'}`} />
               <Tv className="w-3.5 h-3.5 text-red-400" />
-              <span>TJK TV Canlı</span>
+              <span>{livePlayerMode !== 'off' ? 'Canlı Yayını Gizle' : 'TJK TV Canlı'}</span>
             </button>
             <button
               onClick={handleManualRefresh}
@@ -2432,13 +2406,17 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                         {/* Quick Actions & Sort */}
                         <div className="flex flex-wrap items-center gap-1.5">
                           <button
-                            onClick={() => setIsLiveStreamOpen(true)}
-                            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-600 via-rose-600 to-red-500 hover:from-red-500 hover:to-rose-500 text-white font-black text-[11px] cursor-pointer transition-all flex items-center space-x-1 shadow-md shadow-rose-600/30 active:scale-95 border border-rose-400/50"
-                            title="TJK TV Canlı Yayın & Koşuyu İzle"
+                            onClick={() => setLivePlayerMode((m) => (m === 'off' ? 'mini' : 'off'))}
+                            className={`px-3 py-1.5 rounded-lg font-black text-[11px] cursor-pointer transition-all flex items-center space-x-1 shadow-md active:scale-95 border ${
+                              livePlayerMode !== 'off'
+                                ? 'bg-red-700 text-white border-red-300 shadow-red-700/40 ring-2 ring-red-400'
+                                : 'bg-gradient-to-r from-red-600 via-rose-600 to-red-500 hover:from-red-500 hover:to-rose-500 text-white border-rose-400/50 shadow-rose-600/30'
+                            }`}
+                            title="TJK TV Canlı Yayın & Koşuyu Küçük Ekranda İzle"
                           >
                             <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                             <Play className="w-3 h-3 fill-current" />
-                            <span>CANLI İZLE</span>
+                            <span>{livePlayerMode !== 'off' ? 'CANLI AÇIK' : 'CANLI İZLE'}</span>
                           </button>
                           <button
                             onClick={() => pickAITopNInRace(1)}
@@ -3668,10 +3646,10 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
         </div>
       )}
 
-      {/* 📺 TJK TV Canlı Yayın & Koşu Tekrarı Modalı */}
-      <LiveRaceStreamModal
-        isOpen={isLiveStreamOpen}
-        onClose={() => setIsLiveStreamOpen(false)}
+      {/* 📺 TJK TV Canlı Yayın Oynatıcısı (Sayfada Küçük Ekran & Büyük Ekran Modalı) */}
+      <LiveRacePlayer
+        mode={livePlayerMode}
+        onSetMode={setLivePlayerMode}
         race={activeRace}
         programPlace={detail?.program.place}
       />
