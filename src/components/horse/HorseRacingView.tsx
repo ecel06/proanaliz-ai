@@ -44,6 +44,7 @@ import { HorseAIChatModal } from './HorseAIChatModal';
 import {
   fetchHorseRacingBulletin,
   fetchHorseRacingProgram,
+  fetchLiveRaceStream,
 } from '../../services/horseRacingService';
 import {
   GameConfig,
@@ -747,10 +748,26 @@ export const LiveRacePlayer: React.FC<{
   programPlace?: string;
 }> = ({ mode, onSetMode, race, programPlace }) => {
   const [streamSource, setStreamSource] = useState<'live' | 'replay'>('live');
+  const [liveVideoId, setLiveVideoId] = useState<string>('Lq4RbOueIL0');
+
+  useEffect(() => {
+    let active = true;
+    fetchLiveRaceStream()
+      .then((res) => {
+        if (active && res?.videoId) {
+          setLiveVideoId(res.videoId);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (mode === 'off') return null;
 
   const hasReplayVideo = Boolean(race?.video);
+  const liveEmbedSrc = `https://www.youtube.com/embed/${liveVideoId || 'Lq4RbOueIL0'}?autoplay=1&mute=0&rel=0`;
 
   // 1. KÜÇÜK EKRAN MODU (Sayfada Köşede Kayan Mini Oynatıcı)
   if (mode === 'mini') {
@@ -796,7 +813,7 @@ export const LiveRacePlayer: React.FC<{
             />
           ) : (
             <iframe
-              src="https://www.youtube.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1"
+              src={liveEmbedSrc}
               title="TJK TV Canlı Yayın"
               className="w-full h-full border-0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -807,16 +824,28 @@ export const LiveRacePlayer: React.FC<{
 
         {/* Mini Footer Bar */}
         <div className="px-3 py-1.5 bg-slate-950/90 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-          <span className="text-slate-400 truncate max-w-[180px]">
+          <span className="text-slate-400 truncate max-w-[170px]">
             {programPlace || 'Canlı Akış'} • Küçük Ekran
           </span>
-          <button
-            onClick={() => onSetMode('modal')}
-            className="text-amber-400 hover:text-amber-300 font-bold flex items-center space-x-1 cursor-pointer"
-          >
-            <span>Büyüt</span>
-            <Maximize2 className="w-3 h-3" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <a
+              href="https://www.youtube.com/@TJKTVCANLIYAYIN"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-slate-400 hover:text-red-400 flex items-center space-x-0.5"
+              title="YouTube'da Aç"
+            >
+              <span>YouTube</span>
+              <ExternalLink className="w-2.5 h-2.5" />
+            </a>
+            <button
+              onClick={() => onSetMode('modal')}
+              className="text-amber-400 hover:text-amber-300 font-bold flex items-center space-x-1 cursor-pointer"
+            >
+              <span>Büyüt</span>
+              <Maximize2 className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -908,7 +937,7 @@ export const LiveRacePlayer: React.FC<{
             />
           ) : (
             <iframe
-              src="https://www.youtube.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1"
+              src={liveEmbedSrc}
               title="TJK TV Canlı Yayın"
               className="w-full h-full border-0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -925,13 +954,24 @@ export const LiveRacePlayer: React.FC<{
                 <span>🏇 {race.number}. Koşu Atları &amp; Oranları</span>
                 <span className="text-slate-500">({race.distance}m {race.raceCourseType})</span>
               </span>
-              <button
-                onClick={() => onSetMode('mini')}
-                className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center space-x-1 font-bold cursor-pointer"
-              >
-                <span>Sayfada Küçük Ekrana İndir</span>
-                <Minimize2 className="w-3 h-3" />
-              </button>
+              <div className="flex items-center space-x-3">
+                <a
+                  href="https://www.youtube.com/@TJKTVCANLIYAYIN"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-slate-400 hover:text-red-400 flex items-center space-x-1 font-bold"
+                >
+                  <span>YouTube'da Aç</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <button
+                  onClick={() => onSetMode('mini')}
+                  className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center space-x-1 font-bold cursor-pointer"
+                >
+                  <span>Sayfada Küçük Ekrana İndir</span>
+                  <Minimize2 className="w-3 h-3" />
+                </button>
+              </div>
             </div>
 
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">

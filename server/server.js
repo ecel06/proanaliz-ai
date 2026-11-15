@@ -17,7 +17,8 @@ import {
 import {
   fetchFullHorseRacingBulletin,
   fetchProgramDetail,
-  fetchProgramList
+  fetchProgramList,
+  fetchLiveStreamId
 } from './horseRacingService.js';
 import {
   fetchStockScreener,
@@ -288,6 +289,23 @@ app.get('/api/horse-racing/results', async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/horse-racing/live-stream', async (req, res) => {
+  try {
+    const videoId = await fetchLiveStreamId();
+    res.json({
+      success: true,
+      videoId: videoId || 'Lq4RbOueIL0',
+      embedUrl: `https://www.youtube.com/embed/${videoId || 'Lq4RbOueIL0'}?autoplay=1&mute=0&rel=0`
+    });
+  } catch (err) {
+    res.json({
+      success: true,
+      videoId: 'Lq4RbOueIL0',
+      embedUrl: 'https://www.youtube.com/embed/Lq4RbOueIL0?autoplay=1&mute=0&rel=0'
+    });
   }
 });
 
@@ -668,7 +686,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.15.14';
+const APP_VERSION = '2026.11.15.15';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
