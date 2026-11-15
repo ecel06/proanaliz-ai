@@ -21,7 +21,7 @@ export interface CouponMatchItem {
   iddaaCode: string;
   matchTimeText: string;
   pickLabel: string;
-  pickType: 'ms1' | 'ms2' | 'msX' | 'over15' | 'under15' | 'over25' | 'under25' | 'over35' | 'under35' | 'btts' | 'htft';
+  pickType: 'ms1' | 'ms2' | 'msX' | 'over15' | 'under15' | 'over25' | 'under25' | 'over35' | 'under35' | 'btts' | 'htft' | 'cs1X' | 'csX2' | 'cs12';
   odd: number;
   confidence: number;
   reasoning: string;
@@ -193,6 +193,30 @@ export function evaluatePickStatus(
         }
         break;
 
+      case 'cs1X': // 1X Çifte Şans
+        if (isFinished) {
+          pickStatus = home >= away ? 'won' : 'lost';
+        } else {
+          pickStatus = 'live';
+        }
+        break;
+
+      case 'csX2': // X2 Çifte Şans
+        if (isFinished) {
+          pickStatus = away >= home ? 'won' : 'lost';
+        } else {
+          pickStatus = 'live';
+        }
+        break;
+
+      case 'cs12': // 12 Çifte Şans
+        if (isFinished) {
+          pickStatus = home !== away ? 'won' : 'lost';
+        } else {
+          pickStatus = 'live';
+        }
+        break;
+
       default:
         pickStatus = isFinished ? (home > away ? 'won' : 'lost') : 'live';
     }
@@ -276,6 +300,20 @@ function resolveBestCandidateForTier(
       pickLabel: '1.5 Gol Üst',
       prob: analysis.over15,
       reasoning: `Maçta en az 2 gol çıkma olasılığı (%${analysis.over15}) kasa güvenliği sağlıyor.`
+    },
+    {
+      pickType: 'cs1X',
+      oddKey: 'dc_1x',
+      pickLabel: `1X Çifte Şans (${match.homeTeam.shortName || match.homeTeam.name})`,
+      prob: Math.min(94, Math.round(analysis.ms1 + analysis.msX * 0.95)),
+      reasoning: `${match.homeTeam.name} iç sahada yenilgiye kapalı kurgusu ve yüksek direnciyle (%${Math.min(94, Math.round(analysis.ms1 + analysis.msX * 0.95))}) öne çıkıyor.`
+    },
+    {
+      pickType: 'csX2',
+      oddKey: 'dc_x2',
+      pickLabel: `X2 Çifte Şans (${match.awayTeam.shortName || match.awayTeam.name})`,
+      prob: Math.min(94, Math.round(analysis.ms2 + analysis.msX * 0.95)),
+      reasoning: `${match.awayTeam.name} deplasmanda puan çıkarma potansiyeliyle (%${Math.min(94, Math.round(analysis.ms2 + analysis.msX * 0.95))}) kasa güvenliği sunuyor.`
     }
   ];
 
@@ -285,10 +323,11 @@ function resolveBestCandidateForTier(
   });
 
   if (tier === 'banko') {
+    // Banko seçimleri: %70+ kazanma ihtimalli Çifte Şans ve 1.5 Üst öncelikli yüksek tutma oranı
     const bankoMatches = enriched
-      .filter(c => c.prob >= 64 && c.odd >= 1.15 && c.odd <= 1.85)
+      .filter(c => c.prob >= 70 && c.odd >= 1.16 && c.odd <= 1.82)
       .sort((a, b) => (b.prob + (b.isOfficial ? 4 : 0)) - (a.prob + (a.isOfficial ? 4 : 0)));
-    const pick = bankoMatches[0] || enriched.sort((a, b) => b.prob - a.prob)[0];
+    const pick = bankoMatches[0] || enriched.filter(c => c.prob >= 62).sort((a, b) => b.prob - a.prob)[0] || enriched.sort((a, b) => b.prob - a.prob)[0];
     if (!pick) return null;
     return {
       match,
@@ -303,9 +342,9 @@ function resolveBestCandidateForTier(
 
   if (tier === 'ideal') {
     const idealMatches = enriched
-      .filter(c => c.prob >= 52 && c.odd >= 1.48 && c.odd <= 2.35)
+      .filter(c => c.prob >= 55 && c.odd >= 1.42 && c.odd <= 2.25)
       .sort((a, b) => (b.prob * 1.1 + b.odd * 10 + (b.isOfficial ? 5 : 0)) - (a.prob * 1.1 + a.odd * 10 + (a.isOfficial ? 5 : 0)));
-    const pick = idealMatches[0] || enriched.sort((a, b) => Math.abs(b.odd - 1.80) * -1 - Math.abs(a.odd - 1.80) * -1)[0];
+    const pick = idealMatches[0] || enriched.sort((a, b) => Math.abs(b.odd - 1.75) * -1 - Math.abs(a.odd - 1.75) * -1)[0];
     if (!pick) return null;
     return {
       match,
