@@ -18,7 +18,8 @@ import {
   RefreshCw,
   Flame,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Play
 } from 'lucide-react';
 
 export interface TVChannel {
@@ -93,9 +94,11 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 }) => {
   const [activeChannelId, setActiveChannelId] = useState<string>(initialChannelId);
   const [isMiniMode, setIsMiniMode] = useState<boolean>(false);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
+  const [retryKey, setRetryKey] = useState<number>(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -116,6 +119,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
     setIsLoading(true);
     setHasError(false);
+    setIsPaused(false);
 
     if (hlsRef.current) {
       hlsRef.current.destroy();
@@ -124,22 +128,37 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
     const streamUrl = `/api/stream-proxy?url=${encodeURIComponent(currentChannel.streamUrl)}`;
 
-    const attemptPlay = () => {
+    const startPlayback = () => {
+      video.muted = isMuted;
       const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // Tarayıcı otomatik sesli başlatmayı engellerse sessizde başlat
-          video.muted = true;
-          setIsMuted(true);
-          video.play().catch(() => {});
-        });
+        playPromise
+          .then(() => {
+            setIsLoading(false);
+            setIsPaused(false);
+          })
+          .catch(() => {
+            // Tarayıcı sesli otomatik oynatmayı engellerse sessizde başlatmayı dene
+            video.muted = true;
+            setIsMuted(true);
+            video.play()
+              .then(() => {
+                setIsLoading(false);
+                setIsPaused(false);
+              })
+              .catch(() => {
+                // Kullanıcı tıklaması bekleniyor
+                setIsLoading(false);
+                setIsPaused(true);
+              });
+          });
       }
     };
 
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       // Native Apple HLS (Safari / iOS)
       video.src = streamUrl;
-      attemptPlay();
+      startPlayback();
     } else if (Hls.isSupported()) {
       // Hls.js Engine (Chrome, Firefox, Edge, Android)
       const hls = new Hls({
@@ -152,7 +171,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        attemptPlay();
+        startPlayback();
       });
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
@@ -173,30 +192,67 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
       });
     } else {
       video.src = streamUrl;
-      attemptPlay();
+      startPlayback();
     }
 
-    const handleLoaded = () => setIsLoading(false);
+    const handleLoadedData = () => setIsLoading(false);
+    const handleCanPlay = () => setIsLoading(false);
     const handlePlaying = () => {
       setIsLoading(false);
+      setIsPaused(false);
       setHasError(false);
     };
-    const handleWaiting = () => setIsLoading(true);
+    const handlePause = () => setIsPaused(true);
 
-    video.addEventListener('loadeddata', handleLoaded);
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('playing', handlePlaying);
-    video.addEventListener('waiting', handleWaiting);
+    video.addEventListener('pause', handlePause);
+
+    // Fallback: 3 saniye sonra yükleniyor animasyonunu kaldır (takılı kalmayı önler)
+    const safetyTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
 
     return () => {
-      video.removeEventListener('loadeddata', handleLoaded);
+      clearTimeout(safetyTimeout);
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('playing', handlePlaying);
-      video.removeEventListener('waiting', handleWaiting);
+      video.removeEventListener('pause', handlePause);
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
       }
     };
-  }, [isOpen, activeChannelId, currentChannel.streamUrl]);
+  }, [isOpen, activeChannelId, currentChannel.streamUrl, retryKey]);
+
+  const handleManualPlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = isMuted;
+    video.play()
+      .then(() => {
+        setIsPaused(false);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        video.muted = true;
+        setIsMuted(true);
+        video.play().then(() => {
+          setIsPaused(false);
+          setIsLoading(false);
+        });
+      });
+  };
+
+  const toggleSound = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const nextMuted = !isMuted;
+    video.muted = nextMuted;
+    setIsMuted(nextMuted);
+  };
 
   if (!isOpen) return null;
 
@@ -216,6 +272,13 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           </div>
 
           <div className="flex items-center space-x-1">
+            <button
+              onClick={toggleSound}
+              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              title={isMuted ? 'Sesi Aç' : 'Sesi Kapat'}
+            >
+              {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+            </button>
             <button
               onClick={() => setIsMiniMode(false)}
               className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
@@ -237,28 +300,44 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
         <div className="relative aspect-video bg-black flex items-center justify-center">
           <video
             ref={videoRef}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain cursor-pointer"
             playsInline
+            controls
+            autoPlay
             muted={isMuted}
+            onClick={handleManualPlay}
           />
-          {isLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs">
-              <RefreshCw className="w-6 h-6 text-emerald-400 animate-spin mb-1" />
-              <span className="text-[11px] text-slate-300 font-bold">Canlı Yayın Bağlanıyor...</span>
+
+          {isPaused && !isLoading && !hasError && (
+            <button
+              onClick={handleManualPlay}
+              className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/20 transition-all cursor-pointer z-10 group"
+            >
+              <div className="w-12 h-12 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <Play className="w-6 h-6 fill-current ml-0.5" />
+              </div>
+            </button>
+          )}
+
+          {isLoading && !hasError && (
+            <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center bg-black/50 backdrop-blur-xs">
+              <RefreshCw className="w-5 h-5 text-emerald-400 animate-spin mb-1" />
+              <span className="text-[10px] text-slate-300 font-bold">Canlı Yayın Yükleniyor...</span>
             </div>
           )}
+
           {hasError && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 p-3 text-center">
-              <AlertCircle className="w-6 h-6 text-amber-400 mb-1" />
-              <span className="text-[11px] text-slate-300 font-semibold mb-2">Canlı akışa ulaşılamadı</span>
+              <AlertCircle className="w-5 h-5 text-amber-400 mb-1" />
+              <span className="text-[10px] text-slate-300 font-semibold mb-1.5">Yayın açılamadı</span>
               <a
                 href={currentChannel.fallbackWebUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-black text-xs inline-flex items-center space-x-1"
+                className="px-2 py-0.5 rounded-lg bg-emerald-500 text-slate-950 font-black text-[10px] inline-flex items-center space-x-1"
               >
                 <span>Resmi Yayında Aç</span>
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className="w-2.5 h-2.5" />
               </a>
             </div>
           )}
@@ -311,11 +390,19 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => setIsMuted(!isMuted)}
+              onClick={toggleSound}
               className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer"
               title={isMuted ? 'Sesi Aç' : 'Sesi Kapat'}
             >
               {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+            </button>
+
+            <button
+              onClick={() => setRetryKey((k) => k + 1)}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer"
+              title="Yayını Yeniden Başlat"
+            >
+              <RefreshCw className="w-4 h-4 text-emerald-400" />
             </button>
 
             <button
@@ -341,17 +428,33 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
         <div className="relative aspect-video bg-black flex items-center justify-center shrink-0">
           <video
             ref={videoRef}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain cursor-pointer"
             playsInline
             controls
+            autoPlay
             muted={isMuted}
+            onClick={handleManualPlay}
           />
 
-          {isLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs z-10">
+          {/* Big Center Play Button when paused */}
+          {isPaused && !isLoading && !hasError && (
+            <button
+              onClick={handleManualPlay}
+              className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/20 transition-all cursor-pointer z-10 group"
+              title="Yayını Başlat"
+            >
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-500/95 group-hover:bg-emerald-400 group-hover:scale-110 text-slate-950 flex items-center justify-center shadow-2xl shadow-emerald-500/50 transition-all">
+                <Play className="w-8 h-8 sm:w-10 sm:h-10 fill-current ml-1" />
+              </div>
+            </button>
+          )}
+
+          {/* Loading Indicator with pointer-events-none so it NEVER blocks clicks */}
+          {isLoading && !hasError && (
+            <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center bg-black/50 backdrop-blur-xs z-10">
               <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin mb-2" />
               <span className="text-xs sm:text-sm text-slate-200 font-bold tracking-wide">
-                Canlı HD Akış Başlatılıyor...
+                Canlı HD Akış Bağlanıyor...
               </span>
               <span className="text-[11px] text-slate-400 mt-1">{currentChannel.name}</span>
             </div>
@@ -362,17 +465,26 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
               <AlertCircle className="w-10 h-10 text-amber-400 mb-2" />
               <h4 className="text-white font-bold text-sm mb-1">Doğrudan Akış Başlatılamadı</h4>
               <p className="text-xs text-slate-400 max-w-md mb-3">
-                Tarayıcı güvenlik ayarları veya bölgesel yayın kısıtlaması nedeniyle resmi web kanalından kesintisiz izleyebilirsiniz:
+                Bölgesel yayın koruması veya tarayıcı ayarı nedeniyle resmi web kanalından kesintisiz izleyebilirsiniz:
               </p>
-              <a
-                href={currentChannel.fallbackWebUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs inline-flex items-center space-x-1.5 shadow-lg shadow-emerald-500/25 transition-all"
-              >
-                <span>Resmi {currentChannel.name} Yayınına Git</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setRetryKey((k) => k + 1)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs inline-flex items-center space-x-1 transition-all"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Tekrar Dene</span>
+                </button>
+                <a
+                  href={currentChannel.fallbackWebUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs inline-flex items-center space-x-1.5 shadow-lg shadow-emerald-500/25 transition-all"
+                >
+                  <span>Resmi {currentChannel.name} Yayınına Git</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
           )}
         </div>
