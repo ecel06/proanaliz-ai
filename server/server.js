@@ -109,7 +109,7 @@ function loadLocalCache() {
         if (count > 0 && (parsedTs > bestTs || (parsedTs === bestTs && count > bestCount))) {
           bestData = parsed;
         }
-      } catch {}
+      } catch { }
     }
     if (bestData) {
       cachedBulletin = bestData;
@@ -518,7 +518,7 @@ function adminMiddleware(req, res, next) {
     if (!user || user.role !== 'admin') {
       try {
         logActivity('SECURITY_ALERT', 'Engellenen yetkisiz Admin erişimi', { ip: req.ip, userId: req.userId || 'anon' });
-      } catch {}
+      } catch { }
       return res.status(403).json({ success: false, error: 'Bu işlem için Yönetici (Admin) yetkisi gerekiyor.' });
     }
     req.adminUser = user;
@@ -667,7 +667,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.15.04';
+const APP_VERSION = '2026.11.15.05';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

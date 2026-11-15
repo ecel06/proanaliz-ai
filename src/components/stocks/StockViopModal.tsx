@@ -571,6 +571,44 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                     </div>
                   </div>
 
+                  {/* 🛡️ Portföy Koruma (Hedge) Simülatörü */}
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/30 via-slate-900 to-teal-950/30 border border-emerald-500/30 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-xs font-black text-emerald-300 uppercase tracking-wider">
+                          🛡️ Portföy Hedge (Düşüş Sigortası) Simülatörü
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-400">
+                        Riskten Korunma
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Elinizde <strong>{(calcResult.notionalValue * 1.5).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺</strong> değerinde spot hisse portföyü varsa; piyasa düşerken hisselerinizi satmadan zararı sıfırlamak için <strong>{Math.max(1, Math.round(calcResult.count * 1.5))} adet Short (Kısa)</strong> kontrat açmanız portföyünüzü %100 oranında korumaya alır.
+                    </p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                      <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                        <div className="text-[10px] text-slate-400">Gereken Koruma Teminatı</div>
+                        <div className="font-bold text-amber-300 font-mono">
+                          {(calcResult.requiredMargin * 1.5).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
+                        </div>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                        <div className="text-[10px] text-slate-400">Piyasa %5 Düşerse</div>
+                        <div className="font-bold text-emerald-300 font-mono">
+                          +{(calcResult.notionalValue * 0.075).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺ VİOP Kârı
+                        </div>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 col-span-2 sm:col-span-1">
+                        <div className="text-[10px] text-slate-400">Net Portföy Durumu</div>
+                        <div className="font-bold text-cyan-300 font-mono">Dengeli / Zararsız (Hedged)</div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Contract Summary Box */}
                   <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
                     <div className="text-xs font-black text-white flex items-center justify-between">
