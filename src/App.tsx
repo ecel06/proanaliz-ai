@@ -362,7 +362,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.15.03';
+  const CLIENT_BUILD_VERSION = '2026.11.15.04';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -720,12 +720,21 @@ export const App: React.FC = () => {
     } catch {}
 
     const handleGlobalPopState = (e: PopStateEvent) => {
-      // 0. If on stocks and stock view state is active, let stock view handle it without closing or changing section
-      if (activeSection === 'stocks' && e.state?.view === 'detail') {
-        return;
+      // 0. If on stocks and stock internal view or modal state is active, let stock view handle it without closing or changing section
+      if (activeSection === 'stocks') {
+        const isStockModalOrDetail = 
+          e.state?.view === 'detail' || 
+          document.querySelector('[id^="stock-modal-"]') !== null ||
+          document.body.classList.contains('stock-modal-open');
+        if (isStockModalOrDetail) {
+          return;
+        }
       }
 
-      // 1. If any overlay modal or selected match detail is open, close it first
+      // 1. If mobile league drawer is open, close it first
+      if (isMobileLeagueTreeOpen) { setIsMobileLeagueTreeOpen(false); return; }
+
+      // 2. If any overlay modal or selected match detail is open, close it first
       if (selectedMatch) { setSelectedMatch(null); return; }
       if (isFeedbackModalOpen) { setIsFeedbackModalOpen(false); return; }
       if (isAuthModalOpen) { setIsAuthModalOpen(false); return; }
@@ -778,6 +787,7 @@ export const App: React.FC = () => {
     isBetslipOpen,
     isBankrollModalOpen,
     isThemeModalOpen,
+    isMobileLeagueTreeOpen,
   ]);
 
   // 5. Compute category counts for active bulletin matches

@@ -244,6 +244,32 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     }, 50);
   };
 
+  // Track whether any stock modal is open to cooperate with hardware back button
+  const isAnyStockModalOpen = 
+    isWatchlistModalOpen ||
+    isIpoModalOpen ||
+    isDividendModalOpen ||
+    isKapModalOpen ||
+    isMoneyFlowModalOpen ||
+    isPortfolioModalOpen ||
+    isAlertsModalOpen ||
+    isPerformanceModalOpen ||
+    isAIChatOpen ||
+    isCryptoWidgetsModalOpen ||
+    isViopModalOpen;
+
+  // Add body class when stock modal is open so global popstate handler never quits or switches sections prematurely
+  useEffect(() => {
+    if (isAnyStockModalOpen) {
+      document.body.classList.add('stock-modal-open');
+    } else {
+      document.body.classList.remove('stock-modal-open');
+    }
+    return () => {
+      document.body.classList.remove('stock-modal-open');
+    };
+  }, [isAnyStockModalOpen]);
+
   // Mobile Back Button (Popstate) listener for stock detail and modals
   useEffect(() => {
     const handleStockPopState = () => {
