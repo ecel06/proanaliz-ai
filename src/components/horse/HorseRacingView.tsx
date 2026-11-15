@@ -21,6 +21,9 @@ import {
   Bot,
   Lock,
   Crown,
+  X,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import { User } from '../../utils/authHelper';
 import {
@@ -85,6 +88,8 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [expandedHorse, setExpandedHorse] = useState<number | null>(null);
   const [isHorseAIChatOpen, setIsHorseAIChatOpen] = useState<boolean>(false);
+  const [hippodromeTab, setHippodromeTab] = useState<'tr' | 'foreign'>('tr');
+  const [isMobileCouponDrawerOpen, setIsMobileCouponDrawerOpen] = useState<boolean>(false);
 
   // Kupon state: programId -> { raceNo -> horseNumbers[] } (persisted across pull-to-refresh & app reloads)
   const [selectionsByProgram, setSelectionsByProgram] = useState<
@@ -429,6 +434,12 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
     [currentSelections, legRaceNumbers]
   );
   const totalCouponCost = Number((totalCombinations * unitPrice * misli).toFixed(2));
+  const totalPicksInCoupon = useMemo(() => {
+    return legRaceNumbers.reduce(
+      (sum, rNo) => sum + (currentSelections[rNo]?.length || 0),
+      0
+    );
+  }, [legRaceNumbers, currentSelections]);
 
   const handleSaveCoupon = () => {
     if (!activeGame || !detail || totalCombinations === 0) return;
@@ -539,10 +550,36 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
           </div>
         </div>
 
+        {/* Mobile Hippodrome Segmented Switch */}
+        <div className="md:hidden flex rounded-xl bg-slate-950/80 p-1 border border-slate-800 gap-1">
+          <button
+            onClick={() => setHippodromeTab('tr')}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all flex items-center justify-center space-x-1.5 ${
+              hippodromeTab === 'tr'
+                ? 'bg-amber-400 text-slate-950 shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Flag className="w-3.5 h-3.5" />
+            <span>Türkiye ({trPrograms.length})</span>
+          </button>
+          <button
+            onClick={() => setHippodromeTab('foreign')}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all flex items-center justify-center space-x-1.5 ${
+              hippodromeTab === 'foreign'
+                ? 'bg-cyan-400 text-slate-950 shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>Yurt Dışı ({foreignPrograms.length})</span>
+          </button>
+        </div>
+
         {/* Domestic Hippodromes */}
         {trPrograms.length > 0 && (
-          <div className="space-y-1.5">
-            <div className="flex items-center space-x-1.5 text-[10px] font-black uppercase tracking-wider text-amber-400">
+          <div className={`space-y-1.5 ${hippodromeTab !== 'tr' ? 'hidden md:block' : ''}`}>
+            <div className="hidden md:flex items-center space-x-1.5 text-[10px] font-black uppercase tracking-wider text-amber-400">
               <Flag className="w-3 h-3" />
               <span>Yurt İçi Hipodromlar (Türkiye)</span>
             </div>
@@ -553,7 +590,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                   <button
                     key={p.id}
                     onClick={() => handleSelectProgram(p.id)}
-                    className={`shrink-0 text-left px-3 py-2 rounded-xl border transition-all cursor-pointer min-w-[148px] ${
+                    className={`shrink-0 text-left px-3 py-2 rounded-xl border transition-all cursor-pointer min-w-[140px] ${
                       isSel
                         ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-lg shadow-amber-500/20'
                         : 'bg-slate-950/70 hover:bg-slate-800/80 text-white border-slate-800'
@@ -598,8 +635,8 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
 
         {/* Foreign Hippodromes */}
         {foreignPrograms.length > 0 && (
-          <div className="space-y-1.5">
-            <div className="flex items-center space-x-1.5 text-[10px] font-black uppercase tracking-wider text-cyan-400">
+          <div className={`space-y-1.5 ${hippodromeTab !== 'foreign' ? 'hidden md:block' : ''}`}>
+            <div className="hidden md:flex items-center space-x-1.5 text-[10px] font-black uppercase tracking-wider text-cyan-400">
               <Globe className="w-3 h-3" />
               <span>Yurt Dışı Hipodromlar (ABD / İngiltere / Güney Amerika / Avustralya)</span>
             </div>
@@ -682,15 +719,15 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
               </div>
 
               {/* Main View Sub-Tabs */}
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin shrink-0">
                 {[
                   { id: 'bulletin', label: 'Bülten & Kupon', icon: Ticket },
-                  { id: 'ai_coupons', label: `AI Altılı Şablonları (${aiCoupons.length})`, icon: Sparkles },
-                  { id: 'ikili_cifte', label: `İkili & Çifte Robotu (${ikiliPicks.length})`, icon: Zap },
-                  { id: 'results', label: 'Sonuçlar & İkramiye', icon: Trophy },
+                  { id: 'ai_coupons', label: `AI Altılı (${aiCoupons.length})`, icon: Sparkles },
+                  { id: 'ikili_cifte', label: `İkili & Çifte (${ikiliPicks.length})`, icon: Zap },
+                  { id: 'results', label: 'Sonuçlar', icon: Trophy },
                   {
                     id: 'changes',
-                    label: `Çıkan & Jokey (${detail.scratches.length + detail.jockeyChanges.length})`,
+                    label: `Değişenler (${detail.scratches.length + detail.jockeyChanges.length})`,
                     icon: AlertTriangle,
                   },
                 ].map((t) => {
@@ -700,7 +737,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                     <button
                       key={t.id}
                       onClick={() => setSubTab(t.id as HRSubTab)}
-                      className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${
+                      className={`shrink-0 flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${
                         active
                           ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20'
                           : 'bg-slate-950/70 hover:bg-slate-800 text-slate-300 border-slate-800'
@@ -1508,7 +1545,168 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                                 : 'hover:bg-slate-800/40'
                             }`}
                           >
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-2 px-3 sm:px-4 py-2.5 items-center">
+                            {/* 📱 1. DEDICATED MOBILE RUNNER CARD (md:hidden) - High Contrast & Compact */}
+                            <div className="md:hidden p-2.5 sm:p-3 space-y-2">
+                              {/* Top Row: Horse Selection Button + Name + Jockey Specs + Ganyan & AGF */}
+                              <div className="flex items-center justify-between gap-2.5">
+                                {/* Large Horse Number Selection Button */}
+                                <button
+                                  disabled={isScratched}
+                                  onClick={() => toggleHorsePick(activeRace.number, horse.number)}
+                                  className={`w-11 h-11 rounded-xl font-black flex flex-col items-center justify-center border transition-all cursor-pointer shrink-0 disabled:cursor-not-allowed ${
+                                    isScratched
+                                      ? 'bg-rose-950/40 border-rose-500/30 text-rose-400 line-through'
+                                      : isBankoPick
+                                      ? 'bg-amber-400 border-amber-300 text-slate-950 shadow-md shadow-amber-500/30 scale-105'
+                                      : isPicked
+                                      ? 'bg-emerald-500 border-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20'
+                                      : 'bg-slate-950 border-slate-700 text-white hover:border-emerald-400'
+                                  }`}
+                                  title={isScratched ? 'Koşmaz' : 'Kupona Ekle / Çıkar'}
+                                >
+                                  <span className={`text-base leading-none ${isPicked ? 'font-black' : 'font-extrabold'}`}>
+                                    {horse.number}
+                                  </span>
+                                  {isPicked && (
+                                    <span className="text-[8px] font-black uppercase tracking-tighter mt-0.5">
+                                      {isBankoPick ? 'TEK' : 'SEÇİLDİ'}
+                                    </span>
+                                  )}
+                                </button>
+
+                                {/* Horse Main Info (Tap to toggle details) */}
+                                <div
+                                  onClick={() => setExpandedHorse(isExpanded ? null : horse.number)}
+                                  className="flex-1 min-w-0 cursor-pointer"
+                                >
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    {horse.order > 0 && (
+                                      <span
+                                        className={`px-1.5 py-0.2 rounded text-[10px] font-black ${
+                                          horse.order === 1
+                                            ? 'bg-amber-400 text-slate-950'
+                                            : horse.order === 2
+                                            ? 'bg-slate-300 text-slate-950'
+                                            : 'bg-slate-800 text-slate-300'
+                                        }`}
+                                      >
+                                        {horse.order}.
+                                      </span>
+                                    )}
+                                    <span
+                                      className={`font-black text-sm tracking-tight truncate ${
+                                        isScratched ? 'line-through text-rose-300' : 'text-white'
+                                      }`}
+                                    >
+                                      {horse.name}
+                                    </span>
+                                    {horse.stablemate > 0 && (
+                                      <span className="px-1.5 py-0.2 rounded bg-indigo-500/25 border border-indigo-400/40 text-indigo-300 text-[9px] font-black">
+                                        E{horse.stablemate}
+                                      </span>
+                                    )}
+                                    {horse.equipment && (
+                                      <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-300 text-[9px] font-bold">
+                                        {horse.equipment}
+                                      </span>
+                                    )}
+                                    {isScratched && (
+                                      <span className="px-1.5 py-0.2 rounded bg-rose-500/25 text-rose-300 text-[9px] font-black">
+                                        KOŞMAZ
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Jockey, Weight, Gate & HP */}
+                                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                    <span className={`font-bold ${horse.jockey.isJockeyChanged ? 'text-amber-300 font-black' : 'text-slate-200'}`}>
+                                      {horse.jockey.name || '-'}
+                                    </span>
+                                    {horse.jockey.apprentice && (
+                                      <span className="text-[9px] text-cyan-300 font-bold">(AP)</span>
+                                    )}
+                                    <span className="text-slate-600">•</span>
+                                    <span className="font-mono text-slate-300 font-bold">{horse.weight} kg</span>
+                                    <span className="text-slate-600">•</span>
+                                    <span className="text-cyan-400 font-bold">St: {horse.start}</span>
+                                    {horse.handicap ? (
+                                      <>
+                                        <span className="text-slate-600">•</span>
+                                        <span className="text-amber-400 font-bold">HP: {horse.handicap}</span>
+                                      </>
+                                    ) : null}
+                                  </div>
+                                </div>
+
+                                {/* Right: GANYAN & AGF & AI Badges */}
+                                <div className="flex flex-col items-end shrink-0 pl-1">
+                                  <div className="flex items-center gap-1.5">
+                                    {horse.ganyan > 0 ? (
+                                      <span className="px-2 py-0.5 rounded-lg bg-amber-400/15 border border-amber-400/30 text-amber-300 font-mono font-black text-xs shadow-sm">
+                                        {horse.ganyan.toFixed(2)} ₺
+                                      </span>
+                                    ) : null}
+                                    {agf.percentage > 0 ? (
+                                      <span
+                                        className={`px-2 py-0.5 rounded-lg font-mono font-black text-xs ${
+                                          agf.isFavorite
+                                            ? 'bg-amber-400 text-slate-950 shadow-sm'
+                                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                        }`}
+                                      >
+                                        %{agf.percentage.toFixed(1)} {agf.isFavorite ? '★' : ''}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  {ai && !isScratched && (
+                                    <div className="flex items-center gap-1 mt-1">
+                                      <span className={`px-1.5 py-0.2 rounded border text-[9px] font-bold ${getTagBadgeClass(ai.tag)}`}>
+                                        {ai.score} • {ai.tag}
+                                      </span>
+                                      {ai.score >= 68 && agf.percentage <= 12 && agf.percentage > 0 && (
+                                        <span className="px-1.5 py-0.2 rounded bg-purple-500/25 border border-purple-400/40 text-purple-300 text-[9px] font-black animate-pulse">
+                                          🎯 RADAR
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Bottom Row: Son 6 Form Chips + Pedigree + Chevron */}
+                              <div
+                                onClick={() => setExpandedHorse(isExpanded ? null : horse.number)}
+                                className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/60 cursor-pointer"
+                              >
+                                {/* Son 6 Form Chips */}
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <span className="text-[10px] text-slate-500 font-bold mr-0.5">Son 6:</span>
+                                  {horse.last6.length > 0 ? (
+                                    horse.last6.map((f, idx) => (
+                                      <span
+                                        key={idx}
+                                        className={`w-4 h-4 rounded text-[9px] flex items-center justify-center font-mono font-bold ${getLast6ChipClass(
+                                          f.result
+                                        )}`}
+                                      >
+                                        {f.result || '-'}
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span className="text-[10px] text-slate-500">İlk Koşu</span>
+                                  )}
+                                </div>
+
+                                {/* Pedigree & Expand Chevron */}
+                                <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 min-w-0">
+                                  <span className="truncate">{horse.age} {horse.parents.father} - {horse.parents.mother}</span>
+                                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 🖥️ 2. DESKTOP RUNNER TABLE ROW (hidden md:grid) */}
+                            <div className="hidden md:grid md:grid-cols-12 gap-2 px-3 sm:px-4 py-2.5 items-center">
                               {/* Col 1: Saddle Cloth + Forma */}
                               <div className="md:col-span-1 flex items-center space-x-2">
                                 <button
@@ -2008,8 +2206,192 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
         onApplyCoupon={applyGeneratedCoupon}
       />
 
+      {/* 📱 Mobile Floating Coupon Summary Bar (< xl) */}
+      {totalPicksInCoupon > 0 && (
+        <div className="xl:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 border-t border-amber-500/40 p-2.5 px-3.5 backdrop-blur-xl shadow-2xl flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 flex flex-col items-center justify-center font-black shrink-0 shadow-md shadow-amber-500/20">
+              <span className="text-xs leading-none">{totalPicksInCoupon}</span>
+              <span className="text-[8px] uppercase tracking-tighter">At</span>
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-black text-white flex items-center gap-1.5 truncate">
+                <span>{activeGame?.label || 'Kupon'}</span>
+                <span className="text-amber-400 font-mono font-black">{totalCouponCost.toFixed(2)} ₺</span>
+              </div>
+              <div className="text-[10px] text-slate-400 truncate">
+                {totalCombinations} Kolon • {misli} Misli
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 shrink-0">
+            <button
+              onClick={() => setIsMobileCouponDrawerOpen(true)}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/30 flex items-center space-x-1.5 cursor-pointer active:scale-95 transition-all"
+            >
+              <Ticket className="w-3.5 h-3.5" />
+              <span>Kuponu Gör</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 📱 Mobile Coupon Bottom Sheet Drawer Modal */}
+      {isMobileCouponDrawerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/80 backdrop-blur-md animate-fade-in p-0 sm:p-4"
+          onClick={() => setIsMobileCouponDrawerOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg max-h-[85vh] rounded-t-3xl sm:rounded-2xl bg-slate-900 border border-amber-500/30 shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer Header */}
+            <div className="px-4 py-3 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 text-slate-950 flex items-center justify-between shrink-0">
+              <div className="flex items-center space-x-2">
+                <Ticket className="w-4 h-4 font-black" />
+                <div>
+                  <div className="text-xs font-black tracking-wide uppercase">
+                    {activeGame ? activeGame.label : 'At Yarışı Kuponu'}
+                  </div>
+                  <div className="text-[10px] font-bold opacity-85">
+                    {detail?.program.place} • {legRaceNumbers.length} Ayak
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={clearProgramCoupon}
+                  className="p-1.5 rounded-lg bg-slate-950/15 hover:bg-slate-950/25 text-slate-950 transition-colors cursor-pointer"
+                  title="Kuponu Temizle"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setIsMobileCouponDrawerOpen(false)}
+                  className="p-1.5 rounded-lg bg-slate-950/15 hover:bg-slate-950/25 text-slate-950 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Legs List */}
+            <div className="p-3 space-y-2 overflow-y-auto flex-1 overscroll-contain">
+              {legRaceNumbers.map((rNo, idx) => {
+                const raceObj = detail?.races.find((r) => r.number === rNo);
+                const picked = currentSelections[rNo] || [];
+                const isCurrentRace = selectedRaceNo === rNo;
+                return (
+                  <div
+                    key={rNo}
+                    onClick={() => {
+                      setSelectedRaceNo(rNo);
+                      setIsMobileCouponDrawerOpen(false);
+                    }}
+                    className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
+                      isCurrentRace
+                        ? 'bg-emerald-500/10 border-emerald-400/60'
+                        : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-black text-amber-400">{idx + 1}. Ayak</span>
+                        <span className="text-[11px] text-slate-400">
+                          ({rNo}. Koşu {raceObj?.hour})
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-400">
+                        {picked.length} At Seçildi
+                      </span>
+                    </div>
+
+                    {picked.length === 0 ? (
+                      <div className="text-[11px] text-amber-400/80 italic font-semibold">
+                        ⚠️ Henüz at seçilmedi (Koşuya gitmek için tıklayın)
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {picked.map((hNo) => {
+                          const hObj = raceObj?.horses.find((h) => h.number === hNo);
+                          const isSingle = picked.length === 1;
+                          return (
+                            <span
+                              key={hNo}
+                              className={`px-2 py-0.5 rounded-lg text-xs font-mono font-black flex items-center space-x-1 ${
+                                isSingle
+                                  ? 'bg-amber-400 text-slate-950 shadow-sm'
+                                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              }`}
+                            >
+                              <span>#{hNo}</span>
+                              {hObj && <span className="font-sans font-bold text-[10px] max-w-[80px] truncate">{hObj.name}</span>}
+                              {isSingle && <span className="text-[9px] font-black uppercase ml-0.5">TEK</span>}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Misli, Total & Action Buttons */}
+            <div className="p-3.5 bg-slate-950 border-t border-slate-800 space-y-3 shrink-0">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-bold text-slate-400">Misli:</span>
+                  <div className="flex items-center rounded-lg bg-slate-900 border border-slate-700 overflow-hidden">
+                    <button
+                      onClick={() => setMisli((m) => Math.max(1, m - 1))}
+                      className="px-2.5 py-1 text-slate-300 hover:bg-slate-800 font-black text-xs cursor-pointer"
+                    >
+                      -
+                    </button>
+                    <span className="px-2 font-mono font-black text-xs text-white">{misli}x</span>
+                    <button
+                      onClick={() => setMisli((m) => Math.min(100, m + 1))}
+                      className="px-2.5 py-1 text-slate-300 hover:bg-slate-800 font-black text-xs cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-slate-400">{totalCombinations} Kolon</div>
+                  <div className="text-base font-black font-mono text-amber-400">{totalCouponCost.toFixed(2)} ₺</div>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    handleSaveCoupon();
+                    setIsMobileCouponDrawerOpen(false);
+                  }}
+                  disabled={totalCombinations === 0}
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 cursor-pointer disabled:opacity-40 transition-all"
+                >
+                  Kuponu Kaydet
+                </button>
+                <button
+                  onClick={() => setIsMobileCouponDrawerOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs cursor-pointer"
+                >
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Footer Yasal Uyarı / Sorumluluk Reddi */}
-      <div className="w-full mt-6 pt-4 pb-8 border-t border-slate-800/80 text-center space-y-1 text-slate-500 text-[11px]">
+      <div className={`w-full mt-6 pt-4 border-t border-slate-800/80 text-center space-y-1 text-slate-500 text-[11px] ${
+        totalPicksInCoupon > 0 ? 'pb-24 xl:pb-8' : 'pb-8'
+      }`}>
         <p className="max-w-2xl mx-auto leading-relaxed">
           ⚠️ <strong>Yasal Uyarı:</strong> Bu sayfada yer alan AGF oranları, jokey analizleri ve yapay zeka altılı kurguları saf istatistiki algoritmalara dayanmaktadır; kesinlikle yatırım veya müşterek bahis tavsiyesi niteliğinde değildir (YTD).
         </p>
@@ -2018,7 +2400,9 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
       {/* Floating AI Altılı Robotu FAB (Horse Racing Only) */}
       <button
         onClick={() => setIsHorseAIChatOpen(true)}
-        className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-black text-xs sm:text-sm shadow-2xl shadow-amber-500/40 hover:shadow-amber-500/70 border-2 border-amber-200/70 active:scale-95 transition-all cursor-pointer group hover:scale-105"
+        className={`fixed ${
+          totalPicksInCoupon > 0 ? 'bottom-16 sm:bottom-6' : 'bottom-5 sm:bottom-6'
+        } right-4 sm:right-6 z-40 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-black text-xs sm:text-sm shadow-2xl shadow-amber-500/40 hover:shadow-amber-500/70 border-2 border-amber-200/70 active:scale-95 transition-all cursor-pointer group hover:scale-105`}
         title="AI At Yarışı & Altılı Ganyan Robotu"
       >
         <div className="relative">
