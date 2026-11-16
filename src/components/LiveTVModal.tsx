@@ -41,7 +41,7 @@ export const TV_CHANNELS: TVChannel[] = [
     name: 'A Spor HD',
     category: 'Ziraat Türkiye Kupası & Uluslar Ligi',
     badge: 'CANLI HD',
-    youtubeId: 'Uk2xw8Gi6ts',
+    youtubeId: 'DwFLd1Mg0eE',
     streamUrl: 'https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8',
     fallbackWebUrl: 'https://www.aspor.com.tr/canli-yayin',
     logoText: 'A SPOR',
@@ -65,7 +65,7 @@ export const TV_CHANNELS: TVChannel[] = [
     name: 'TRT Spor HD',
     category: 'Milli Maçlar & Uluslar Ligi',
     badge: 'RESMİ CANLI',
-    youtubeId: 'LQKHjWH7zCk',
+    youtubeId: 'hJ6KygUV_F8',
     streamUrl: 'https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor',
     fallbackWebUrl: 'https://www.trtspor.com.tr/canli-yayin-izle/trt-spor',
     logoText: 'TRT SPOR',
@@ -73,16 +73,16 @@ export const TV_CHANNELS: TVChannel[] = [
     description: 'A Milli Takım, UEFA Uluslar Ligi ve Avrupa maç özetleri'
   },
   {
-    id: 'tjktv',
-    name: 'TJK TV Canlı',
-    category: 'Canlı Hipodrom & Koşular',
-    badge: 'TJK TV',
-    youtubeId: 'Lq4RbOueIL0',
-    streamUrl: 'https://tjktv-live.tjk.org/tjktv_1080p.m3u8',
-    fallbackWebUrl: 'https://www.tjk.org/TR/YarisSever/CanliYayin',
-    logoText: 'TJK TV',
-    accentColor: '#EF4444', // red
-    description: 'İstanbul, Adana, İzmir ve yabancı hipodrom canlı yarış yayınları'
+    id: 'sportsdigitale',
+    name: 'Sports Digitale',
+    category: 'Canlı Maç & Derbi Yorumları',
+    badge: 'CANLI HD',
+    youtubeId: '-tBXTOmSAYU',
+    streamUrl: '',
+    fallbackWebUrl: 'https://www.youtube.com/@SportsDigitale',
+    logoText: 'DIGITALE',
+    accentColor: '#F59E0B', // amber
+    description: 'Canlı maç önü ve maç sonu yorumları, taktik tahtası ve futbol analizleri'
   }
 ];
 
@@ -97,6 +97,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
   onClose,
   initialChannelId = 'aspor'
 }) => {
+  const [channels, setChannels] = useState<TVChannel[]>(TV_CHANNELS);
   const [activeChannelId, setActiveChannelId] = useState<string>(initialChannelId);
   const [isMiniMode, setIsMiniMode] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
@@ -106,7 +107,24 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
 
-  const currentChannel = TV_CHANNELS.find((c) => c.id === activeChannelId) || TV_CHANNELS[0];
+  // Canlı Spor TV kanal akışlarını sunucudan dinamik çek (YouTube ID güncellemeleri için)
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+    fetch(`/api/sports-tv/channels${retryKey > 0 ? '?force=1' : ''}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (isMounted && data && data.success && Array.isArray(data.channels) && data.channels.length > 0) {
+          setChannels(data.channels);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, retryKey]);
+
+  const currentChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
 
   // HLS Modu aktifse Hls.js bağla
   useEffect(() => {
@@ -225,7 +243,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
         {/* Mini Channel Selector */}
         <div className="p-1.5 bg-slate-900/95 flex items-center justify-between gap-1 overflow-x-auto">
-          {TV_CHANNELS.map((ch) => (
+          {channels.map((ch) => (
             <button
               key={ch.id}
               onClick={() => setActiveChannelId(ch.id)}
@@ -340,7 +358,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
         <div className="p-3 sm:p-4 bg-slate-950 border-t border-slate-800 space-y-3">
           {/* Channel Tabs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {TV_CHANNELS.map((ch) => {
+            {channels.map((ch) => {
               const isActive = activeChannelId === ch.id;
               return (
                 <button

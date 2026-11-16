@@ -386,7 +386,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.16.01';
+  const CLIENT_BUILD_VERSION = '2026.11.16.02';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1149,7 +1149,7 @@ export const App: React.FC = () => {
   if (activeSection === 'home') {
     return (
       <div
-        className="min-h-[100dvh] w-full overflow-y-auto touch-pan-y flex flex-col bg-slate-950 scrollbar-none"
+        className="min-h-[100dvh] w-full overflow-y-auto flex flex-col bg-slate-950 scrollbar-none"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {newVersionAvailable && (
@@ -1341,7 +1341,7 @@ export const App: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen text-slate-100 flex flex-col pb-20 md:pb-12 transition-colors duration-300 w-full overflow-x-clip max-w-[100vw] touch-pan-y"
+      className="min-h-screen text-slate-100 flex flex-col pb-20 md:pb-12 transition-colors duration-300 w-full overflow-x-clip max-w-[100vw]"
       style={{
         backgroundColor: activeSection === 'football' ? (activeTheme?.bgDark || '#0b0f19') : '#020617'
       }}

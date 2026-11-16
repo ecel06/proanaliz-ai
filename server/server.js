@@ -377,6 +377,103 @@ app.get('/api/stream-proxy', async (req, res) => {
   }
 });
 
+// 📺 Dynamic Sports TV Channels with Active Live Stream Resolver
+let sportsTvChannelsCache = { data: null, expiresAt: 0 };
+
+async function resolveYouTubeLiveVideoId(channelHandle) {
+  try {
+    const res = await fetch(`https://www.youtube.com/${channelHandle}/live`, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      },
+    });
+    if (!res.ok) return null;
+    const body = await res.text();
+    const match = body.match(/"videoId":"([^"]+)"/);
+    return match ? match[1] : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+app.get('/api/sports-tv/channels', async (req, res) => {
+  const now = Date.now();
+  const force = req.query.force === '1' || req.query.force === 'true';
+  if (!force && sportsTvChannelsCache.data && sportsTvChannelsCache.expiresAt > now) {
+    return res.json(sportsTvChannelsCache.data);
+  }
+
+  try {
+    const [asporId, htsporId, sportsDigitaleId, trtsporId] = await Promise.all([
+      resolveYouTubeLiveVideoId('@aspor'),
+      resolveYouTubeLiveVideoId('@htspor'),
+      resolveYouTubeLiveVideoId('@SportsDigitale'),
+      resolveYouTubeLiveVideoId('@trtspor'),
+    ]);
+
+    const channels = [
+      {
+        id: 'aspor',
+        name: 'A Spor HD',
+        category: 'Ziraat Türkiye Kupası & Uluslar Ligi',
+        badge: 'CANLI HD',
+        youtubeId: asporId || 'DwFLd1Mg0eE',
+        streamUrl: 'https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8',
+        fallbackWebUrl: 'https://www.aspor.com.tr/canli-yayin',
+        logoText: 'A SPOR',
+        accentColor: '#06B6D4',
+        description: 'Ziraat Türkiye Kupası maçları, canlı maç özetleri, flaş analizler ve skorlar',
+      },
+      {
+        id: 'htspor',
+        name: 'HT Spor HD',
+        category: 'Süper Lig & Canlı Maç Yorumları',
+        badge: 'CANLI HD',
+        youtubeId: htsporId || 'gcWaPe_LBMc',
+        streamUrl: 'https://ciner.daioncdn.net/ht-spor/ht-spor.m3u8?app=web',
+        fallbackWebUrl: 'https://www.htspor.com/canli-yayin',
+        logoText: 'HT SPOR',
+        accentColor: '#8B5CF6',
+        description: 'Ciner Medya spor kanalı, 7/24 kesintisiz canlı yayın, taktik tahtası ve transferler',
+      },
+      {
+        id: 'trtspor',
+        name: 'TRT Spor HD',
+        category: 'Milli Maçlar & Uluslar Ligi',
+        badge: 'RESMİ CANLI',
+        youtubeId: trtsporId || 'hJ6KygUV_F8',
+        streamUrl: 'https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor',
+        fallbackWebUrl: 'https://www.trtspor.com.tr/canli-yayin-izle/trt-spor',
+        logoText: 'TRT SPOR',
+        accentColor: '#10B981',
+        description: 'A Milli Takım, UEFA Uluslar Ligi ve Avrupa maç özetleri',
+      },
+      {
+        id: 'sportsdigitale',
+        name: 'Sports Digitale',
+        category: 'Canlı Maç & Derbi Yorumları',
+        badge: 'CANLI HD',
+        youtubeId: sportsDigitaleId || '-tBXTOmSAYU',
+        streamUrl: '',
+        fallbackWebUrl: 'https://www.youtube.com/@SportsDigitale',
+        logoText: 'DIGITALE',
+        accentColor: '#F59E0B',
+        description: 'Canlı maç önü, maç sonu yorumları, Süper Lig ve Avrupa futbolu analizleri',
+      },
+    ];
+
+    sportsTvChannelsCache = {
+      data: { success: true, channels, updatedAt: new Date().toISOString() },
+      expiresAt: now + 5 * 60 * 1000,
+    };
+
+    res.json(sportsTvChannelsCache.data);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 5d. Live Stock Market Screener & Historical OHLCV Chart (BIST / NASDAQ / NYSE / Crypto)
 app.get('/api/stocks/viop', async (req, res) => {
   try {
@@ -764,7 +861,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.16.01';
+const APP_VERSION = '2026.11.16.02';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
