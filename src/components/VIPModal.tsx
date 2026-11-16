@@ -388,7 +388,7 @@ export const VIPModal: React.FC<VIPModalProps> = ({
                 </p>
               </div>
               <a
-                href={`https://wa.me/905300000000?text=${encodeURIComponent(
+                href={`https://wa.me/905068910050?text=${encodeURIComponent(
                   `Merhaba ProAnaliz AI! ${user?.email ? user.email : ''} hesabım için VIP üyelik başlatmak istiyorum.`
                 )}`}
                 target="_blank"

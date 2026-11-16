@@ -978,7 +978,7 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
             <span>Telegram VIP Kanalı</span>
           </a>
           <a
-            href="https://wa.me/905550000000?text=Merhaba%2C%20ProAnaliz%20AI%20VIP%20WhatsApp%20grubuna%20kat%C4%B1lmak%20istiyorum."
+            href="https://wa.me/905068910050?text=Merhaba%2C%20ProAnaliz%20AI%20VIP%20WhatsApp%20grubuna%20kat%C4%B1lmak%20istiyorum."
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20 cursor-pointer"

@@ -36,17 +36,23 @@ export interface SupportedStandingsLeague {
   name: string;
   country: string;
   countryFlag: string;
+  aliases?: string[];
 }
 
 export const STANDINGS_LEAGUES: SupportedStandingsLeague[] = [
-  { code: 'tur.1', name: 'Süper Lig', country: 'Türkiye', countryFlag: '🇹🇷' },
-  { code: 'tur.2', name: 'TFF 1. Lig', country: 'Türkiye', countryFlag: '🇹🇷' },
-  { code: 'eng.1', name: 'Premier League', country: 'İngiltere', countryFlag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
-  { code: 'esp.1', name: 'La Liga', country: 'İspanya', countryFlag: '🇪🇸' },
-  { code: 'ita.1', name: 'Serie A', country: 'İtalya', countryFlag: '🇮🇹' },
-  { code: 'ger.1', name: 'Bundesliga', country: 'Almanya', countryFlag: '🇩🇪' },
-  { code: 'fra.1', name: 'Ligue 1', country: 'Fransa', countryFlag: '🇫🇷' },
-  { code: 'uefa.champions', name: 'Şampiyonlar Ligi', country: 'Avrupa', countryFlag: '⭐' }
+  { code: 'tur.1', name: 'Süper Lig', country: 'Türkiye', countryFlag: '🇹🇷', aliases: ['super lig', 'süper lig', 'turkiye', 'türkiye'] },
+  { code: 'tur.2', name: 'TFF 1. Lig', country: 'Türkiye', countryFlag: '🇹🇷', aliases: ['tff', '1. lig', 'tff 1. lig'] },
+  { code: 'uefa.europa', name: 'UEFA Avrupa Ligi', country: 'Avrupa', countryFlag: '🟠', aliases: ['uefa', 'avrupa ligi', 'uefa avrupa ligi', 'europa league', 'europa'] },
+  { code: 'uefa.champions', name: 'Şampiyonlar Ligi', country: 'Avrupa', countryFlag: '⭐', aliases: ['uefa', 'şampiyonlar', 'sampiyonlar ligi', 'champions league', 'ucl'] },
+  { code: 'uefa.europa.conf', name: 'Konferans Ligi', country: 'Avrupa', countryFlag: '🟢', aliases: ['uefa', 'konferans', 'konferans ligi', 'conference league'] },
+  { code: 'uefa.nations', name: 'Uluslar Ligi', country: 'Avrupa', countryFlag: '🌐', aliases: ['uluslar ligi', 'nations league', 'uefa uluslar ligi'] },
+  { code: 'eng.1', name: 'Premier League', country: 'İngiltere', countryFlag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', aliases: ['premier lig', 'premier league', 'ingiltere'] },
+  { code: 'esp.1', name: 'La Liga', country: 'İspanya', countryFlag: '🇪🇸', aliases: ['la liga', 'ispanya'] },
+  { code: 'ita.1', name: 'Serie A', country: 'İtalya', countryFlag: '🇮🇹', aliases: ['serie a', 'italya'] },
+  { code: 'ger.1', name: 'Bundesliga', country: 'Almanya', countryFlag: '🇩🇪', aliases: ['bundesliga', 'almanya'] },
+  { code: 'fra.1', name: 'Ligue 1', country: 'Fransa', countryFlag: '🇫🇷', aliases: ['ligue 1', 'fransa'] },
+  { code: 'ned.1', name: 'Eredivisie', country: 'Hollanda', countryFlag: '🇳🇱', aliases: ['eredivisie', 'hollanda'] },
+  { code: 'por.1', name: 'Liga Portugal', country: 'Portekiz', countryFlag: '🇵🇹', aliases: ['portekiz', 'liga nos', 'primeira liga'] }
 ];
 
 function getTeamColor(teamName: string): string {
@@ -175,6 +181,60 @@ const OFFICIAL_STANDINGS_DATA: Record<string, Omit<StandingRow, 'rank' | 'avgGoa
     { team: 'Borussia Dortmund', shortName: 'BVB', played: 9, won: 5, drawn: 1, lost: 3, gf: 17, ga: 15, gd: 2, points: 16 },
     { team: 'Freiburg', shortName: 'SCF', played: 9, won: 5, drawn: 1, lost: 3, gf: 13, ga: 11, gd: 2, points: 16 },
     { team: 'Union Berlin', shortName: 'FCU', played: 9, won: 4, drawn: 3, lost: 2, gf: 9, ga: 8, gd: 1, points: 15 }
+  ],
+  'uefa.europa': [
+    { team: 'Lazio', shortName: 'LAZ', played: 4, won: 4, drawn: 0, lost: 0, gf: 11, ga: 2, gd: 9, points: 12 },
+    { team: 'Ajax', shortName: 'AJX', played: 4, won: 3, drawn: 1, lost: 0, gf: 13, ga: 1, gd: 12, points: 10 },
+    { team: 'Galatasaray', shortName: 'GS', played: 4, won: 3, drawn: 1, lost: 0, gf: 12, ga: 8, gd: 4, points: 10 },
+    { team: 'Eintracht Frankfurt', shortName: 'SGE', played: 4, won: 3, drawn: 1, lost: 0, gf: 8, ga: 4, gd: 4, points: 10 },
+    { team: 'Anderlecht', shortName: 'AND', played: 4, won: 3, drawn: 1, lost: 0, gf: 7, ga: 3, gd: 4, points: 10 },
+    { team: 'Athletic Bilbao', shortName: 'ATH', played: 4, won: 3, drawn: 1, lost: 0, gf: 6, ga: 2, gd: 4, points: 10 },
+    { team: 'Tottenham Hotspur', shortName: 'TOT', played: 4, won: 3, drawn: 0, lost: 1, gf: 8, ga: 4, gd: 4, points: 9 },
+    { team: 'FCSB', shortName: 'FCSB', played: 4, won: 3, drawn: 0, lost: 1, gf: 7, ga: 5, gd: 2, points: 9 },
+    { team: 'Lyon', shortName: 'LYO', played: 4, won: 2, drawn: 1, lost: 1, gf: 8, ga: 4, gd: 4, points: 7 },
+    { team: 'Rangers', shortName: 'RAN', played: 4, won: 2, drawn: 1, lost: 1, gf: 8, ga: 5, gd: 3, points: 7 },
+    { team: 'Olympiakos', shortName: 'OLY', played: 4, won: 2, drawn: 1, lost: 1, gf: 5, ga: 3, gd: 2, points: 7 },
+    { team: 'Bodø/Glimt', shortName: 'BOD', played: 4, won: 2, drawn: 1, lost: 1, gf: 6, ga: 5, gd: 1, points: 7 },
+    { team: 'Midtjylland', shortName: 'MID', played: 4, won: 2, drawn: 1, lost: 1, gf: 4, ga: 3, gd: 1, points: 7 },
+    { team: 'Ferencvaros', shortName: 'FER', played: 4, won: 2, drawn: 0, lost: 2, gf: 7, ga: 4, gd: 3, points: 6 },
+    { team: 'Manchester United', shortName: 'MUN', played: 4, won: 1, drawn: 3, lost: 0, gf: 7, ga: 5, gd: 2, points: 6 },
+    { team: 'Viktoria Plzen', shortName: 'PLZ', played: 4, won: 1, drawn: 3, lost: 0, gf: 7, ga: 6, gd: 1, points: 6 },
+    { team: 'AZ Alkmaar', shortName: 'AZ', played: 4, won: 2, drawn: 0, lost: 2, gf: 6, ga: 6, gd: 0, points: 6 },
+    { team: 'Beşiktaş', shortName: 'BJK', played: 4, won: 2, drawn: 0, lost: 2, gf: 4, ga: 8, gd: -4, points: 6 },
+    { team: 'Hoffenheim', shortName: 'TSG', played: 4, won: 1, drawn: 2, lost: 1, gf: 5, ga: 5, gd: 0, points: 5 },
+    { team: 'Roma', shortName: 'ROM', played: 4, won: 1, drawn: 2, lost: 1, gf: 3, ga: 3, gd: 0, points: 5 },
+    { team: 'Fenerbahçe', shortName: 'FB', played: 4, won: 1, drawn: 2, lost: 1, gf: 5, ga: 6, gd: -1, points: 5 },
+    { team: 'Porto', shortName: 'POR', played: 4, won: 1, drawn: 1, lost: 2, gf: 8, ga: 8, gd: 0, points: 4 },
+    { team: 'Slavia Prag', shortName: 'SLA', played: 4, won: 1, drawn: 1, lost: 2, gf: 3, ga: 3, gd: 0, points: 4 },
+    { team: 'Real Sociedad', shortName: 'RSO', played: 4, won: 1, drawn: 1, lost: 2, gf: 5, ga: 6, gd: -1, points: 4 },
+    { team: 'Braga', shortName: 'BRA', played: 4, won: 1, drawn: 1, lost: 2, gf: 4, ga: 7, gd: -3, points: 4 },
+    { team: 'Twente', shortName: 'TWE', played: 4, won: 0, drawn: 3, lost: 1, gf: 4, ga: 6, gd: -2, points: 3 },
+    { team: 'Malmö FF', shortName: 'MAL', played: 4, won: 1, drawn: 0, lost: 3, gf: 3, ga: 6, gd: -3, points: 3 },
+    { team: 'Karabağ FK', shortName: 'QAR', played: 4, won: 1, drawn: 0, lost: 3, gf: 3, ga: 9, gd: -6, points: 3 },
+    { team: 'Nice', shortName: 'NIC', played: 4, won: 0, drawn: 2, lost: 2, gf: 4, ga: 8, gd: -4, points: 2 },
+    { team: 'PAOK', shortName: 'PAO', played: 4, won: 0, drawn: 1, lost: 3, gf: 3, ga: 8, gd: -5, points: 1 }
+  ],
+  'uefa.champions': [
+    { team: 'Liverpool', shortName: 'LIV', played: 4, won: 4, drawn: 0, lost: 0, gf: 10, ga: 1, gd: 9, points: 12 },
+    { team: 'Sporting CP', shortName: 'SCP', played: 4, won: 3, drawn: 1, lost: 0, gf: 9, ga: 2, gd: 7, points: 10 },
+    { team: 'Monaco', shortName: 'MON', played: 4, won: 3, drawn: 1, lost: 0, gf: 10, ga: 4, gd: 6, points: 10 },
+    { team: 'Brest', shortName: 'BRE', played: 4, won: 3, drawn: 1, lost: 0, gf: 9, ga: 3, gd: 6, points: 10 },
+    { team: 'Inter Milan', shortName: 'INT', played: 4, won: 3, drawn: 1, lost: 0, gf: 6, ga: 0, gd: 6, points: 10 },
+    { team: 'Barcelona', shortName: 'BAR', played: 4, won: 3, drawn: 0, lost: 1, gf: 15, ga: 5, gd: 10, points: 9 },
+    { team: 'Borussia Dortmund', shortName: 'BVB', played: 4, won: 3, drawn: 0, lost: 1, gf: 13, ga: 6, gd: 7, points: 9 },
+    { team: 'Aston Villa', shortName: 'AVL', played: 4, won: 3, drawn: 0, lost: 1, gf: 6, ga: 1, gd: 5, points: 9 },
+    { team: 'Atalanta', shortName: 'ATA', played: 4, won: 2, drawn: 2, lost: 0, gf: 5, ga: 0, gd: 5, points: 8 },
+    { team: 'Manchester City', shortName: 'MCI', played: 4, won: 2, drawn: 1, lost: 1, gf: 10, ga: 4, gd: 6, points: 7 },
+    { team: 'Juventus', shortName: 'JUV', played: 4, won: 2, drawn: 1, lost: 1, gf: 7, ga: 5, gd: 2, points: 7 },
+    { team: 'Arsenal', shortName: 'ARS', played: 4, won: 2, drawn: 1, lost: 1, gf: 3, ga: 1, gd: 2, points: 7 },
+    { team: 'Bayer Leverkusen', shortName: 'B04', played: 4, won: 2, drawn: 1, lost: 1, gf: 6, ga: 5, gd: 1, points: 7 },
+    { team: 'Bayern Munich', shortName: 'BAY', played: 4, won: 2, drawn: 0, lost: 2, gf: 11, ga: 7, gd: 4, points: 6 },
+    { team: 'Real Madrid', shortName: 'RMA', played: 4, won: 2, drawn: 0, lost: 2, gf: 9, ga: 7, gd: 2, points: 6 },
+    { team: 'Benfica', shortName: 'SLB', played: 4, won: 2, drawn: 0, lost: 2, gf: 7, ga: 5, gd: 2, points: 6 },
+    { team: 'AC Milan', shortName: 'MIL', played: 4, won: 2, drawn: 0, lost: 2, gf: 7, ga: 6, gd: 1, points: 6 },
+    { team: 'Atletico Madrid', shortName: 'ATM', played: 4, won: 2, drawn: 0, lost: 2, gf: 5, ga: 9, gd: -4, points: 6 },
+    { team: 'PSV Eindhoven', shortName: 'PSV', played: 4, won: 1, drawn: 2, lost: 1, gf: 7, ga: 5, gd: 2, points: 5 },
+    { team: 'Paris Saint-Germain', shortName: 'PSG', played: 4, won: 1, drawn: 1, lost: 2, gf: 3, ga: 5, gd: -2, points: 4 }
   ]
 };
 

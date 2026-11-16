@@ -75,20 +75,50 @@ export const StandingsModal: React.FC<StandingsModalProps> = ({
 
   const currentLeague = STANDINGS_LEAGUES.find(l => l.code === selectedLeagueCode) || {
     name: 'Lig Puan Durumu',
-    countryFlag: '⚽'
+    country: 'Dünya',
+    countryFlag: '⚽',
+    aliases: []
   };
 
   const rows = standingsResult?.standings || [];
   const totalTeams = rows.length;
 
+  // Search matching leagues
+  const matchedLeagues = useMemo(() => {
+    if (!searchTeam.trim()) return [];
+    const q = searchTeam.toLowerCase().trim();
+    return STANDINGS_LEAGUES.filter(l =>
+      l.name.toLowerCase().includes(q) ||
+      l.country.toLowerCase().includes(q) ||
+      (l.aliases && l.aliases.some(a => a.toLowerCase().includes(q) || q.includes(a.toLowerCase())))
+    );
+  }, [searchTeam]);
+
   const filteredRows = useMemo(() => {
     if (!searchTeam.trim()) return rows;
     const query = searchTeam.toLowerCase().trim();
+
+    // If query matches the currently selected league name or alias, don't filter out the teams
+    const matchesCurrentLeague =
+      currentLeague.name.toLowerCase().includes(query) ||
+      (currentLeague.aliases && currentLeague.aliases.some(a => a.toLowerCase().includes(query)));
+
+    if (matchesCurrentLeague) {
+      return rows;
+    }
+
     return rows.filter(r =>
       r.team.toLowerCase().includes(query) ||
       (r.shortName && r.shortName.toLowerCase().includes(query))
     );
-  }, [rows, searchTeam]);
+  }, [rows, searchTeam, currentLeague]);
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && matchedLeagues.length > 0) {
+      setSelectedLeagueCode(matchedLeagues[0].code);
+      setSearchTeam('');
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[999] overflow-y-auto">
@@ -150,10 +180,11 @@ export const StandingsModal: React.FC<StandingsModalProps> = ({
         </div>
 
         {/* League Selector Horizontal Tabs & Quick Search */}
-        <div className="px-4 sm:px-6 py-2.5 border-b border-slate-800/80 bg-slate-950/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-          <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar text-xs">
+        <div className="px-3 sm:px-6 py-2.5 border-b border-slate-800/80 bg-slate-950/60 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <div className="flex items-center space-x-1.5 overflow-x-auto py-1.5 pb-2 text-xs scrollbar-thin scrollbar-thumb-slate-700 max-w-full">
             {STANDINGS_LEAGUES.map((league) => {
               const isActive = selectedLeagueCode === league.code;
+              const isMatched = matchedLeagues.some((m) => m.code === league.code);
               return (
                 <button
                   key={league.code}
@@ -163,7 +194,9 @@ export const StandingsModal: React.FC<StandingsModalProps> = ({
                   }}
                   className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                      ? 'bg-amber-400 text-slate-950 border border-amber-300 font-black shadow-md shadow-amber-500/20'
+                      : isMatched
+                      ? 'bg-emerald-500/20 text-emerald-300 border-2 border-emerald-400 font-bold shadow-sm animate-pulse'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 bg-slate-900 border border-slate-800/80'
                   }`}
                 >
@@ -174,21 +207,63 @@ export const StandingsModal: React.FC<StandingsModalProps> = ({
             })}
           </div>
 
-          {/* Quick Team Search in Standings */}
-          <div className="relative shrink-0 sm:w-48">
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+          {/* Quick Lig & Takım Search in Standings */}
+          <div className="relative shrink-0 md:w-64">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTeam}
               onChange={(e) => setSearchTeam(e.target.value)}
-              placeholder="Tabloda takım ara..."
-              className="w-full pl-8 pr-2.5 py-1 text-xs rounded-lg bg-slate-900 border border-slate-800 text-slate-200 placeholder-slate-500 focus:outline-hidden focus:border-emerald-500/50"
+              onKeyDown={handleSearchKeyDown}
+              placeholder="Lig veya takım ara... (Örn: Avrupa Ligi)"
+              className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-slate-900 border border-slate-700/80 text-slate-100 placeholder-slate-400 focus:outline-hidden focus:border-amber-400/80 focus:ring-1 focus:ring-amber-400/50 shadow-inner"
             />
+            {searchTeam && (
+              <button
+                onClick={() => setSearchTeam('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                title="Aramayı Temizle"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
+        {/* Found Matching Leagues Quick Pill Bar */}
+        {matchedLeagues.length > 0 && (
+          <div className="px-3 sm:px-6 py-2 bg-emerald-950/40 border-b border-emerald-500/30 flex items-center gap-2 flex-wrap animate-fadeIn">
+            <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1 shrink-0">
+              <Sparkles className="w-3 h-3 text-emerald-400" />
+              Bulunan Lig:
+            </span>
+            {matchedLeagues.map((l) => (
+              <button
+                key={l.code}
+                onClick={() => {
+                  setSelectedLeagueCode(l.code);
+                  setSearchTeam('');
+                }}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  selectedLeagueCode === l.code
+                    ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
+                    : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 shadow-sm'
+                }`}
+              >
+                <span>{l.countryFlag}</span>
+                <span>{l.name}</span>
+                {selectedLeagueCode === l.code ? (
+                  <span className="text-[10px] bg-slate-950/30 px-1 rounded">Seçili</span>
+                ) : (
+                  <span className="text-[10px] text-emerald-400 font-bold">Tabloyu Aç ➔</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Scrollable Table Area - ALWAYS RENDERS THE FULL TABLE IMMEDIATELY */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 pb-12">
           <div className="space-y-4">
             
             {/* Table Container */}
@@ -213,18 +288,45 @@ export const StandingsModal: React.FC<StandingsModalProps> = ({
                   {filteredRows.length === 0 ? (
                     <tr>
                       <td colSpan={11} className="py-12 text-center text-slate-400">
-                        <div className="flex flex-col items-center justify-center space-y-2">
-                          <Search className="w-6 h-6 text-slate-500 opacity-60" />
-                          <div className="text-xs font-semibold text-slate-300">
-                            "{searchTeam}" ile eşleşen takım bulunamadı.
+                        {matchedLeagues.length > 0 ? (
+                          <div className="flex flex-col items-center justify-center space-y-3 p-4">
+                            <Sparkles className="w-8 h-8 text-amber-400 animate-bounce" />
+                            <div className="text-sm font-bold text-white">
+                              "{searchTeam}" bir lig adı olarak bulundu!
+                            </div>
+                            <p className="text-xs text-slate-400 max-w-sm">
+                              Aşağıdaki butona tıklayarak ligin tüm takımlarını ve puan durumunu hemen görüntüleyebilirsiniz:
+                            </p>
+                            <div className="flex items-center gap-2 flex-wrap justify-center pt-1">
+                              {matchedLeagues.map((l) => (
+                                <button
+                                  key={l.code}
+                                  onClick={() => {
+                                    setSelectedLeagueCode(l.code);
+                                    setSearchTeam('');
+                                  }}
+                                  className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center gap-2 shadow-lg shadow-amber-500/20"
+                                >
+                                  <span>{l.countryFlag}</span>
+                                  <span>{l.name} Puan Tablosunu Göster ➔</span>
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                          <button
-                            onClick={() => setSearchTeam('')}
-                            className="text-[11px] text-emerald-400 hover:underline cursor-pointer"
-                          >
-                            Aramayı temizle
-                          </button>
-                        </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center space-y-2">
+                            <Search className="w-6 h-6 text-slate-500 opacity-60" />
+                            <div className="text-xs font-semibold text-slate-300">
+                              "{searchTeam}" ile eşleşen takım veya lig bulunamadı.
+                            </div>
+                            <button
+                              onClick={() => setSearchTeam('')}
+                              className="text-[11px] text-emerald-400 hover:underline cursor-pointer"
+                            >
+                              Aramayı temizle
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ) : (
@@ -358,6 +460,8 @@ export const StandingsModal: React.FC<StandingsModalProps> = ({
               </div>
             </div>
 
+            {/* Bottom Safe Spacer */}
+            <div className="h-6" />
           </div>
         </div>
 

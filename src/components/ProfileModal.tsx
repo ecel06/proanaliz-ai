@@ -461,7 +461,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <Send className="w-3.5 h-3.5" />
                 </a>
                 <a
-                  href="https://wa.me/905550000000?text=Merhaba%20ProAnaliz%20AI%20VIP%20deste%C4%9Fi%20almak%20istiyorum."
+                  href="https://wa.me/905068910050?text=Merhaba%20ProAnaliz%20AI%20VIP%20deste%C4%9Fi%20almak%20istiyorum."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors"
@@ -698,7 +698,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className="text-[11px] text-slate-400">Yönetici masasına WhatsApp üzerinden anında yazın</div>
               </div>
               <a
-                href={`https://wa.me/905448378396?text=${encodeURIComponent(`Merhaba ProAnaliz AI ekibi, üye e-posta: ${user.email}. Destek rica ediyorum.`)}`}
+                href={`https://wa.me/905068910050?text=${encodeURIComponent(`Merhaba ProAnaliz AI ekibi, üye e-posta: ${user.email}. Destek rica ediyorum.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-colors shrink-0 flex items-center gap-1.5"
