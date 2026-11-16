@@ -1991,20 +1991,51 @@ export async function fetchLiveViopContracts(force = false) {
     const spreadPoints = Number((futures - spot).toFixed(2));
     const settlement = Number((futures * 0.9995).toFixed(2));
 
+    const theoreticalPrice = Number((spot * (1 + def.spreadRate * 0.98)).toFixed(2));
+
+    // Multi-factor Quantitative VİOP Signal
+    // 1. Price Momentum scaled by asset class volatility
+    let momentumFactor = 0;
+    if (def.category === 'CURRENCY') {
+      // Currencies: 0.20% is baseline, 0.50% is strong
+      momentumFactor = changePct >= 0.50 ? 24 : changePct >= 0.20 ? 12 : changePct <= -0.50 ? -24 : changePct <= -0.20 ? -12 : 0;
+    } else if (def.category === 'COMMODITY') {
+      // Commodities (Gold/Silver): 0.5% baseline, 1.2% strong
+      momentumFactor = changePct >= 1.20 ? 24 : changePct >= 0.45 ? 14 : changePct <= -1.20 ? -24 : changePct <= -0.45 ? -14 : 0;
+    } else {
+      // Index & Single Stocks: 0.7% baseline, 1.8% strong
+      momentumFactor = changePct >= 1.80 ? 25 : changePct >= 0.65 ? 14 : changePct <= -1.80 ? -25 : changePct <= -0.65 ? -14 : 0;
+    }
+
+    // 2. Open Interest Change (APS Değişimi Trend Teyidi)
+    let apsFactor = 0;
+    if (def.openInterestChange > 1000) {
+      // Trende kurumsal taze para girişi
+      apsFactor = changePct >= 0 ? 12 : -12;
+    } else if (def.openInterestChange < -1000) {
+      // Pozisyon kapatma / kâr realizasyonu
+      apsFactor = changePct >= 0 ? -6 : 6;
+    }
+
+    // 3. Basis / Taşıma Maliyeti & Arbitraj Dengesi
+    let basisFactor = 0;
+    const basisDiffPct = theoreticalPrice > 0 ? ((futures - theoreticalPrice) / spot) * 100 : 0;
+    if (basisDiffPct < -0.25) {
+      basisFactor = 8; // İskontolu vadeli (Cazip taşıma maliyeti)
+    } else if (basisDiffPct > 1.2) {
+      basisFactor = -8; // Aşırı primli vadeli (Düzeltme riski)
+    }
+
+    const signalScore = Math.max(10, Math.min(95, Math.round(50 + momentumFactor + apsFactor + basisFactor)));
     let signal = 'NÖTR';
-    let signalScore = 50;
-    if (changePct >= 1.5) {
+    if (signalScore >= 72) {
       signal = 'GÜÇLÜ AL';
-      signalScore = 85 + Math.min(10, Math.round(changePct * 2));
-    } else if (changePct >= 0.2) {
+    } else if (signalScore >= 60) {
       signal = 'AL';
-      signalScore = 65 + Math.min(15, Math.round(changePct * 5));
-    } else if (changePct <= -1.5) {
+    } else if (signalScore <= 28) {
       signal = 'GÜÇLÜ SAT';
-      signalScore = 20 - Math.min(15, Math.round(Math.abs(changePct) * 2));
-    } else if (changePct <= -0.2) {
+    } else if (signalScore <= 40) {
       signal = 'SAT';
-      signalScore = 35 - Math.min(15, Math.round(Math.abs(changePct) * 5));
     }
 
     return {
@@ -2022,7 +2053,7 @@ export async function fetchLiveViopContracts(force = false) {
       changePct,
       spreadPoints,
       spreadPct,
-      theoreticalPrice: Number((spot * (1 + def.spreadRate * 0.98)).toFixed(2)),
+      theoreticalPrice,
       openInterest: def.openInterest,
       openInterestChange: def.openInterestChange,
       volumeTl: def.volumeTl,

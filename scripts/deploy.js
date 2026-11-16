@@ -4,7 +4,7 @@
 import { execSync } from 'child_process';
 
 const DEPLOY_HOOK_URL = 'https://api.render.com/deploy/srv-dbo9obp5efls73d8kfp0?key=OT41AzNOijg';
-const EXPECTED_VERSION = '2026.11.16.02';
+const EXPECTED_VERSION = '2026.11.16.03';
 const LIVE_VERSION_URL = 'https://proanaliz-ai.onrender.com/api/version';
 
 async function main() {
@@ -18,8 +18,8 @@ async function main() {
   console.log('📡 [AutoDeploy] Render bulut sunucusu tetikleniyor...');
   try {
     const res = await fetch(DEPLOY_HOOK_URL, { method: 'POST' });
-    const data = await res.json();
-    console.log('🎉 [AutoDeploy] Başarılı! Render otomatik derleme başlattı. Deploy ID:', data.deploy?.id);
+    const text = await res.text();
+    console.log('🎉 [AutoDeploy] Render yanıtı:', text.trim());
   } catch (err) {
     console.error('Deploy hook tetikleme hatası:', err.message);
   }

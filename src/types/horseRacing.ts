@@ -215,6 +215,7 @@ export interface HorseAIAnalysis {
   score: number; // 0-100 composite AI rating
   tag: 'BANKO' | 'ALTERNATİF' | 'SÜRPRİZ' | 'BOMBA' | 'PLASE';
   reasons: string[];
+  agfPct?: number;
 }
 
 export interface GeneratedAltiliCoupon {

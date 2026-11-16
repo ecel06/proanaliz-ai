@@ -69,18 +69,18 @@ function getTeamDeterministicStats(team: TeamStats, isHome: boolean): { scored: 
   }
   const pos = Math.abs(hash);
 
-  const isSuperClub = /real madrid|barcelona|manchester city|bayern|liverpool|arsenal|inter|psg|galatasaray|fenerbahce|besiktas/.test(name);
-  const isStrongClub = /chelsea|juventus|milan|atletico|dortmund|tottenham|napoli|leverkusen|trabzonspor|roma|porto|benfica|sporting|ajax|lille|aston villa|newcastle|athletic/.test(name);
+  const isSuperClub = /real madrid|barcelona|manchester city|manchester united|bayern|liverpool|arsenal|inter|milan|juventus|psg|paris|galatasaray|fenerbahce|fenerbahçe|besiktas|beşiktaş|atletico|chelsea|leverkusen|dortmund|tottenham/i.test(name);
+  const isStrongClub = /aston villa|newcastle|brighton|roma|lazio|napoli|atalanta|fiorentina|sevilla|real sociedad|athletic bilbao|villarreal|porto|benfica|sporting|ajax|feyenoord|psv|trabzonspor|basaksehir|başakşehir|lille|monaco|lyon|marseille|frankfurt|stuttgart|leipzig/i.test(name);
 
-  let baseScored = 1.15 + (pos % 85) / 100; // 1.15 to 2.00
-  let baseConceded = 0.95 + ((pos >> 3) % 75) / 100; // 0.95 to 1.70
+  let baseScored = 1.20 + (pos % 75) / 100; // 1.20 to 1.95
+  let baseConceded = 0.95 + ((pos >> 3) % 70) / 100; // 0.95 to 1.65
 
   if (isSuperClub) {
-    baseScored = isHome ? 2.35 : 2.05;
-    baseConceded = isHome ? 0.75 : 0.90;
+    baseScored = isHome ? 2.38 : 2.05;
+    baseConceded = isHome ? 0.72 : 0.88;
   } else if (isStrongClub) {
     baseScored = isHome ? 1.95 : 1.70;
-    baseConceded = isHome ? 0.95 : 1.10;
+    baseConceded = isHome ? 0.92 : 1.08;
   }
 
   const formPatterns: ('W' | 'D' | 'L')[][] = isSuperClub
@@ -140,8 +140,8 @@ export function analyzeMatch(home: TeamStats, away: TeamStats, matchId?: string)
   const expectedTotalGoals = Number((expHomeGoals + expAwayGoals).toFixed(2));
 
   // 3. İlk Yarı Gol Beklentileri (Maç gollerinin ortalama %43'ü ilk yarıda olur)
-  const home1hShare = 0.38 + (home.firstHalfGoalRate * 0.15);
-  const away1hShare = 0.35 + (away.firstHalfGoalRate * 0.15);
+  const home1hShare = 0.38 + ((home.firstHalfGoalRate || 0.42) * 0.15);
+  const away1hShare = 0.35 + ((away.firstHalfGoalRate || 0.40) * 0.15);
 
   const expHome1H = Math.max(0.2, expHomeGoals * home1hShare);
   const expAway1H = Math.max(0.15, expAwayGoals * away1hShare);
@@ -224,7 +224,9 @@ export function analyzeMatch(home: TeamStats, away: TeamStats, matchId?: string)
   const awayZeroProb = Math.exp(-expAwayGoals);
   const rawBttsYes = (1 - homeZeroProb) * (1 - awayZeroProb);
   // Pure Poisson + clean sheet penalty (if a team has high clean sheet, KG Var probability reduces realistically)
-  const defensiveDampener = Math.min(1.0, 1.0 - (home.cleanSheetRate * 0.35 + away.cleanSheetRate * 0.35));
+  const effectiveHomeCleanSheet = home.cleanSheetRate && home.cleanSheetRate > 0 ? home.cleanSheetRate : (homeStats.conceded <= 1.05 ? 0.35 : 0.22);
+  const effectiveAwayCleanSheet = away.cleanSheetRate && away.cleanSheetRate > 0 ? away.cleanSheetRate : (awayStats.conceded <= 1.15 ? 0.30 : 0.18);
+  const defensiveDampener = Math.min(1.0, 1.0 - (effectiveHomeCleanSheet * 0.25 + effectiveAwayCleanSheet * 0.25));
   let bttsYes = Math.round(rawBttsYes * defensiveDampener * 100);
   bttsYes = Math.min(88, Math.max(12, bttsYes));
   const bttsNo = 100 - bttsYes;
@@ -257,8 +259,10 @@ export function analyzeMatch(home: TeamStats, away: TeamStats, matchId?: string)
   }
 
   // İlk yarı önde kapatma yüzdelerinden gelen etkiyi harmanla
-  htFtProbs['1/1'] *= (1 + home.firstHalfLeadingRate * 0.4);
-  htFtProbs['2/2'] *= (1 + away.firstHalfLeadingRate * 0.4);
+  const effectiveHomeHtLead = home.firstHalfLeadingRate && home.firstHalfLeadingRate > 0 ? home.firstHalfLeadingRate : (homeFormScore >= 60 ? 0.38 : 0.26);
+  const effectiveAwayHtLead = away.firstHalfLeadingRate && away.firstHalfLeadingRate > 0 ? away.firstHalfLeadingRate : (awayFormScore >= 60 ? 0.34 : 0.22);
+  htFtProbs['1/1'] *= (1 + effectiveHomeHtLead * 0.4);
+  htFtProbs['2/2'] *= (1 + effectiveAwayHtLead * 0.4);
 
   const htFtSum = Object.values(htFtProbs).reduce((a, b) => a + b, 0);
   const htFtRanked: HtFtItem[] = Object.entries(htFtProbs)
@@ -288,19 +292,30 @@ export function analyzeMatch(home: TeamStats, away: TeamStats, matchId?: string)
     .slice(0, 4)
     .map(s => ({ score: s.score, prob: Math.round(s.prob * 100) }));
 
-  // 7. Korner ve Kart Beklentileri
-  const expectedCorners = Number(((home.avgCorners + away.avgCorners) / 2 * (0.95 + (expHomeGoals + expAwayGoals) * 0.04)).toFixed(1));
-  const expectedCards = Number(((home.avgCards + away.avgCards) / 2).toFixed(1));
+  // 7. Korner ve Kart Beklentileri (Boş veya eksik istatistikte gerçekçi lig projeksiyonu kullanılır)
+  const homeCorners = home.avgCorners && home.avgCorners > 0 ? home.avgCorners : (4.9 + (homeStats.scored >= 1.7 ? 0.8 : 0.2));
+  const awayCorners = away.avgCorners && away.avgCorners > 0 ? away.avgCorners : (4.2 + (awayStats.scored >= 1.5 ? 0.7 : 0.1));
+  const expectedCorners = Number(((homeCorners + awayCorners) / 2 * (0.95 + (expHomeGoals + expAwayGoals) * 0.04)).toFixed(1));
+
+  const homeCards = home.avgCards && home.avgCards > 0 ? home.avgCards : 2.2;
+  const awayCards = away.avgCards && away.avgCards > 0 ? away.avgCards : 2.4;
+  const expectedCards = Number(((homeCards + awayCards) / 2).toFixed(1));
 
   // 8. Karşılaştırmalı Güç Puanları (0 - 100)
-  const homeAttackScore = Math.min(99, Math.round((home.avgGoalsScored / 2.8) * 60 + (home.shotsOnTargetAvg / 8) * 40));
-  const awayAttackScore = Math.min(99, Math.round((away.avgGoalsScored / 2.8) * 60 + (away.shotsOnTargetAvg / 8) * 40));
+  const homeShots = home.shotsOnTargetAvg && home.shotsOnTargetAvg > 0 ? home.shotsOnTargetAvg : Number((homeStats.scored * 2.8).toFixed(1));
+  const awayShots = away.shotsOnTargetAvg && away.shotsOnTargetAvg > 0 ? away.shotsOnTargetAvg : Number((awayStats.scored * 2.6).toFixed(1));
 
-  const homeDefenseScore = Math.min(99, Math.round((1 - (home.avgGoalsConceded / 2.5)) * 60 + home.cleanSheetRate * 40));
-  const awayDefenseScore = Math.min(99, Math.round((1 - (away.avgGoalsConceded / 2.5)) * 60 + away.cleanSheetRate * 40));
+  const homeAttackScore = Math.min(99, Math.round((homeStats.scored / 2.6) * 60 + (homeShots / 8) * 40));
+  const awayAttackScore = Math.min(99, Math.round((awayStats.scored / 2.6) * 60 + (awayShots / 8) * 40));
 
-  const homeHtImpactScore = Math.round(home.firstHalfGoalRate * 60 + home.firstHalfLeadingRate * 40);
-  const awayHtImpactScore = Math.round(away.firstHalfGoalRate * 60 + away.firstHalfLeadingRate * 40);
+  const homeDefenseScore = Math.min(99, Math.round((1 - (homeStats.conceded / 2.5)) * 60 + effectiveHomeCleanSheet * 40));
+  const awayDefenseScore = Math.min(99, Math.round((1 - (awayStats.conceded / 2.5)) * 60 + effectiveAwayCleanSheet * 40));
+
+  const effectiveHomeHtRate = home.firstHalfGoalRate && home.firstHalfGoalRate > 0 ? home.firstHalfGoalRate : 0.44;
+  const effectiveAwayHtRate = away.firstHalfGoalRate && away.firstHalfGoalRate > 0 ? away.firstHalfGoalRate : 0.40;
+
+  const homeHtImpactScore = Math.round(effectiveHomeHtRate * 60 + effectiveHomeHtLead * 40);
+  const awayHtImpactScore = Math.round(effectiveAwayHtRate * 60 + effectiveAwayHtLead * 40);
 
   // 9. Ana Banko ve En Güçlü Tahmini Belirleme
   // Tüm piyasaları tarayıp en yüksek güven ve istatistiksel üstünlüğü olan seçeneği çıkar
@@ -589,16 +604,16 @@ export function analyzeMatch(home: TeamStats, away: TeamStats, matchId?: string)
   const tacticalBreakdown = {
     overview: `${home.name} evinde %${homeFormScore} form katsayısıyla sahaya çıkarken, ${away.name} deplasmanlarda %${awayFormScore} direnç seviyesinde. Karşılaşmada ${ms1 > ms2 ? home.name + ' oyun inisiyatifini elinde tutan taraf' : ms2 > ms1 ? away.name + ' geçiş hücumlarıyla etkili olan taraf' : 'her iki takım dengeli güç mücadelesi'} sergileyecektir.`,
     attackVsDefense: `Ev sahibi hücum gücü ${homeAttackScore}/100, deplasman hücum gücü ${awayAttackScore}/100. Poisson xG beklentisi ${home.name} için ${expHomeGoals.toFixed(2)} gol, ${away.name} için ${expAwayGoals.toFixed(2)} gol olarak hesaplanmıştır (Toplam: ${expectedTotalGoals} gol).`,
-    tempoTempo: `${home.name} ilk yarılarda %${Math.round(home.firstHalfGoalRate * 100)} oranında gol bulurken, ${away.name} ilk yarılarda %${Math.round(away.firstHalfGoalRate * 100)} gol potansiyeline sahip. ${expectedTotalGoals >= 2.7 ? 'Maçın erken dakikalardan itibaren yüksek tempolu ve açık geçmesi' : 'İlk 45 dakikanın kontrollü taktiksel satranç şeklinde geçmesi'} bekleniyor.`,
+    tempoTempo: `${home.name} ilk yarı gol potansiyeli %${Math.round(effectiveHomeHtRate * 100)}, ${away.name} ilk yarı gol potansiyeli %${Math.round(effectiveAwayHtRate * 100)}. ${expectedTotalGoals >= 2.6 ? 'Maçın erken dakikalardan itibaren yüksek tempolu ve açık geçmesi' : 'İlk 45 dakikanın kontrollü taktiksel mücadele şeklinde geçmesi'} bekleniyor.`,
     keyRisk: `${expectedCards >= 4.5 ? 'Hakem ve takımların sertlik seviyesi nedeniyle kart sayısı yüksek olabilir; duran top fırsatlarına dikkat edilmeli.' : expectedCorners >= 9.5 ? 'Kanat akınlarının yoğunluğuyla korner sayısı 10 bandını aşabilir.' : 'Savunma bloklarının disiplinli kalması gol sayısını sınırlandırabilir.'}`
   };
 
   // 10. Otomatik AI Maç Yorumu (2-3 analitik cümle)
   let aiComment = '';
   if (ms1 > 58) {
-    aiComment = `${home.name}, evinde yakaladığı %${Math.round(home.firstHalfGoalRate * 100)}'lik ilk yarı skor üretme hızı ve %${homeFormScore} form endeksiyle maça ağırlığını koyacaktır. `;
+    aiComment = `${home.name}, evinde yakaladığı ${expHomeGoals.toFixed(2)} xG gol beklentisi ve %${homeFormScore} form endeksiyle maça ağırlığını koyacaktır. `;
   } else if (ms2 > 52) {
-    aiComment = `${away.name}, deplasmandaki maç başı ${away.avgGoalsScored} gol ortalaması ve ${away.shotsOnTargetAvg} isabetli şut temposuyla rakip savunmayı zor durumda bırakacaktır. `;
+    aiComment = `${away.name}, deplasmandaki maç başı ${awayStats.scored.toFixed(2)} beklenen gol gücü ve %${awayFormScore} form direnciyle rakip sahada sonuç alma avantajına sahip. `;
   } else {
     aiComment = `İki ekibin de dengeli form puanları (${homeFormScore} vs ${awayFormScore}) ve savunma disiplinleri, maçın taktiksel bir satranç şeklinde geçeceğini gösteriyor. `;
   }

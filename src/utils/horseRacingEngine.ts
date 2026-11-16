@@ -281,7 +281,7 @@ export interface RaceChaosAssessment {
 export function calculateRaceChaosAssessment(race: RaceCard | null): RaceChaosAssessment {
   if (!race || !race.horses || race.horses.length === 0) {
     return {
-      chaosScore: 0.5,
+      chaosScore: 0.38,
       tier: 'MEDIUM',
       isBankoFriendly: false,
       recommendedPicksMin: 2,
@@ -293,43 +293,43 @@ export function calculateRaceChaosAssessment(race: RaceCard | null): RaceChaosAs
   const typeDesc = (race.typeDescription || '').toLowerCase();
   const activeCount = race.horses.filter((h) => h.status !== false).length;
 
-  let chaos = 0.50;
+  let chaos = 0.38;
   let reason = 'Dengeli koşu';
 
   // 1. Koşu Türü ve Şartına Dayalı Risk Modeli
   if (typeDesc.includes('handikap') || typeDesc.includes('handicap')) {
-    chaos += 0.32;
-    reason = 'Handikap Koşusu: Kilo farkları nedeniyle sürprize ve bomba atlara son derece açıktır (Tek atılmamalıdır)';
-  } else if (typeDesc.includes('dişi') || typeDesc.includes('disi')) {
     chaos += 0.22;
-    reason = 'Dişi Koşusu: Dalgalı form grafikleri ve sert sürpriz olasılığı yüksek';
+    reason = 'Handikap Koşusu: Kilo farkları nedeniyle sürprize açıktır, dikkatli kurgulanmalıdır';
+  } else if (typeDesc.includes('dişi') || typeDesc.includes('disi')) {
+    chaos += 0.16;
+    reason = 'Dişi Koşusu: Dalgalı form grafikleri ve sürpriz olasılığı barındırır';
   } else if (typeDesc.includes('maiden')) {
     const hasStandout = race.horses.some((h) => {
       const agf = getHorsePrimaryAgf(h);
-      return agf.percentage >= 45;
+      return agf.percentage >= 38;
     });
     if (hasStandout) {
-      chaos -= 0.22;
+      chaos -= 0.18;
       reason = 'Maiden: Net favorisi olan, banko kurulmaya en uygun koşu';
     } else {
-      chaos += 0.15;
+      chaos += 0.12;
       reason = 'Maiden: Birinciliği olmayan denk atlar, sürprize açık';
     }
   } else if (typeDesc.includes('kv-') || typeDesc.includes('grup') || typeDesc.includes('açık') || typeDesc.includes('acik')) {
-    if (activeCount <= 7) {
-      chaos -= 0.18;
+    if (activeCount <= 8) {
+      chaos -= 0.16;
       reason = 'Kısa Alan / Grup Koşusu: Kalite atların taktik yarışı, favori öncelikli';
     } else {
-      chaos += 0.08;
+      chaos += 0.05;
       reason = 'Üst Düzey Koşu: Denk şampiyon atların mücadelesi';
     }
   }
 
   // 2. Koşan At Sayısı (Trafik & Kalabalık Faktörü)
   if (activeCount >= 14) {
-    chaos += 0.15;
+    chaos += 0.12;
   } else if (activeCount <= 6) {
-    chaos -= 0.15;
+    chaos -= 0.12;
   }
 
   // 3. AGF Piyasa Yoğunlaşması (Fark Analizi)
@@ -338,27 +338,29 @@ export function calculateRaceChaosAssessment(race: RaceCard | null): RaceChaosAs
   const secondAgf = agfs[1] || 0;
   const agfGap = topAgf - secondAgf;
 
-  if (topAgf >= 50 && agfGap >= 25 && !typeDesc.includes('handikap')) {
-    chaos -= 0.15;
-  } else if (topAgf < 24 && agfGap < 8) {
-    chaos += 0.18;
+  if (topAgf >= 42 && agfGap >= 18) {
+    chaos -= 0.18;
+  } else if (topAgf >= 34 && agfGap >= 12) {
+    chaos -= 0.10;
+  } else if (topAgf < 22 && agfGap < 6) {
+    chaos += 0.16;
   }
 
-  chaos = Math.max(0.15, Math.min(0.95, Number(chaos.toFixed(2))));
+  chaos = Math.max(0.12, Math.min(0.92, Number(chaos.toFixed(2))));
 
   let tier: RaceChaosAssessment['tier'] = 'MEDIUM';
   let isBankoFriendly = false;
   let recommendedPicksMin = 2;
   let recommendedPicksMax = 3;
 
-  if (chaos <= 0.40) {
+  if (chaos <= 0.46) {
     tier = 'LOW';
     isBankoFriendly = true;
     recommendedPicksMin = 1;
     recommendedPicksMax = 2;
-  } else if (chaos <= 0.62) {
+  } else if (chaos <= 0.64) {
     tier = 'MEDIUM';
-    isBankoFriendly = false;
+    isBankoFriendly = topAgf >= 38 && agfGap >= 15;
     recommendedPicksMin = 2;
     recommendedPicksMax = 3;
   } else if (chaos <= 0.78) {
@@ -399,7 +401,7 @@ export function analyzeRaceHorses(race: RaceCard | null): Map<number, HorseAIAna
     activeHorses.reduce((acc, h) => acc + (h.weight || 56), 0) / Math.max(1, activeHorses.length);
 
   // Türkiye'nin elit/kazanma yüzdesi yüksek jokeyleri
-  const ELITE_JOCKEYS = /kocakaya|abis|abiş|sözen|sozen|yıldırım|yildirim|karataş|karatas|çankaya|cankaya|akyavuz|kurşun|kursun|avcı|avci/;
+  const ELITE_JOCKEYS = /kocakaya|abis|abiş|sözen|sozen|yıldırım|yildirim|karataş|karatas|çankaya|cankaya|akyavuz|kurşun|kursun|avcı|avci|çelik|celik|çizik|cizik|yardımcı|yardimci|çiçek|cicek|bilgin|özçelik|ozcelik|kaya|aktuğ|aktug|şimşek|simsek|kaplan|akçay|akcay|boyraz|tokaçoğlu|tokacoglu|sansar/i;
 
   const scored = activeHorses.map((h) => {
     const agf = getHorsePrimaryAgf(h);
@@ -412,18 +414,18 @@ export function analyzeRaceHorses(race: RaceCard | null): Map<number, HorseAIAna
     let score = 20;
     const reasons: string[] = [];
 
-    // 1. Kalibre Edilmiş AGF Puanı (Maks +18; kamuoyu balon favorilerini engellemek için dengelendi)
+    // 1. Kalibre Edilmiş AGF Puanı (Maks +30; TJK piyasa istatistiğine göre favori ağırlığı optimize edildi)
     if (agf.percentage > 0) {
-      score += Math.min(18, agf.percentage * 0.40);
+      score += Math.min(30, agf.percentage * 0.65);
       if (agf.isFavorite) reasons.push(`AGF Favorisi (%${agf.percentage.toFixed(1)})`);
       else if (agf.percentage >= 15) reasons.push(`Güçlü AGF (%${agf.percentage.toFixed(1)})`);
     } else if (ganyan > 0) {
-      const implied = Math.min(16, 45 / Math.max(1.2, ganyan));
+      const implied = Math.min(26, 60 / Math.max(1.1, ganyan));
       score += implied;
     }
 
-    // 2. Pist ve Mesafe Formu (Maks +28)
-    score += Math.min(28, formPts * 0.82);
+    // 2. Pist ve Mesafe Formu (Maks +26)
+    score += Math.min(26, formPts * 0.78);
     const winsLast6 = h.last6.filter((x) => x.result === '1').length;
     const top3Last6 = h.last6.filter((x) => ['1', '2', '3'].includes(x.result)).length;
     if (winsLast6 >= 2) reasons.push(`Son 6 yarışta ${winsLast6} birincilik`);
@@ -459,13 +461,18 @@ export function analyzeRaceHorses(race: RaceCard | null): Map<number, HorseAIAna
       reasons.push(`Jokey değişikliği (${h.jockey.name})`);
     }
 
-    // 6. En İyi Pist Derecesi & Dinçlik
+    // 6. En İyi Pist Derecesi, Dinçlik & Son 20 Gün Puanı
     if (h.bestGrade?.value) {
       score += 4;
       reasons.push(`En İyi Derece: ${h.bestGrade.value}`);
     }
     if (h.kgs > 0 && h.kgs <= 21) {
       score += 3;
+    }
+    if (h.last20 > 0) {
+      const l20Bonus = Math.min(5, Math.round(h.last20 / 4));
+      score += l20Bonus;
+      if (h.last20 >= 16) reasons.push(`Son 20 gün form puanı: ${h.last20}`);
     }
     if (h.stablemate > 0) {
       score += 3;
@@ -474,11 +481,11 @@ export function analyzeRaceHorses(race: RaceCard | null): Map<number, HorseAIAna
 
     // 7. Cazip Sürpriz / Bomba Dedektörü (Value Longshot)
     const isValueBomber =
-      (ganyan >= 5.5 || (agf.percentage > 0 && agf.percentage <= 12)) &&
-      (formPts >= 12 || (isHandicap && h.weight <= avgWeight - 2.5));
+      (ganyan >= 6.5 || (agf.percentage > 0 && agf.percentage <= 10)) &&
+      (formPts >= 14 || (isHandicap && h.weight <= avgWeight - 3.0));
 
     if (isValueBomber) {
-      score += 6;
+      score += 4;
       reasons.unshift(
         `💣 Cazip Sürpriz (${ganyan > 0 ? `${ganyan.toFixed(2)} Ganyan` : `%${agf.percentage.toFixed(1)} AGF`})`
       );
@@ -508,11 +515,10 @@ export function analyzeRaceHorses(race: RaceCard | null): Map<number, HorseAIAna
 
   scored.forEach((item, idx) => {
     let tag: HorseAIAnalysis['tag'] = 'PLASE';
-    // Banko SADECE koşu kaotik/handikap DEĞİLSE atanabilir!
     if (
       idx === 0 &&
-      chaosInfo.isBankoFriendly &&
-      (item.score >= 72 || (item.score - secondScore >= 7 && item.agfPct >= 28))
+      (chaosInfo.isBankoFriendly || item.agfPct >= 35) &&
+      (item.score >= 66 || (item.score - secondScore >= 5 && item.agfPct >= 26))
     ) {
       tag = 'BANKO';
     } else if (idx <= 1 || item.score >= topScore - 8) {
@@ -527,6 +533,7 @@ export function analyzeRaceHorses(race: RaceCard | null): Map<number, HorseAIAna
       score: item.score,
       tag,
       reasons: item.reasons,
+      agfPct: item.agfPct,
     });
   });
 
@@ -572,22 +579,21 @@ export function generateAICoupons(
     };
   });
 
-  // Banko sadece ve sadece Kaos puanı düşük olan (Maiden veya Grup/Standout) koşularda aranır!
-  // Handikap koşular asla tek atılmaz!
+  // Banko adayı: Kaos puanı düşük olan ya da AGF'si belirgin yüksek (%34+) öne çıkan koşularda aranır
   const bankoCandidates = legAnalyses
-    .filter((la) => la.chaos.isBankoFriendly && !la.race.typeDescription?.toLowerCase().includes('handikap'))
+    .filter((la) => la.chaos.isBankoFriendly || (la.ranked[0]?.agfPct || 0) >= 34)
     .sort((a, b) => (b.ranked[0]?.score || 0) + b.gap * 2 - ((a.ranked[0]?.score || 0) + a.gap * 2));
 
   const bestCandidate = bankoCandidates[0];
   const secondCandidate = bankoCandidates[1];
 
   const hasLegitPrimaryBanko = Boolean(
-    bestCandidate && (bestCandidate.gap >= 5 || (bestCandidate.ranked[0]?.score || 0) >= 68)
+    bestCandidate && (bestCandidate.gap >= 4 || (bestCandidate.ranked[0]?.score || 0) >= 64 || (bestCandidate.ranked[0]?.agfPct || 0) >= 35)
   );
   const primaryBankoRace = hasLegitPrimaryBanko ? bestCandidate.raceNumber : null;
 
   const hasLegitSecondaryBanko = Boolean(
-    secondCandidate && (secondCandidate.gap >= 4 || (secondCandidate.ranked[0]?.score || 0) >= 64)
+    secondCandidate && (secondCandidate.gap >= 3 || (secondCandidate.ranked[0]?.score || 0) >= 60 || (secondCandidate.ranked[0]?.agfPct || 0) >= 30)
   );
   const secondaryBankoRace = hasLegitSecondaryBanko ? secondCandidate.raceNumber : null;
 
@@ -744,9 +750,9 @@ export function generateBudgetHorseCoupon(
   const maxPerLeg = riskMode === 'ekonomik' ? 3 : riskMode === 'ideal' ? 4 : 6;
   const minBankos = riskMode === 'ekonomik' ? 2 : 1;
 
-  // SADECE ve SADECE Banko dostu koşular kilitli banko yapılabilir! Handikap asla banko kilitlenemez!
+  // Banko adayı: Kaos puanı düşük olan ya da AGF'si belirgin yüksek (%34+) öne çıkan koşular
   const bankoEligible = legData
-    .filter((l) => l.chaos.isBankoFriendly && !l.race.typeDescription?.toLowerCase().includes('handikap'))
+    .filter((l) => l.chaos.isBankoFriendly || (l.ranked[0]?.agfPct || 0) >= 34)
     .sort((a, b) => b.confidence - a.confidence);
 
   const lockedBankoRaces = new Set(
