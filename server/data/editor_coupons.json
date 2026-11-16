@@ -1,51 +1,63 @@
 [
   {
-    "id": "ed_cp_001",
-    "title": "👑 YÖNETİCİ ŞEREF KUPONU",
-    "subtitle": "Yönetici Masası Özel Tercihleri & AI Derin Analizi",
+    "id": "ed_cp_002",
+    "title": "👑 GÜNÜN YÖNETİCİ ŞEREF KUPONU",
+    "subtitle": "Yönetici Masası & AI En Yüksek Güven Tercihleri",
     "category": "football",
-    "confidence": 91,
-    "totalOdds": 3.65,
+    "confidence": 93,
+    "totalOdds": 4.32,
     "isVipOnly": true,
     "status": "pending",
     "author": "Yönetici",
-    "createdAt": 1794771156439,
+    "createdAt": 1794851200000,
     "matches": [
       {
-        "id": "401861177",
-        "homeTeam": "Fransa",
-        "awayTeam": "Türkiye",
+        "id": "401861185",
+        "homeTeam": "Almanya",
+        "awayTeam": "Hollanda",
         "league": "UEFA Uluslar Ligi",
         "matchTime": "22:45",
         "matchDate": "Bugün",
         "prediction": "2.5 ÜST & KG VAR",
-        "odds": 1.75,
-        "confidence": 93,
-        "reason": "A Milli Takım hücum temposu ve Fransa ofansif gücü en az 3 golü işaret ediyor."
+        "odds": 1.78,
+        "confidence": 94,
+        "reason": "İki dev ekibin hücum gücü ve turnuva temposu karşılıklı bol gollü bir maça işaret ediyor."
       },
       {
-        "id": "401861175",
-        "homeTeam": "İspanya",
-        "awayTeam": "İngiltere",
+        "id": "401861188",
+        "homeTeam": "Yunanistan",
+        "awayTeam": "Sırbistan",
         "league": "UEFA Uluslar Ligi",
         "matchTime": "22:45",
         "matchDate": "Bugün",
         "prediction": "MS 1X Çifte Şans",
-        "odds": 1.44,
-        "confidence": 90,
-        "reason": "İspanya saha avantajı ve pas organizasyonuyla maça ağırlığını koyacaktır."
+        "odds": 1.34,
+        "confidence": 92,
+        "reason": "Yunanistan iç saha savunma disiplini ve seyirci baskısıyla puan kaybına kapalı."
       },
       {
-        "id": "401861176",
-        "homeTeam": "Belçika",
-        "awayTeam": "İtalya",
-        "league": "UEFA Uluslar Ligi",
-        "matchTime": "22:45",
+        "id": "401906326",
+        "homeTeam": "Luton Town",
+        "awayTeam": "Peterborough United",
+        "league": "İngiltere EFL Trophy",
+        "matchTime": "22:00",
         "matchDate": "Bugün",
-        "prediction": "İY 0.5 ÜST",
+        "prediction": "1.5 Gol Üst",
+        "odds": 1.25,
+        "confidence": 95,
+        "reason": "EFL Trophy grup mücadelelerindeki açık futbol yapısı en az 2 golü destekliyor."
+      },
+      {
+        "id": "401841310",
+        "homeTeam": "Remo",
+        "awayTeam": "Chapecoense",
+        "league": "Brezilya Serie A",
+        "matchTime": "02:00",
+        "matchDate": "Gece",
+        "prediction": "MS 1",
         "odds": 1.45,
         "confidence": 91,
-        "reason": "İlk yarı yüksek tempo ve ceza sahası aksiyonu bekleniyor."
+        "reason": "Remo iç sahada yakaladığı form ve ligdeki mutlak galibiyet ihtiyacıyla öne çıkıyor."
       }
     ]
   }

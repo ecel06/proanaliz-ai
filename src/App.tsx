@@ -386,7 +386,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.16.03';
+  const CLIENT_BUILD_VERSION = '2026.11.16.04';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1306,6 +1306,7 @@ export const App: React.FC = () => {
               onClose={() => setIsAdminModalOpen(false)}
               currentUser={currentUser}
               onRefreshBulletin={handleRefreshBulletin}
+              allMatches={allMatches}
             />
           )}
 
@@ -2346,6 +2347,7 @@ export const App: React.FC = () => {
             onClose={() => setIsAdminModalOpen(false)}
             currentUser={currentUser}
             onRefreshBulletin={handleRefreshBulletin}
+            allMatches={allMatches}
           />
         )}
 

@@ -61,12 +61,15 @@ import {
   fetchAdminSupportTicketsApi,
   updateAdminSupportTicketApi
 } from '../utils/authHelper';
+import { Match } from '../types';
+import { getEditorMatchEvaluation } from '../utils/editorCouponHelper';
 
 interface AdminModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: User | null;
   onRefreshBulletin?: () => void;
+  allMatches?: Match[];
 }
 
 export const AdminModal: React.FC<AdminModalProps> = ({
@@ -74,6 +77,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   onClose,
   currentUser,
   onRefreshBulletin,
+  allMatches = [],
 }) => {
   const [activeTab, setActiveTab] = useState<'users' | 'tickets' | 'finance' | 'editor_coupons' | 'announcement' | 'logs' | 'system' | 'promos' | 'tiers'>('users');
   const [loading, setLoading] = useState(false);
@@ -429,6 +433,45 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       showFeedback('Kupon yayından kaldırıldı.');
     } else {
       showFeedback(res.error || 'Kupon silinemedi', true);
+    }
+  };
+
+  const handleGenerateTodayCoupon = async () => {
+    const candidates = (allMatches || []).filter(
+      (m) => m.status === 'upcoming' && m.odds && (m.odds.ms1 || m.odds.over25 || m.odds.bttsYes)
+    );
+    if (candidates.length === 0) {
+      showFeedback('Bültende uygun aktif maç bulunamadı.', true);
+      return;
+    }
+    const selectedMatches = candidates.slice(0, 3).map((m, idx) => ({
+      id: m.id,
+      homeTeam: m.homeTeam.name,
+      awayTeam: m.awayTeam.name,
+      league: m.league || 'Lig',
+      matchTime: m.time || '20:00',
+      matchDate: 'Bugün',
+      prediction: (m.odds?.over25 && m.odds.over25 <= 1.65) ? '2.5 ÜST' : (m.odds?.ms1 && m.odds.ms1 <= 1.6) ? 'MS 1' : '1X Çifte Şans',
+      odds: (m.odds?.over25 && m.odds.over25 <= 1.65) ? m.odds.over25 : (m.odds?.ms1 && m.odds.ms1 <= 1.6) ? m.odds.ms1 : 1.35,
+      confidence: 90 - idx * 2,
+      reason: `${m.homeTeam.name} iç saha performansı ve istatistiksel üstünlüğüyle öne çıkıyor.`
+    }));
+
+    setLoading(true);
+    const res = await saveEditorCouponApi({
+      title: '👑 GÜNÜN YÖNETİCİ ŞEREF KUPONU',
+      subtitle: 'Yönetici Masası & AI En Yüksek Güven Tercihleri',
+      category: 'football',
+      confidence: 93,
+      isVipOnly: true,
+      matches: selectedMatches
+    });
+    setLoading(false);
+    if (res.success && res.coupon) {
+      setEditorCoupons(prev => [res.coupon!, ...prev.filter(c => c.id !== res.coupon!.id)]);
+      showFeedback('👑 Bugünün AI VIP Yönetici Kuponu başarıyla yayına alındı!');
+    } else {
+      showFeedback(res.error || 'Kupon oluşturulamadı', true);
     }
   };
 
@@ -1113,13 +1156,25 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 </p>
               </div>
 
-              <button
-                onClick={() => setIsAddingCoupon(!isAddingCoupon)}
-                className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{isAddingCoupon ? 'İptal' : 'Yeni Kupon Ekle'}</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleGenerateTodayCoupon}
+                  disabled={loading}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center gap-1.5 shadow-md shadow-emerald-500/20"
+                  title="Bugünün bülten maçlarından en yüksek güvene sahip AI VIP Yönetici Kuponunu otomatik oluşturur ve yayınlar."
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Bugünün AI Kuponunu Yayınla</span>
+                </button>
+
+                <button
+                  onClick={() => setIsAddingCoupon(!isAddingCoupon)}
+                  className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{isAddingCoupon ? 'İptal' : 'Yeni Kupon Ekle'}</span>
+                </button>
+              </div>
             </div>
 
             {/* Coupon Creation Form */}
@@ -1283,47 +1338,98 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   Henüz yayında bir yönetici kuponu bulunmuyor.
                 </div>
               ) : (
-                editorCoupons.map((c) => (
-                  <div key={c.id} className="p-3.5 rounded-2xl bg-slate-950/70 border border-amber-500/30 space-y-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-black text-white text-sm">{c.title}</span>
-                          <span className="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black text-[9px]">
-                            {c.isVipOnly ? 'VIP ÖZEL' : 'HERKESE AÇIK'}
-                          </span>
-                        </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">{c.subtitle}</div>
-                      </div>
+                editorCoupons.map((c) => {
+                  const evaluatedMatches = c.matches.map((m) => ({
+                    match: m,
+                    evaluation: getEditorMatchEvaluation(m, allMatches, new Date()),
+                  }));
+                  const hasLost = evaluatedMatches.some((x) => x.evaluation.pickStatus === 'lost');
+                  const hasLive = evaluatedMatches.some((x) => x.evaluation.pickStatus === 'live');
+                  const allWon =
+                    evaluatedMatches.length > 0 &&
+                    evaluatedMatches.every((x) => x.evaluation.pickStatus === 'won');
 
-                      <div className="flex items-center gap-2">
-                        <div className="text-right">
-                          <div className="text-[10px] text-slate-400">Toplam Oran</div>
-                          <div className="text-sm font-black text-amber-400 font-mono">{c.totalOdds}</div>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteEditorCoupon(c.id)}
-                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 cursor-pointer"
-                          title="Yayından Kaldır"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                      {c.matches.map((m) => (
-                        <div key={m.id} className="flex items-center justify-between text-xs py-0.5 border-b border-slate-800/50 last:border-0">
-                          <span className="text-white font-medium">{m.homeTeam} - {m.awayTeam}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-amber-300 font-mono">{m.prediction}</span>
-                            <span className="font-mono text-emerald-400">{m.odds}</span>
+                  return (
+                    <div key={c.id} className="p-3.5 rounded-2xl bg-slate-950/70 border border-amber-500/30 space-y-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-black text-white text-sm">{c.title}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black text-[9px]">
+                              {c.isVipOnly ? 'VIP ÖZEL' : 'HERKESE AÇIK'}
+                            </span>
+                            {allWon ? (
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-black text-[9px] uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                                🏆 TUTTU
+                              </span>
+                            ) : hasLost ? (
+                              <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-black text-[9px] uppercase tracking-wider">
+                                ❌ YATTI
+                              </span>
+                            ) : hasLive ? (
+                              <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-black text-[9px] uppercase tracking-wider animate-pulse flex items-center gap-1">
+                                <Radio className="w-2.5 h-2.5 text-rose-400" />
+                                CANLI
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-black text-[9px] uppercase tracking-wider">
+                                ⏳ BEKLİYOR
+                              </span>
+                            )}
                           </div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">{c.subtitle}</div>
                         </div>
-                      ))}
+
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <div className="text-[10px] text-slate-400">Toplam Oran</div>
+                            <div className="text-sm font-black text-amber-400 font-mono">{c.totalOdds}</div>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteEditorCoupon(c.id)}
+                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 cursor-pointer"
+                            title="Yayından Kaldır"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                        {evaluatedMatches.map(({ match: m, evaluation }) => (
+                          <div key={m.id} className="flex items-center justify-between text-xs py-1 border-b border-slate-800/50 last:border-0 gap-2">
+                            <div>
+                              <div className="text-white font-medium">{m.homeTeam} - {m.awayTeam}</div>
+                              <div className="text-[10px] text-slate-400 flex items-center gap-2">
+                                <span>{m.league}</span>
+                                {evaluation.matchStatus === 'finished' ? (
+                                  <span className="font-mono text-amber-300 font-bold">MS: {evaluation.homeScore} - {evaluation.awayScore}</span>
+                                ) : evaluation.matchStatus === 'live' ? (
+                                  <span className="font-mono text-rose-400 font-bold animate-pulse">CANLI: {evaluation.homeScore} - {evaluation.awayScore} ({evaluation.liveMinute || 'Devam'})</span>
+                                ) : (
+                                  <span className="text-slate-500">Başlamadı ({m.matchTime})</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-amber-300 font-mono text-[11px]">{m.prediction}</span>
+                              <span className="font-mono text-emerald-400 font-bold">{m.odds}</span>
+                              {evaluation.pickStatus === 'won' ? (
+                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-black text-[9px]">TUTTU</span>
+                              ) : evaluation.pickStatus === 'lost' ? (
+                                <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/40 font-black text-[9px]">YATTI</span>
+                              ) : evaluation.pickStatus === 'live' ? (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 font-black text-[9px] animate-pulse">CANLI</span>
+                              ) : (
+                                <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-bold text-[9px]">BEKLİYOR</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
