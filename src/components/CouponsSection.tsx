@@ -79,6 +79,21 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
 
   const quickStakes = [50, 100, 250, 500, 1000];
 
+  const filteredEditorCoupons = useMemo(() => {
+    return editorCoupons.filter((c) => {
+      const isPastCoupon = c.matches.some(
+        (m) => m.matchDate === 'Dün' || (c.createdAt && Date.now() - c.createdAt > 30 * 60 * 60 * 1000)
+      );
+      if (selectedDay === 'today') {
+        return !isPastCoupon;
+      }
+      if (selectedDay === 'yesterday') {
+        return isPastCoupon;
+      }
+      return true;
+    });
+  }, [editorCoupons, selectedDay]);
+
   // Dynamic daily coupons based on selected day tab
   const activeCoupons = useMemo(() => {
     if (allMatches.length > 0) {
@@ -255,9 +270,9 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
       </div>
 
       {/* 👑 PROANALIZ YÖNETİCİ & EDİTÖR ÖZEL KUPONLARI */}
-      {editorCoupons.length > 0 && (
+      {filteredEditorCoupons.length > 0 && (
         <div className="space-y-4">
-          {editorCoupons.map((edCoupon) => {
+          {filteredEditorCoupons.map((edCoupon) => {
             const isEdLocked = edCoupon.isVipOnly && !user?.isVip;
             const visibleMatches = isEdLocked ? edCoupon.matches.slice(0, 1) : edCoupon.matches;
             const edPotentialWin = Math.round(stake * edCoupon.totalOdds);
