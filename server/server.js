@@ -50,6 +50,8 @@ import {
   getEditorCoupons,
   saveEditorCoupon,
   deleteEditorCoupon,
+  syncCouponMatchResults,
+  autoCheckAndRolloverCoupons,
   getServicesHealth,
   updateOwnProfile,
   getAnnouncement,
@@ -794,6 +796,16 @@ app.delete('/api/admin/editor-coupons/:id', adminMiddleware, (req, res) => {
   res.json(result);
 });
 
+// Admin Force Rollover Endpoint
+app.post('/api/admin/rollover-coupons', adminMiddleware, (req, res) => {
+  const matches = cachedBulletin?.matches || [];
+  const coupon = autoCheckAndRolloverCoupons(matches, true);
+  if (!coupon) {
+    return res.status(400).json({ success: false, error: 'Bültende uygun maç bulunamadı veya kupon oluşturulamadı.' });
+  }
+  res.json({ success: true, coupon });
+});
+
 // Admin Live Services Health Monitor
 app.get('/api/admin/services-health', adminMiddleware, (req, res) => {
   const health = getServicesHealth();
@@ -861,7 +873,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.16.05';
+const APP_VERSION = '2026.11.16.06';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -949,6 +961,12 @@ app.listen(PORT, '0.0.0.0', () => {
         cachedBulletin = freshData;
         lastFetchTime = freshData.updatedAt;
         persistCache(cachedBulletin);
+        try {
+          syncCouponMatchResults(cachedBulletin.matches);
+          autoCheckAndRolloverCoupons(cachedBulletin.matches);
+        } catch (e) {
+          console.error('[Server] Coupon sync error:', e.message);
+        }
       }
       isFetching = false;
     } catch (err) {

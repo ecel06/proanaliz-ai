@@ -1038,6 +1038,238 @@ export function deleteEditorCoupon(couponId) {
   return { success: true, message: 'Yönetici kuponu silindi.' };
 }
 
+/**
+ * Kuponlardaki maçların sonuçlarını canlı bülten verisiyle senkronize eder
+ */
+export function syncCouponMatchResults(allMatches) {
+  if (!allMatches || !Array.isArray(allMatches) || allMatches.length === 0) return;
+
+  let changed = false;
+  for (const coupon of editorCouponsMap.values()) {
+    if (!coupon.matches || coupon.matches.length === 0) continue;
+    if (coupon.status === 'won' || coupon.status === 'lost') continue;
+
+    let allFinished = true;
+    let anyLost = false;
+
+    for (const m of coupon.matches) {
+      const match = allMatches.find((x) => String(x.id) === String(m.id));
+      if (!match) continue;
+
+      if (match.status === 'finished') {
+        const homeScore = match.currentScore?.home ?? match.homeScore ?? 0;
+        const awayScore = match.currentScore?.away ?? match.awayScore ?? 0;
+        m.homeScore = homeScore;
+        m.awayScore = awayScore;
+
+        const pred = (m.prediction || '').toUpperCase();
+        let pickWon = false;
+
+        if (pred.includes('2.5 ÜST & KG VAR')) {
+          pickWon = (homeScore + awayScore >= 3) && (homeScore > 0 && awayScore > 0);
+        } else if (pred.includes('2.5 ÜST')) {
+          pickWon = (homeScore + awayScore >= 3);
+        } else if (pred.includes('2.5 ALT')) {
+          pickWon = (homeScore + awayScore <= 2);
+        } else if (pred.includes('1.5 ÜST') || pred.includes('1.5 GOL ÜST')) {
+          pickWon = (homeScore + awayScore >= 2);
+        } else if (pred.includes('KG VAR')) {
+          pickWon = (homeScore > 0 && awayScore > 0);
+        } else if (pred.includes('KG YOK')) {
+          pickWon = (homeScore === 0 || awayScore === 0);
+        } else if (pred.includes('MS 1X') || pred.includes('1X')) {
+          pickWon = (homeScore >= awayScore);
+        } else if (pred.includes('MS X2') || pred.includes('X2')) {
+          pickWon = (awayScore >= homeScore);
+        } else if (pred.includes('MS 12') || pred.includes('12')) {
+          pickWon = (homeScore !== awayScore);
+        } else if (pred.includes('MS 1')) {
+          pickWon = (homeScore > awayScore);
+        } else if (pred.includes('MS 2')) {
+          pickWon = (awayScore > homeScore);
+        } else if (pred.includes('MS 0') || pred.includes('MS X')) {
+          pickWon = (homeScore === awayScore);
+        } else {
+          pickWon = true;
+        }
+
+        m.status = pickWon ? 'won' : 'lost';
+        if (!pickWon) anyLost = true;
+      } else {
+        allFinished = false;
+        if (match.status === 'live') {
+          m.status = 'live';
+          m.homeScore = match.currentScore?.home ?? 0;
+          m.awayScore = match.currentScore?.away ?? 0;
+          m.liveMinute = match.liveMinute || '';
+        }
+      }
+    }
+
+    if (anyLost) {
+      coupon.status = 'lost';
+      changed = true;
+    } else if (allFinished && coupon.matches.length > 0) {
+      coupon.status = 'won';
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    saveEditorCoupons();
+  }
+}
+
+/**
+ * 👑 Otomatik Gece & Günlük VIP Kupon Rollover Otomasyonu
+ */
+export function autoCheckAndRolloverCoupons(allMatches, force = false) {
+  if (!allMatches || !Array.isArray(allMatches) || allMatches.length === 0) return null;
+
+  // Önce tamamlanan maç sonuçlarını güncelle
+  syncCouponMatchResults(allMatches);
+
+  const now = Date.now();
+  const editorCoupons = Array.from(editorCouponsMap.values());
+
+  // Günün bekleyen aktif kuponu var mı kontrol et
+  const activeCoupon = editorCoupons.find((c) => {
+    if (!c.matches || c.matches.length === 0) return false;
+    if (c.status !== 'pending') return false;
+
+    const areAllFinished = c.matches.every((m) => {
+      const liveM = allMatches.find((x) => String(x.id) === String(m.id));
+      if (liveM && liveM.status === 'finished') return true;
+      if (m.matchDate === 'Dün') return true;
+      return false;
+    });
+
+    const isOld = c.createdAt && now - c.createdAt > 22 * 60 * 60 * 1000;
+    return !areAllFinished && !isOld;
+  });
+
+  // Eğer zaten aktif oynanacak kupon varsa ve force değilse rollover yapma
+  if (activeCoupon && !force) {
+    return null;
+  }
+
+  // Bültenden aday maçları çek
+  const candidates = allMatches.filter((m) => {
+    if (!m.homeTeam || !m.awayTeam) return false;
+    if (m.status !== 'upcoming') return false;
+    if (!m.odds) return false;
+    return Boolean(m.odds.ms1 || m.odds.over25 || m.odds.bttsYes);
+  });
+
+  if (candidates.length < 3) {
+    return null;
+  }
+
+  // Maçları güven skoruna göre sırala
+  const scored = candidates.map((m) => {
+    let score = 50;
+    const l = (m.league || '').toLowerCase();
+    if (l.includes('şampiyonlar') || l.includes('uefa') || l.includes('champions') || l.includes('nations')) score += 25;
+    else if (l.includes('premier') || l.includes('süper lig') || l.includes('super lig') || l.includes('la liga') || l.includes('serie a') || l.includes('bundesliga')) score += 20;
+
+    if (m.odds?.ms1 && m.odds.ms1 >= 1.25 && m.odds.ms1 <= 1.85) score += 15;
+    if (m.odds?.over25 && m.odds.over25 >= 1.40 && m.odds.over25 <= 1.95) score += 15;
+    if (m.odds?.bttsYes && m.odds.bttsYes >= 1.45 && m.odds.bttsYes <= 1.85) score += 10;
+
+    return { match: m, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const selectedMatches = scored.slice(0, 4).map((x) => x.match);
+
+  // Kupon maçlarını ve tahminlerini oluştur
+  const couponMatches = selectedMatches.map((m, idx) => {
+    let prediction = 'MS 1';
+    let odds = 1.45;
+    let reason = `${m.homeTeam.name} iç saha form durumu ve kadro kalitesiyle galibiyete yakın.`;
+
+    if (m.odds?.over25 && m.odds.over25 <= 1.75) {
+      prediction = '2.5 ÜST';
+      odds = m.odds.over25;
+      reason = `${m.homeTeam.name} ve ${m.awayTeam.name} ekiplerinin ofansif temposu maçın 2.5 üst baremine ulaşacağını işaret ediyor.`;
+    } else if (m.odds?.bttsYes && m.odds.bttsYes <= 1.70) {
+      prediction = 'KG VAR';
+      odds = m.odds.bttsYes;
+      reason = `Her iki tarafın da gol yollarındaki etkinliği karşılıklı gol ihtimalini güçlendiriyor.`;
+    } else if (m.odds?.ms1 && m.odds.ms1 <= 1.65) {
+      prediction = 'MS 1';
+      odds = m.odds.ms1;
+      reason = `${m.homeTeam.name} seyirci desteği ve mutlak puan hedefiyle galibiyetin favorisi.`;
+    } else {
+      prediction = '1X Çifte Şans';
+      odds = m.odds?.ms1 ? Math.max(1.22, Number((m.odds.ms1 * 0.75).toFixed(2))) : 1.30;
+      reason = `${m.homeTeam.name} dengeli oyunuyla sahadan en az 1 puanla ayrılacaktır.`;
+    }
+
+    let matchTimeStr = '20:00';
+    if (m.time) {
+      if (m.time.includes('T')) {
+        const d = new Date(m.time);
+        matchTimeStr = d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Istanbul' });
+      } else {
+        matchTimeStr = m.time;
+      }
+    }
+
+    return {
+      id: String(m.id),
+      homeTeam: m.homeTeam.name,
+      awayTeam: m.awayTeam.name,
+      league: m.league || 'Lig',
+      matchTime: matchTimeStr,
+      matchDate: 'Bugün',
+      prediction,
+      odds: Number(odds.toFixed(2)),
+      confidence: 94 - idx * 2,
+      reason
+    };
+  });
+
+  let totalOdds = 1;
+  couponMatches.forEach((m) => {
+    totalOdds *= m.odds;
+  });
+  totalOdds = Math.round(totalOdds * 100) / 100;
+
+  const newCoupon = {
+    id: `ed_cp_auto_${Date.now()}`,
+    title: '👑 GÜNÜN YÖNETİCİ ŞEREF KUPONU',
+    subtitle: 'Yönetici Masası & AI Gece Otomasyonu',
+    category: 'football',
+    confidence: 93,
+    totalOdds,
+    isVipOnly: true,
+    status: 'pending',
+    author: 'ProAnaliz AI Robotu',
+    createdAt: Date.now(),
+    matches: couponMatches
+  };
+
+  // Eski bekleyen kuponları arşive al
+  for (const c of editorCouponsMap.values()) {
+    if (c.status === 'pending') {
+      c.status = 'archived';
+    }
+  }
+
+  editorCouponsMap.set(newCoupon.id, newCoupon);
+  saveEditorCoupons();
+
+  logActivity('coupon', '🤖 Yeni Günün VIP Yönetici Kuponu AI tarafından otomatik oluşturuldu ve yayına alındı.', {
+    couponId: newCoupon.id,
+    totalOdds,
+    matchCount: couponMatches.length
+  });
+
+  console.log(`🤖 [CouponRollover] Yeni günün kuponu otomatik yayınlandı: ${newCoupon.id} (Toplam Oran: ${totalOdds})`);
+  return newCoupon;
+}
+
 // --- Extended Admin Stats & Financial Metrics ---
 export function getAdminStats() {
   const all = Array.from(usersMap.values());

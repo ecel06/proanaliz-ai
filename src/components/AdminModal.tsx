@@ -53,6 +53,7 @@ import {
   fetchEditorCouponsApi,
   saveEditorCouponApi,
   deleteEditorCouponApi,
+  triggerAutoCouponRolloverApi,
   fetchServicesHealthApi,
   fetchAnnouncementApi,
   saveAnnouncementApi,
@@ -437,10 +438,22 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   const handleGenerateTodayCoupon = async () => {
+    setLoading(true);
+    // 1. Sunucu tarafı akıllı rollover tetikle
+    const autoRes = await triggerAutoCouponRolloverApi();
+    if (autoRes.success && autoRes.coupon) {
+      setLoading(false);
+      setEditorCoupons((prev) => [autoRes.coupon!, ...prev.filter((c) => c.id !== autoRes.coupon!.id)]);
+      showFeedback('👑 Bugünün AI VIP Yönetici Kuponu başarıyla oluşturuldu ve yayına alındı!');
+      return;
+    }
+
+    // 2. İstemci tarafı bülten maçları yedeği
     const candidates = (allMatches || []).filter(
       (m) => m.status === 'upcoming' && m.odds && (m.odds.ms1 || m.odds.over25 || m.odds.bttsYes)
     );
     if (candidates.length === 0) {
+      setLoading(false);
       showFeedback('Bültende uygun aktif maç bulunamadı.', true);
       return;
     }
@@ -457,7 +470,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       reason: `${m.homeTeam.name} iç saha performansı ve istatistiksel üstünlüğüyle öne çıkıyor.`
     }));
 
-    setLoading(true);
     const res = await saveEditorCouponApi({
       title: '👑 GÜNÜN YÖNETİCİ ŞEREF KUPONU',
       subtitle: 'Yönetici Masası & AI En Yüksek Güven Tercihleri',

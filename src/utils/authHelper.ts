@@ -465,6 +465,20 @@ export async function deleteEditorCouponApi(couponId: string): Promise<{ success
   }
 }
 
+export async function triggerAutoCouponRolloverApi(): Promise<{ success: boolean; coupon?: EditorCoupon; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yetki yok.' };
+  try {
+    const res = await fetch('/api/admin/rollover-coupons', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: false, error: 'Otomatik kupon yenileme tetiklenemedi.' };
+  }
+}
+
 // --- Services Health API ---
 export async function fetchServicesHealthApi(): Promise<{ success: boolean; health?: any; error?: string }> {
   const token = getStoredToken();
