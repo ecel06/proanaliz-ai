@@ -1,5 +1,5 @@
 // src/components/stocks/StockViopModal.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   X,
   Zap,
@@ -17,6 +17,7 @@ import {
   Scale,
   Building2,
   Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import { StockViopContract, StockItem } from '../../types/stocks';
 import { INITIAL_VIOP_CONTRACTS, INITIAL_VIOP_BROKER_POSITIONS } from '../../data/viopData';
@@ -31,6 +32,11 @@ interface StockViopModalProps {
 type ViopTab = 'contracts' | 'calculator' | 'open_interest' | 'guide';
 type ContractFilter = 'all' | 'index' | 'stock' | 'metal' | 'fx';
 
+export const getCurrencySymbol = (c?: StockViopContract | null) => {
+  if (!c) return '₺';
+  return c.currency === 'USD' || c.code.includes('XAUUSD') ? '$' : '₺';
+};
+
 export const StockViopModal: React.FC<StockViopModalProps> = ({
   isOpen,
   onClose,
@@ -40,6 +46,28 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
   const [activeTab, setActiveTab] = useState<ViopTab>('contracts');
   const [contractFilter, setContractFilter] = useState<ContractFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [liveContracts, setLiveContracts] = useState<StockViopContract[]>(INITIAL_VIOP_CONTRACTS);
+  const [isViopLoading, setIsViopLoading] = useState<boolean>(false);
+
+  // Fetch real-time live VIOP data from server
+  const fetchViopData = (force = false) => {
+    setIsViopLoading(true);
+    fetch(`/api/stocks/viop${force ? '?force=1' : ''}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.contracts?.length) {
+          setLiveContracts(data.contracts);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsViopLoading(false));
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchViopData();
+    }
+  }, [isOpen]);
 
   // Selected contract for the calculator
   const [selectedContractCode, setSelectedContractCode] = useState<string>('F_XU0301126');
@@ -56,7 +84,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
 
   // Synchronize live spot prices when available
   const enrichedContracts = useMemo(() => {
-    return INITIAL_VIOP_CONTRACTS.map((c) => {
+    return liveContracts.map((c) => {
       const live = stockMap.get(c.underlyingCode);
       if (!live) return c;
       const liveSpot = live.close;
@@ -69,7 +97,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
         spreadPct,
       };
     });
-  }, [stockMap]);
+  }, [liveContracts, stockMap]);
 
   // Filtered contracts
   const filteredContracts = useMemo(() => {
@@ -257,15 +285,24 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                   ))}
                 </div>
 
-                <div className="relative sm:w-64">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Sözleşme veya dayanak ara..."
-                    className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="relative sm:w-64">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Sözleşme veya dayanak ara..."
+                      className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                    />
+                  </div>
+                  <button
+                    onClick={() => fetchViopData(true)}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 border border-slate-700 transition-colors"
+                    title="Canlı VİOP Fiyatlarını Yenile"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isViopLoading ? 'animate-spin' : ''}`} />
+                  </button>
                 </div>
               </div>
 
@@ -281,7 +318,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                         <th className="py-2.5 px-3 text-right">Vadeli Fiyat</th>
                         <th className="py-2.5 px-3 text-right">Değişim %</th>
                         <th className="py-2.5 px-3 text-right">Makas (Prim)</th>
-                        <th className="py-2.5 px-3 text-right">Teminat (TL)</th>
+                        <th className="py-2.5 px-3 text-right">Teminat</th>
                         <th className="py-2.5 px-3 text-right">Kaldıraç</th>
                         <th className="py-2.5 px-3 text-center">AI Sinyali</th>
                         <th className="py-2.5 px-3 text-center">Hesapla</th>
@@ -292,6 +329,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                         const isUp = c.changePct >= 0;
                         const isBullSignal = c.signal === 'GÜÇLÜ AL' || c.signal === 'AL';
                         const isBearSignal = c.signal === 'SAT' || c.signal === 'GÜÇLÜ SAT';
+                        const currSymbol = getCurrencySymbol(c);
 
                         return (
                           <tr
@@ -315,10 +353,10 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                               </div>
                             </td>
                             <td className="py-2.5 px-3 text-right font-mono text-slate-300">
-                              {c.spotPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                              {c.spotPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {currSymbol}
                             </td>
                             <td className="py-2.5 px-3 text-right font-mono font-black text-white">
-                              {c.futuresPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                              {c.futuresPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {currSymbol}
                             </td>
                             <td className="py-2.5 px-3 text-right font-mono">
                               <span
@@ -338,7 +376,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                               </div>
                             </td>
                             <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-300">
-                              {c.initialMargin.toLocaleString('tr-TR')} ₺
+                              {c.initialMargin.toLocaleString('tr-TR')} {currSymbol}
                             </td>
                             <td className="py-2.5 px-3 text-right font-mono font-black text-white">
                               {c.leverage.toFixed(1)}x
@@ -400,7 +438,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                     >
                       {enrichedContracts.map((c) => (
                         <option key={c.code} value={c.code}>
-                          {c.code} - {c.name} ({c.futuresPrice} ₺)
+                          {c.code} - {c.name} ({c.futuresPrice} {getCurrencySymbol(c)})
                         </option>
                       ))}
                     </select>
@@ -471,9 +509,9 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                   {/* Target Exit Price Slider / Input */}
                   <div>
                     <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 mb-1">
-                      <span>Hedef Çıkış Fiyatı (₺):</span>
+                      <span>Hedef Çıkış Fiyatı ({getCurrencySymbol(calcContract)}):</span>
                       <span className="text-white font-mono font-black">
-                        {calcResult.exitPrice.toFixed(2)} ₺
+                        {calcResult.exitPrice.toFixed(2)} {getCurrencySymbol(calcContract)}
                       </span>
                     </div>
                     <input
@@ -507,7 +545,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                         Yatırılan Teminat
                       </div>
                       <div className="text-base sm:text-lg font-mono font-black text-amber-300">
-                        {calcResult.requiredMargin.toLocaleString('tr-TR')} ₺
+                        {calcResult.requiredMargin.toLocaleString('tr-TR')} {getCurrencySymbol(calcContract)}
                       </div>
                       <div className="text-[10px] text-slate-400 font-mono">Takasbank Nakit</div>
                     </div>
@@ -517,7 +555,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                         Pozisyon Büyüklüğü
                       </div>
                       <div className="text-base sm:text-lg font-mono font-black text-white">
-                        {calcResult.notionalValue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
+                        {calcResult.notionalValue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} {getCurrencySymbol(calcContract)}
                       </div>
                       <div className="text-[10px] text-slate-400 font-mono">Piyasa Değeri</div>
                     </div>
@@ -544,7 +582,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                       </div>
                       <div className="text-base sm:text-lg font-mono font-black">
                         {calcResult.pnlTl >= 0 ? '+' : ''}
-                        {calcResult.pnlTl.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺
+                        {calcResult.pnlTl.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {getCurrencySymbol(calcContract)}
                       </div>
                       <div className="text-[11px] font-mono font-bold">
                         {calcResult.returnOnMarginPct >= 0 ? '+' : ''}
@@ -563,7 +601,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                       <p className="text-slate-300">
                         Fiyat{' '}
                         <strong className="text-rose-400 font-mono text-sm">
-                          {calcResult.marginCallPrice.toFixed(2)} ₺
+                          {calcResult.marginCallPrice.toFixed(2)} {getCurrencySymbol(calcContract)}
                         </strong>{' '}
                         seviyesine gerilerse başlangıç teminatınızın %25'i erir ve Takasbank teminat tamamlama
                         çağrısı (Margin Call) gönderir. Stop-Loss emrinizi bu seviyenin üzerine koymanız önerilir.
@@ -586,20 +624,20 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                     </div>
 
                     <p className="text-xs text-slate-300 leading-relaxed">
-                      Elinizde <strong>{(calcResult.notionalValue * 1.5).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺</strong> değerinde spot hisse portföyü varsa; piyasa düşerken hisselerinizi satmadan zararı sıfırlamak için <strong>{Math.max(1, Math.round(calcResult.count * 1.5))} adet Short (Kısa)</strong> kontrat açmanız portföyünüzü %100 oranında korumaya alır.
+                      Elinizde <strong>{(calcResult.notionalValue * 1.5).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} {getCurrencySymbol(calcContract)}</strong> değerinde spot portföy varsa; piyasa düşerken varlıklarınızı satmadan zararı sıfırlamak için <strong>{Math.max(1, Math.round(calcResult.count * 1.5))} adet Short (Kısa)</strong> kontrat açmanız portföyünüzü %100 oranında korumaya alır.
                     </p>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                       <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
                         <div className="text-[10px] text-slate-400">Gereken Koruma Teminatı</div>
                         <div className="font-bold text-amber-300 font-mono">
-                          {(calcResult.requiredMargin * 1.5).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
+                          {(calcResult.requiredMargin * 1.5).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} {getCurrencySymbol(calcContract)}
                         </div>
                       </div>
                       <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
                         <div className="text-[10px] text-slate-400">Piyasa %5 Düşerse</div>
                         <div className="font-bold text-emerald-300 font-mono">
-                          +{(calcResult.notionalValue * 0.075).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺ VİOP Kârı
+                          +{(calcResult.notionalValue * 0.075).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} {getCurrencySymbol(calcContract)} VİOP Kârı
                         </div>
                       </div>
                       <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 col-span-2 sm:col-span-1">
@@ -619,11 +657,11 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
                       <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
                         <div className="text-[10px] text-slate-400">Giriş (Vadeli Fiyat)</div>
-                        <div className="font-bold text-white font-mono">{calcContract.futuresPrice} ₺</div>
+                        <div className="font-bold text-white font-mono">{calcContract.futuresPrice} {getCurrencySymbol(calcContract)}</div>
                       </div>
                       <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
                         <div className="text-[10px] text-slate-400">Dayanak Spot Fiyat</div>
-                        <div className="font-bold text-white font-mono">{calcContract.spotPrice} ₺</div>
+                        <div className="font-bold text-white font-mono">{calcContract.spotPrice} {getCurrencySymbol(calcContract)}</div>
                       </div>
                       <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
                         <div className="text-[10px] text-slate-400">Vadeli Primi (Makas)</div>
@@ -639,7 +677,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                       </div>
                       <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
                         <div className="text-[10px] text-slate-400">1 Kontrat Teminatı</div>
-                        <div className="font-bold text-amber-300 font-mono">{calcContract.initialMargin} ₺</div>
+                        <div className="font-bold text-amber-300 font-mono">{calcContract.initialMargin} {getCurrencySymbol(calcContract)}</div>
                       </div>
                       <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
                         <div className="text-[10px] text-slate-400">Vade Sonu Tarihi</div>

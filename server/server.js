@@ -24,7 +24,8 @@ import {
   fetchStockScreener,
   fetchStockChart,
   fetchStockDeepAnalysis,
-  fetchMacroOverview
+  fetchMacroOverview,
+  fetchLiveViopContracts
 } from './stockService.js';
 import {
   registerUser,
@@ -377,6 +378,16 @@ app.get('/api/stream-proxy', async (req, res) => {
 });
 
 // 5d. Live Stock Market Screener & Historical OHLCV Chart (BIST / NASDAQ / NYSE / Crypto)
+app.get('/api/stocks/viop', async (req, res) => {
+  try {
+    const force = req.query.force === '1' || req.query.force === 'true';
+    const data = await fetchLiveViopContracts(force);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get('/api/stocks/screener', async (req, res) => {
   try {
     const market = String(req.query.market || 'bist');
@@ -753,7 +764,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.15.26';
+const APP_VERSION = '2026.11.16.01';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

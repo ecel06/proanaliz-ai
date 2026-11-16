@@ -388,6 +388,7 @@ export interface StockViopContract {
   name: string;
   category: 'index' | 'fx' | 'metal' | 'stock';
   underlyingCode: string;
+  currency?: 'TL' | 'USD';
   maturity: string;
   maturityDate: string;
   daysToExpiry: number;
