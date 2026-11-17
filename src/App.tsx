@@ -387,7 +387,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.17.04';
+  const CLIENT_BUILD_VERSION = '2026.11.17.05';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1524,61 +1524,10 @@ export const App: React.FC = () => {
             onCloseMobile={() => setIsMobileLeagueTreeOpen(false)}
           />
 
-          {/* RIGHT COLUMN: Hero Banner, Filters, Match Lists */}
-          <div className="flex-1 min-w-0 w-full space-y-4 sm:space-y-6">
+          {/* RIGHT COLUMN: Filters & Live Match Bülteni */}
+          <div className="flex-1 min-w-0 w-full space-y-3 sm:space-y-4">
 
-            {/* Hero / Highlight Banner */}
-            <div className="relative rounded-2xl sm:rounded-3xl bg-slate-900/90 border border-slate-800 p-4 sm:p-7 overflow-hidden shadow-2xl">
-              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-5 items-center">
-
-                <div className="lg:col-span-8 space-y-1.5 sm:space-y-3">
-                  <div className="inline-flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                    <Radio className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400 animate-pulse" />
-                    <span>Canlı İddaa Bülteni ({totalMatches} Karşılaşma)</span>
-                  </div>
-
-                  <h1 className="text-base sm:text-3xl font-black text-white tracking-tight">
-                    Tüm Dünya Ligleri <span className="text-emerald-400">Yapay Zeka Analizinde</span>
-                  </h1>
-
-                  <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed hidden sm:block">
-                    Süper Lig, Premier Lig, La Liga, Serie A, Bundesliga, Şampiyonlar Ligi ve tüm dünya bülteni açık spor uç noktalarından canlı çekilir.
-                    <strong className="text-emerald-400"> Bahis veya kupon oynatmaz;</strong> Poisson ve xG olasılıklarını hesaplar.
-                  </p>
-                </div>
-
-                <div className="lg:col-span-4 grid grid-cols-2 gap-1.5 sm:gap-2 text-center">
-                  <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-slate-950/60 border border-slate-800 backdrop-blur-sm">
-                    <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-semibold">Tüm Ligler</div>
-                    <div className="text-sm sm:text-lg font-black text-emerald-400 font-mono mt-0.5">{totalMatches} Maç</div>
-                    <div className="text-[9px] sm:text-[10px] text-slate-500">20+ Lig Yayında</div>
-                  </div>
-
-                  <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-slate-950/60 border border-slate-800 backdrop-blur-sm">
-                    <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-semibold">Günün Bankoları</div>
-                    <div className="text-sm sm:text-lg font-black text-amber-400 font-mono mt-0.5">{counts.banko} Maç</div>
-                    <div className="text-[9px] sm:text-[10px] text-slate-500">+%75 Güven</div>
-                  </div>
-
-                  <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-slate-950/60 border border-slate-800 backdrop-blur-sm">
-                    <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-semibold">2.5 Üst Trendi</div>
-                    <div className="text-sm sm:text-lg font-black text-amber-400 font-mono mt-0.5">{counts.over25} Maç</div>
-                    <div className="text-[9px] sm:text-[10px] text-slate-500">Yüksek Tempolu</div>
-                  </div>
-
-                  <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-slate-950/60 border border-slate-800 backdrop-blur-sm">
-                    <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-semibold">KG Var Adayları</div>
-                    <div className="text-sm sm:text-lg font-black text-emerald-400 font-mono mt-0.5">{counts.btts} Maç</div>
-                    <div className="text-[9px] sm:text-[10px] text-slate-500">Karşılıklı Gol</div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Filters, Search & Date Controls */}
+            {/* Filters, Search & Date Controls (Top-Level Clean Access) */}
             <Filters
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
@@ -1601,104 +1550,54 @@ export const App: React.FC = () => {
               counts={counts}
             />
 
-            {/* CANLI GOL RADARI & ANLIK MOMENTUM TAKİP KONSOLU (ALWAYS VISIBLE & INTERACTIVE) */}
-            <div className="my-3.5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900 to-slate-950 border border-slate-800 p-3.5 sm:p-4 shadow-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center space-x-3">
-                  <span className="relative flex h-3.5 w-3.5 shrink-0">
-                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                      liveGoalAlerts.length > 0 ? 'bg-rose-400' : 'bg-emerald-400'
-                    }`}></span>
-                    <span className={`relative inline-flex rounded-full h-3.5 w-3.5 ${
-                      liveGoalAlerts.length > 0 ? 'bg-rose-500' : 'bg-emerald-500'
-                    }`}></span>
-                  </span>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-white flex items-center space-x-1.5">
-                        <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
-                        <span>Canlı Gol Radarı & Momentum Takibi</span>
-                      </span>
-                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
-                        liveGoalAlerts.length > 0
-                          ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
-                          : liveFiltered.length > 0
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                          : 'bg-slate-800 text-slate-300 border-slate-700'
-                      }`}>
-                        {liveGoalAlerts.length > 0
-                          ? `🔥 ${liveGoalAlerts.length} Maçta Kritik Baskı!`
-                          : liveFiltered.length > 0
-                          ? `📡 ${liveFiltered.length} Canlı Maç Taranıyor`
-                          : '⚡ 7/24 Otomatik Tarama Devrede'}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      {liveGoalAlerts.length > 0
-                        ? 'Oynanan maçlarda xG ve dakika baskısı (60-88\' / 35-45\') tavan yaptı! Yakın gol sinyali üretildi.'
-                        : liveFiltered.length > 0
-                        ? `Şu anda ${liveFiltered.length} canlı maç taranıyor. 35'-45' ve 60'-88' pencerelerinde gol alarmı tetiklenecektir.`
-                        : 'Devam eden canlı maçlarda xG ve dakika baskısı oluştuğunda sistem anlık kritik gol alarmları üretir.'}
-                    </p>
+            {/* CANLI GOL RADARI & ANLIK MOMENTUM (Displayed when there is active critical pressure) */}
+            {(activeRadarAlerts.length > 0 || showRadarDemo) && (
+              <div className="my-2.5 rounded-2xl bg-gradient-to-r from-rose-950/40 via-slate-900 to-slate-950 border border-rose-500/40 p-3 sm:p-3.5 shadow-xl animate-fadeIn">
+                <div className="flex items-center justify-between pb-2 border-b border-rose-500/20">
+                  <div className="flex items-center space-x-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500" />
+                    </span>
+                    <span className="text-xs sm:text-sm font-black uppercase text-white flex items-center gap-1.5">
+                      <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                      <span>Canlı Gol Radarı &amp; Momentum Baskısı</span>
+                    </span>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                      {activeRadarAlerts.length} Maçta Kritik Baskı
+                    </span>
                   </div>
+                  {showRadarDemo && (
+                    <button
+                      type="button"
+                      onClick={() => setShowRadarDemo(false)}
+                      className="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800 cursor-pointer"
+                    >
+                      Kapat
+                    </button>
+                  )}
                 </div>
 
-                <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setShowRadarDemo(!showRadarDemo)}
-                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      showRadarDemo
-                        ? 'bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/20'
-                        : 'bg-slate-800 hover:bg-slate-750 text-slate-200 hover:text-white border border-slate-700'
-                    }`}
-                    title="Canlı gol radarı uyarısının maç anında nasıl göründüğünü test edin"
-                  >
-                    <Flame className={`w-3.5 h-3.5 ${showRadarDemo ? 'text-slate-950' : 'text-amber-400'}`} />
-                    <span>{showRadarDemo ? 'Örnek Alarmı Kapat' : '⚡ Örnek Alarmı Gör'}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* ACTIVE ALERTS OR DEMO ALERTS GRID */}
-              {activeRadarAlerts.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-3 mt-3 border-t border-slate-800/80 animate-fadeIn">
+                {/* ACTIVE ALERTS GRID */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2.5">
                   {activeRadarAlerts.map((alert) => (
                     <div
                       key={alert.match.id}
                       onClick={() => setSelectedMatch(alert.match)}
-                      className={`p-3 rounded-xl border transition-all cursor-pointer hover:scale-[1.01] ${
-                        alert.urgency === 'critical'
-                          ? 'bg-rose-950/30 border-rose-500/50 hover:border-rose-400 shadow-md shadow-rose-950/40'
-                          : 'bg-amber-950/30 border-amber-500/40 hover:border-amber-300 shadow-sm'
-                      }`}
+                      className="p-3 rounded-xl border border-rose-500/50 hover:border-rose-400 bg-rose-950/30 transition-all cursor-pointer hover:scale-[1.01]"
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
-                              alert.urgency === 'critical'
-                                ? 'bg-rose-500 text-slate-950 font-black animate-pulse'
-                                : 'bg-amber-400 text-slate-950 font-black'
-                            }`}
-                          >
+                        <div className="flex items-center space-x-1.5">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-rose-500 text-slate-950">
                             {alert.title}
                           </span>
                           <span className="font-mono text-xs font-bold text-rose-300">
                             {alert.minuteText}
                           </span>
-                          {showRadarDemo && liveGoalAlerts.length === 0 && (
-                            <span className="text-[9px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.2 rounded">
-                              Simülasyon
-                            </span>
-                          )}
                         </div>
-                        <div className="flex items-center space-x-1.5">
-                          <span className="text-[10px] text-slate-400">Gol Beklentisi:</span>
-                          <span className="font-mono font-black text-amber-300 text-xs bg-slate-900 px-1.5 py-0.5 rounded border border-amber-500/30">
-                            %{alert.goalProbability}
-                          </span>
-                        </div>
+                        <span className="font-mono font-black text-amber-300 text-xs bg-slate-900 px-1.5 py-0.5 rounded border border-amber-500/30">
+                          Gol Beklentisi: %{alert.goalProbability}
+                        </span>
                       </div>
 
                       <div className="flex items-center justify-between mt-2 font-bold text-xs sm:text-sm text-white">
@@ -1710,34 +1609,33 @@ export const App: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="mt-1.5 text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
+                      <div className="mt-1 text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
                         {alert.reason}
                       </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Mode Switcher when NOT searching: "Oynanacak Maçlar", "Canlı Maçlar", "Haftanın Biten Maçları" */}
+            {/* Mode Switcher when NOT searching: "Günün Maçları", "Günün Kuponları", "Biten Maçlar" */}
             {!isSearching && (
-              <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-2">
-                <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2.5 gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                   <button
                     onClick={() => {
                       setActiveTabMode('upcoming');
                       setSelectedDate('all');
                       setSelectedCategory('all');
                     }}
-                    className={`flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center space-x-1.5 sm:space-x-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                       activeTabMode === 'upcoming'
                         ? 'bg-emerald-600 text-slate-950 font-black border-2 border-emerald-300 shadow-md shadow-emerald-950/40'
                         : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
                     }`}
                   >
                     <Clock className={`w-3.5 sm:w-4 h-3.5 sm:h-4 ${activeTabMode === 'upcoming' ? 'text-slate-950 stroke-[2.5]' : 'text-emerald-400'}`} />
-                    <span className="hidden sm:inline">Başlamış &amp; Oynanacak Maçlar</span>
-                    <span className="sm:hidden">Maçlar</span>
+                    <span>Günün Maçları</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
                       activeTabMode === 'upcoming'
                         ? 'bg-emerald-950 text-emerald-200 border border-emerald-400/40'
@@ -1753,19 +1651,18 @@ export const App: React.FC = () => {
                       setSelectedDate('all');
                       setSelectedCategory('all');
                     }}
-                    className={`flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center space-x-1.5 sm:space-x-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                       activeTabMode === 'coupons'
                         ? 'bg-amber-500 text-slate-950 font-black border-2 border-amber-300 shadow-md shadow-amber-950/40'
                         : 'bg-slate-900/60 text-slate-400 hover:text-amber-300 border border-slate-800'
                     }`}
                   >
-                    <Flame className={`w-3.5 sm:w-4 h-3.5 sm:h-4 ${activeTabMode === 'coupons' ? 'text-slate-950 stroke-[2.5] animate-pulse' : 'text-slate-400'}`} />
-                    <span className="hidden sm:inline">Günün Kuponları (Banko • İdeal • Sürpriz)</span>
-                    <span className="sm:hidden">Kuponlar</span>
+                    <Flame className={`w-3.5 sm:w-4 h-3.5 sm:h-4 ${activeTabMode === 'coupons' ? 'text-slate-950 stroke-[2.5] animate-pulse' : 'text-amber-400'}`} />
+                    <span>Günün Kuponları</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
                       activeTabMode === 'coupons'
                         ? 'bg-amber-950 text-amber-200 border border-amber-400/40'
-                        : 'bg-slate-800 text-slate-400'
+                        : 'bg-amber-400 text-slate-950 font-black'
                     }`}>
                       3
                     </span>
@@ -1777,15 +1674,14 @@ export const App: React.FC = () => {
                       setSelectedDate('all');
                       setSelectedCategory('all');
                     }}
-                    className={`flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center space-x-1.5 sm:space-x-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                       activeTabMode === 'finished'
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black border-2 border-blue-300 shadow-lg shadow-blue-900/40 scale-[1.02]'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black border-2 border-blue-300 shadow-lg shadow-blue-900/40'
                         : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
                     }`}
                   >
-                    <CalendarCheck className={`w-3.5 sm:w-4 h-3.5 sm:h-4 ${activeTabMode === 'finished' ? 'text-white stroke-[2.5] animate-pulse' : 'text-slate-400'}`} />
-                    <span className="hidden sm:inline">Haftanın Tamamlanan Maçları</span>
-                    <span className="sm:hidden">Bitenler</span>
+                    <CalendarCheck className={`w-3.5 sm:w-4 h-3.5 sm:h-4 ${activeTabMode === 'finished' ? 'text-white stroke-[2.5]' : 'text-slate-400'}`} />
+                    <span>Biten Maçlar</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
                       activeTabMode === 'finished'
                         ? 'bg-blue-950 text-blue-200 border border-blue-400/50'
