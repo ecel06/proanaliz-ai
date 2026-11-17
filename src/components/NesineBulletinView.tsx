@@ -358,7 +358,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
               return (
                 <div
                   key={match.id}
-                  className="p-3 sm:p-3.5 hover:bg-slate-800/40 transition-colors group"
+                  className="px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-slate-800/40 transition-colors group"
                 >
                   {/* DESKTOP & TABLET VIEW (lg and up): 3 clear non-colliding columns */}
                   <div className="hidden lg:flex items-center justify-between gap-3 xl:gap-4">
@@ -440,33 +440,28 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                       onClick={() => onSelectMatch(match)}
                       className="flex-1 min-w-[170px] sm:min-w-[200px] cursor-pointer flex items-center justify-between gap-2.5 pr-2"
                     >
-                      {/* Teams (Guaranteed width: team names are 100% visible) */}
-                      <div className="flex flex-col space-y-1 min-w-[130px] flex-1">
-                        <div className="flex items-center space-x-2 text-xs sm:text-sm font-black text-white group-hover:text-emerald-300 transition-colors">
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: match.homeTeam.primaryColor || '#10b981' }}
-                          />
-                          <span className="truncate">{match.homeTeam.name}</span>
-                          {liveState.isLive && (
-                            <span className="font-mono font-black text-rose-400 text-xs ml-auto pr-2">
-                              {liveState.displayScore.home}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center space-x-2 text-xs sm:text-sm font-black text-slate-200 group-hover:text-indigo-300 transition-colors">
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: match.awayTeam.primaryColor || '#6366f1' }}
-                          />
-                          <span className="truncate">{match.awayTeam.name}</span>
-                          {liveState.isLive && (
-                            <span className="font-mono font-black text-rose-400 text-xs ml-auto pr-2">
-                              {liveState.displayScore.away}
-                            </span>
-                          )}
-                        </div>
+                      {/* Teams: Side by Side Single Row */}
+                      <div className="flex items-center space-x-1.5 min-w-[140px] flex-1 truncate">
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: match.homeTeam.primaryColor || '#10b981' }}
+                        />
+                        <span className="font-black text-xs sm:text-sm text-white truncate group-hover:text-emerald-300 transition-colors">
+                          {match.homeTeam.name}
+                        </span>
+                        <span className="text-slate-500 font-bold text-xs shrink-0 px-0.5">-</span>
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: match.awayTeam.primaryColor || '#6366f1' }}
+                        />
+                        <span className="font-black text-xs sm:text-sm text-slate-300 truncate group-hover:text-indigo-300 transition-colors">
+                          {match.awayTeam.name}
+                        </span>
+                        {liveState.isLive && (
+                          <span className="font-mono font-black text-rose-400 text-xs ml-auto shrink-0 bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.2 rounded">
+                            {liveState.displayScore.home} - {liveState.displayScore.away}
+                          </span>
+                        )}
                       </div>
 
                       {/* AI & Value Recommendation Pills (Stacked vertically when both exist to save 140px width!) */}
@@ -606,7 +601,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                   </div>
 
                   {/* MOBILE & TABLET COMPACT VIEW (< lg): 3 clean stacked rows */}
-                  <div className="lg:hidden flex flex-col space-y-2.5">
+                  <div className="lg:hidden flex flex-col space-y-1.5">
                     {/* Row 1: Time, Rank, Code, Favorite on left, AI Pick on right */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
@@ -691,36 +686,32 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Row 2: Team Names (Stacked cleanly on mobile so names never collide or get cut off) */}
+                    {/* Row 2: Team Names Side by Side (Ultra Sleek, Thin & Space-Saving) */}
                     <div
                       onClick={() => onSelectMatch(match)}
-                      className="flex flex-col space-y-1 cursor-pointer py-1 hover:text-emerald-300 transition-colors"
+                      className="flex items-center justify-between gap-2 cursor-pointer py-0.5 hover:text-emerald-300 transition-colors min-w-0"
                     >
-                      <div className="flex items-center space-x-2 text-xs sm:text-sm font-black text-white">
+                      <div className="flex items-center space-x-1.5 min-w-0 truncate text-xs sm:text-sm font-black text-white">
                         <span
                           className="w-2 h-2 rounded-full shrink-0"
                           style={{ backgroundColor: match.homeTeam.primaryColor || '#10b981' }}
                         />
                         <span className="truncate">{match.homeTeam.name}</span>
-                        {liveState.isLive && (
-                          <span className="font-mono font-black text-rose-400 text-xs ml-auto pr-1">
-                            {liveState.displayScore.home}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center space-x-2 text-xs sm:text-sm font-black text-slate-200">
+                        <span className="text-slate-500 font-bold text-[11px] shrink-0 px-0.5">-</span>
                         <span
                           className="w-2 h-2 rounded-full shrink-0"
                           style={{ backgroundColor: match.awayTeam.primaryColor || '#6366f1' }}
                         />
-                        <span className="truncate">{match.awayTeam.name}</span>
-                        {liveState.isLive && (
-                          <span className="font-mono font-black text-rose-400 text-xs ml-auto pr-1">
-                            {liveState.displayScore.away}
-                          </span>
-                        )}
+                        <span className="truncate text-slate-200">{match.awayTeam.name}</span>
                       </div>
+
+                      {liveState.isLive && (
+                        <div className="shrink-0 flex items-center space-x-1 font-mono font-black text-rose-400 text-xs bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.2 rounded">
+                          <span>{liveState.displayScore.home}</span>
+                          <span>-</span>
+                          <span>{liveState.displayScore.away}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Row 3: Quick Odds Bar (8 columns: 7 odds + 1 detail button) */}
