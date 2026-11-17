@@ -1,5 +1,5 @@
 // src/components/Header.tsx
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { 
   Activity, 
   BrainCircuit, 
@@ -109,8 +109,35 @@ export const Header: React.FC<HeaderProps> = ({
   activeSection = 'football',
   onSelectSection
 }) => {
+  const headerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.offsetHeight;
+        document.documentElement.style.setProperty('--app-header-height', `${height}px`);
+      }
+    };
+
+    updateHeaderHeight();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && headerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        updateHeaderHeight();
+      });
+      resizeObserver.observe(headerRef.current);
+    }
+
+    window.addEventListener('resize', updateHeaderHeight);
+    return () => {
+      if (resizeObserver) resizeObserver.disconnect();
+      window.removeEventListener('resize', updateHeaderHeight);
+    };
+  }, [activeSection, hasNewUpdate, isRefreshing]);
+
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl w-full max-w-full overflow-x-clip">
+    <header ref={headerRef} className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl w-full max-w-full overflow-x-clip">
       {/* 🚀 Beta / Geliştirme Aşaması Bilgilendirme Şeridi - Ultra Compact & Sleek */}
       <div className="relative overflow-hidden bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 py-1 px-2.5 text-center text-xs font-bold text-slate-950 flex items-center justify-between sm:justify-center gap-2 border-b border-amber-300/40">
         <div className="flex items-center gap-1.5 truncate">

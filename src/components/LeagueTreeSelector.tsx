@@ -202,8 +202,15 @@ export const LeagueTreeSelector: React.FC<LeagueTreeSelectorProps> = ({
 
   return (
     <>
-      {/* Desktop Sticky Sidebar */}
-      <aside className="hidden lg:flex flex-col w-72 shrink-0 self-start sticky top-[6.5rem] h-[calc(100vh-7.5rem)] max-h-[calc(100vh-7.5rem)]">
+      {/* Desktop Sticky Sidebar - Perfectly Synchronized with Dynamic Header Height */}
+      <aside
+        className="hidden lg:flex flex-col w-72 shrink-0 self-start sticky z-20"
+        style={{
+          top: 'calc(var(--app-header-height, 12rem) + 1rem)',
+          height: 'calc(100vh - var(--app-header-height, 12rem) - 2rem)',
+          maxHeight: 'calc(100vh - var(--app-header-height, 12rem) - 2rem)'
+        }}
+      >
         {content}
       </aside>
 
