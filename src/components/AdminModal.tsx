@@ -1267,6 +1267,44 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
                   {couponMatches.map((m, idx) => (
                     <div key={idx} className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      {/* Quick Bulletin Match Select */}
+                      <div className="flex items-center justify-between pb-1 border-b border-slate-800/60 text-[11px]">
+                        <span className="font-bold text-amber-400">Maç #{idx + 1}</span>
+                        {allMatches && allMatches.length > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-slate-500 hidden sm:inline">Bültenden:</span>
+                            <select
+                              className="px-2 py-0.5 rounded-lg bg-slate-950 border border-slate-700 text-amber-300 text-[10px] font-bold cursor-pointer max-w-[210px] sm:max-w-[280px] truncate"
+                              onChange={(e) => {
+                                const found = allMatches.find(x => String(x.id) === String(e.target.value));
+                                if (found) {
+                                  setCouponMatches(prev => prev.map((item, i) => i === idx ? {
+                                    ...item,
+                                    homeTeam: found.homeTeam.name,
+                                    awayTeam: found.awayTeam.name,
+                                    league: found.league || 'Lig',
+                                    matchTime: found.time || '20:00',
+                                    matchDate: 'Bugün',
+                                    prediction: (found.odds?.over25 && found.odds.over25 <= 1.65) ? '2.5 ÜST' : (found.odds?.ms1 && found.odds.ms1 <= 1.65) ? 'MS 1' : '1X Çifte Şans',
+                                    odds: found.odds?.ms1 || found.odds?.over25 || 1.65,
+                                    confidence: 90,
+                                    reason: `${found.homeTeam.name} form analizi ve model olasılıklarıyla öne çıkıyor.`
+                                  } : item));
+                                }
+                              }}
+                              defaultValue=""
+                            >
+                              <option value="" disabled>📋 Bültenden Maç Seç (Otomatik Doldur)...</option>
+                              {allMatches.slice(0, 100).map(match => (
+                                <option key={match.id} value={match.id}>
+                                  {match.time ? `[${match.time}] ` : ''}{match.homeTeam.name} vs {match.awayTeam.name} ({match.league || 'Lig'})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                         <input
                           type="text"
@@ -1397,6 +1435,32 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             <div className="text-[10px] text-slate-400">Toplam Oran</div>
                             <div className="text-sm font-black text-amber-400 font-mono">{c.totalOdds}</div>
                           </div>
+                          <button
+                            onClick={() => {
+                              setCouponTitle(c.title);
+                              setCouponSubtitle(c.subtitle || '');
+                              setCouponCategory(c.category || 'football');
+                              setCouponConfidence(c.confidence || 90);
+                              setCouponIsVipOnly(Boolean(c.isVipOnly));
+                              setCouponMatches(c.matches.map(m => ({
+                                homeTeam: m.homeTeam,
+                                awayTeam: m.awayTeam,
+                                league: m.league,
+                                matchTime: m.matchTime,
+                                matchDate: m.matchDate || 'Bugün',
+                                prediction: m.prediction,
+                                odds: m.odds,
+                                confidence: m.confidence || 90,
+                                reason: m.reason || ''
+                              })));
+                              setIsAddingCoupon(true);
+                              showFeedback('Kupon düzenleme formuna aktarıldı.');
+                            }}
+                            className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 cursor-pointer"
+                            title="Kuponu Düzenle / Formda Aç"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={() => handleDeleteEditorCoupon(c.id)}
                             className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 cursor-pointer"
