@@ -181,7 +181,7 @@ export const StandingsModal: React.FC<StandingsModalProps> = ({
 
         {/* League Selector Horizontal Tabs & Quick Search */}
         <div className="px-3 sm:px-6 py-2.5 border-b border-slate-800/80 bg-slate-950/60 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          <div className="flex items-center space-x-1.5 overflow-x-auto py-1.5 pb-2 text-xs scrollbar-thin scrollbar-thumb-slate-700 max-w-full">
+          <div className="flex items-center space-x-1.5 overflow-x-auto py-1.5 pb-2 text-xs no-scrollbar max-w-full">
             {STANDINGS_LEAGUES.map((league) => {
               const isActive = selectedLeagueCode === league.code;
               const isMatched = matchedLeagues.some((m) => m.code === league.code);

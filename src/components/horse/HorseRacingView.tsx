@@ -1108,7 +1108,7 @@ export const LiveRacePlayer: React.FC<{
               </div>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
               {race.horses.map((h) => {
                 const isScr = h.status === false;
                 return (
@@ -1776,7 +1776,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
               <Flag className="w-3 h-3" />
               <span>Yurt İçi Hipodromlar (Türkiye)</span>
             </div>
-            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
               {trPrograms.map((p) => {
                 const isSel = p.id === selectedProgramId;
                 return (
@@ -1829,7 +1829,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
               <Globe className="w-3 h-3" />
               <span>Yurt Dışı Hipodromlar</span>
             </div>
-            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
               {foreignPrograms.map((p) => {
                 const isSel = p.id === selectedProgramId;
                 return (
@@ -1906,7 +1906,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
               </div>
 
               {/* Main View Sub-Tabs */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin shrink-0">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar shrink-0">
                 {[
                   { id: 'bulletin', label: 'Bülten & Kupon', icon: Ticket },
                   { id: 'ai_coupons', label: `AI Altılı (${aiCoupons.length})`, icon: Sparkles },
@@ -2516,7 +2516,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
               {/* LEFT / MAIN: RACE TABS + RUNNER TABLE */}
               <div className="flex-1 w-full min-w-0 space-y-3">
                 {/* Race Selector Tabs (1. Koşu .. N. Koşu) */}
-                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
                   {detail.races.map((r) => {
                     const isSel = activeRace?.number === r.number;
                     const legBadge = getLegBadgeForRace(r.number, activeGame);

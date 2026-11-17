@@ -379,7 +379,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* ROW 3: Dedicated Football Tools & Features Bar (Sleek, Centered, Zero Horizontal Overflow) */}
         {activeSection === 'football' && (
           <div className="w-full pb-1.5 pt-0.5">
-            <div className="flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 pr-6 sm:pr-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 shadow-inner w-full max-w-5xl mx-auto overflow-x-auto no-scrollbar scroll-smooth sm:flex-wrap sm:justify-center">
+            <div className="flex items-center justify-between sm:justify-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 shadow-inner w-full max-w-5xl mx-auto overflow-hidden">
               {/* Renk & Takım Teması */}
               {onOpenThemeModal && (
                 <button
@@ -398,16 +398,15 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
 
-              {/* Güncel Puan Durumu */}
+              {/* Güncel Puan Durumu (Mobilde alt menüde mevcuttur) */}
               {onOpenStandings && (
                 <button
                   onClick={onOpenStandings}
-                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
+                  className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
                   title="Güncel Puan Durumu"
                 >
                   <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="hidden sm:inline">Puan Durumu</span>
-                  <span className="sm:hidden">Puan</span>
+                  <span>Puan Durumu</span>
                 </button>
               )}
 
@@ -440,11 +439,11 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
 
-              {/* Kullanıcı Kuponu (Kuponum) */}
+              {/* Kullanıcı Kuponu (Kuponum - Mobilde alt menüde mevcuttur, masaüstünde burada görünür) */}
               {betslipCount > 0 && onOpenBetslip && (
                 <button
                   onClick={onOpenBetslip}
-                  className="flex items-center space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-extrabold text-xs border border-emerald-500/40 transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95 animate-pulse shrink-0"
+                  className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-extrabold text-xs border border-emerald-500/40 transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95 animate-pulse shrink-0"
                   title="Kuponumu Aç & Hesapla"
                 >
                   <Ticket className="w-3.5 h-3.5 text-emerald-400" />
@@ -459,7 +458,7 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenBankroll && (
                 <button
                   onClick={onOpenBankroll}
-                  className="flex items-center space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-white font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
+                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-white font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
                   title="Sanal Kasa & Kupon Takibi"
                 >
                   <Wallet className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -480,11 +479,11 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
 
-              {/* Native Web Push Toggle */}
+              {/* Native Web Push Toggle (Masaüstü) */}
               {onTogglePush && (
                 <button
                   onClick={onTogglePush}
-                  className={`p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 shadow-xs active:scale-95 ${
+                  className={`hidden sm:block p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 shadow-xs active:scale-95 ${
                     isPushEnabled
                       ? 'bg-amber-400/20 text-amber-300 border-amber-400/50 shadow-amber-500/20'
                       : 'bg-slate-800 hover:bg-slate-750 text-slate-400 border-slate-700/80 hover:text-white'
@@ -499,17 +498,13 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenCustomAnalyzer && (
                 <button
                   onClick={onOpenCustomAnalyzer}
-                  className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
+                  className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
                   title="Kendi Maçını Analiz Et"
                 >
                   <Calculator className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span className="hidden sm:inline">Kendi Maçını Analiz Et</span>
-                  <span className="sm:hidden">Özel Analiz</span>
+                  <span>Kendi Maçını Analiz Et</span>
                 </button>
               )}
-
-              {/* Right safe spacer on mobile to prevent clipping */}
-              <div className="w-5 shrink-0 sm:hidden" />
             </div>
           </div>
         )}

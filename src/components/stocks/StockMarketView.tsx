@@ -683,7 +683,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
 
       {/* 1. MACRO INDICES & FX LIVE TICKER STRIP */}
       {macro.length > 0 && (
-        <section className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+        <section className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
           {macro.map((m) => (
             <div
               key={m.symbol}
