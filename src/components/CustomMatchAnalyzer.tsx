@@ -269,7 +269,7 @@ export const CustomMatchAnalyzer: React.FC<CustomMatchAnalyzerProps> = ({
 
             {/* Arama Yapılmamışken: Bültenden Gerçek Hızlı Maç Önerileri */}
             {!searchQuery.trim() && (
-              <div className="flex items-center space-x-2 overflow-x-auto pb-1 text-xs">
+              <div className="flex flex-wrap items-center gap-1.5 py-1 text-xs">
                 <span className="text-slate-400 font-medium whitespace-nowrap text-[11px] flex items-center space-x-1 shrink-0">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   <span>Bültenden Hızlı Seç:</span>

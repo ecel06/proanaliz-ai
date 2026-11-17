@@ -182,7 +182,7 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
     <>
       {/* 1. FLOATING BOTTOM PILL / BAR (Always visible when items exist and drawer is closed) */}
       {!isOpen && (
-        <div className="fixed bottom-16 sm:bottom-5 left-4 sm:left-6 z-40 animate-in fade-in slide-in-from-bottom duration-300">
+        <div className="fixed bottom-20 sm:bottom-5 left-4 sm:left-6 z-50 animate-in fade-in slide-in-from-bottom duration-300">
           <button
             onClick={onOpen}
             className="flex items-center space-x-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white font-black text-xs sm:text-sm shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/60 border-2 border-emerald-300/40 hover:scale-105 active:scale-95 transition-all cursor-pointer group"

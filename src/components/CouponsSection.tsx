@@ -232,7 +232,7 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
           <span>Kupon Günü:</span>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+        <div className="grid grid-cols-2 gap-2 w-full max-w-xs">
           <button
             onClick={() => setSelectedDay('today')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap flex items-center space-x-1.5 ${

@@ -1108,7 +1108,7 @@ export const LiveRacePlayer: React.FC<{
               </div>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            <div className="flex flex-wrap gap-1.5 pb-1">
               {race.horses.map((h) => {
                 const isScr = h.status === false;
                 return (
@@ -1776,14 +1776,14 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
               <Flag className="w-3 h-3" />
               <span>Yurt İçi Hipodromlar (Türkiye)</span>
             </div>
-            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5">
               {trPrograms.map((p) => {
                 const isSel = p.id === selectedProgramId;
                 return (
                   <button
                     key={p.id}
                     onClick={() => handleSelectProgram(p.id)}
-                    className={`shrink-0 text-left px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer min-w-[125px] ${isSel
+                    className={`w-full text-left px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer ${isSel
                       ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/20'
                       : 'bg-slate-950/70 hover:bg-slate-800/80 text-white border-slate-800'
                       }`}
@@ -1829,27 +1829,27 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
               <Globe className="w-3 h-3" />
               <span>Yurt Dışı Hipodromlar</span>
             </div>
-            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5">
               {foreignPrograms.map((p) => {
                 const isSel = p.id === selectedProgramId;
                 return (
                   <button
                     key={p.id}
                     onClick={() => handleSelectProgram(p.id)}
-                    className={`shrink-0 text-left px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer ${isSel
+                    className={`w-full text-left px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer ${isSel
                       ? 'bg-cyan-400 text-slate-950 border-cyan-300 font-black shadow-md shadow-cyan-500/20'
                       : 'bg-slate-950/60 hover:bg-slate-800 text-slate-200 border-slate-800'
                       }`}
                   >
-                    <div className="flex items-center space-x-1.5">
-                      <span className="font-bold text-[11px]">{p.place}</span>
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className="font-bold text-[11px] truncate">{p.place}</span>
                       {!p.isCompleted ? (
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-slate-950' : 'bg-emerald-400 animate-pulse'
                             }`}
                         />
                       ) : null}
-                      <span className={`text-[10px] font-mono ${isSel ? 'text-slate-900' : 'text-slate-400'}`}>
+                      <span className={`text-[10px] font-mono shrink-0 ${isSel ? 'text-slate-900' : 'text-slate-400'}`}>
                         {p.openingHour}
                       </span>
                     </div>
@@ -1906,7 +1906,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
               </div>
 
               {/* Main View Sub-Tabs */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar shrink-0">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center gap-1.5">
                 {[
                   { id: 'bulletin', label: 'Bülten & Kupon', icon: Ticket },
                   { id: 'ai_coupons', label: `AI Altılı (${aiCoupons.length})`, icon: Sparkles },
@@ -1916,6 +1916,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                     id: 'changes',
                     label: `Değişenler (${detail.scratches.length + detail.jockeyChanges.length})`,
                     icon: AlertTriangle,
+                    colSpan: 'col-span-2 sm:col-span-1'
                   },
                 ].map((t) => {
                   const Icon = t.icon;
@@ -1924,13 +1925,13 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                     <button
                       key={t.id}
                       onClick={() => setSubTab(t.id as HRSubTab)}
-                      className={`shrink-0 flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${active
+                      className={`w-full md:w-auto flex items-center justify-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${t.colSpan || ''} ${active
                         ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20'
                         : 'bg-slate-950/70 hover:bg-slate-800 text-slate-300 border-slate-800'
                         }`}
                     >
-                      <Icon className="w-3.5 h-3.5" />
-                      <span>{t.label}</span>
+                      <Icon className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">{t.label}</span>
                     </button>
                   );
                 })}
@@ -2515,8 +2516,8 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
             <div className="flex flex-col xl:flex-row gap-4 items-start">
               {/* LEFT / MAIN: RACE TABS + RUNNER TABLE */}
               <div className="flex-1 w-full min-w-0 space-y-3">
-                {/* Race Selector Tabs (1. Koşu .. N. Koşu) */}
-                <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                {/* Race Selector Tabs (1. Koşu .. N. Koşu) - 100% Solid Responsive Grid, Zero Horizontal Cutoff */}
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1 sm:gap-1.5">
                   {detail.races.map((r) => {
                     const isSel = activeRace?.number === r.number;
                     const legBadge = getLegBadgeForRace(r.number, activeGame);
@@ -2528,32 +2529,32 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                           setSelectedRaceNo(r.number);
                           setExpandedHorse(null);
                         }}
-                        className={`shrink-0 px-2.5 py-1.5 rounded-xl border text-left transition-all cursor-pointer min-w-[105px] ${isSel
-                          ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20'
+                        className={`w-full px-1.5 py-1.5 sm:px-2 sm:py-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${isSel
+                          ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20 font-bold'
                           : 'bg-slate-900/90 hover:bg-slate-800 text-white border-slate-800'
                           }`}
                       >
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="font-black text-xs">{r.number}. Koşu</span>
+                        <div className="flex items-center justify-between gap-0.5">
+                          <span className="font-black text-xs truncate">{r.number}. Koşu</span>
                           <span
-                            className={`text-[10px] font-mono font-bold ${isSel ? 'text-slate-900' : 'text-slate-400'
+                            className={`text-[10px] font-mono font-bold shrink-0 ${isSel ? 'text-slate-900' : 'text-slate-400'
                               }`}
                           >
                             {r.hour}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between gap-1 mt-0.5">
-                          <span className={`text-[9px] font-semibold truncate max-w-[55px] ${isSel ? 'text-slate-900' : 'text-slate-400'}`}>
-                            {r.distance}m {r.raceCourseType}
+                        <div className="flex items-center justify-between gap-0.5 mt-0.5">
+                          <span className={`text-[9px] font-semibold truncate ${isSel ? 'text-slate-900' : 'text-slate-400'}`}>
+                            {r.distance}m {r.raceCourseType ? r.raceCourseType.substring(0, 3) : ''}
                           </span>
                           {legBadge && (
                             <span
-                              className={`px-1 py-0.2 rounded text-[8px] font-black ${isSel
+                              className={`px-1 py-0.2 rounded text-[8px] font-black shrink-0 ${isSel
                                 ? 'bg-slate-950 text-amber-300'
                                 : 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
                                 }`}
                             >
-                              {legBadge}.AYAK
+                              {legBadge}.A
                             </span>
                           )}
                         </div>
@@ -3520,7 +3521,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
 
       {/* 📱 Mobile Floating Coupon Summary Bar (< xl) */}
       {totalPicksInCoupon > 0 && (
-        <div className="xl:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 border-t border-amber-500/40 p-2.5 px-3.5 backdrop-blur-xl shadow-2xl flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300">
+        <div className="xl:hidden fixed bottom-16 left-0 right-0 z-40 bg-slate-900/95 border-t border-amber-500/40 p-2.5 px-3.5 backdrop-blur-xl shadow-2xl flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300">
           <div className="flex items-center space-x-2.5 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 flex flex-col items-center justify-center font-black shrink-0 shadow-md shadow-amber-500/20">
               <span className="text-xs leading-none">{totalPicksInCoupon}</span>
@@ -3872,8 +3873,8 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
       {/* Floating AI Altılı Robotu FAB (Horse Racing Only) */}
       <button
         onClick={() => setIsHorseAIChatOpen(true)}
-        className={`fixed ${totalPicksInCoupon > 0 ? 'bottom-16 sm:bottom-6' : 'bottom-5 sm:bottom-6'
-          } right-4 sm:right-6 z-40 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-black text-xs sm:text-sm shadow-2xl shadow-amber-500/40 hover:shadow-amber-500/70 border-2 border-amber-200/70 active:scale-95 transition-all cursor-pointer group hover:scale-105`}
+        className={`fixed ${totalPicksInCoupon > 0 ? 'bottom-32 sm:bottom-6' : 'bottom-20 sm:bottom-6'
+          } right-4 sm:right-6 z-50 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-black text-xs sm:text-sm shadow-2xl shadow-amber-500/40 hover:shadow-amber-500/70 border-2 border-amber-200/70 active:scale-95 transition-all cursor-pointer group hover:scale-105`}
         title="AI At Yarışı & Altılı Ganyan Robotu"
       >
         <div className="relative">

@@ -683,11 +683,11 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
 
       {/* 1. MACRO INDICES & FX LIVE TICKER STRIP */}
       {macro.length > 0 && (
-        <section className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+        <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 pb-1">
           {macro.map((m) => (
             <div
               key={m.symbol}
-              className="shrink-0 px-3.5 py-2 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center space-x-3 shadow-sm"
+              className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between shadow-sm"
             >
               <div>
                 <div className="text-[10px] font-bold text-slate-400">{m.label}</div>
@@ -2739,7 +2739,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       {/* Floating Borsa AI Robotu FAB */}
       <button
         onClick={() => setIsAIChatOpen(true)}
-        className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 text-slate-950 font-black text-xs sm:text-sm shadow-2xl shadow-cyan-500/40 hover:shadow-cyan-500/70 border-2 border-cyan-200/70 active:scale-95 transition-all cursor-pointer group hover:scale-105"
+        className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 text-slate-950 font-black text-xs sm:text-sm shadow-2xl shadow-cyan-500/40 hover:shadow-cyan-500/70 border-2 border-cyan-200/70 active:scale-95 transition-all cursor-pointer group hover:scale-105"
         title="ProAnaliz Borsa AI & Sinyal Robotu"
       >
         <div className="relative">
