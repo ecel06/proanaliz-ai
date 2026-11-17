@@ -85,6 +85,10 @@ export function isMatchOnDateFilter(
     return matchKey === yesterdayKey;
   }
 
+  if (filterId === 'future') {
+    return matchKey !== todayKey && matchKey !== tomorrowKey && matchKey > tomorrowKey;
+  }
+
   if (filterId === 'weekday_cups') {
     // Cup matches (e.g. 3-5 Kasım or any Tuesday-Thursday before Friday)
     const dayOfWeek = md.getDay(); // 2=Tue, 3=Wed, 4=Thu
