@@ -1147,9 +1147,17 @@ export interface HorseRacingViewProps {
   user?: User | null;
   onOpenVIP?: () => void;
   onShowToast?: (msg: string, type?: 'success' | 'info' | 'warning') => void;
+  activeSubTab?: HRSubTab;
+  onChangeSubTab?: (tab: HRSubTab) => void;
 }
 
-export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVIP, onShowToast }) => {
+export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
+  user,
+  onOpenVIP,
+  onShowToast,
+  activeSubTab,
+  onChangeSubTab,
+}) => {
   const [programs, setPrograms] = useState<HippodromeProgram[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<number | null>(() => {
     try {
@@ -1169,7 +1177,19 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
     }
   });
   const [selectedGameId, setSelectedGameId] = useState<string>('ALTILI_1');
-  const [subTab, setSubTab] = useState<HRSubTab>('bulletin');
+  const [subTabState, setSubTabState] = useState<HRSubTab>(activeSubTab || 'bulletin');
+
+  useEffect(() => {
+    if (activeSubTab && activeSubTab !== subTabState) {
+      setSubTabState(activeSubTab);
+    }
+  }, [activeSubTab]);
+
+  const subTab = activeSubTab || subTabState;
+  const setSubTab = (t: HRSubTab) => {
+    setSubTabState(t);
+    onChangeSubTab?.(t);
+  };
   const [sortMode, setSortMode] = useState<SortMode>('number');
   const [loading, setLoading] = useState<boolean>(true);
   const [programLoading, setProgramLoading] = useState<boolean>(false);

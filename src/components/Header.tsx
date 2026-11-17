@@ -379,12 +379,12 @@ export const Header: React.FC<HeaderProps> = ({
         {/* ROW 3: Dedicated Football Tools & Features Bar (Sleek, Centered, Zero Horizontal Overflow) */}
         {activeSection === 'football' && (
           <div className="w-full pb-1.5 pt-0.5">
-            <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 shadow-inner w-full max-w-5xl mx-auto overflow-x-auto no-scrollbar sm:flex-wrap sm:justify-center">
+            <div className="flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 pr-6 sm:pr-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 shadow-inner w-full max-w-5xl mx-auto overflow-x-auto no-scrollbar scroll-smooth sm:flex-wrap sm:justify-center">
               {/* Renk & Takım Teması */}
               {onOpenThemeModal && (
                 <button
                   onClick={onOpenThemeModal}
-                  className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg border font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
+                  className="flex items-center space-x-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
                   style={{
                     backgroundColor: activeTheme?.badgeBg || 'rgba(16, 185, 129, 0.15)',
                     borderColor: activeTheme?.cardBorder || 'rgba(16, 185, 129, 0.35)',
@@ -402,7 +402,7 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenStandings && (
                 <button
                   onClick={onOpenStandings}
-                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
+                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
                   title="Güncel Puan Durumu"
                 >
                   <Activity className="w-3.5 h-3.5 text-emerald-400" />
@@ -415,7 +415,7 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenAIPerformance && (
                 <button
                   onClick={onOpenAIPerformance}
-                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
+                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
                   title="Yapay Zeka Başarı Karnesi & Şeffaf İstatistikler"
                 >
                   <Trophy className="w-3.5 h-3.5 text-amber-400" />
@@ -428,7 +428,7 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenLiveTV && (
                 <button
                   onClick={onOpenLiveTV}
-                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs border border-rose-500/40 transition-all cursor-pointer shadow-md shadow-rose-500/15 active:scale-95 shrink-0 group"
+                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs border border-rose-500/40 transition-all cursor-pointer shadow-md shadow-rose-500/15 active:scale-95 shrink-0 group"
                   title="Canlı Maç & Spor TV Yayınlarını İzle (TRT Spor, TRT Yıldız, A Spor, HT Spor)"
                 >
                   <span className="relative flex h-2 w-2">
@@ -444,7 +444,7 @@ export const Header: React.FC<HeaderProps> = ({
               {betslipCount > 0 && onOpenBetslip && (
                 <button
                   onClick={onOpenBetslip}
-                  className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-extrabold text-xs border border-emerald-500/40 transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95 animate-pulse shrink-0"
+                  className="flex items-center space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-extrabold text-xs border border-emerald-500/40 transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95 animate-pulse shrink-0"
                   title="Kuponumu Aç & Hesapla"
                 >
                   <Ticket className="w-3.5 h-3.5 text-emerald-400" />
@@ -459,7 +459,7 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenBankroll && (
                 <button
                   onClick={onOpenBankroll}
-                  className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-white font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
+                  className="flex items-center space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-white font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
                   title="Sanal Kasa & Kupon Takibi"
                 >
                   <Wallet className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -499,7 +499,7 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenCustomAnalyzer && (
                 <button
                   onClick={onOpenCustomAnalyzer}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
+                  className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
                   title="Kendi Maçını Analiz Et"
                 >
                   <Calculator className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -507,6 +507,9 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="sm:hidden">Özel Analiz</span>
                 </button>
               )}
+
+              {/* Right safe spacer on mobile to prevent clipping */}
+              <div className="w-5 shrink-0 sm:hidden" />
             </div>
           </div>
         )}

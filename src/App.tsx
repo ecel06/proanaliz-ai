@@ -367,6 +367,10 @@ export const App: React.FC = () => {
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isLiveTVModalOpen, setIsLiveTVModalOpen] = useState(false);
 
+  // Section-specific mobile subtabs & actions
+  const [horseRacingSubTab, setHorseRacingSubTab] = useState<'bulletin' | 'ai_coupons' | 'ikili_cifte' | 'results' | 'changes'>('bulletin');
+  const [stockExternalAction, setStockExternalAction] = useState<{ action: 'list' | 'portfolio' | 'alerts' | 'kap'; timestamp: number } | null>(null);
+
   // Social Coupon Share Modal State
   const [shareSlipCoupon, setShareSlipCoupon] = useState<any | null>(null);
 
@@ -1337,24 +1341,6 @@ export const App: React.FC = () => {
             />
           )}
         </React.Suspense>
-
-        {/* Mobile Bottom Navigation Bar (sm:hidden) */}
-        <MobileBottomNav
-          activeSection={activeSection}
-          activeTabMode={activeTabMode}
-          onSelectSection={(sec) => handleNavigateSection(sec)}
-          onSelectFootballTab={(tab) => {
-            setActiveTabMode(tab);
-            handleNavigateSection('football');
-          }}
-          onOpenStandings={() => setIsStandingsOpen(true)}
-          onOpenProfile={() => setIsProfileModalOpen(true)}
-          onOpenAuth={() => setIsAuthModalOpen(true)}
-          onOpenVIP={() => setIsVipModalOpen(true)}
-          user={currentUser}
-          betslipCount={betslipItems.length}
-          onOpenBetslip={() => setIsBetslipOpen(true)}
-        />
       </div>
     );
   }
@@ -1497,6 +1483,8 @@ export const App: React.FC = () => {
                 setRefreshToast(msg);
                 setTimeout(() => setRefreshToast(null), 3500);
               }}
+              activeSubTab={horseRacingSubTab}
+              onChangeSubTab={setHorseRacingSubTab}
             />
           </React.Suspense>
         ) : activeSection === 'stocks' ? (
@@ -1509,6 +1497,7 @@ export const App: React.FC = () => {
                 setTimeout(() => setRefreshToast(null), 3500);
               }}
               onGoHome={() => handleNavigateSection('home')}
+              externalAction={stockExternalAction}
             />
           </React.Suspense>
         ) : (
@@ -2356,6 +2345,14 @@ export const App: React.FC = () => {
         user={currentUser}
         betslipCount={betslipItems.length}
         onOpenBetslip={() => setIsBetslipOpen(true)}
+        horseSubTab={horseRacingSubTab}
+        onSelectHorseSubTab={(tab) => {
+          setHorseRacingSubTab(tab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onSelectStockAction={(act) => {
+          setStockExternalAction({ action: act, timestamp: Date.now() });
+        }}
       />
 
     </div>

@@ -83,11 +83,12 @@ import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/
 type PresetFilter = 'all' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
 type StockSort = 'ai_desc' | 'change_desc' | 'volume_desc' | 'rsi_asc' | 'pe_asc';
 
-interface StockMarketViewProps {
+export interface StockMarketViewProps {
   user?: User | null;
   onOpenVIP?: () => void;
   onShowToast?: (msg: string) => void;
   onGoHome?: () => void;
+  externalAction?: { action: string; timestamp: number } | null;
 }
 
 export const StockMarketView: React.FC<StockMarketViewProps> = ({
@@ -95,6 +96,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
   onOpenVIP,
   onShowToast,
   onGoHome,
+  externalAction,
 }) => {
   const [market, setMarket] = useState<StockMarketType>('bist');
   const [searchInput, setSearchInput] = useState<string>('');
@@ -131,6 +133,20 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState<boolean>(false);
   const [isCryptoWidgetsModalOpen, setIsCryptoWidgetsModalOpen] = useState<boolean>(false);
   const [isViopModalOpen, setIsViopModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!externalAction) return;
+    if (externalAction.action === 'list') {
+      setMobileViewTab('list');
+      setSelectedSymbol(null);
+    } else if (externalAction.action === 'portfolio') {
+      setIsPortfolioModalOpen(true);
+    } else if (externalAction.action === 'alerts') {
+      setIsAlertsModalOpen(true);
+    } else if (externalAction.action === 'kap') {
+      setIsKapModalOpen(true);
+    }
+  }, [externalAction]);
 
   const [alerts, setAlerts] = useState<StockAlertItem[]>(() => {
     try {
