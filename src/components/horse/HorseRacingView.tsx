@@ -116,8 +116,6 @@ export const AltiliResultsSummaryBoard: React.FC<{
   onSelectRace: (raceNo: number) => void;
   onSelectGame: (gameId: any) => void;
 }> = ({ detail, availableGames, activeGame, onSelectRace, onSelectGame }) => {
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
-
   // Filter games that are Altılı or fallback to availableGames
   const altiliGames = useMemo(() => {
     const altilis = availableGames.filter(
@@ -166,6 +164,8 @@ export const AltiliResultsSummaryBoard: React.FC<{
   const isAllFinished =
     legsInfo.length > 0 && finishedLegs.length === legsInfo.length;
 
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => isAllFinished);
+
   const totalGanyanProduct = useMemo(() => {
     if (finishedLegs.length === 0) return 0;
     return finishedLegs.reduce((acc, l) => {
@@ -185,22 +185,25 @@ export const AltiliResultsSummaryBoard: React.FC<{
 
   if (!detail || legsInfo.length === 0) return null;
 
+  const placeName = detail.program.place || detail.program.name || 'Hipodrom';
+  const programDate = detail.program.date ? ` • ${detail.program.date}` : '';
+
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-amber-500/40 p-3 sm:p-4 shadow-xl space-y-3">
+    <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-amber-500/40 p-2.5 sm:p-3.5 shadow-xl space-y-2">
       {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex items-center space-x-2 flex-wrap gap-1.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 flex items-center justify-center font-black shadow-md shadow-amber-500/20">
-            <Trophy className="w-4 h-4 fill-current" />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center space-x-2 flex-wrap gap-1.5 min-w-0">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 flex items-center justify-center font-black shadow-md shadow-amber-500/20 shrink-0">
+            <Trophy className="w-3.5 h-3.5 fill-current" />
           </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-1.5">
-                <span>🏆 {detail.program.place} Canlı Altılı Sonuçları</span>
+          <div className="min-w-0">
+            <div className="flex items-center space-x-2 flex-wrap gap-1">
+              <h3 className="text-xs sm:text-sm font-black text-white flex items-center gap-1 truncate">
+                <span>🏆 {placeName}{programDate} Canlı Altılı Sonuçları</span>
               </h3>
               <span
-                className={`px-2 py-0.2 rounded-full text-[10px] font-black border ${isAllFinished
-                  ? 'bg-emerald-500 text-slate-950 border-emerald-400 animate-pulse'
+                className={`px-2 py-0.2 rounded-full text-[9px] font-black border ${isAllFinished
+                  ? 'bg-emerald-500 text-slate-950 border-emerald-400'
                   : finishedLegs.length > 0
                     ? 'bg-amber-400/20 text-amber-300 border-amber-400/40'
                     : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -213,23 +216,20 @@ export const AltiliResultsSummaryBoard: React.FC<{
                     : 'Koşular Başlamadı'}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 hidden sm:block">
-              Tüm ayakların gelen atları, resmi ganyanları ve toplu ikramiye tablosu
-            </p>
           </div>
         </div>
 
         {/* Action Controls & Game Selector */}
-        <div className="flex items-center space-x-2 shrink-0">
+        <div className="flex items-center space-x-1.5 shrink-0 ml-auto">
           {altiliGames.length > 1 && (
-            <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 gap-1">
+            <div className="flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 gap-0.5">
               {altiliGames.map((g) => {
                 const isSel = currentBoardGame?.id === g.id;
                 return (
                   <button
                     key={g.id}
                     onClick={() => onSelectGame(g.id)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${isSel
+                    className={`px-2 py-1 rounded-md text-[11px] font-black transition-all cursor-pointer ${isSel
                       ? 'bg-amber-400 text-slate-950 shadow-sm'
                       : 'text-slate-400 hover:text-white'
                       }`}
@@ -243,45 +243,81 @@ export const AltiliResultsSummaryBoard: React.FC<{
 
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-colors"
+            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold cursor-pointer transition-colors"
             title={isCollapsed ? 'Genişlet' : 'Küçült'}
           >
-            {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            <span className="text-[11px] hidden sm:inline">{isCollapsed ? 'Detayı Aç' : 'Küçült'}</span>
+            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>
 
+      {/* Collapsed One-Line Quick Summary Banner */}
+      {isCollapsed && finishedLegs.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-800/80 text-xs">
+          <div className="flex items-center space-x-1.5 flex-wrap gap-1">
+            <span className="text-[10px] font-bold text-slate-400">Gelenler:</span>
+            {legsInfo.map((l, i) => (
+              <span
+                key={l.raceNo}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${l.winner
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : 'bg-slate-900 text-slate-500 border border-slate-800'
+                  }`}
+              >
+                {i + 1}.A: {l.winner ? `#${l.winner.number}` : '⏳'}
+              </span>
+            ))}
+          </div>
+
+          <div className="flex items-center space-x-3 ml-auto text-xs">
+            {totalGanyanProduct > 0 && (
+              <span className="text-[11px] font-mono text-amber-300 font-bold hidden sm:inline">
+                Bileşik: {totalGanyanProduct.toFixed(2)} ₺
+              </span>
+            )}
+            {officialPayout?.unitPrize && (
+              <div className="flex items-center space-x-1 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                <span className="text-[10px] text-emerald-400 font-semibold">TJK İkramiye:</span>
+                <span className="font-mono font-black text-emerald-400 text-xs">
+                  {officialPayout.unitPrize} ₺
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Expanded 6 Legs Sleek Grid */}
       {!isCollapsed && (
         <>
-          {/* 6 Legs Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 pt-1">
             {legsInfo.map((leg) => {
               const winner = leg.winner;
               return (
                 <div
                   key={leg.raceNo}
                   onClick={() => onSelectRace(leg.raceNo)}
-                  className={`p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between space-y-2 hover:scale-[1.02] ${winner
-                    ? 'bg-gradient-to-b from-emerald-950/40 to-slate-950 border-emerald-500/50 shadow-md shadow-emerald-950/30'
+                  className={`p-2 rounded-xl border transition-all cursor-pointer flex flex-col justify-between space-y-1 hover:border-amber-400/50 ${winner
+                    ? 'bg-gradient-to-b from-emerald-950/30 to-slate-950 border-emerald-500/40 shadow-sm'
                     : 'bg-slate-950/80 border-slate-800 hover:border-slate-700'
                     }`}
                 >
                   {/* Leg Header */}
-                  <div className="flex items-center justify-between text-[11px] pb-1 border-b border-slate-800/80">
+                  <div className="flex items-center justify-between text-[10px] pb-1 border-b border-slate-800/80">
                     <span className="font-black text-amber-400">{leg.legIndex}. Ayak</span>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      {leg.raceNo}. Koşu {leg.raceHour ? `• ${leg.raceHour}` : ''}
+                    <span className="text-[9px] text-slate-400 font-mono">
+                      {leg.raceNo}.K {leg.raceHour ? `• ${leg.raceHour}` : ''}
                     </span>
                   </div>
 
                   {/* Winner Content */}
                   {winner ? (
-                    <div className="space-y-1.5 py-0.5">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500 text-slate-950 flex flex-col items-center justify-center font-black shadow-md shadow-emerald-500/20 shrink-0">
-                          <span className="text-sm font-black leading-none">#{winner.number}</span>
-                          <span className="text-[7px] font-black uppercase tracking-tighter">1. GELDİ</span>
-                        </div>
+                    <div className="space-y-1 py-0.5">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="w-6 h-6 rounded-md bg-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center shrink-0">
+                          #{winner.number}
+                        </span>
                         <div className="min-w-0">
                           <div
                             className="font-black text-xs text-white truncate max-w-[95px]"
@@ -289,33 +325,33 @@ export const AltiliResultsSummaryBoard: React.FC<{
                           >
                             {winner.name}
                           </div>
-                          <div className="text-[10px] text-slate-400 truncate max-w-[95px]">
+                          <div className="text-[9px] text-slate-400 truncate max-w-[95px]">
                             {winner.jockey?.name || 'Jokey'}
                           </div>
                         </div>
                       </div>
 
                       {/* Ganyan Badge */}
-                      <div className="flex items-center justify-between pt-1 border-t border-emerald-500/20">
-                        <span className="text-[10px] text-slate-400 font-semibold">GANYAN:</span>
-                        <span className="font-mono font-black text-xs text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/30">
+                      <div className="flex items-center justify-between text-[10px] pt-1 border-t border-emerald-500/20">
+                        <span className="text-[9px] text-slate-400 font-medium">GANYAN:</span>
+                        <span className="font-mono font-black text-[11px] text-amber-400 bg-amber-400/10 px-1 py-0.2 rounded border border-amber-400/30">
                           {winner.ganyan > 0 ? `${winner.ganyan.toFixed(2)} ₺` : '1.00 ₺'}
                         </span>
                       </div>
 
                       {leg.second && (
-                        <div className="text-[9px] text-slate-400 truncate">
+                        <div className="text-[8px] text-slate-400 truncate">
                           2. #{leg.second.number} {leg.second.name}
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="py-3 text-center space-y-1">
-                      <div className="text-xs text-slate-400 font-bold flex items-center justify-center space-x-1">
+                    <div className="py-2 text-center space-y-0.5">
+                      <div className="text-[11px] text-slate-400 font-bold flex items-center justify-center space-x-1">
                         <Clock className="w-3 h-3 text-amber-400/80" />
                         <span>{leg.raceHour || 'Koşulmadı'}</span>
                       </div>
-                      <span className="inline-block px-2 py-0.5 rounded text-[9px] font-semibold bg-slate-900 text-slate-500 border border-slate-800">
+                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-semibold bg-slate-900 text-slate-500 border border-slate-800">
                         Bekleniyor ⏳
                       </span>
                     </div>
@@ -326,13 +362,13 @@ export const AltiliResultsSummaryBoard: React.FC<{
           </div>
 
           {/* Bottom Summary Strip */}
-          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/90 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center space-x-2 flex-wrap gap-1">
-              <span className="font-bold text-slate-400 text-[11px]">🏁 Gelen Sıralama:</span>
+          <div className="p-2 sm:p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/90 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex items-center space-x-1.5 flex-wrap gap-1">
+              <span className="font-bold text-slate-400 text-[10px]">🏁 Sıralama:</span>
               {legsInfo.map((l, i) => (
                 <span
                   key={l.raceNo}
-                  className={`px-2 py-0.5 rounded-lg font-mono font-black text-xs flex items-center space-x-1 ${l.winner
+                  className={`px-1.5 py-0.5 rounded font-mono font-bold text-[10px] flex items-center space-x-1 ${l.winner
                     ? 'bg-emerald-500 text-slate-950 shadow-sm'
                     : 'bg-slate-900 text-slate-500 border border-slate-800'
                     }`}
@@ -343,19 +379,19 @@ export const AltiliResultsSummaryBoard: React.FC<{
               ))}
             </div>
 
-            <div className="flex items-center space-x-4 ml-auto">
+            <div className="flex items-center space-x-3 ml-auto">
               {totalGanyanProduct > 0 && (
                 <div className="text-right">
-                  <span className="text-[10px] text-slate-400 block font-semibold">Bileşik Ganyan:</span>
-                  <span className="font-mono font-black text-amber-400 text-xs sm:text-sm">
+                  <span className="text-[9px] text-slate-400 block font-semibold">Bileşik Ganyan:</span>
+                  <span className="font-mono font-black text-amber-400 text-xs">
                     {totalGanyanProduct.toFixed(2)} ₺
                   </span>
                 </div>
               )}
               {officialPayout && (
-                <div className="text-right pl-3 border-l border-slate-800">
-                  <span className="text-[10px] text-emerald-400 font-semibold block">TJK Resmi İkramiye:</span>
-                  <span className="font-mono font-black text-emerald-400 text-sm sm:text-base">
+                <div className="text-right pl-2.5 border-l border-slate-800">
+                  <span className="text-[9px] text-emerald-400 font-semibold block">TJK Resmi İkramiye:</span>
+                  <span className="font-mono font-black text-emerald-400 text-xs sm:text-sm">
                     {officialPayout.unitPrize ? `${officialPayout.unitPrize} ₺` : 'Hesaplanıyor'}
                   </span>
                 </div>
@@ -1647,26 +1683,21 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
   return (
     <div className="space-y-4">
       {/* 1. NESINE STYLE TOP HIPPODROME SELECTOR STRIP */}
-      <section className="rounded-2xl bg-slate-900/90 border border-slate-800/90 p-3 sm:p-4 shadow-xl space-y-3">
+      <section className="rounded-2xl bg-slate-900/90 border border-slate-800/90 p-2.5 sm:p-3.5 shadow-xl space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
-            <span className="px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black text-[11px] tracking-wide flex items-center space-x-1">
+            <span className="px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black text-[11px] tracking-wide flex items-center space-x-1">
               <span>🏇</span>
-              <span>TJK CANLI BÜLTEN</span>
+              <span>TJK BÜLTEN</span>
             </span>
-            <span className="text-xs text-slate-400 font-semibold hidden sm:inline">
-              Nesine / TJK Resmi Program, Canlı AGF &amp; AI Altılı Motoru
+            <span className="text-xs text-slate-400 font-medium hidden sm:inline">
+              Resmi TJK Programı, Canlı AGF &amp; AI Altılı Motoru
             </span>
           </div>
-          <div className="flex items-center space-x-2 flex-wrap gap-1.5">
-            {detail?.updatedAt && (
-              <span className="text-[11px] text-slate-400 font-mono hidden md:inline">
-                Güncelleme: {new Date(detail.updatedAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </span>
-            )}
+          <div className="flex items-center space-x-1.5 flex-wrap gap-1">
             <button
               onClick={() => setIsSavedCouponsModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-300 font-bold text-xs cursor-pointer transition-all"
+              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-300 font-bold text-xs cursor-pointer transition-all"
             >
               <Award className="w-3.5 h-3.5 text-amber-400" />
               <span>Kayıtlı Kuponlar</span>
@@ -1678,78 +1709,77 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
             </button>
             <button
               onClick={() => setLivePlayerMode((m) => (m === 'off' ? 'mini' : 'off'))}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600/25 to-rose-600/15 hover:from-red-600/35 hover:to-rose-600/25 border border-red-500/40 text-red-300 font-extrabold text-xs cursor-pointer transition-all"
+              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 text-red-300 font-extrabold text-xs cursor-pointer transition-all"
             >
-              <span className={`w-2 h-2 rounded-full ${livePlayerMode !== 'off' ? 'bg-red-500 animate-ping' : 'bg-red-500 animate-pulse'}`} />
               <Tv className="w-3.5 h-3.5 text-red-400" />
-              <span>{livePlayerMode !== 'off' ? 'Canlı Yayını Gizle' : 'TJK TV Canlı'}</span>
+              <span>{livePlayerMode !== 'off' ? 'TV Kapat' : 'TJK TV'}</span>
             </button>
             <button
               onClick={handleManualRefresh}
               disabled={programLoading}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-300 font-bold text-xs cursor-pointer transition-all disabled:opacity-60"
+              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-300 font-bold text-xs cursor-pointer transition-all disabled:opacity-60"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${programLoading ? 'animate-spin' : ''}`} />
-              <span>Canlı AGF Yenile</span>
+              <span className="hidden sm:inline">Canlı Yenile</span>
             </button>
           </div>
         </div>
 
         {/* Mobile Hippodrome Segmented Switch */}
-        <div className="md:hidden flex rounded-xl bg-slate-950/80 p-1 border border-slate-800 gap-1">
+        <div className="md:hidden flex rounded-xl bg-slate-950/80 p-0.5 border border-slate-800 gap-1">
           <button
             onClick={() => setHippodromeTab('tr')}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all flex items-center justify-center space-x-1.5 ${hippodromeTab === 'tr'
+            className={`flex-1 py-1 rounded-lg text-xs font-black transition-all flex items-center justify-center space-x-1.5 ${hippodromeTab === 'tr'
               ? 'bg-amber-400 text-slate-950 shadow-sm'
               : 'text-slate-400 hover:text-white'
               }`}
           >
-            <Flag className="w-3.5 h-3.5" />
+            <Flag className="w-3 h-3" />
             <span>Türkiye ({trPrograms.length})</span>
           </button>
           <button
             onClick={() => setHippodromeTab('foreign')}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all flex items-center justify-center space-x-1.5 ${hippodromeTab === 'foreign'
+            className={`flex-1 py-1 rounded-lg text-xs font-black transition-all flex items-center justify-center space-x-1.5 ${hippodromeTab === 'foreign'
               ? 'bg-cyan-400 text-slate-950 shadow-sm'
               : 'text-slate-400 hover:text-white'
               }`}
           >
-            <Globe className="w-3.5 h-3.5" />
+            <Globe className="w-3 h-3" />
             <span>Yurt Dışı ({foreignPrograms.length})</span>
           </button>
         </div>
 
         {/* Domestic Hippodromes */}
         {trPrograms.length > 0 && (
-          <div className={`space-y-1.5 ${hippodromeTab !== 'tr' ? 'hidden md:block' : ''}`}>
+          <div className={`space-y-1 ${hippodromeTab !== 'tr' ? 'hidden md:block' : ''}`}>
             <div className="hidden md:flex items-center space-x-1.5 text-[10px] font-black uppercase tracking-wider text-amber-400">
               <Flag className="w-3 h-3" />
               <span>Yurt İçi Hipodromlar (Türkiye)</span>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
               {trPrograms.map((p) => {
                 const isSel = p.id === selectedProgramId;
                 return (
                   <button
                     key={p.id}
                     onClick={() => handleSelectProgram(p.id)}
-                    className={`shrink-0 text-left px-3 py-2 rounded-xl border transition-all cursor-pointer min-w-[140px] ${isSel
-                      ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-lg shadow-amber-500/20'
+                    className={`shrink-0 text-left px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer min-w-[125px] ${isSel
+                      ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/20'
                       : 'bg-slate-950/70 hover:bg-slate-800/80 text-white border-slate-800'
                       }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-1.5">
                       <span className="font-black text-xs truncate">{p.place}</span>
                       {!p.isCompleted ? (
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[9px] font-black ${isSel ? 'bg-slate-950 text-emerald-400' : 'bg-emerald-500/20 text-emerald-300'
+                          className={`px-1.5 py-0.2 rounded text-[9px] font-black ${isSel ? 'bg-slate-950 text-emerald-400' : 'bg-emerald-500/20 text-emerald-300'
                             }`}
                         >
                           {p.beginRaceHour === 'Yarın' || p.beginRaceHour === 'Cuma' ? p.beginRaceHour : 'AÇIK'}
                         </span>
                       ) : (
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${isSel ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'
+                          className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${isSel ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'
                             }`}
                         >
                           BİTTİ
@@ -1762,7 +1792,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                     >
                       <span>{p.date}</span>
                       <span>
-                        {p.openingHour}–{p.closingHour}
+                        {p.openingHour}
                       </span>
                     </div>
                   </button>
@@ -1774,10 +1804,10 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
 
         {/* Foreign Hippodromes */}
         {foreignPrograms.length > 0 && (
-          <div className={`space-y-1.5 ${hippodromeTab !== 'foreign' ? 'hidden md:block' : ''}`}>
+          <div className={`space-y-1 ${hippodromeTab !== 'foreign' ? 'hidden md:block' : ''}`}>
             <div className="hidden md:flex items-center space-x-1.5 text-[10px] font-black uppercase tracking-wider text-cyan-400">
               <Globe className="w-3 h-3" />
-              <span>Yurt Dışı Hipodromlar (ABD / İngiltere / Güney Amerika / Avustralya)</span>
+              <span>Yurt Dışı Hipodromlar</span>
             </div>
             <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
               {foreignPrograms.map((p) => {
@@ -1914,20 +1944,22 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
           </section>
 
           {/* 🏁 Toplu Altılı Ganyan Canlı Sonuçları & Ganyan Paneli */}
-          <AltiliResultsSummaryBoard
-            detail={detail}
-            availableGames={availableGames}
-            activeGame={activeGame}
-            onSelectRace={(rNo) => {
-              setSelectedRaceNo(rNo);
-              setSubTab('bulletin');
-            }}
-            onSelectGame={(gId) => {
-              setSelectedGameId(gId);
-              const g = availableGames.find((ag) => ag.id === gId);
-              if (g) setSelectedRaceNo(g.startRace);
-            }}
-          />
+          {subTab !== 'results' && (
+            <AltiliResultsSummaryBoard
+              detail={detail}
+              availableGames={availableGames}
+              activeGame={activeGame}
+              onSelectRace={(rNo) => {
+                setSelectedRaceNo(rNo);
+                setSubTab('bulletin');
+              }}
+              onSelectGame={(gId) => {
+                setSelectedGameId(gId);
+                const g = availableGames.find((ag) => ag.id === gId);
+                if (g) setSelectedRaceNo(g.startRace);
+              }}
+            />
+          )}
 
           {/* SUBTAB 2: AI ALTILI TEMPLATES */}
           {subTab === 'ai_coupons' && (
@@ -2476,8 +2508,8 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                           setSelectedRaceNo(r.number);
                           setExpandedHorse(null);
                         }}
-                        className={`shrink-0 px-3 py-2 rounded-xl border text-left transition-all cursor-pointer min-w-[116px] ${isSel
-                          ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20'
+                        className={`shrink-0 px-2.5 py-1.5 rounded-xl border text-left transition-all cursor-pointer min-w-[105px] ${isSel
+                          ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20'
                           : 'bg-slate-900/90 hover:bg-slate-800 text-white border-slate-800'
                           }`}
                       >
@@ -2490,13 +2522,13 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                             {r.hour}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between gap-1 mt-1">
-                          <span className={`text-[10px] font-semibold ${isSel ? 'text-slate-900' : 'text-slate-400'}`}>
-                            {r.distance} {r.raceCourseType}
+                        <div className="flex items-center justify-between gap-1 mt-0.5">
+                          <span className={`text-[9px] font-semibold truncate max-w-[55px] ${isSel ? 'text-slate-900' : 'text-slate-400'}`}>
+                            {r.distance}m {r.raceCourseType}
                           </span>
                           {legBadge && (
                             <span
-                              className={`px-1 py-0.2 rounded text-[9px] font-black ${isSel
+                              className={`px-1 py-0.2 rounded text-[8px] font-black ${isSel
                                 ? 'bg-slate-950 text-amber-300'
                                 : 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
                                 }`}
@@ -2505,9 +2537,9 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center justify-between mt-1">
+                        <div className="flex items-center justify-between mt-0.5">
                           <span
-                            className={`text-[9px] font-black ${r.isFinished
+                            className={`text-[8px] font-black ${r.isFinished
                               ? isSel
                                 ? 'text-slate-950'
                                 : 'text-emerald-400'
@@ -2520,7 +2552,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                           </span>
                           {pickCount > 0 && (
                             <span
-                              className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${isSel ? 'bg-slate-950 text-white' : 'bg-emerald-500 text-slate-950'
+                              className={`px-1.5 py-0.2 rounded-full text-[8px] font-black ${isSel ? 'bg-slate-950 text-white' : 'bg-emerald-500 text-slate-950'
                                 }`}
                             >
                               {pickCount} At
@@ -2740,14 +2772,14 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                               }`}
                           >
                             {/* 📱 1. DEDICATED MOBILE RUNNER CARD (md:hidden) - High Contrast & Compact */}
-                            <div className="md:hidden p-2.5 sm:p-3 space-y-2">
+                            <div className="md:hidden p-2 sm:p-2.5 space-y-1.5">
                               {/* Top Row: Horse Selection Button + Name + Jockey Specs + Ganyan & AGF */}
-                              <div className="flex items-center justify-between gap-2.5">
-                                {/* Large Horse Number Selection Button */}
+                              <div className="flex items-center justify-between gap-2">
+                                {/* Compact Horse Number Selection Button */}
                                 <button
                                   disabled={isScratched}
                                   onClick={() => toggleHorsePick(activeRace.number, horse.number)}
-                                  className={`w-11 h-11 rounded-xl font-black flex flex-col items-center justify-center border transition-all cursor-pointer shrink-0 disabled:cursor-not-allowed ${isScratched
+                                  className={`w-9 h-9 rounded-lg font-black flex flex-col items-center justify-center border transition-all cursor-pointer shrink-0 disabled:cursor-not-allowed ${isScratched
                                     ? 'bg-rose-950/40 border-rose-500/30 text-rose-400 line-through'
                                     : isBankoPick
                                       ? 'bg-amber-400 border-amber-300 text-slate-950 shadow-md shadow-amber-500/30 scale-105'
@@ -2757,11 +2789,11 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                                     }`}
                                   title={isScratched ? 'Koşmaz' : 'Kupona Ekle / Çıkar'}
                                 >
-                                  <span className={`text-base leading-none ${isPicked ? 'font-black' : 'font-extrabold'}`}>
+                                  <span className={`text-sm leading-none ${isPicked ? 'font-black' : 'font-extrabold'}`}>
                                     {horse.number}
                                   </span>
                                   {isPicked && (
-                                    <span className="text-[8px] font-black uppercase tracking-tighter mt-0.5">
+                                    <span className="text-[7px] font-black uppercase tracking-tighter mt-0.5">
                                       {isBankoPick ? 'TEK' : 'SEÇİLDİ'}
                                     </span>
                                   )}
@@ -2772,10 +2804,10 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                                   onClick={() => setExpandedHorse(isExpanded ? null : horse.number)}
                                   className="flex-1 min-w-0 cursor-pointer"
                                 >
-                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                  <div className="flex items-center gap-1 flex-wrap">
                                     {horse.order > 0 && (
                                       <span
-                                        className={`px-1.5 py-0.2 rounded text-[10px] font-black ${horse.order === 1
+                                        className={`px-1 py-0.2 rounded text-[9px] font-black ${horse.order === 1
                                           ? 'bg-amber-400 text-slate-950'
                                           : horse.order === 2
                                             ? 'bg-slate-300 text-slate-950'
@@ -2786,44 +2818,44 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                                       </span>
                                     )}
                                     <span
-                                      className={`font-black text-sm tracking-tight truncate ${isScratched ? 'line-through text-rose-300' : 'text-white'
+                                      className={`font-black text-xs sm:text-sm tracking-tight truncate ${isScratched ? 'line-through text-rose-300' : 'text-white'
                                         }`}
                                     >
                                       {horse.name}
                                     </span>
                                     {horse.stablemate > 0 && (
-                                      <span className="px-1.5 py-0.2 rounded bg-indigo-500/25 border border-indigo-400/40 text-indigo-300 text-[9px] font-black">
+                                      <span className="px-1 py-0.2 rounded bg-indigo-500/25 border border-indigo-400/40 text-indigo-300 text-[8px] font-black">
                                         E{horse.stablemate}
                                       </span>
                                     )}
                                     {horse.equipment && (
-                                      <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-300 text-[9px] font-bold">
+                                      <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-300 text-[8px] font-bold">
                                         {horse.equipment}
                                       </span>
                                     )}
                                     {isScratched && (
-                                      <span className="px-1.5 py-0.2 rounded bg-rose-500/25 text-rose-300 text-[9px] font-black">
+                                      <span className="px-1 py-0.2 rounded bg-rose-500/25 text-rose-300 text-[8px] font-black">
                                         KOŞMAZ
                                       </span>
                                     )}
                                   </div>
 
                                   {/* Jockey, Weight, Gate & HP */}
-                                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                  <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5 flex-wrap">
                                     <span className={`font-bold ${horse.jockey.isJockeyChanged ? 'text-amber-300 font-black' : 'text-slate-200'}`}>
                                       {horse.jockey.name || '-'}
                                     </span>
                                     {horse.jockey.apprentice && (
-                                      <span className="text-[9px] text-cyan-300 font-bold">(AP)</span>
+                                      <span className="text-[8px] text-cyan-300 font-bold">(AP)</span>
                                     )}
                                     <span className="text-slate-600">•</span>
-                                    <span className="font-mono text-slate-300 font-bold">{horse.weight} kg</span>
+                                    <span className="font-mono text-slate-300">{horse.weight} kg</span>
                                     <span className="text-slate-600">•</span>
-                                    <span className="text-cyan-400 font-bold">St: {horse.start}</span>
+                                    <span className="text-cyan-400 font-semibold">St: {horse.start}</span>
                                     {horse.handicap ? (
                                       <>
                                         <span className="text-slate-600">•</span>
-                                        <span className="text-amber-400 font-bold">HP: {horse.handicap}</span>
+                                        <span className="text-amber-400 font-semibold">HP: {horse.handicap}</span>
                                       </>
                                     ) : null}
                                   </div>
@@ -2831,15 +2863,15 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
 
                                 {/* Right: GANYAN & AGF & AI Badges */}
                                 <div className="flex flex-col items-end shrink-0 pl-1">
-                                  <div className="flex items-center gap-1.5">
+                                  <div className="flex items-center gap-1">
                                     {horse.ganyan > 0 ? (
-                                      <span className="px-2 py-0.5 rounded-lg bg-amber-400/15 border border-amber-400/30 text-amber-300 font-mono font-black text-xs shadow-sm">
+                                      <span className="px-1.5 py-0.5 rounded bg-amber-400/15 border border-amber-400/30 text-amber-300 font-mono font-bold text-[11px]">
                                         {horse.ganyan.toFixed(2)} ₺
                                       </span>
                                     ) : null}
                                     {agf.percentage > 0 ? (
                                       <span
-                                        className={`px-2 py-0.5 rounded-lg font-mono font-black text-xs ${agf.isFavorite
+                                        className={`px-1.5 py-0.5 rounded font-mono font-black text-[11px] ${agf.isFavorite
                                           ? 'bg-amber-400 text-slate-950 shadow-sm'
                                           : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                                           }`}
@@ -2849,18 +2881,18 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                                     ) : null}
                                   </div>
                                   {ai && !isScratched && (
-                                    <div className="flex items-center gap-1 mt-1">
-                                      <span className={`px-1.5 py-0.2 rounded border text-[9px] font-bold ${getTagBadgeClass(ai.tag)}`}>
+                                    <div className="flex items-center gap-1 mt-0.5">
+                                      <span className={`px-1 py-0.2 rounded border text-[8px] font-bold ${getTagBadgeClass(ai.tag)}`}>
                                         {ai.tag}
                                       </span>
-                                      <span className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-black ${ai.score >= 80
+                                      <span className={`px-1 py-0.2 rounded text-[8px] font-mono font-black ${ai.score >= 80
                                         ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
                                         : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
                                         }`}>
                                         ⚡ HPI {ai.score}
                                       </span>
                                       {ai.score >= 68 && agf.percentage <= 12 && agf.percentage > 0 && (
-                                        <span className="px-1.5 py-0.2 rounded bg-purple-500/25 border border-purple-400/40 text-purple-300 text-[9px] font-black animate-pulse">
+                                        <span className="px-1 py-0.2 rounded bg-purple-500/25 border border-purple-400/40 text-purple-300 text-[8px] font-black animate-pulse">
                                           🎯 RADAR
                                         </span>
                                       )}
@@ -2872,16 +2904,16 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                               {/* Bottom Row: Son 6 Form Chips + Pedigree + Chevron */}
                               <div
                                 onClick={() => setExpandedHorse(isExpanded ? null : horse.number)}
-                                className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/60 cursor-pointer"
+                                className="flex items-center justify-between gap-2 pt-0.5 border-t border-slate-800/60 cursor-pointer"
                               >
                                 {/* Son 6 Form Chips */}
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <span className="text-[10px] text-slate-500 font-bold mr-0.5">Son 6:</span>
+                                <div className="flex items-center gap-0.5 shrink-0">
+                                  <span className="text-[9px] text-slate-500 font-bold mr-0.5">Son 6:</span>
                                   {horse.last6.length > 0 ? (
                                     horse.last6.map((f, idx) => (
                                       <span
                                         key={idx}
-                                        className={`w-4 h-4 rounded text-[9px] flex items-center justify-center font-mono font-bold ${getLast6ChipClass(
+                                        className={`w-3.5 h-3.5 rounded text-[8px] flex items-center justify-center font-mono font-bold ${getLast6ChipClass(
                                           f.result
                                         )}`}
                                       >
@@ -2889,26 +2921,26 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                                       </span>
                                     ))
                                   ) : (
-                                    <span className="text-[10px] text-slate-500">İlk Koşu</span>
+                                    <span className="text-[9px] text-slate-500">İlk Koşu</span>
                                   )}
                                 </div>
 
                                 {/* Pedigree & Expand Chevron */}
-                                <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 min-w-0">
+                                <div className="flex items-center space-x-1 text-[9px] text-slate-400 min-w-0">
                                   <span className="truncate">{horse.age} {horse.parents.father} - {horse.parents.mother}</span>
-                                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                  <ChevronDown className={`w-3 h-3 text-slate-400 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                                 </div>
                               </div>
                             </div>
 
                             {/* 🖥️ 2. DESKTOP RUNNER TABLE ROW (hidden md:grid) */}
-                            <div className="hidden md:grid md:grid-cols-12 gap-2 px-3 sm:px-4 py-2.5 items-center">
+                            <div className="hidden md:grid md:grid-cols-12 gap-2 px-3 sm:px-4 py-1.5 sm:py-2 items-center">
                               {/* Col 1: Saddle Cloth + Forma */}
-                              <div className="md:col-span-1 flex items-center space-x-2">
+                              <div className="md:col-span-1 flex items-center space-x-1.5">
                                 <button
                                   disabled={isScratched}
                                   onClick={() => toggleHorsePick(activeRace.number, horse.number)}
-                                  className={`w-9 h-9 rounded-xl font-black text-sm flex items-center justify-center border transition-all cursor-pointer shrink-0 disabled:cursor-not-allowed ${isScratched
+                                  className={`w-8 h-8 rounded-lg font-black text-xs flex items-center justify-center border transition-all cursor-pointer shrink-0 disabled:cursor-not-allowed ${isScratched
                                     ? 'bg-rose-950/40 border-rose-500/30 text-rose-400 line-through'
                                     : isBankoPick
                                       ? 'bg-amber-400 border-amber-300 text-slate-950 shadow-md shadow-amber-500/30 scale-105'
@@ -2924,7 +2956,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({ user, onOpenVI
                                   <img
                                     src={horse.uniformImageURL}
                                     alt=""
-                                    className="w-7 h-7 rounded-md object-cover border border-slate-700 hidden sm:block"
+                                    className="w-6 h-6 rounded-md object-cover border border-slate-700 hidden sm:block"
                                     loading="lazy"
                                   />
                                 ) : null}
