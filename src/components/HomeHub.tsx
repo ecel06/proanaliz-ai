@@ -358,48 +358,49 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         
-        {/* Top Header: Brand & Quick Install Action (Compact) */}
-        <div className="text-center space-y-1">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <div className="inline-flex items-center space-x-2 px-3 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-[10px] font-extrabold tracking-widest uppercase text-slate-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>ProAnaliz AI • Küresel Analiz Terminali</span>
+        {/* Top Header: Brand Logo & Main User Actions (Clean & Spacious) */}
+        <header className="w-full flex items-center justify-between py-1.5 sm:py-2 border-b border-slate-800/60 shrink-0">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 via-teal-500 to-indigo-600 p-[1.5px] shadow-lg shadow-emerald-500/20 flex items-center justify-center">
+              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                <span className="text-base">⚡</span>
+              </div>
             </div>
-
-            {onOpenInstallModal && (
-              <button
-                onClick={onOpenInstallModal}
-                className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 text-[10px] font-bold text-slate-300 hover:text-white transition-all shadow cursor-pointer group"
-                title="Telefona İndir, Karekod ve Kurulum Rehberi"
-              >
-                <Smartphone className="w-3 h-3 text-emerald-400 group-hover:scale-110 transition-transform" />
-                <span>Telefona İndir</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              </button>
-            )}
-
-            {onOpenShare && (
-              <button
-                onClick={onOpenShare}
-                className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 border border-emerald-400/40 text-[10px] font-black text-emerald-300 hover:text-white transition-all shadow cursor-pointer group"
-                title="Arkadaşını Davet Et, +3 Gün Hediye VIP Kazan!"
-              >
-                <Gift className="w-3 h-3 text-amber-400 group-hover:scale-110 transition-transform" />
-                <span>Paylaş &amp; Kazan</span>
-                <span className="px-1 py-0.2 rounded text-[8px] font-black bg-amber-400 text-slate-950 font-mono">
-                  +3G
+            <div>
+              <div className="flex items-center space-x-1.5">
+                <span className="font-black text-sm sm:text-base text-white tracking-tight">
+                  ProAnaliz <span className="text-emerald-400">AI</span>
                 </span>
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Canlı
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 hidden sm:block">
+                Küresel Yapay Zeka Analiz Terminali
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
+            {user?.role === 'admin' && onOpenAdmin && (
+              <button
+                onClick={onOpenAdmin}
+                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 font-black text-xs hover:bg-rose-500/30 cursor-pointer active:scale-95 transition-all shadow-xs"
+                title="Yönetici Paneli"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-rose-400" />
+                <span className="hidden sm:inline">Yönetici</span>
               </button>
             )}
 
             {onOpenVIP && (
               <button
                 onClick={onOpenVIP}
-                className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-[10px] transition-all shadow-md shadow-amber-500/25 cursor-pointer active:scale-95 group"
-                title="VIP Üyelik Paketleri ve Ayrıcalıkları"
+                className="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 cursor-pointer active:scale-95 transition-all"
+                title="VIP Kulübü ve Ayrıcalıkları"
               >
-                <Crown className="w-3 h-3 text-slate-950" />
-                <span>{user?.isVip ? '👑 VIP Üyeliğim' : '👑 VIP Üye Ol'}</span>
+                <Crown className="w-3.5 h-3.5" />
+                <span>{user?.isVip ? '👑 VIP' : '👑 VIP Ol'}</span>
               </button>
             )}
 
@@ -407,89 +408,27 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               onOpenAuth && (
                 <button
                   onClick={onOpenAuth}
-                  className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-bold text-[10px] transition-all shadow cursor-pointer"
+                  className="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs cursor-pointer active:scale-95 transition-all shadow-xs"
                   title="Giriş Yap veya Ücretsiz Üye Ol"
                 >
-                  <UserIcon className="w-3 h-3 text-amber-400" />
-                  <span>Giriş / Üye Ol</span>
+                  <UserIcon className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Giriş Yap</span>
                 </button>
               )
             ) : (
-              <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-slate-900/90 border border-slate-800 text-[10px]">
-                <button
-                  onClick={onOpenProfile}
-                  className="inline-flex items-center space-x-1 font-bold text-slate-300 hover:text-white cursor-pointer transition-colors"
-                  title="Üye Paneli & Hesap Ayarları"
-                >
-                  <UserIcon className="w-3 h-3 text-emerald-400" />
-                  <span>{user.name.split(' ')[0]}</span>
-                </button>
-                {user.isVip && (
-                  <span className="text-[9px] px-1 py-0.2 rounded bg-amber-400 text-slate-950 font-black">VIP</span>
-                )}
-                {onLogout && (
-                  <button
-                    onClick={onLogout}
-                    className="text-slate-500 hover:text-rose-400 cursor-pointer transition-colors ml-1"
-                    title="Çıkış Yap"
-                  >
-                    <LogOut className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            )}
-
-            {user?.role === 'admin' && onOpenAdmin && (
               <button
-                onClick={onOpenAdmin}
-                className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/50 hover:bg-rose-500/30 text-rose-300 font-black text-[10px] transition-all shadow-md shadow-rose-500/20 cursor-pointer active:scale-95 group"
-                title="Yönetici (Admin) Paneli"
+                onClick={onOpenProfile}
+                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
+                title="Üye Profili"
               >
-                <ShieldCheck className="w-3 h-3 text-rose-400" />
-                <span>🛡️ Yönetici Paneli</span>
-              </button>
-            )}
-
-            {deferredPrompt && !isInstalled && (
-              <button
-                onClick={handleInstallApp}
-                className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-[10px] transition-colors shadow-lg shadow-emerald-500/20 cursor-pointer animate-pulse"
-              >
-                <Download className="w-3 h-3" />
-                <span>Telefona Kur</span>
+                <UserIcon className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="truncate max-w-[70px]">{user.name.split(' ')[0]}</span>
               </button>
             )}
           </div>
+        </header>
 
-          {/* Live AI Accuracy Scorecard Banner */}
-          {onOpenAIPerformance && (
-            <div 
-              onClick={onOpenAIPerformance}
-              className="mt-2 mb-4 p-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-slate-900 to-emerald-500/15 border border-amber-400/30 hover:border-amber-400/60 transition-all cursor-pointer flex items-center justify-between gap-3 group shadow-lg shadow-amber-500/5 max-w-xl mx-auto"
-            >
-              <div className="flex items-center gap-2.5 text-left">
-                <div className="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-400/30">
-                  <Trophy className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-white">Yapay Zeka Başarı Karnesi</span>
-                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      Doğrulanmış İstatistikler
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-slate-400">
-                    Biten maçlar ve resmi sonuçlarla kanıtlanmış şeffaf Poisson tahmin performansı
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-amber-400 font-bold text-xs shrink-0 group-hover:translate-x-1 transition-transform">
-                <span className="hidden sm:inline">İncele</span>
-                <ChevronRight className="w-4 h-4" />
-              </div>
-            </div>
-          )}
-
+        <div className="text-center space-y-1">
           <h1 className="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-white">
             Bölüm Seçiniz
           </h1>
@@ -650,60 +589,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </button>
         </div>
 
-        {/* 📱 TELEFONA İNDİR BANNERI (Responsive & Never Squashed on Mobile) */}
-        <div className="w-full shrink-0 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 border border-slate-800 hover:border-emerald-500/40 p-3 sm:p-3.5 md:py-2.5 md:px-4 transition-all shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 relative overflow-hidden group">
-          <div className="flex items-center gap-2.5 sm:gap-3 text-left min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center shrink-0 text-emerald-400 shadow">
-              <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                <span className="text-xs sm:text-sm font-black text-white">
-                  ProAnaliz AI Cebinizde
-                </span>
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
-                  ÜCRETSİZ PWA
-                </span>
-              </div>
-              <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 leading-tight">
-                Tek dokunuşla ana ekrana ekleyin, canlı gol ve kupon bildirimlerini anında alın.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-0.5 sm:pt-0">
-            {deferredPrompt && !isInstalled && (
-              <button
-                onClick={handleInstallApp}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-xs transition-all shadow cursor-pointer animate-pulse"
-              >
-                <Download className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Hemen Kur</span>
-              </button>
-            )}
-            <button
-              onClick={() => {
-                if (onOpenInstallModal) onOpenInstallModal();
-              }}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 hover:border-emerald-400/60 border border-slate-700 active:scale-95 text-white font-black text-xs transition-all shadow-xs cursor-pointer group"
-            >
-              <QrCode className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
-              <span>Telefona İndir</span>
-            </button>
-            {onOpenShare && (
-              <button
-                onClick={onOpenShare}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-95 text-slate-950 font-black text-xs transition-all shadow-md shadow-amber-500/20 cursor-pointer group"
-                title="Arkadaşını Davet Et, +3 Gün Hediye VIP Kazan!"
-              >
-                <Gift className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Paylaş &amp; Kazan</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* 🌟 GÜNÜN ALTIN FIRSATLARI & AI RADAR CARD (Compact & Dynamic) */}
+        {/* 🌟 GÜNÜN ALTIN FIRSATLARI & AI RADAR CARD (Direct & Engaging) */}
         <div className="w-full shrink-0 rounded-2xl bg-slate-900/70 border border-slate-800/80 p-2.5 sm:p-3 md:py-2 md:px-3 space-y-1.5 shadow-xl">
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
             <div className="flex items-center gap-2">
@@ -823,6 +709,37 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 </div>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Subtle quick utility links */}
+        <div className="w-full flex items-center justify-center gap-3 sm:gap-6 text-xs text-slate-400 py-1.5 flex-wrap">
+          {onOpenInstallModal && (
+            <button
+              onClick={onOpenInstallModal}
+              className="hover:text-emerald-300 flex items-center gap-1.5 cursor-pointer transition-colors text-[11px] px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Telefona Yükle</span>
+            </button>
+          )}
+          {onOpenShare && (
+            <button
+              onClick={onOpenShare}
+              className="hover:text-amber-300 flex items-center gap-1.5 cursor-pointer transition-colors text-[11px] px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800"
+            >
+              <Gift className="w-3.5 h-3.5 text-amber-400" />
+              <span>Arkadaşını Davet Et (+3G VIP)</span>
+            </button>
+          )}
+          {onOpenAIPerformance && (
+            <button
+              onClick={onOpenAIPerformance}
+              className="hover:text-cyan-300 flex items-center gap-1.5 cursor-pointer transition-colors text-[11px] px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800"
+            >
+              <Trophy className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Doğrulanmış Başarı Karnesi</span>
+            </button>
           )}
         </div>
 

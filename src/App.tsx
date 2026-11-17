@@ -17,6 +17,7 @@ import { MatchOfTheDayBanner } from './components/MatchOfTheDayBanner';
 import { GoalNotificationToast, LiveGoalEvent } from './components/GoalNotificationToast';
 import { AuthModal } from './components/AuthModal';
 import { HomeHub } from './components/HomeHub';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { User, getStoredUser, clearAuthSession, fetchCurrentUser, SiteAnnouncement, fetchAnnouncementApi } from './utils/authHelper';
 import { computeAIPerformance } from './utils/aiPerformanceHelper';
 import type { AIChatCoupon, AICouponItem } from './utils/aiChatEngine';
@@ -386,7 +387,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.17.03';
+  const CLIENT_BUILD_VERSION = '2026.11.17.04';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1149,7 +1150,7 @@ export const App: React.FC = () => {
   if (activeSection === 'home') {
     return (
       <div
-        className="min-h-[100dvh] w-full overflow-y-auto flex flex-col bg-slate-950 scrollbar-none"
+        className="min-h-[100dvh] w-full overflow-y-auto flex flex-col bg-slate-950 scrollbar-none pb-16 sm:pb-0"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {newVersionAvailable && (
@@ -1336,6 +1337,24 @@ export const App: React.FC = () => {
             />
           )}
         </React.Suspense>
+
+        {/* Mobile Bottom Navigation Bar (sm:hidden) */}
+        <MobileBottomNav
+          activeSection={activeSection}
+          activeTabMode={activeTabMode}
+          onSelectSection={(sec) => handleNavigateSection(sec)}
+          onSelectFootballTab={(tab) => {
+            setActiveTabMode(tab);
+            handleNavigateSection('football');
+          }}
+          onOpenStandings={() => setIsStandingsOpen(true)}
+          onOpenProfile={() => setIsProfileModalOpen(true)}
+          onOpenAuth={() => setIsAuthModalOpen(true)}
+          onOpenVIP={() => setIsVipModalOpen(true)}
+          user={currentUser}
+          betslipCount={betslipItems.length}
+          onOpenBetslip={() => setIsBetslipOpen(true)}
+        />
       </div>
     );
   }
@@ -2421,6 +2440,24 @@ export const App: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Bottom Navigation Bar (sm:hidden) */}
+      <MobileBottomNav
+        activeSection={activeSection}
+        activeTabMode={activeTabMode}
+        onSelectSection={(sec) => handleNavigateSection(sec)}
+        onSelectFootballTab={(tab) => {
+          setActiveTabMode(tab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onOpenStandings={() => setIsStandingsOpen(true)}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenVIP={() => setIsVipModalOpen(true)}
+        user={currentUser}
+        betslipCount={betslipItems.length}
+        onOpenBetslip={() => setIsBetslipOpen(true)}
+      />
 
     </div>
   );

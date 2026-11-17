@@ -111,25 +111,24 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl w-full max-w-full overflow-x-clip">
-      {/* 🚀 Beta / Geliştirme Aşaması Bilgilendirme Şeridi - Canlı, Parlak & Prestijli */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 py-1.5 px-3 text-center text-xs font-bold text-slate-950 shadow-md shadow-amber-500/20 flex flex-wrap items-center justify-center gap-2 border-b border-amber-300/40">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-950 text-amber-300 font-black text-[10px] uppercase tracking-wider shadow-sm ring-1 ring-amber-400/50">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-          TEST &amp; GELİŞTİRME
-        </span>
-        <span className="font-extrabold tracking-tight text-slate-950">
-          ⚡ ProAnaliz AI şu anda <span className="underline decoration-slate-950/40 underline-offset-2">Geliştirme &amp; Test Aşamasındadır</span>.
-        </span>
-        <span className="hidden md:inline text-slate-900 font-semibold">
-          • Karşılaştığınız hata ve önerilerinizi bildirebilirsiniz:
-        </span>
+      {/* 🚀 Beta / Geliştirme Aşaması Bilgilendirme Şeridi - Ultra Compact & Sleek */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 py-1 px-2.5 text-center text-xs font-bold text-slate-950 flex items-center justify-between sm:justify-center gap-2 border-b border-amber-300/40">
+        <div className="flex items-center gap-1.5 truncate">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-slate-950 text-amber-300 font-black text-[9px] uppercase tracking-wider shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+            BETA
+          </span>
+          <span className="font-extrabold text-[11px] sm:text-xs text-slate-950 truncate">
+            ProAnaliz AI Geliştirme &amp; Test Aşamasındadır.
+          </span>
+        </div>
         {onOpenFeedback && (
           <button
             onClick={onOpenFeedback}
-            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-950 hover:bg-slate-900 text-amber-300 hover:text-white font-black text-[11px] shadow-sm cursor-pointer transition-all active:scale-95 ml-1 ring-1 ring-slate-950/40"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-950 hover:bg-slate-900 text-amber-300 hover:text-white font-black text-[10px] shrink-0 cursor-pointer transition-all active:scale-95"
           >
-            <MessageSquare className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
-            <span>Geri Bildirim Gönder</span>
+            <MessageSquare className="w-3 h-3 text-amber-400" />
+            <span>Geri Bildirim</span>
           </button>
         )}
       </div>
@@ -168,26 +167,13 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Right Action Tools - Complete Suite with Zero Horizontal Overflow */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink min-w-0 overflow-x-auto no-scrollbar py-0.5">
-            
-            {/* 💬 Geri Bildirim (Beta Test) */}
-            {onOpenFeedback && (
-              <button
-                onClick={onOpenFeedback}
-                className="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center space-x-1 transition-all shadow-xs shrink-0 cursor-pointer active:scale-95"
-                title="Görüş, Öneri ve Hata Bildirimi Gönder"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden md:inline">Geri Bildirim</span>
-              </button>
-            )}
-            
+          {/* Right Action Tools - Clean, Essential, Zero Clutter */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink min-w-0 py-0.5">
             {/* Direct Update Trigger in Header */}
             {hasNewUpdate && onUpdateApp && (
               <button
                 onClick={onUpdateApp}
-                className="flex items-center space-x-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 text-slate-950 font-black text-[11px] sm:text-xs shadow-lg shadow-emerald-500/50 ring-2 ring-emerald-300 animate-pulse active:scale-95 transition-all cursor-pointer whitespace-nowrap shrink-0"
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/50 ring-2 ring-emerald-300 animate-pulse active:scale-95 transition-all cursor-pointer whitespace-nowrap shrink-0"
                 title="Yeni Güncelleme Mevcut - Yenilemek için Tıklayın"
               >
                 <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-950 stroke-[3]" />
@@ -211,21 +197,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-400' : 'text-emerald-400'}`} />
                 <span className="hidden md:inline font-bold text-xs text-white">
                   {isRefreshing ? 'Çekiliyor...' : 'Yenile'}
-                </span>
-              </button>
-            )}
-
-            {/* 🎁 Share App & Referral Trigger */}
-            {onOpenShare && (
-              <button
-                onClick={onOpenShare}
-                className="flex items-center space-x-1 px-2 sm:px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-amber-500/15 hover:from-emerald-500/25 hover:to-amber-500/25 border border-emerald-500/40 text-emerald-300 hover:text-white text-xs font-black transition-all shadow-xs cursor-pointer shrink-0 active:scale-95 group"
-                title="Uygulamayı Paylaş & Arkadaşını Davet Et (+3 Gün VIP Kazan!)"
-              >
-                <Share2 className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
-                <span className="hidden sm:inline">Paylaş</span>
-                <span className="px-1 py-0.2 rounded text-[9px] font-black bg-amber-400 text-slate-950 font-mono">
-                  +3G
                 </span>
               </button>
             )}
@@ -380,8 +351,8 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* ROW 3: Dedicated Football Tools & Features Bar (Sleek, Centered, Zero Horizontal Overflow) */}
         {activeSection === 'football' && (
-          <div className="w-full pb-2 pt-0.5">
-            <div className="flex items-center justify-center gap-1 sm:gap-1.5 flex-wrap p-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 shadow-inner w-full max-w-5xl mx-auto">
+          <div className="w-full pb-1.5 pt-0.5">
+            <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 shadow-inner w-full max-w-5xl mx-auto overflow-x-auto no-scrollbar sm:flex-wrap sm:justify-center">
               {/* Renk & Takım Teması */}
               {onOpenThemeModal && (
                 <button
