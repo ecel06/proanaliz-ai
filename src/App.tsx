@@ -387,7 +387,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.17.05';
+  const CLIENT_BUILD_VERSION = '2026.11.17.06';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1620,23 +1620,24 @@ export const App: React.FC = () => {
 
             {/* Mode Switcher when NOT searching: "Günün Maçları", "Günün Kuponları", "Biten Maçlar" */}
             {!isSearching && (
-              <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2.5 gap-2">
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-2.5 gap-2">
+                <div className="grid grid-cols-3 gap-1 sm:flex sm:items-center sm:gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => {
                       setActiveTabMode('upcoming');
                       setSelectedDate('all');
                       setSelectedCategory('all');
                     }}
-                    className={`flex items-center space-x-1.5 sm:space-x-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 py-2 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-w-0 ${
                       activeTabMode === 'upcoming'
                         ? 'bg-emerald-600 text-slate-950 font-black border-2 border-emerald-300 shadow-md shadow-emerald-950/40'
                         : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
                     }`}
                   >
-                    <Clock className={`w-3.5 sm:w-4 h-3.5 sm:h-4 ${activeTabMode === 'upcoming' ? 'text-slate-950 stroke-[2.5]' : 'text-emerald-400'}`} />
-                    <span>Günün Maçları</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                    <Clock className={`w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0 ${activeTabMode === 'upcoming' ? 'text-slate-950 stroke-[2.5]' : 'text-emerald-400'}`} />
+                    <span className="hidden sm:inline">Günün Maçları</span>
+                    <span className="sm:hidden truncate">Maçlar</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
                       activeTabMode === 'upcoming'
                         ? 'bg-emerald-950 text-emerald-200 border border-emerald-400/40'
                         : 'bg-slate-800 text-slate-300'
@@ -1651,15 +1652,16 @@ export const App: React.FC = () => {
                       setSelectedDate('all');
                       setSelectedCategory('all');
                     }}
-                    className={`flex items-center space-x-1.5 sm:space-x-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 py-2 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-w-0 ${
                       activeTabMode === 'coupons'
                         ? 'bg-amber-500 text-slate-950 font-black border-2 border-amber-300 shadow-md shadow-amber-950/40'
                         : 'bg-slate-900/60 text-slate-400 hover:text-amber-300 border border-slate-800'
                     }`}
                   >
-                    <Flame className={`w-3.5 sm:w-4 h-3.5 sm:h-4 ${activeTabMode === 'coupons' ? 'text-slate-950 stroke-[2.5] animate-pulse' : 'text-amber-400'}`} />
-                    <span>Günün Kuponları</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                    <Flame className={`w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0 ${activeTabMode === 'coupons' ? 'text-slate-950 stroke-[2.5] animate-pulse' : 'text-amber-400'}`} />
+                    <span className="hidden sm:inline">Günün Kuponları</span>
+                    <span className="sm:hidden truncate">Kuponlar</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
                       activeTabMode === 'coupons'
                         ? 'bg-amber-950 text-amber-200 border border-amber-400/40'
                         : 'bg-amber-400 text-slate-950 font-black'
@@ -1674,15 +1676,16 @@ export const App: React.FC = () => {
                       setSelectedDate('all');
                       setSelectedCategory('all');
                     }}
-                    className={`flex items-center space-x-1.5 sm:space-x-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 py-2 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-w-0 ${
                       activeTabMode === 'finished'
                         ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black border-2 border-blue-300 shadow-lg shadow-blue-900/40'
                         : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
                     }`}
                   >
-                    <CalendarCheck className={`w-3.5 sm:w-4 h-3.5 sm:h-4 ${activeTabMode === 'finished' ? 'text-white stroke-[2.5]' : 'text-slate-400'}`} />
-                    <span>Biten Maçlar</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                    <CalendarCheck className={`w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0 ${activeTabMode === 'finished' ? 'text-white stroke-[2.5]' : 'text-slate-400'}`} />
+                    <span className="hidden sm:inline">Biten Maçlar</span>
+                    <span className="sm:hidden truncate">Bitenler</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
                       activeTabMode === 'finished'
                         ? 'bg-blue-950 text-blue-200 border border-blue-400/50'
                         : 'bg-slate-800 text-slate-300'
@@ -1692,13 +1695,13 @@ export const App: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                   {activeTabMode === 'upcoming' && (
                     <div className="flex items-center space-x-1 bg-slate-900 border border-slate-800 p-0.5 rounded-xl shadow-inner">
                       <button
                         type="button"
                         onClick={() => handleSetViewMode('bulletin')}
-                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'bulletin'
+                        className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'bulletin'
                             ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
                             : 'text-slate-400 hover:text-white'
                           }`}
@@ -1710,7 +1713,7 @@ export const App: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleSetViewMode('cards')}
-                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'cards'
+                        className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'cards'
                             ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
                             : 'text-slate-400 hover:text-white'
                           }`}

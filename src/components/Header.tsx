@@ -375,11 +375,12 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenStandings && (
                 <button
                   onClick={onOpenStandings}
-                  className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
+                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
                   title="Güncel Puan Durumu"
                 >
                   <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Puan Durumu</span>
+                  <span className="hidden sm:inline">Puan Durumu</span>
+                  <span className="sm:hidden">Puan</span>
                 </button>
               )}
 
@@ -387,30 +388,12 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenAIPerformance && (
                 <button
                   onClick={onOpenAIPerformance}
-                  className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
+                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
                   title="Yapay Zeka Başarı Karnesi & Şeffaf İstatistikler"
                 >
                   <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Başarı Karnesi</span>
-                </button>
-              )}
-
-              {/* Günün Kuponları */}
-              {onOpenCoupons && (
-                <button
-                  onClick={activeTabMode === 'coupons' ? () => onSelectSection?.('football') : onOpenCoupons}
-                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg font-bold text-xs border transition-all cursor-pointer shadow-xs shrink-0 active:scale-95 ${
-                    activeTabMode === 'coupons'
-                      ? 'bg-amber-400 text-slate-950 border-amber-300 font-extrabold shadow-amber-500/20'
-                      : 'bg-slate-800 hover:bg-slate-750 text-white border-slate-700/80'
-                  }`}
-                  title={activeTabMode === 'coupons' ? "Maç Bültenine Dön" : "Günün Kuponları (Banko, İdeal, Sürpriz)"}
-                >
-                  <Flame className={`w-3.5 h-3.5 ${activeTabMode === 'coupons' ? 'text-slate-950 fill-current' : 'text-amber-400 animate-pulse'}`} />
-                  <span>{activeTabMode === 'coupons' ? 'Maç Bülteni' : 'Günün Kuponları'}</span>
-                  {activeTabMode !== 'coupons' && (
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 font-black">3</span>
-                  )}
+                  <span className="hidden sm:inline">Başarı Karnesi</span>
+                  <span className="sm:hidden">Karne</span>
                 </button>
               )}
 
@@ -418,7 +401,7 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenLiveTV && (
                 <button
                   onClick={onOpenLiveTV}
-                  className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs border border-rose-500/40 transition-all cursor-pointer shadow-md shadow-rose-500/15 active:scale-95 shrink-0 group"
+                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs border border-rose-500/40 transition-all cursor-pointer shadow-md shadow-rose-500/15 active:scale-95 shrink-0 group"
                   title="Canlı Maç & Spor TV Yayınlarını İzle (TRT Spor, TRT Yıldız, A Spor, HT Spor)"
                 >
                   <span className="relative flex h-2 w-2">
@@ -426,7 +409,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
                   </span>
                   <Tv className="w-3.5 h-3.5 text-rose-400 group-hover:scale-110 transition-transform" />
-                  <span>Canlı İzle</span>
+                  <span>Canlı TV</span>
                 </button>
               )}
 
@@ -493,7 +476,8 @@ export const Header: React.FC<HeaderProps> = ({
                   title="Kendi Maçını Analiz Et"
                 >
                   <Calculator className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>Kendi Maçını Analiz Et</span>
+                  <span className="hidden sm:inline">Kendi Maçını Analiz Et</span>
+                  <span className="sm:hidden">Özel Analiz</span>
                 </button>
               )}
             </div>
