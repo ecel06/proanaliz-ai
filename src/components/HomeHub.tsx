@@ -826,8 +826,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           )}
         </div>
 
-        {/* 🛡️ YASAL UYARI & SORUMLULUK REDDİ (YTD) - Belirgin & Göze Hitap Eden Tasarım */}
-        <div className="w-full shrink-0 flex items-center justify-center py-0.5 md:py-1">
+        {/* 🛡️ YASAL UYARI, +18 & SORUMLULUK REDDİ (YTD) - Belirgin & Göze Hitap Eden Tasarım */}
+        <div className="w-full shrink-0 flex items-center justify-center py-1 flex-wrap gap-2">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:py-1 rounded-full bg-rose-500/15 border border-rose-500/40 text-rose-300 text-[10px] sm:text-[11px] font-black shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
+            <span>🔞 18+</span>
+          </div>
+
           <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-amber-500/10 via-amber-400/20 to-amber-500/10 border border-amber-400/40 text-amber-200/90 shadow-md shadow-amber-500/10 text-[9px] sm:text-[10px] md:text-[11px] backdrop-blur-md max-w-full">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
             <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -835,7 +840,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               YASAL UYARI:
             </span>
             <span className="font-medium text-slate-300 truncate sm:whitespace-normal">
-              Bu platformdaki tüm analiz ve modellemeler bilgilendirme amaçlıdır; kesinlikle{' '}
+              18 yaşından küçükler şans oyunları oynayamaz. Tüm analizler istatistik amaçlıdır; kesinlikle{' '}
               <strong className="text-amber-300 font-black tracking-wide underline decoration-amber-400 decoration-2 underline-offset-2">
                 YATIRIM TAVSİYESİ DEĞİLDİR (YTD)
               </strong>

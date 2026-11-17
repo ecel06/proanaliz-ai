@@ -386,7 +386,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.16.08';
+  const CLIENT_BUILD_VERSION = '2026.11.17.01';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -2381,21 +2381,43 @@ export const App: React.FC = () => {
       </React.Suspense>
 
       {/* Footer */}
-      <footer className="mt-16 border-t border-slate-800/80 bg-slate-950 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2.5">
+      <footer className="mt-16 border-t border-slate-800/80 bg-slate-950 py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
           <div className="flex items-center justify-center space-x-2 text-slate-300 font-bold text-sm">
             <BrainCircuit className="w-4 h-4 text-emerald-400" />
             <span>ProAnaliz AI • Otomatik İddaa, At Yarışı &amp; Borsa Analiz Platformu</span>
           </div>
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-amber-400/20 to-amber-500/15 border border-amber-400/40 text-xs font-bold text-amber-200 shadow-md shadow-amber-500/10 backdrop-blur-md">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
-            <span>⚠️ Yasal Uyarı: Bu platformdaki tüm içerik, sinyal ve analizler <strong className="text-amber-300 font-black underline decoration-amber-400">YATIRIM TAVSİYESİ DEĞİLDİR (YTD)</strong>.</span>
+
+          {/* Legal Compliance & Age Restriction Badges */}
+          <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-black shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
+              <span>🔞 18+ Yaş Sınırı</span>
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-sm">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>Sorumlu Oyun (Responsible Gaming)</span>
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/40 text-xs font-bold text-amber-200 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+              <span>⚠️ YATIRIM TAVSİYESİ DEĞİLDİR (YTD)</span>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 max-w-xl mx-auto leading-relaxed">
-            Bu uygulama hiçbir şekilde bahis oynatmaz, kupon satmaz veya aracılık etmez. Tüm oran ve yüzdeler Poisson dağılımı, Dixon-Coles düzeltmesi, TJK AGF verileri ve Borsa quant algoritmaları ile üretilmiş saf matematiksel modellemelerdir.
-          </p>
+
+          {/* Detailed Legal Text */}
+          <div className="max-w-2xl mx-auto space-y-2 text-xs text-slate-400 leading-relaxed bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80">
+            <p>
+              <strong className="text-rose-400 font-bold">18 Yaşından Küçüklerin Dikkatine:</strong> Türkiye Cumhuriyeti kanunları ve 7258 sayılı kanun uyarınca 18 yaşından küçüklerin bahis, şans oyunları ve iddaa oynaması kesinlikle yasaktır. ProAnaliz AI hiçbir şekilde bahis oynatmaz, para toplamaz, kupon yatırmaz veya aracılık etmez.
+            </p>
+            <p className="text-[11px] text-slate-500 border-t border-slate-800/60 pt-2">
+              Sitede yer alan oranlar, yüzdeler ve kupon kombinasyonları Dixon-Coles Poisson modelleri, TJK AGF resmi verileri ve makine öğrenimi ile üretilmiş saf istatistiki simülasyonlardır. Şans oyunları bağımlılık riski taşır, lütfen bilinçli ve bütçenizi aşmayacak şekilde sorumlu oynayınız.
+            </p>
+          </div>
+
           <div className="text-[11px] text-slate-600">
-            © 2026 ProAnaliz AI • Canlı API Veri Entegrasyonu
+            © 2026 ProAnaliz AI • Tüm Hakları Saklıdır • Canlı Veri &amp; Olasılık Simülasyonu
           </div>
         </div>
       </footer>

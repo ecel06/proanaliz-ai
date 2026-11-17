@@ -762,8 +762,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
 
         {/* Footer info */}
-        <div className="mt-4 text-center text-[10px] text-slate-500">
-          Giriş yaparak <span className="text-slate-400 underline">Kullanım Koşulları</span> ve <span className="text-slate-400 underline">Gizlilik Politikası</span>'nı kabul etmiş sayılırsınız.
+        <div className="mt-4 text-center text-[10px] text-slate-500 space-y-1">
+          <div className="flex items-center justify-center gap-1.5 text-rose-400 font-bold">
+            <span>🔞 18+</span>
+            <span>18 yaşından büyük olduğumu beyan ederim</span>
+          </div>
+          <div>
+            Giriş veya kayıt olarak <span className="text-slate-400 underline">Kullanım Koşulları</span>, <span className="text-slate-400 underline">Sorumlu Oyun İlkeleri</span> ve <span className="text-slate-400 underline">Gizlilik Politikası</span>'nı kabul etmiş sayılırsınız.
+          </div>
         </div>
       </div>
     </div>

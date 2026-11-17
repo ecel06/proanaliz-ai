@@ -240,11 +240,10 @@ export const VIPModal: React.FC<VIPModalProps> = ({
               <div
                 key={plan.id}
                 onClick={() => setSelectedPlan(plan.id as any)}
-                className={`relative rounded-2xl p-4 border transition-all cursor-pointer flex flex-col justify-between ${
-                  isSelected
-                    ? 'bg-gradient-to-b from-slate-800/90 to-slate-900 border-amber-400 ring-2 ring-amber-400/30 shadow-lg shadow-amber-500/10 scale-[1.02]'
-                    : 'bg-slate-950/60 hover:bg-slate-800/40 border-slate-800'
-                }`}
+                className={`relative rounded-2xl p-4 border transition-all cursor-pointer flex flex-col justify-between ${isSelected
+                  ? 'bg-gradient-to-b from-slate-800/90 to-slate-900 border-amber-400 ring-2 ring-amber-400/30 shadow-lg shadow-amber-500/10 scale-[1.02]'
+                  : 'bg-slate-950/60 hover:bg-slate-800/40 border-slate-800'
+                  }`}
               >
                 {plan.badge && (
                   <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
@@ -274,9 +273,8 @@ export const VIPModal: React.FC<VIPModalProps> = ({
                   <span className={`font-bold ${isSelected ? 'text-amber-400' : 'text-slate-500'}`}>
                     {isSelected ? 'Seçildi' : 'Seç'}
                   </span>
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                    isSelected ? 'border-amber-400 bg-amber-400 text-slate-950' : 'border-slate-700'
-                  }`}>
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-amber-400 bg-amber-400 text-slate-950' : 'border-slate-700'
+                    }`}>
                     {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                   </div>
                 </div>
@@ -320,11 +318,10 @@ export const VIPModal: React.FC<VIPModalProps> = ({
                   key={method.id}
                   type="button"
                   onClick={() => setPaymentMethod(method.id as any)}
-                  className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                    active
-                      ? 'bg-amber-400/10 border-amber-400 ring-1 ring-amber-400/30 text-white shadow-md'
-                      : 'bg-slate-950/60 hover:bg-slate-800/40 border-slate-800 text-slate-400'
-                  }`}
+                  className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${active
+                    ? 'bg-amber-400/10 border-amber-400 ring-1 ring-amber-400/30 text-white shadow-md'
+                    : 'bg-slate-950/60 hover:bg-slate-800/40 border-slate-800 text-slate-400'
+                    }`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <Icon className={`w-4 h-4 ${active ? 'text-amber-400' : 'text-slate-500'}`} />
@@ -415,8 +412,8 @@ export const VIPModal: React.FC<VIPModalProps> = ({
                 {paymentMethod === 'bank'
                   ? 'Havale Bildir & VIP Üyeliği Başlat'
                   : user.isVip
-                  ? 'Planı Yenile / Seçili Pakete Geç'
-                  : 'Seçili Paketi Başlat & VIP Ol'}
+                    ? 'Planı Yenile / Seçili Pakete Geç'
+                    : 'Seçili Paketi Başlat & VIP Ol'}
               </span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
@@ -476,13 +473,15 @@ export const VIPModal: React.FC<VIPModalProps> = ({
         </div>
 
         {/* Trust Badges */}
-        <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-slate-500">
+        <div className="mt-4 flex items-center justify-center gap-3 sm:gap-4 text-[10px] text-slate-500 flex-wrap">
+          <span className="text-rose-400 font-bold">🔞 18+ Yaş Sınırı</span>
+          <span>•</span>
           <span className="flex items-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
             256-Bit SSL Güvenli Altyapı
           </span>
           <span>•</span>
-          <span>İstediğiniz An İptal Edebilme</span>
+          <span>İstediğiniz An İptal</span>
           <span>•</span>
           <span>Anında VIP Tanımlama</span>
         </div>

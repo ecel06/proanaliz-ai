@@ -997,9 +997,22 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
         </p>
       </div>
 
-      {/* Yasal Uyarı / Sorumluluk Reddi */}
-      <div className="text-center text-[10px] sm:text-[11px] text-slate-500 max-w-xl mx-auto py-2">
-        <span>⚠️ <strong>Yasal Uyarı:</strong> Kuponlar ve maç olasılıkları saf istatistiki algoritmalar tarafından hesaplanır; kesin kazanç vaat etmez ve yatırım/bahis tavsiyesi niteliğinde değildir (YTD).</span>
+      {/* 🔞 Yasal Uyarı, +18 & Sorumlu Oyun / Sorumluluk Reddi */}
+      <div className="max-w-2xl mx-auto p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-center space-y-2">
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          <span className="px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/40 text-rose-300 text-[10px] font-black">
+            🔞 18+ Yaş Sınırı
+          </span>
+          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold">
+            🛡️ Sorumlu Oyun (Bilinçli Bahis)
+          </span>
+          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[10px] font-bold">
+            ⚠️ YTD
+          </span>
+        </div>
+        <p className="text-[10px] sm:text-[11px] text-slate-400 leading-relaxed">
+          18 yaşından küçüklerin bahis ve şans oyunları oynaması kanunen yasaktır. Kuponlar ve maç olasılıkları saf istatistiki algoritmalar tarafından simüle edilir; kesin kazanç vaat etmez ve yatırım/bahis tavsiyesi niteliğinde değildir. Lütfen bütçenizi aşmayacak şekilde sorumlu oynayınız.
+        </p>
       </div>
 
       {/* Bottom Back Button */}
