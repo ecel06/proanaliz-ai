@@ -37,9 +37,14 @@ body.no-scrollbar,
   scrollbar-width: none !important;
 }
 
-/* Global touch action: Ensure two-finger pinch-to-zoom is ALWAYS enabled on mobile */
-html, body {
+/* Global touch action: Ensure two-finger pinch-to-zoom is ALWAYS enabled on mobile across all screens */
+html, body, #root, main {
   touch-action: auto !important;
+}
+
+/* Ensure touch-pan-y allows two-finger pinch-to-zoom while handling vertical pan */
+.touch-pan-y {
+  touch-action: pan-y pinch-zoom !important;
 }
 
 /* Touch scrolling enhancement: ensure horizontal tab strips allow fluid vertical page swiping AND pinch-zoom */

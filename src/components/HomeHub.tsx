@@ -348,13 +348,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   };
 
   return (
-    <div className="h-full w-full flex-1 min-h-0 bg-slate-950 text-slate-100 flex flex-col items-center px-3 sm:px-6 py-1.5 sm:py-2.5 relative overflow-x-hidden touch-pan-y">
+    <div className="h-full w-full flex-1 min-h-0 bg-slate-950 text-slate-100 flex flex-col items-center px-3 sm:px-6 py-1.5 sm:py-2.5 relative overflow-x-hidden">
       {/* Subtle Ambient Glow */}
       <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-emerald-500/10 blur-[90px]" />
       <div className="pointer-events-none absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-amber-500/10 blur-[90px]" />
 
       <div
-        className="w-full max-w-5xl h-full flex-1 min-h-0 flex flex-col justify-between space-y-1.5 sm:space-y-2 md:space-y-0 relative z-10 touch-pan-y"
+        className="w-full max-w-5xl h-full flex-1 min-h-0 flex flex-col justify-between space-y-1.5 sm:space-y-2 md:space-y-0 relative z-10"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         
