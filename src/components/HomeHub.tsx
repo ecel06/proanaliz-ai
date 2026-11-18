@@ -133,12 +133,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
 
             for (const race of detail.races) {
               if (!race.horses) continue;
+              const rNum = race.number || race.raceNumber || 1;
               for (const h of race.horses) {
                 const agf = parseFloat(h.agfPercent || '0') || 0;
                 if (agf > highestAgf) {
                   highestAgf = agf;
                   topHorse = h;
-                  topRaceNum = race.raceNumber;
+                  topRaceNum = rNum;
                 }
               }
             }
@@ -158,10 +159,11 @@ export const HomeHub: React.FC<HomeHubProps> = ({
 
             const r1 = detail.races[0];
             const h1 = r1?.horses?.[0];
+            const r1Num = r1?.number || r1?.raceNumber || 1;
             if (h1) {
               const horseObj = {
                 title: `#${h1.number} ${h1.name}`,
-                place: `${placeName} • ${r1.raceNumber}. Koşu`,
+                place: `${placeName} • ${r1Num}. Koşu`,
                 jockey: h1.jockey?.name ? `Jokey: ${h1.jockey.name}` : undefined,
                 badge: 'Günün Favorisi',
                 recommendation: `Öne Çıkan Form: #${h1.number} ${h1.name}`,
@@ -282,12 +284,14 @@ export const HomeHub: React.FC<HomeHubProps> = ({
       const awayName = top.awayTeam?.name || 'Deplasman';
 
       let timeText = 'Bugün';
-      if (top.time && top.time.includes(':')) {
+      if (top.time && top.time.includes(':') && !top.time.includes('T')) {
         timeText = `Bugün ${top.time}`;
-      } else if (top.utcDate) {
+      } else if (top.utcDate || top.time) {
         try {
-          const d = new Date(top.utcDate);
-          timeText = `Bugün ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+          const d = new Date(top.utcDate || top.time);
+          if (!isNaN(d.getTime())) {
+            timeText = `Bugün ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+          }
         } catch {
           timeText = 'Bugün';
         }
@@ -617,9 +621,10 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           {showGoldRadar && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-2.5 pt-0.5">
               {/* Futbol Özet Tile */}
-              <div
+              <button
+                type="button"
                 onClick={onSelectFootball}
-                className="p-2 sm:p-2.5 md:py-1.5 md:px-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-950 border border-emerald-500/20 hover:border-emerald-500/50 transition-all cursor-pointer flex flex-col justify-between space-y-1 group"
+                className="w-full text-left p-2 sm:p-2.5 md:py-1.5 md:px-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-950 border border-emerald-500/20 hover:border-emerald-500/50 transition-all cursor-pointer flex flex-col justify-between space-y-1 group active:scale-[0.98]"
               >
                 <div>
                   <div className="flex items-center justify-between">
@@ -639,16 +644,17 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-800/40 pt-1.5">
                   <span className="truncate">{bestFootballMatch ? bestFootballMatch.league : 'Günün Canlı Bülteni'}</span>
-                  <span className="text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center shrink-0">
-                    İncele <ArrowUpRight className="w-3 h-3" />
+                  <span className="text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center shrink-0 pointer-events-none">
+                    İncele <ArrowUpRight className="w-3 h-3 ml-0.5" />
                   </span>
                 </div>
-              </div>
+              </button>
 
               {/* At Yarışı Özet Tile */}
-              <div
+              <button
+                type="button"
                 onClick={onSelectHorseRacing}
-                className="p-2 sm:p-2.5 md:py-1.5 md:px-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-950 border border-amber-500/20 hover:border-amber-500/50 transition-all cursor-pointer flex flex-col justify-between space-y-1 group"
+                className="w-full text-left p-2 sm:p-2.5 md:py-1.5 md:px-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-950 border border-amber-500/20 hover:border-amber-500/50 transition-all cursor-pointer flex flex-col justify-between space-y-1 group active:scale-[0.98]"
               >
                 <div>
                   <div className="flex items-center justify-between">
@@ -669,16 +675,17 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-800/40 pt-1.5">
                   <span className="truncate">{bestHorse ? bestHorse.place : 'TJK Bugün Programı'}</span>
-                  <span className="text-amber-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center shrink-0">
-                    Bültene Git <ArrowUpRight className="w-3 h-3" />
+                  <span className="text-amber-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center shrink-0 pointer-events-none">
+                    Bültene Git <ArrowUpRight className="w-3 h-3 ml-0.5" />
                   </span>
                 </div>
-              </div>
+              </button>
 
               {/* Borsa Özet Tile */}
-              <div
+              <button
+                type="button"
                 onClick={onSelectStocks}
-                className="p-2 sm:p-2.5 md:py-1.5 md:px-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-950 border border-cyan-500/20 hover:border-cyan-500/50 transition-all cursor-pointer flex flex-col justify-between space-y-1 group"
+                className="w-full text-left p-2 sm:p-2.5 md:py-1.5 md:px-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-950 border border-cyan-500/20 hover:border-cyan-500/50 transition-all cursor-pointer flex flex-col justify-between space-y-1 group active:scale-[0.98]"
               >
                 <div>
                   <div className="flex items-center justify-between">
@@ -703,11 +710,11 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-800/40 pt-1.5">
                   <span>Borsa İstanbul (BIST 30)</span>
-                  <span className="text-cyan-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center shrink-0">
-                    Terminale Git <ArrowUpRight className="w-3 h-3" />
+                  <span className="text-cyan-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center shrink-0 pointer-events-none">
+                    Terminale Git <ArrowUpRight className="w-3 h-3 ml-0.5" />
                   </span>
                 </div>
-              </div>
+              </button>
             </div>
           )}
         </div>
