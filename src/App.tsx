@@ -395,7 +395,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.18.03';
+  const CLIENT_BUILD_VERSION = '2026.11.18.04';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1250,6 +1250,7 @@ export const App: React.FC = () => {
           user={currentUser}
           allMatches={weeklyMatches}
           analysesMap={matchAnalysesMap}
+          aiPerformanceReport={aiPerformanceReport}
         />
 
         {/* Modal: Kullanıcı Giriş & Kayıt Penceresi (Ana Sayfa İçin) */}
