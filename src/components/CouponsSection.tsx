@@ -306,7 +306,7 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
                       <div className="flex items-center gap-2">
                         <h3 className="text-base sm:text-lg font-black text-white">{edCoupon.title}</h3>
                         {allWon ? (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 border border-emerald-300 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-1 shadow-md shadow-emerald-500/30">
                             🏆 TUTTU
                           </span>
                         ) : hasLost ? (
@@ -544,17 +544,21 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
                 </>
               )}
 
-              {/* TUTMUŞSA (WON) KUPON BAŞLIĞI - YEŞİL YANIP SÖNEN & YILDIZLAR ÇIKAN BANNER */}
+              {/* TUTMUŞSA (WON) KUPON BAŞLIĞI - ULTRA OKUNAKLI, NET VE PARLAK ŞAMPİYON BANNERI */}
               {isCouponWon && (
-                <div className="relative z-10 overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 p-3 text-slate-950 shadow-xl shadow-emerald-500/30 flex items-center justify-between mb-4 animate-pulse">
-                  <div className="flex items-center space-x-1.5 font-black text-xs sm:text-sm tracking-wider">
-                    <Sparkles className="w-4 h-4 text-slate-950 animate-spin" style={{ animationDuration: '4s' }} />
-                    <span>⭐ TEBRİKLER! KUPON TUTTU ⭐</span>
+                <div
+                  style={{ backgroundColor: '#047857', color: '#ffffff' }}
+                  className="relative z-10 overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 border-2 border-emerald-300 p-3 text-white shadow-xl shadow-emerald-500/40 flex items-center justify-between mb-4 flex-wrap gap-2"
+                >
+                  <div className="flex items-center space-x-2 font-black text-xs sm:text-sm tracking-wide text-white">
+                    <Sparkles className="w-4 h-4 text-amber-300 fill-amber-300 animate-spin shrink-0" style={{ animationDuration: '5s' }} />
+                    <span className="text-white font-black drop-shadow-md">⭐ TEBRİKLER! KUPON TUTTU ⭐</span>
                   </div>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1.5 shrink-0 bg-emerald-950/50 px-2.5 py-1 rounded-xl border border-emerald-300/40">
                     <Star className="w-4 h-4 fill-amber-300 text-amber-300 animate-bounce" />
                     <Star className="w-4 h-4 fill-amber-300 text-amber-300 animate-bounce delay-100" />
                     <Star className="w-4 h-4 fill-amber-300 text-amber-300 animate-bounce delay-200" />
+                    <span className="text-[11px] font-black text-amber-300 font-mono uppercase tracking-wider ml-0.5">KAZANDI</span>
                   </div>
                 </div>
               )}
