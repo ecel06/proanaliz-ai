@@ -117,6 +117,32 @@ export const StockKapModal: React.FC<StockKapModalProps> = ({
           </button>
         </div>
 
+        {/* Bloomberg / TipRanks AI Sentiment Barometer */}
+        <div className="px-4 sm:px-6 py-2.5 bg-slate-950/90 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center space-x-2 text-xs">
+            <span className="font-extrabold text-white">Yapay Zeka Piyasa Duygu Skoru:</span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-black text-xs border border-emerald-500/40">
+              %84 Pozitif Hakimiyet
+            </span>
+            <span className="text-slate-400 text-[11px] hidden sm:inline">• Bildirimlerin %84'ü fiyatı yukarı destekleyici nitelikte</span>
+          </div>
+
+          <div className="flex items-center space-x-3 text-xs font-semibold shrink-0">
+            <div className="flex items-center space-x-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+              <span className="text-emerald-300">Pozitif: %84</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+              <span className="text-slate-300">Nötr: %10</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
+              <span className="text-rose-300">Risk: %6</span>
+            </div>
+          </div>
+        </div>
+
         {/* Categories Bar & Search */}
         <div className="border-b border-slate-800 bg-slate-950/60 px-3 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2">

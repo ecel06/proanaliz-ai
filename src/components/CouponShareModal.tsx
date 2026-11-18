@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UserBetslipItem } from '../types';
 import { MonteCarloSimulationResult } from '../utils/monteCarloHelper';
-import { X, Copy, Check, Share2, Sparkles, Trophy, ShieldCheck, ExternalLink, Bot } from 'lucide-react';
+import { X, Copy, Check, Share2, Sparkles, Trophy, ShieldCheck, Download, Camera, Ticket } from 'lucide-react';
 
 interface CouponShareModalProps {
   isOpen: boolean;
@@ -23,11 +23,179 @@ export const CouponShareModal: React.FC<CouponShareModalProps> = ({
   monteCarlo
 }) => {
   const [copied, setCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   if (!isOpen || items.length === 0) return null;
 
   // Coupon Serial code
   const couponSerial = `PRO-${Math.abs(items.reduce((acc, it) => acc + it.matchId.charCodeAt(0), 10000))}-${items.length}M`;
+
+  // 1. Download PNG Image for Instagram Stories (9:16) or Ticket Post (4:5)
+  const handleDownloadImage = (format: 'story' | 'ticket' = 'ticket') => {
+    setIsDownloading(true);
+    try {
+      const isStory = format === 'story';
+      const width = isStory ? 1080 : 1080;
+      const height = isStory ? 1920 : Math.max(1200, 520 + items.length * 130);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setIsDownloading(false);
+        return;
+      }
+
+      // 1. Background Gradient (Deep Luxury Dark)
+      const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+      bgGrad.addColorStop(0, '#030712');
+      bgGrad.addColorStop(0.3, '#0B1329');
+      bgGrad.addColorStop(0.7, '#071026');
+      bgGrad.addColorStop(1, '#020617');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // 2. Neon Accent Glow Borders
+      ctx.strokeStyle = '#F59E0B';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(32, 32, width - 64, height - 64);
+
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(40, 40, width - 80, height - 80);
+
+      // 3. Header Branding
+      ctx.fillStyle = '#10B981';
+      ctx.font = '900 48px sans-serif';
+      ctx.fillText('⚡ ProAnaliz AI', 80, isStory ? 140 : 120);
+
+      ctx.fillStyle = '#F59E0B';
+      ctx.font = 'bold 22px monospace';
+      ctx.fillText(`#${couponSerial}`, width - 360, isStory ? 130 : 110);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '20px sans-serif';
+      const dateStr = new Date().toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      ctx.fillText(dateStr, 80, isStory ? 180 : 160);
+
+      // Separator
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(80, isStory ? 220 : 195);
+      ctx.lineTo(width - 80, isStory ? 220 : 195);
+      ctx.stroke();
+
+      // Monte Carlo Risk Badge if exists
+      let startY = isStory ? 270 : 235;
+      if (monteCarlo) {
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+        ctx.strokeStyle = '#10B981';
+        ctx.lineWidth = 2;
+        ctx.fillRect(80, startY, width - 160, 60);
+        ctx.strokeRect(80, startY, width - 160, 60);
+
+        ctx.fillStyle = '#34D399';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.fillText(`🛡️ AI Güven Skoru: %${monteCarlo.combinedTheoreticalProb} (${monteCarlo.riskLabel})`, 105, startY + 40);
+
+        startY += 85;
+      }
+
+      // Match Cards
+      items.forEach((it, idx) => {
+        const cardH = 100;
+        // Card Box
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.fillRect(80, startY, width - 160, cardH);
+        ctx.strokeRect(80, startY, width - 160, cardH);
+
+        // Number
+        ctx.fillStyle = '#10B981';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.fillText(`${idx + 1}.`, 105, startY + 60);
+
+        // Match Name
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 28px sans-serif';
+        ctx.fillText(`${it.match.homeTeam.name} - ${it.match.awayTeam.name}`, 155, startY + 45);
+
+        // League
+        ctx.fillStyle = '#64748B';
+        ctx.font = '20px sans-serif';
+        ctx.fillText(`${it.match.league}`, 155, startY + 78);
+
+        // Pick Badge
+        ctx.fillStyle = '#F59E0B';
+        ctx.font = '900 28px sans-serif';
+        ctx.fillText(it.pickLabel, width - 360, startY + 60);
+
+        // Odd Pill
+        ctx.fillStyle = '#10B981';
+        ctx.font = '900 30px monospace';
+        ctx.fillText(`@${it.odd.toFixed(2)}`, width - 200, startY + 60);
+
+        startY += cardH + 18;
+      });
+
+      // Total Odds & Return Summary Box
+      startY += 15;
+      const sumBoxH = 150;
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
+      ctx.strokeStyle = '#10B981';
+      ctx.lineWidth = 3;
+      ctx.fillRect(80, startY, width - 160, sumBoxH);
+      ctx.strokeRect(80, startY, width - 160, sumBoxH);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('TOPLAM ORAN', 115, startY + 50);
+      ctx.fillText('YATIRILAN', width / 2 - 80, startY + 50);
+      ctx.fillText('TAHMİNİ KAZANÇ', width - 330, startY + 50);
+
+      ctx.fillStyle = '#F59E0B';
+      ctx.font = '900 48px monospace';
+      ctx.fillText(totalOdds.toFixed(2), 115, startY + 115);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 44px monospace';
+      ctx.fillText(`${stake} ₺`, width / 2 - 80, startY + 115);
+
+      ctx.fillStyle = '#10B981';
+      ctx.font = '900 48px monospace';
+      ctx.fillText(`${potentialWin.toLocaleString('tr-TR')} ₺`, width - 330, startY + 115);
+
+      // Watermark Footer
+      ctx.fillStyle = '#64748B';
+      ctx.font = 'bold 22px sans-serif';
+      const footerY = height - 65;
+      ctx.fillText('🤖 ProAnaliz AI • Poisson & xG İstatistik Modeli', 80, footerY);
+      ctx.fillText('proanaliz-ai.onrender.com', width - 380, footerY);
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `ProAnaliz-Kupon-${format}-${Date.now().toString(36)}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+        setIsDownloading(false);
+      });
+    } catch {
+      setIsDownloading(false);
+    }
+  };
 
   // Format shareable text for WhatsApp / Telegram / Socials
   const generateShareText = () => {
@@ -57,7 +225,6 @@ export const CouponShareModal: React.FC<CouponShareModalProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Fallback
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     }
@@ -194,6 +361,39 @@ export const CouponShareModal: React.FC<CouponShareModalProps> = ({
               <span>🤖 Poisson & xG İstatistik Modeli</span>
               <span>proanaliz-ai.onrender.com</span>
             </div>
+          </div>
+        </div>
+
+        {/* Visual Export Banner (Instagram Story & Ticket PNG) */}
+        <div className="px-4 sm:px-5 py-3 bg-gradient-to-r from-amber-500/10 via-slate-900 to-emerald-500/10 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+          <div className="flex items-center space-x-2 text-xs">
+            <span className="p-1.5 rounded-lg bg-amber-400/20 text-amber-300 border border-amber-400/40">
+              <Camera className="w-4 h-4 text-amber-400" />
+            </span>
+            <div>
+              <span className="font-extrabold text-white block">Görsel Kupon Paylaşımı</span>
+              <span className="text-[10px] text-slate-400">Instagram Story veya WhatsApp durumu için HD PNG</span>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
+            <button
+              disabled={isDownloading}
+              onClick={() => handleDownloadImage('story')}
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:opacity-90 text-white font-extrabold text-[11px] transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>📱 Story (9:16)</span>
+            </button>
+
+            <button
+              disabled={isDownloading}
+              onClick={() => handleDownloadImage('ticket')}
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-400/40 font-bold text-[11px] transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
+            >
+              <Ticket className="w-3.5 h-3.5" />
+              <span>🎫 Bilet İndir</span>
+            </button>
           </div>
         </div>
 

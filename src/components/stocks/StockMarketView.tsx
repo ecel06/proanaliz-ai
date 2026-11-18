@@ -78,6 +78,7 @@ import { StockWatchlistModal } from './StockWatchlistModal';
 import { StockCryptoWidgetsModal } from './StockCryptoWidgetsModal';
 import { StockViopModal } from './StockViopModal';
 import { INITIAL_IPOS } from '../../data/ipoData';
+import { INITIAL_KAP_NEWS } from '../../data/kapNewsData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
 type PresetFilter = 'all' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
@@ -1043,6 +1044,64 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             </div>
           );
         })()}
+
+        {/* 📢 CANLI KAP AI RADARI & DUYGU BANDI (BLOOMBERG / TIPRANKS STANDARTI) */}
+        {market === 'bist' && (
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-900 to-indigo-950/50 border border-blue-500/40 p-3 sm:p-3.5 shadow-lg shadow-blue-950/30">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="flex items-center space-x-2.5 shrink-0">
+                <span className="p-1.5 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                  <Radio className="w-4 h-4 text-blue-400 animate-pulse" />
+                </span>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-extrabold text-white text-xs">Canlı KAP AI Radarı</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[9px] font-black uppercase tracking-wider">
+                      Sentiment 2026
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400">Şirket haberlerine 2 saniyede anlık AI duygu ve fiyat etki puanı</span>
+                </div>
+              </div>
+
+              {/* Latest High-Impact Disclosures (Scroll-free flex-wrap) */}
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                {INITIAL_KAP_NEWS.slice(0, 3).map((item) => {
+                  const isPositive = item.aiImpact === 'ÇOK POZİTİF' || item.aiImpact === 'POZİTİF';
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setIsKapModalOpen(true)}
+                      className="px-2.5 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-700/80 text-[11px] font-medium flex items-center space-x-1.5 transition-all cursor-pointer group"
+                    >
+                      <span className="font-black font-mono text-cyan-300 group-hover:text-cyan-200">{item.code}</span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded text-[10px] font-extrabold ${
+                          isPositive
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                            : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                        }`}
+                      >
+                        %{item.aiScore} {item.aiImpact}
+                      </span>
+                      <span className="text-slate-300 max-w-[120px] sm:max-w-[180px] truncate hidden xs:inline">
+                        {item.title.split(':')[1] || item.title}
+                      </span>
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() => setIsKapModalOpen(true)}
+                  className="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-[11px] transition-all cursor-pointer flex items-center space-x-1 shadow-sm"
+                >
+                  <span>Tümü ({INITIAL_KAP_NEWS.length})</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 🚨 PORTFÖYDE RİSKLİ HİSSE ALARMI (SAT / GÜÇLÜ SAT) */}
         {urgentPortfolioRisks.length > 0 && (

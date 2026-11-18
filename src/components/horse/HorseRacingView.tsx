@@ -52,6 +52,7 @@ import {
   IkiliPick,
   analyzeRaceHorses,
   calculateCouponCombinations,
+  calculateJockeyTrainerSynergy,
   checkGameClosedStatus,
   generateAICoupons,
   generateDailyIkiliAndCifte,
@@ -2920,6 +2921,37 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                                       </>
                                     ) : null}
                                   </div>
+
+                                  {/* 🤝 Timeform / Racing Post: Jokey & Antrenör Sinerjisi (Strike Rate) */}
+                                  {horse.jockey?.name && horse.coach && (() => {
+                                    const synergy = calculateJockeyTrainerSynergy(horse.jockey.name, horse.coach);
+                                    return (
+                                      <div
+                                        title={synergy.tacticalNote}
+                                        className={`mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all ${
+                                          synergy.isHot
+                                            ? 'bg-amber-400/15 border-amber-400/40 text-amber-300 shadow-xs'
+                                            : 'bg-slate-900 border-slate-800 text-slate-400'
+                                        }`}
+                                      >
+                                        <span className="text-cyan-300 font-medium truncate max-w-[90px] sm:max-w-none">
+                                          Ant: {horse.coach}
+                                        </span>
+                                        <span className="text-slate-600">•</span>
+                                        <span className="flex items-center gap-1">
+                                          <span>🤝 Sinerji:</span>
+                                          <strong className={synergy.isHot ? 'text-amber-300 font-mono font-black' : 'text-slate-300 font-mono'}>
+                                            %{synergy.strikeRate}
+                                          </strong>
+                                        </span>
+                                        {synergy.isHot && (
+                                          <span className="px-1 rounded bg-amber-400 text-slate-950 text-[9px] font-black uppercase">
+                                            {synergy.tier}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
 
                                 {/* Right: GANYAN & AGF & AI Badges */}
