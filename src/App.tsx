@@ -366,6 +366,7 @@ export const App: React.FC = () => {
 
   // AI Accuracy Scorecard Modal State
   const [isAIPerformanceOpen, setIsAIPerformanceOpen] = useState(false);
+  const [aiPerformanceInitialTab, setAiPerformanceInitialTab] = useState<'overall' | 'football' | 'horse' | 'stocks'>('overall');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isLiveTVModalOpen, setIsLiveTVModalOpen] = useState(false);
@@ -395,7 +396,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.18.05';
+  const CLIENT_BUILD_VERSION = '2026.11.18.06';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1244,7 +1245,10 @@ export const App: React.FC = () => {
           onOpenAuth={() => setIsAuthModalOpen(true)}
           onOpenProfile={() => setIsProfileModalOpen(true)}
           onOpenAdmin={() => setIsAdminModalOpen(true)}
-          onOpenAIPerformance={() => setIsAIPerformanceOpen(true)}
+          onOpenAIPerformance={() => {
+            setAiPerformanceInitialTab('overall');
+            setIsAIPerformanceOpen(true);
+          }}
           onOpenShare={() => setIsShareModalOpen(true)}
           onLogout={handleLogout}
           user={currentUser}
@@ -1334,6 +1338,7 @@ export const App: React.FC = () => {
               isOpen={isAIPerformanceOpen}
               onClose={() => setIsAIPerformanceOpen(false)}
               report={aiPerformanceReport}
+              initialTab={aiPerformanceInitialTab}
             />
           )}
 
@@ -1417,7 +1422,12 @@ export const App: React.FC = () => {
         }}
         onOpenCustomAnalyzer={() => setIsCustomAnalyzerOpen(true)}
         onOpenStandings={() => setIsStandingsOpen(true)}
-        onOpenAIPerformance={() => setIsAIPerformanceOpen(true)}
+        onOpenAIPerformance={() => {
+          setAiPerformanceInitialTab(
+            activeSection === 'horseRacing' ? 'horse' : activeSection === 'stocks' ? 'stocks' : 'football'
+          );
+          setIsAIPerformanceOpen(true);
+        }}
         onOpenShare={() => setIsShareModalOpen(true)}
         onOpenCoupons={() => setActiveTabMode('coupons')}
         onOpenInstallApp={() => setIsInstallModalOpen(true)}
@@ -2229,6 +2239,7 @@ export const App: React.FC = () => {
             isOpen={isAIPerformanceOpen}
             onClose={() => setIsAIPerformanceOpen(false)}
             report={aiPerformanceReport}
+            initialTab={aiPerformanceInitialTab}
           />
         )}
 
