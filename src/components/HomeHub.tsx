@@ -25,10 +25,16 @@ import {
 import { Match, MatchAnalysis } from '../types';
 import { User } from '../utils/authHelper';
 
+export interface HorseTarget {
+  programId?: number;
+  raceNo?: number;
+  horseNumber?: number;
+}
+
 interface HomeHubProps {
-  onSelectFootball: () => void;
-  onSelectHorseRacing: () => void;
-  onSelectStocks: () => void;
+  onSelectFootball: (match?: Match | null) => void;
+  onSelectHorseRacing: (target?: HorseTarget | null) => void;
+  onSelectStocks: (symbol?: string | null) => void;
   onOpenInstallModal?: () => void;
   onOpenShare?: () => void;
   onOpenVIP?: () => void;
@@ -70,6 +76,9 @@ export const HomeHub: React.FC<HomeHubProps> = ({
 
   // Real live data for today's horse and stock with instant cache hydration
   const [bestHorse, setBestHorse] = useState<{
+    programId?: number;
+    raceNo?: number;
+    horseNumber?: number;
     title: string;
     place: string;
     jockey?: string;
@@ -124,6 +133,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         .then((data) => {
           const prog = data?.programs?.[0];
           const detail = data?.activeProgramDetail;
+          const progId = prog?.id || detail?.program?.id;
           const placeName = prog?.place ? `${prog.place} Hipodromu` : 'TJK Bugün Bülteni';
 
           if (detail?.races && detail.races.length > 0) {
@@ -146,6 +156,9 @@ export const HomeHub: React.FC<HomeHubProps> = ({
 
             if (topHorse) {
               const horseObj = {
+                programId: progId,
+                raceNo: topRaceNum,
+                horseNumber: topHorse.number,
                 title: `#${topHorse.number} ${topHorse.name}`,
                 place: `${placeName} • ${topRaceNum}. Koşu`,
                 jockey: topHorse.jockey?.name ? `Jokey: ${topHorse.jockey.name}` : undefined,
@@ -162,6 +175,9 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             const r1Num = r1?.number || r1?.raceNumber || 1;
             if (h1) {
               const horseObj = {
+                programId: progId,
+                raceNo: r1Num,
+                horseNumber: h1.number,
                 title: `#${h1.number} ${h1.name}`,
                 place: `${placeName} • ${r1Num}. Koşu`,
                 jockey: h1.jockey?.name ? `Jokey: ${h1.jockey.name}` : undefined,
@@ -256,6 +272,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         : ((top as any).homeScore !== undefined ? `${(top as any).homeScore} - ${(top as any).awayScore}` : '');
 
       return {
+        rawMatch: top,
         title: `${homeName} — ${awayName}`,
         badge: `🔴 CANLI ${minute}${score ? ` (${score})` : ''}`,
         league: `${top.league || 'Futbol'} • Canlı Takip`,
@@ -298,6 +315,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
       }
 
       return {
+        rawMatch: top,
         title: `${homeName} — ${awayName}`,
         badge: timeText,
         league: `${top.league || 'Futbol'} • Günün Bankosu`,
@@ -326,6 +344,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
       } catch {}
 
       return {
+        rawMatch: top,
         title: `${homeName} — ${awayName}`,
         badge: dateBadge,
         league: `${top.league || 'Futbol'} • Sıradaki Maç`,
@@ -443,7 +462,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
 
         {/* 🪙 CANLI ALTIN & DÖVİZ PİYASALARI TİCKER (Compact & Live Dynamic) */}
         <div 
-          onClick={onSelectStocks}
+          onClick={() => onSelectStocks()}
           className="w-full rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 px-2 py-1.5 sm:px-3 sm:py-1.5 transition-all shadow-md flex items-center justify-between gap-2 overflow-hidden cursor-pointer group"
           title="Borsa, Altın ve Döviz Terminaline Git"
         >
@@ -534,7 +553,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         <div className="w-full shrink-0 grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3">
           {/* FUTBOL CARD */}
           <button
-            onClick={onSelectFootball}
+            onClick={() => onSelectFootball()}
             className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-emerald-400/70 p-2.5 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-emerald-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-1 md:space-y-1.5"
           >
             <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-emerald-500/10">
@@ -554,7 +573,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
 
           {/* AT YARIŞI CARD */}
           <button
-            onClick={onSelectHorseRacing}
+            onClick={() => onSelectHorseRacing()}
             className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-400/70 p-2.5 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-amber-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-1 md:space-y-1.5"
           >
             <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-amber-500/10">
@@ -574,7 +593,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
 
           {/* BORSA CARD */}
           <button
-            onClick={onSelectStocks}
+            onClick={() => onSelectStocks()}
             className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-cyan-400/70 p-2.5 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-cyan-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-1 md:space-y-1.5"
           >
             <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-cyan-500/10">
@@ -623,7 +642,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               {/* Futbol Özet Tile */}
               <button
                 type="button"
-                onClick={onSelectFootball}
+                onClick={() => onSelectFootball(bestFootballMatch?.rawMatch)}
                 className="w-full text-left p-2 sm:p-2.5 md:py-1.5 md:px-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-950 border border-emerald-500/20 hover:border-emerald-500/50 transition-all cursor-pointer flex flex-col justify-between space-y-1 group active:scale-[0.98]"
               >
                 <div>
@@ -653,7 +672,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               {/* At Yarışı Özet Tile */}
               <button
                 type="button"
-                onClick={onSelectHorseRacing}
+                onClick={() =>
+                  onSelectHorseRacing({
+                    programId: bestHorse?.programId,
+                    raceNo: bestHorse?.raceNo,
+                    horseNumber: bestHorse?.horseNumber,
+                  })
+                }
                 className="w-full text-left p-2 sm:p-2.5 md:py-1.5 md:px-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-950 border border-amber-500/20 hover:border-amber-500/50 transition-all cursor-pointer flex flex-col justify-between space-y-1 group active:scale-[0.98]"
               >
                 <div>
@@ -684,7 +709,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               {/* Borsa Özet Tile */}
               <button
                 type="button"
-                onClick={onSelectStocks}
+                onClick={() => onSelectStocks(bestStock?.symbol || 'THYAO')}
                 className="w-full text-left p-2 sm:p-2.5 md:py-1.5 md:px-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-950 border border-cyan-500/20 hover:border-cyan-500/50 transition-all cursor-pointer flex flex-col justify-between space-y-1 group active:scale-[0.98]"
               >
                 <div>

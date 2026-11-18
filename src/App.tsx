@@ -372,7 +372,8 @@ export const App: React.FC = () => {
 
   // Section-specific mobile subtabs & actions
   const [horseRacingSubTab, setHorseRacingSubTab] = useState<'bulletin' | 'ai_coupons' | 'ikili_cifte' | 'results' | 'changes'>('bulletin');
-  const [stockExternalAction, setStockExternalAction] = useState<{ action: 'list' | 'portfolio' | 'alerts' | 'kap'; timestamp: number } | null>(null);
+  const [horseRacingTarget, setHorseRacingTarget] = useState<{ programId?: number; raceNo?: number; horseNumber?: number; timestamp?: number } | null>(null);
+  const [stockExternalAction, setStockExternalAction] = useState<{ action: string; timestamp: number; symbol?: string } | null>(null);
 
   // Social Coupon Share Modal State
   const [shareSlipCoupon, setShareSlipCoupon] = useState<any | null>(null);
@@ -394,7 +395,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.18.02';
+  const CLIENT_BUILD_VERSION = '2026.11.18.03';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1226,9 +1227,18 @@ export const App: React.FC = () => {
         )}
 
         <HomeHub
-          onSelectFootball={() => handleNavigateSection('football')}
-          onSelectHorseRacing={() => handleNavigateSection('horseRacing')}
-          onSelectStocks={() => handleNavigateSection('stocks')}
+          onSelectFootball={(match) => {
+            handleNavigateSection('football');
+            if (match) setSelectedMatch(match);
+          }}
+          onSelectHorseRacing={(target) => {
+            handleNavigateSection('horseRacing');
+            if (target) setHorseRacingTarget({ ...target, timestamp: Date.now() });
+          }}
+          onSelectStocks={(symbol) => {
+            handleNavigateSection('stocks');
+            if (symbol) setStockExternalAction({ action: 'select_symbol', symbol, timestamp: Date.now() });
+          }}
           onOpenInstallModal={() => setIsInstallModalOpen(true)}
           onOpenVIP={() => setIsVipModalOpen(true)}
           onOpenAuth={() => setIsAuthModalOpen(true)}
@@ -1488,6 +1498,7 @@ export const App: React.FC = () => {
               }}
               activeSubTab={horseRacingSubTab}
               onChangeSubTab={setHorseRacingSubTab}
+              initialTarget={horseRacingTarget}
             />
           </React.Suspense>
         ) : activeSection === 'stocks' ? (
@@ -2073,10 +2084,10 @@ export const App: React.FC = () => {
       </main>
 
       {/* Modal 1: Detailed Match Analysis Modal */}
-      {selectedMatch && activeAnalysis && (
+      {selectedMatch && (
         <MatchDetailModal
           match={selectedMatch}
-          analysis={activeAnalysis}
+          analysis={activeAnalysis || (selectedMatch ? matchAnalysesMap.get(selectedMatch.id) || null : null)}
           onClose={() => setSelectedMatch(null)}
           betslipItems={betslipItems}
           onToggleBetslip={handleToggleBetslip}

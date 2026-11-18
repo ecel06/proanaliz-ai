@@ -1149,6 +1149,12 @@ export interface HorseRacingViewProps {
   onShowToast?: (msg: string, type?: 'success' | 'info' | 'warning') => void;
   activeSubTab?: HRSubTab;
   onChangeSubTab?: (tab: HRSubTab) => void;
+  initialTarget?: {
+    programId?: number;
+    raceNo?: number;
+    horseNumber?: number;
+    timestamp?: number;
+  } | null;
 }
 
 export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
@@ -1157,6 +1163,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
   onShowToast,
   activeSubTab,
   onChangeSubTab,
+  initialTarget,
 }) => {
   const [programs, setPrograms] = useState<HippodromeProgram[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<number | null>(() => {
@@ -1247,6 +1254,39 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
       } catch { }
     }
   }, [selectedRaceNo]);
+
+  // Deep-link from HomeHub or external trigger: navigate directly to target program, race and horse
+  useEffect(() => {
+    if (!initialTarget || !initialTarget.timestamp) return;
+    const applyTarget = async () => {
+      setSubTab('bulletin');
+      if (initialTarget.programId && (selectedProgramId !== initialTarget.programId || detail?.program.id !== initialTarget.programId)) {
+        setSelectedProgramId(initialTarget.programId);
+        setProgramLoading(true);
+        try {
+          const d = await fetchHorseRacingProgram(initialTarget.programId, false);
+          setDetail(d);
+          if (initialTarget.raceNo) {
+            setSelectedRaceNo(initialTarget.raceNo);
+          }
+          if (initialTarget.horseNumber) {
+            setExpandedHorse(initialTarget.horseNumber);
+          }
+        } catch {
+        } finally {
+          setProgramLoading(false);
+        }
+        return;
+      }
+      if (initialTarget.raceNo) {
+        setSelectedRaceNo(initialTarget.raceNo);
+      }
+      if (initialTarget.horseNumber) {
+        setExpandedHorse(initialTarget.horseNumber);
+      }
+    };
+    applyTarget();
+  }, [initialTarget]);
 
   // Initial bulletin fetch + auto live poll every 30s if active races exist
   const loadBulletin = async (targetPid?: number | null, force = false) => {

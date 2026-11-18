@@ -88,7 +88,7 @@ export interface StockMarketViewProps {
   onOpenVIP?: () => void;
   onShowToast?: (msg: string) => void;
   onGoHome?: () => void;
-  externalAction?: { action: string; timestamp: number } | null;
+  externalAction?: { action: string; timestamp: number; symbol?: string } | null;
 }
 
 export const StockMarketView: React.FC<StockMarketViewProps> = ({
@@ -139,6 +139,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     if (externalAction.action === 'list') {
       setMobileViewTab('list');
       setSelectedSymbol(null);
+    } else if (externalAction.action === 'select_symbol' && (externalAction as any).symbol) {
+      const sym = (externalAction as any).symbol.toUpperCase();
+      setSelectedSymbol(sym);
+      setMobileViewTab('detail');
     } else if (externalAction.action === 'portfolio') {
       setIsPortfolioModalOpen(true);
     } else if (externalAction.action === 'alerts') {
