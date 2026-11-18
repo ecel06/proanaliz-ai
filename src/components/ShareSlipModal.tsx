@@ -93,134 +93,168 @@ export const ShareSlipModal: React.FC<ShareSlipModalProps> = ({
   };
 
   // 3. Render High-Resolution Ticket Card onto HTML5 Canvas and Download
-  const handleDownloadImage = () => {
+  const handleDownloadImage = (format: 'story' | 'ticket' = 'ticket') => {
     setIsDownloading(true);
-    const canvas = document.createElement('canvas');
-    const width = 800;
-    const height = 340 + items.length * 80;
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    try {
+      const isStory = format === 'story';
+      const width = isStory ? 1080 : 1080;
+      const height = isStory ? 1920 : Math.max(1200, 480 + items.length * 110);
 
-    // Background Gradient (Deep Navy/Black)
-    const bgGrad = ctx.createLinearGradient(0, 0, width, height);
-    bgGrad.addColorStop(0, '#020617');
-    bgGrad.addColorStop(0.5, '#0B132B');
-    bgGrad.addColorStop(1, '#020617');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, width, height);
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setIsDownloading(false);
+        return;
+      }
 
-    // Glowing Outer Gold Border
-    ctx.strokeStyle = '#F59E0B';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(16, 16, width - 32, height - 32);
+      // Background Gradient (Deep Navy/Black)
+      const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+      bgGrad.addColorStop(0, '#020617');
+      bgGrad.addColorStop(0.3, '#0B132B');
+      bgGrad.addColorStop(0.7, '#071026');
+      bgGrad.addColorStop(1, '#020617');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
 
-    // Header Badge: ProAnaliz AI
-    ctx.fillStyle = '#10B981';
-    ctx.font = 'bold 28px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('⚡ ProAnaliz AI', 40, 65);
+      // Glowing Outer Gold Border
+      ctx.strokeStyle = '#F59E0B';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(32, 32, width - 64, height - 64);
 
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '14px sans-serif';
-    ctx.fillText(new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }), 40, 95);
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(40, 40, width - 80, height - 80);
 
-    // Coupon Title
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '900 24px sans-serif';
-    ctx.fillText(couponTitle, 40, 135);
-
-    // Separator line
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(40, 155);
-    ctx.lineTo(width - 40, 155);
-    ctx.stroke();
-
-    // Match Items
-    let startY = 195;
-    items.forEach((it, idx) => {
-      // Background row
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
-      ctx.fillRect(40, startY - 25, width - 80, 65);
-
-      // Number
+      // Header Badge: ProAnaliz AI
       ctx.fillStyle = '#10B981';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillText(`${idx + 1}.`, 55, startY + 12);
+      ctx.font = 'bold 44px sans-serif';
+      ctx.fillText('⚡ ProAnaliz AI', 80, isStory ? 140 : 115);
 
-      // Teams
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '20px sans-serif';
+      const dateText = new Date().toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      ctx.fillText(dateText, 80, isStory ? 180 : 155);
+
+      // Coupon Title
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillText(`${it.home} vs ${it.away}`, 85, startY + 5);
+      ctx.font = '900 36px sans-serif';
+      ctx.fillText(couponTitle, 80, isStory ? 240 : 210);
 
-      // League
-      ctx.fillStyle = '#64748B';
-      ctx.font = '12px sans-serif';
-      ctx.fillText(it.league, 85, startY + 25);
+      // Separator line
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(80, isStory ? 275 : 240);
+      ctx.lineTo(width - 80, isStory ? 275 : 240);
+      ctx.stroke();
 
-      // Pick Badge
-      ctx.fillStyle = '#F59E0B';
-      ctx.font = '900 16px sans-serif';
-      ctx.fillText(it.pick, width - 210, startY + 14);
+      // Match Items
+      let startY = isStory ? 320 : 275;
+      items.forEach((it, idx) => {
+        const rowH = 105;
+        // Background row
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.fillRect(80, startY, width - 160, rowH);
+        ctx.strokeRect(80, startY, width - 160, rowH);
 
-      // Odds
-      ctx.fillStyle = '#10B981';
-      ctx.font = 'bold 16px monospace';
-      ctx.fillText(`@${it.odd.toFixed(2)}`, width - 110, startY + 14);
+        // Number
+        ctx.fillStyle = '#10B981';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.fillText(`${idx + 1}.`, 105, startY + 62);
 
-      startY += 80;
-    });
+        // Teams
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 28px sans-serif';
+        ctx.fillText(`${it.home} vs ${it.away}`, 155, startY + 48);
 
-    // Summary Card
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
-    ctx.strokeStyle = '#10B981';
-    ctx.lineWidth = 2;
-    ctx.fillRect(40, startY, width - 80, 95);
-    ctx.strokeRect(40, startY, width - 80, 95);
+        // League
+        ctx.fillStyle = '#64748B';
+        ctx.font = '20px sans-serif';
+        ctx.fillText(it.league, 155, startY + 82);
 
-    ctx.fillStyle = '#CBD5E1';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.fillText('TOPLAM ORAN', 65, startY + 35);
-    ctx.fillText('OLASI KAZANÇ', width - 260, startY + 35);
+        // Pick Badge
+        ctx.fillStyle = '#F59E0B';
+        ctx.font = '900 28px sans-serif';
+        ctx.fillText(it.pick, width - 360, startY + 62);
 
-    ctx.fillStyle = '#F59E0B';
-    ctx.font = '900 28px monospace';
-    ctx.fillText(calcOdds.toFixed(2), 65, startY + 75);
+        // Odds
+        ctx.fillStyle = '#10B981';
+        ctx.font = '900 30px monospace';
+        ctx.fillText(`@${it.odd.toFixed(2)}`, width - 190, startY + 62);
 
-    ctx.fillStyle = '#10B981';
-    ctx.font = '900 28px monospace';
-    ctx.fillText(`${calcWin.toLocaleString('tr-TR')} ₺`, width - 260, startY + 75);
+        startY += rowH + 18;
+      });
 
-    // Won Stamp if Won
-    if (checkWon) {
-      ctx.save();
-      ctx.translate(width - 150, 110);
-      ctx.rotate(-0.15);
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
+      // Summary Card
+      startY += 15;
+      const sumH = 150;
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
       ctx.strokeStyle = '#10B981';
       ctx.lineWidth = 3;
-      ctx.fillRect(-80, -25, 160, 50);
-      ctx.strokeRect(-80, -25, 160, 50);
-      ctx.fillStyle = '#10B981';
-      ctx.font = '900 22px sans-serif';
-      ctx.fillText('⭐ TUTTU ⭐', -65, 8);
-      ctx.restore();
-    }
+      ctx.fillRect(80, startY, width - 160, sumH);
+      ctx.strokeRect(80, startY, width - 160, sumH);
 
-    // Export & Download
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `ProAnaliz-Kupon-${Date.now().toString(36)}.png`;
-        a.click();
-        URL.revokeObjectURL(url);
+      ctx.fillStyle = '#CBD5E1';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('TOPLAM ORAN', 115, startY + 50);
+      ctx.fillText('OLASI KAZANÇ', width - 330, startY + 50);
+
+      ctx.fillStyle = '#F59E0B';
+      ctx.font = '900 48px monospace';
+      ctx.fillText(calcOdds.toFixed(2), 115, startY + 115);
+
+      ctx.fillStyle = '#10B981';
+      ctx.font = '900 48px monospace';
+      ctx.fillText(`${calcWin.toLocaleString('tr-TR')} ₺`, width - 330, startY + 115);
+
+      // Won Stamp if Won
+      if (checkWon) {
+        ctx.save();
+        ctx.translate(width - 200, 150);
+        ctx.rotate(-0.15);
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.25)';
+        ctx.strokeStyle = '#10B981';
+        ctx.lineWidth = 4;
+        ctx.fillRect(-120, -35, 240, 70);
+        ctx.strokeRect(-120, -35, 240, 70);
+        ctx.fillStyle = '#10B981';
+        ctx.font = '900 32px sans-serif';
+        ctx.fillText('⭐ TUTTU ⭐', -100, 12);
+        ctx.restore();
       }
+
+      // Watermark
+      ctx.fillStyle = '#64748B';
+      ctx.font = 'bold 22px sans-serif';
+      const footY = height - 65;
+      ctx.fillText('🤖 ProAnaliz AI • İstatistik & Tahmin Modeli', 80, footY);
+      ctx.fillText('proanaliz-ai.onrender.com', width - 380, footY);
+
+      // Export & Download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `ProAnaliz-Kupon-${format}-${Date.now().toString(36)}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+        setIsDownloading(false);
+      });
+    } catch {
       setIsDownloading(false);
-    });
+    }
   };
 
   return (
@@ -290,30 +324,55 @@ export const ShareSlipModal: React.FC<ShareSlipModalProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="p-4 bg-slate-950/90 border-t border-slate-800 flex flex-col sm:flex-row gap-2.5">
+        <div className="p-3.5 sm:p-4 bg-slate-950/95 border-t border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-2">
           <button
             onClick={handleShareWhatsApp}
-            className="flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-all cursor-pointer shadow-lg shadow-emerald-600/30"
+            className="flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-all cursor-pointer shadow-lg shadow-emerald-600/30"
           >
-            <Share2 className="w-4 h-4" />
-            <span>WhatsApp'ta Paylaş</span>
+            <Share2 className="w-3.5 h-3.5" />
+            <span>WhatsApp</span>
           </button>
 
           <button
-            onClick={handleDownloadImage}
+            onClick={() => handleDownloadImage('story')}
             disabled={isDownloading}
-            className="flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-all cursor-pointer"
+            className="flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:opacity-90 text-white font-extrabold text-xs transition-all shadow-md cursor-pointer disabled:opacity-50"
+            title="Instagram Story formatında 1080x1920 HD görsel indir"
           >
-            <Download className="w-4 h-4 text-amber-400" />
-            <span>{isDownloading ? 'Oluşturuluyor...' : 'Resim Olarak İndir (PNG)'}</span>
+            <Download className="w-3.5 h-3.5" />
+            <span>📱 Story (9:16)</span>
+          </button>
+
+          <button
+            onClick={() => handleDownloadImage('ticket')}
+            disabled={isDownloading}
+            className="flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-amber-400/40 transition-all cursor-pointer disabled:opacity-50"
+            title="Bilet formatında HD PNG indir"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>{isDownloading ? '...' : '🎫 Bilet İndir'}</span>
           </button>
 
           <button
             onClick={handleCopyText}
-            className="p-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all cursor-pointer flex items-center justify-center"
+            className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
+              copied
+                ? 'bg-emerald-500 text-slate-950 font-black'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+            }`}
             title="Metni Kopyala"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            {copied ? (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                <span>Kopyalandı!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                <span>Metin</span>
+              </>
+            )}
           </button>
         </div>
 

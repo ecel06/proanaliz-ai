@@ -49,7 +49,7 @@ interface CouponsSectionProps {
   onSelectMatch: (match: Match) => void;
   onViewAllMatches?: () => void;
   onAddCouponToBetslip?: (coupon: CuratedCoupon) => void;
-  onShareCoupon?: (coupon: CuratedCoupon) => void;
+  onShareCoupon?: (coupon: any) => void;
 }
 
 export const CouponsSection: React.FC<CouponsSectionProps> = ({
@@ -489,11 +489,32 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
 
                   {!isEdLocked && onShareCoupon && (
                     <button
-                      onClick={() => alert('Yönetici kuponu panoya kopyalandı!')}
-                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                      onClick={() => {
+                        const convertedCoupon: any = {
+                          id: edCoupon.id,
+                          title: edCoupon.title,
+                          subtitle: edCoupon.subtitle,
+                          totalOdds: edCoupon.totalOdds,
+                          status: allWon ? 'won' : hasLost ? 'lost' : 'pending',
+                          confidence: edCoupon.confidence,
+                          items: edCoupon.matches.map((m) => ({
+                            matchId: m.id || `${m.homeTeam}-${m.awayTeam}`,
+                            homeTeamName: m.homeTeam,
+                            awayTeamName: m.awayTeam,
+                            league: m.league,
+                            pickLabel: m.prediction,
+                            odd: Number(m.odds),
+                            probability: edCoupon.confidence,
+                            pickStatus: 'pending'
+                          }))
+                        };
+                        onShareCoupon(convertedCoupon);
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 via-slate-800 to-amber-500/10 hover:bg-slate-700 text-amber-300 font-extrabold text-xs transition-all cursor-pointer flex items-center gap-2 border border-amber-400/40 shadow-sm active:scale-95"
+                      title="Kuponu Instagram Story veya WhatsApp görseli olarak indir / paylaş"
                     >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>Kuponu Paylaş</span>
+                      <Share2 className="w-4 h-4 text-amber-400" />
+                      <span>📸 Kupon Kartını Paylaş / İndir</span>
                     </button>
                   )}
                 </div>
