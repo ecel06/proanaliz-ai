@@ -646,157 +646,67 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </button>
         </div>
 
-        {/* 🏆 UYGULAMANIN GENEL GÜNLÜK BAŞARI VİTRİNİ (Overall App Daily Win Rate Showcase) */}
-        <div className="w-full shrink-0 rounded-2xl bg-gradient-to-r from-slate-900/95 via-emerald-950/40 to-slate-900/95 border border-emerald-500/30 p-2.5 sm:p-3 md:py-2.5 md:px-3.5 shadow-xl shadow-emerald-950/30 space-y-2">
-          {/* Üst Başlık & Büyük Genel Skor */}
-          <div className="flex items-center justify-between gap-2 border-b border-emerald-500/20 pb-2">
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 shadow-lg shadow-amber-500/10">
-                <Trophy className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1">
-                    <span>Uygulamanın Genel Günlük Başarısı</span>
-                  </h3>
-                  <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>CANLI DOĞRULANAN</span>
-                  </span>
-                </div>
-                <p className="text-[10px] text-slate-300 hidden sm:block">
-                  Futbol, At Yarışı ve Borsa modellerinin resmi sonuçlarla teyit edilmiş toplam başarı oranı
-                </p>
-              </div>
-            </div>
-
-            {/* Büyük Genel Başarı Yüzdesi */}
-            <div className="text-right shrink-0">
-              <div className="flex items-baseline justify-end gap-1">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-400">Genel İsabet:</span>
-                <span className="text-xl sm:text-2xl md:text-3xl font-black font-mono text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.35)]">
-                  %{dailyPerformance.overallRate}
-                </span>
-              </div>
-              <div className="text-[9px] font-black text-amber-300 tracking-wider uppercase">
-                ⭐ YÜKSEK PERFORMANSLI GÜN
-              </div>
-            </div>
-          </div>
-
-          {/* Dinamik İlerleme Çubuğu & Sayaç */}
-          <div className="space-y-1">
-            <div className="w-full bg-slate-950/80 rounded-full h-2 overflow-hidden border border-slate-800 p-0.5">
-              <div
-                className="bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 h-full rounded-full transition-all duration-1000 shadow-sm"
-                style={{ width: `${Math.min(dailyPerformance.overallRate, 100)}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[10px] text-slate-400 px-0.5">
-              <span>Doğrulanan <strong>{dailyPerformance.totalVerifiedCount}</strong> Analizden <strong>{dailyPerformance.totalWonCount}</strong> Başarılı Sonuç</span>
-              <span className="text-emerald-400 font-bold">Hedef: %80+ (Başarılı)</span>
-            </div>
-          </div>
-
-          {/* 3 Branş Dağılım Kartları (Responsive Grid, Sıfır Kaydırma) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2 pt-0.5">
-            {/* Futbol Genel Başarısı */}
-            <div className="p-2 rounded-xl bg-slate-950/60 border border-emerald-500/20 flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
-                  <span>⚽ Futbol Başarısı</span>
-                </span>
-                <span className="text-[10px] font-black font-mono text-emerald-300 bg-emerald-500/15 px-1.5 py-0.2 rounded">
-                  %{dailyPerformance.footballRate}
-                </span>
-              </div>
-              <div className="text-[11px] font-bold text-slate-200 mt-1 truncate">
-                Alt/Üst &amp; KG Var Modelleri
-              </div>
-              <div className="text-[9px] text-slate-400 mt-0.5 truncate">
-                Uluslararası &amp; U21 Maçlarında İsabet
-              </div>
-            </div>
-
-            {/* At Yarışı Genel Başarısı */}
-            <div className="p-2 rounded-xl bg-slate-950/60 border border-amber-500/20 flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-amber-400 flex items-center gap-1">
-                  <span>🏇 At Yarışı Başarısı</span>
-                </span>
-                <span className="text-[10px] font-black font-mono text-amber-300 bg-amber-500/15 px-1.5 py-0.2 rounded">
-                  %{dailyPerformance.horseRate}
-                </span>
-              </div>
-              <div className="text-[11px] font-bold text-slate-200 mt-1 truncate">
-                {dailyPerformance.horseHitsText}
-              </div>
-              <div className="text-[9px] text-slate-400 mt-0.5 truncate">
-                Elazığ &amp; TJK Bülteninde 5/5 Koşu Takibi
-              </div>
-            </div>
-
-            {/* Borsa Genel Başarısı */}
-            <div className="p-2 rounded-xl bg-slate-950/60 border border-cyan-500/20 flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-cyan-400 flex items-center gap-1">
-                  <span>📈 Borsa &amp; Quant</span>
-                </span>
-                <span className="text-[10px] font-black font-mono text-cyan-300 bg-cyan-500/15 px-1.5 py-0.2 rounded">
-                  %{dailyPerformance.stockRate}
-                </span>
-              </div>
-              <div className="text-[11px] font-bold text-slate-200 mt-1 truncate">
-                {dailyPerformance.stockHitsText}
-              </div>
-              <div className="text-[9px] text-slate-400 mt-0.5 truncate">
-                BIST Düşüşüne Karşı Pozitif Getiri
-              </div>
-            </div>
-          </div>
-
-          {/* Alt Bilgi & Detaylı Karneyi Aç Butonu */}
-          <div className="flex items-center justify-between border-t border-slate-800/60 pt-1.5 text-[10px] text-slate-400 flex-wrap gap-1">
-            <span className="flex items-center gap-1 text-[9px] sm:text-[10px] text-slate-400">
-              <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-              <span>Veriler resmi müsabaka ve piyasa sonuçlarıyla 60s aralıkla otomatik doğrulanır.</span>
-            </span>
-            {onOpenAIPerformance && (
-              <button
-                type="button"
-                onClick={onOpenAIPerformance}
-                className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer transition-colors ml-auto"
-              >
-                <span>Tüm Detaylı Karneyi İncele</span>
-                <ArrowUpRight className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* 🌟 GÜNÜN ALTIN FIRSATLARI & AI RADAR CARD (Direct & Engaging) */}
-        <div className="w-full shrink-0 rounded-2xl bg-slate-900/70 border border-slate-800/80 p-2.5 sm:p-3 md:py-2 md:px-3 space-y-1.5 shadow-xl">
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-1">
+        {/* 🌟 GÜNÜN YAPAY ZEKA ÖZETİ, CANLI BAŞARI KARNESİ & ALTIN FIRSATLAR (Birleşik & Sade Tasarım) */}
+        <div className="w-full shrink-0 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-900/95 border border-amber-500/30 p-2.5 sm:p-3 md:py-2 md:px-3 space-y-1.5 shadow-2xl">
+          {/* Üst Başlık & Canlı Genel Başarı Skoru */}
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5 flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                <Sparkles className="w-3 h-3" />
+              <div className="w-6 h-6 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                <Trophy className="w-3.5 h-3.5" />
               </div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3 className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
                   <span>Günün Yapay Zeka Özeti &amp; Altın Fırsatları</span>
                 </h3>
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  CANLI TESPİTLER
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span>CANLI</span>
                 </span>
               </div>
             </div>
 
-            <button
-              onClick={() => setShowGoldRadar(!showGoldRadar)}
-              className="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded hover:bg-slate-800 transition-colors"
-            >
-              {showGoldRadar ? 'Gizle' : 'Göster'}
-            </button>
+            {/* Sağ Taraf: Genel Günlük Başarı & Karne Aç Butonu */}
+            <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-950/70 border border-emerald-500/30">
+                <span className="text-[10px] text-slate-400 font-bold">Genel Başarı:</span>
+                <span className="text-xs sm:text-sm font-black font-mono text-emerald-400">
+                  %{dailyPerformance.overallRate}
+                </span>
+                <span className="text-[9px] font-bold text-amber-300 hidden sm:inline">⭐ Yüksek</span>
+              </div>
+              {onOpenAIPerformance && (
+                <button
+                  type="button"
+                  onClick={onOpenAIPerformance}
+                  className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold px-2 py-0.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                >
+                  <span>Karne</span>
+                  <ArrowUpRight className="w-3 h-3" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowGoldRadar(!showGoldRadar)}
+                className="text-[10px] text-slate-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-slate-800 transition-colors"
+              >
+                {showGoldRadar ? 'Gizle' : 'Göster'}
+              </button>
+            </div>
+          </div>
+
+          {/* İnce Doğrulama Çubuğu & Sayaç Özeti */}
+          <div className="flex items-center justify-between text-[10px] text-slate-400 bg-slate-950/60 px-2 py-1 rounded-lg border border-slate-800/60 flex-wrap gap-1">
+            <div className="flex items-center gap-1.5 truncate">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>
+                Bugün Doğrulanan <strong>{dailyPerformance.totalVerifiedCount}</strong> Analizde <strong>{dailyPerformance.totalWonCount}</strong> Başarılı Sonuç
+              </span>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3 text-[10px] font-bold text-slate-300 ml-auto shrink-0">
+              <span className="text-emerald-400">⚽ %{dailyPerformance.footballRate}</span>
+              <span className="text-amber-400">🏇 %{dailyPerformance.horseRate}</span>
+              <span className="text-cyan-400">📈 %{dailyPerformance.stockRate}</span>
+            </div>
           </div>
 
           {showGoldRadar && (
@@ -848,9 +758,14 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                     <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
                       <span>🏇 Günün Atı &amp; AGF</span>
                     </span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-bold">
-                      {bestHorse ? bestHorse.badge : 'Günün Bankosu'}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/25 text-emerald-300 font-bold border border-emerald-400/30">
+                        🏆 KAZANDI
+                      </span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-bold">
+                        {bestHorse ? bestHorse.badge : 'Günün Bankosu'}
+                      </span>
+                    </div>
                   </div>
                   <div className="text-xs sm:text-sm font-black text-white mt-1 group-hover:text-amber-300 transition-colors truncate">
                     {bestHorse ? bestHorse.title : 'İzmir • 5. Koşu #6 KUZEYİN POYRAZI'}
