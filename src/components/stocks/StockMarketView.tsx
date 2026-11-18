@@ -77,6 +77,7 @@ import { StockMoneyFlowModal } from './StockMoneyFlowModal';
 import { StockWatchlistModal } from './StockWatchlistModal';
 import { StockCryptoWidgetsModal } from './StockCryptoWidgetsModal';
 import { StockViopModal } from './StockViopModal';
+import { StockTefasModal } from './StockTefasModal';
 import { INITIAL_IPOS } from '../../data/ipoData';
 import { INITIAL_KAP_NEWS } from '../../data/kapNewsData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
@@ -134,6 +135,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState<boolean>(false);
   const [isCryptoWidgetsModalOpen, setIsCryptoWidgetsModalOpen] = useState<boolean>(false);
   const [isViopModalOpen, setIsViopModalOpen] = useState<boolean>(false);
+  const [isTefasModalOpen, setIsTefasModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (!externalAction) return;
@@ -150,6 +152,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       setIsAlertsModalOpen(true);
     } else if (externalAction.action === 'kap') {
       setIsKapModalOpen(true);
+    } else if (externalAction.action === 'tefas') {
+      setIsTefasModalOpen(true);
     }
   }, [externalAction]);
 
@@ -339,6 +343,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         setIsViopModalOpen(false);
         return;
       }
+      if (isTefasModalOpen) {
+        setIsTefasModalOpen(false);
+        return;
+      }
 
       // 2. If in mobile detail view, go back to list view and clear search!
       if (mobileViewTab === 'detail') {
@@ -362,6 +370,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     isAIChatOpen,
     isCryptoWidgetsModalOpen,
     isViopModalOpen,
+    isTefasModalOpen,
   ]);
 
   useEffect(() => {
@@ -903,6 +912,19 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             >
               <Activity className="w-3.5 h-3.5 text-emerald-400" />
               <span>Para Akışı</span>
+            </button>
+
+            {/* 🏦 TEFAS Yatırım Fonları & AI Sepet Terminali */}
+            <button
+              onClick={() => setIsTefasModalOpen(true)}
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-600/25 via-emerald-600/20 to-cyan-600/25 hover:from-cyan-600/35 hover:to-cyan-600/35 border border-cyan-400/40 text-cyan-200 text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-md shadow-cyan-950/40 active:scale-95"
+              title="TEFAS Yatırım Fonları, Getiri Liderleri ve 3 Hazır AI Portföy Sepeti"
+            >
+              <Layers className="w-3.5 h-3.5 text-cyan-400" />
+              <span>TEFAS Fonları</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 text-[10px] font-bold">
+                AI Sepet
+              </span>
             </button>
 
             {/* 🏆 Başarı Karnesi */}
@@ -2772,6 +2794,12 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
           setActiveSearch('');
           setIsViopModalOpen(false);
         }}
+      />
+
+      {/* 🏦 TEFAS Yatırım Fonları & AI Portföy Sepet Terminali Modal */}
+      <StockTefasModal
+        isOpen={isTefasModalOpen}
+        onClose={() => setIsTefasModalOpen(false)}
       />
 
       {/* Borsa Dedicated AI Sinyal Robotu Modal */}
