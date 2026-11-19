@@ -31,6 +31,8 @@ import {
   ExternalLink,
   Maximize2,
   Minimize2,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { User } from '../../utils/authHelper';
 import {
@@ -782,6 +784,7 @@ const TJKVideoPlayer: React.FC<{
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasError, setHasError] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isMuted, setIsMuted] = useState<boolean>(true);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -793,12 +796,12 @@ const TJKVideoPlayer: React.FC<{
 
     const attemptPlay = () => {
       if (!autoPlay || !video) return;
+      video.muted = true; // Tarayıcı güvenlik kısıtlamalarına takılmadan anında oynatmak için sessiz başlar
+      setIsMuted(true);
       const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // Tarayıcı sesli otomatik oynatmaya izin vermezse sessize alarak akışı başlat
-          video.muted = true;
-          video.play().catch(() => { });
+        playPromise.catch((err) => {
+          console.warn('Autoplay error:', err);
         });
       }
     };
@@ -809,16 +812,14 @@ const TJKVideoPlayer: React.FC<{
       return;
     }
 
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Native HLS (Safari / iOS / Mac)
-      video.src = streamUrl;
-      attemptPlay();
-    } else if (Hls.isSupported()) {
-      // Chrome, Edge, Firefox, Android (Hls.js Engine)
+    // 1. Önce Hls.js desteği kontrol edilir (Chrome, Edge, Firefox, Android)
+    if (Hls.isSupported()) {
       hlsInstance = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
         backBufferLength: 30,
+        manifestLoadingMaxRetry: 4,
+        levelLoadingMaxRetry: 4,
       });
       hlsInstance.loadSource(streamUrl);
       hlsInstance.attachMedia(video);
@@ -840,27 +841,44 @@ const TJKVideoPlayer: React.FC<{
           }
         }
       });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // 2. Safari / iOS için yerel HLS oynatımı
+      video.src = streamUrl;
+      attemptPlay();
     } else {
       video.src = streamUrl;
+      attemptPlay();
     }
 
     const handleLoadedData = () => setIsLoading(false);
     const handlePlaying = () => setIsLoading(false);
     const handleWaiting = () => setIsLoading(true);
+    const handleVolumeChange = () => {
+      if (video) setIsMuted(video.muted);
+    };
 
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('playing', handlePlaying);
     video.addEventListener('waiting', handleWaiting);
+    video.addEventListener('volumechange', handleVolumeChange);
 
     return () => {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('playing', handlePlaying);
       video.removeEventListener('waiting', handleWaiting);
+      video.removeEventListener('volumechange', handleVolumeChange);
       if (hlsInstance) {
         hlsInstance.destroy();
       }
     };
   }, [streamUrl, autoPlay]);
+
+  const handleToggleSound = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(videoRef.current.muted);
+    }
+  };
 
   return (
     <div className="relative w-full h-full bg-black flex items-center justify-center">
@@ -868,9 +886,21 @@ const TJKVideoPlayer: React.FC<{
         ref={videoRef}
         controls
         playsInline
+        muted
         autoPlay={autoPlay}
         className={className}
       />
+      {/* Sesi Aç / Kapat Kısayol Butonu */}
+      {isMuted && !isLoading && !hasError && (
+        <button
+          onClick={handleToggleSound}
+          className="absolute top-3 left-3 z-20 px-3 py-1.5 rounded-xl bg-slate-950/85 hover:bg-slate-900 text-amber-300 hover:text-amber-200 border border-amber-400/50 shadow-xl text-xs font-black flex items-center space-x-1.5 cursor-pointer backdrop-blur-md animate-bounce"
+          title="Canlı yayının sesini aç"
+        >
+          <VolumeX className="w-4 h-4 text-amber-400" />
+          <span>Sesi Aç 🔊</span>
+        </button>
+      )}
       {isLoading && !hasError && (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
           <div className="flex flex-col items-center space-y-2">
@@ -888,7 +918,7 @@ const TJKVideoPlayer: React.FC<{
             rel="noopener noreferrer"
             className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-black flex items-center space-x-1"
           >
-            <span>YouTube'da Aç</span>
+            <span>Resmi YouTube'da Aç</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
@@ -931,9 +961,9 @@ export const LiveRacePlayer: React.FC<{
       return race.video;
     }
     if (streamSource === 'tjktv2') {
-      return 'https://tjktv-live.tjk.org/tjktv2/tjktv2_1080p.m3u8';
+      return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz2/yaristayiz2.m3u8';
     }
-    return 'https://tjktv-live.tjk.org/tjktv_1080p.m3u8';
+    return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz/yaristayiz.m3u8';
   };
 
   const activeStreamUrl = getStreamUrl();
