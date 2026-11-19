@@ -775,21 +775,6 @@ export const SavedCouponCard: React.FC<{
   };
 
 
-// 📺 Canlı HLS Oynatıcı: .m3u8 dosyalarının tarayıcı önbelleğinde kalıp 10. saniyede donmasını önleyen dinamik yükleyici
-class LivePlaylistLoader extends (Hls.DefaultConfig.loader as any) {
-  constructor(config: any) {
-    super(config);
-    const originalLoad = this.load.bind(this);
-    this.load = function (context: any, config: any, callbacks: any) {
-      if (context && (context.type === 'manifest' || context.type === 'level')) {
-        const sep = context.url.includes('?') ? '&' : '?';
-        context.url = context.url + sep + '_cb=' + Date.now();
-      }
-      originalLoad(context, config, callbacks);
-    };
-  }
-}
-
 // 📺 TJK TV Resmi Canlı Yayın Oynatıcısı (Native HLS / HTML5 Video)
 const TJKVideoPlayer: React.FC<{
   streamUrl: string;
@@ -830,29 +815,10 @@ const TJKVideoPlayer: React.FC<{
       hlsInstance = new Hls({
         enableWorker: true,
         lowLatencyMode: false,
-        liveDurationInfinity: true, // KRİTİK: Tarayıcının 10. saniyede (0:10 / 0:10) videoyu bitti sanıp durdurmasını engeller!
-        liveSyncDurationCount: 3, // Oynatıcının donmaması için daima 3 segment (6sn) güvenli ön tampon tutar
-        liveMaxLatencyDurationCount: 8, // Canlı yayından en fazla 16sn geri kalır
-        maxBufferLength: 20, // 20 saniye tamponlama
-        maxMaxBufferLength: 40,
-        maxBufferSize: 30 * 1000 * 1000,
-        maxBufferHole: 0.5,
-        highBufferWatchdogPeriod: 2,
-        nudgeOffset: 0.2,
-        nudgeMaxRetry: 5,
-        manifestLoadingTimeOut: 15000,
-        manifestLoadingMaxRetry: 6,
-        levelLoadingTimeOut: 15000,
-        levelLoadingMaxRetry: 6,
-        fragLoadingTimeOut: 20000,
-        fragLoadingMaxRetry: 6,
-        pLoader: LivePlaylistLoader as any,
-        xhrSetup: (xhr, url) => {
-          if (url.includes('.m3u8')) {
-            xhr.setRequestHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-            xhr.setRequestHeader('Pragma', 'no-cache');
-          }
-        },
+        liveDurationInfinity: true, // Tarayıcının canlı yayını 10. saniyede bitti sanıp durdurmasını engeller
+        liveSyncDurationCount: 3, // Kesintisiz akış için 3 segment canlı tampon
+        maxBufferLength: 30, // 30 saniye tamponlama
+        maxMaxBufferLength: 60,
       });
       hlsInstance.loadSource(streamUrl);
       hlsInstance.attachMedia(video);
@@ -863,7 +829,6 @@ const TJKVideoPlayer: React.FC<{
 
       hlsInstance.on(Hls.Events.LEVEL_UPDATED, () => {
         setIsLoading(false);
-        // Yeni canlı parçalar geldikçe videonun duraksamasını önle
         if (video && video.paused && autoPlay && !video.ended) {
           video.play().catch(() => {});
         }
@@ -871,9 +836,6 @@ const TJKVideoPlayer: React.FC<{
 
       hlsInstance.on(Hls.Events.FRAG_BUFFERED, () => {
         setIsLoading(false);
-        if (video && video.paused && autoPlay && !video.ended) {
-          attemptPlay();
-        }
       });
 
       hlsInstance.on(Hls.Events.ERROR, (_e, data) => {
@@ -893,11 +855,6 @@ const TJKVideoPlayer: React.FC<{
               setHasError(true);
               break;
           }
-        } else if (data.details === 'bufferStalledError') {
-          // Canlı akışta mikro tampon boşluğu oluşursa videoyu hafifçe ileri kaydır
-          if (video && !video.paused) {
-            video.currentTime += 0.2;
-          }
         }
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -911,18 +868,8 @@ const TJKVideoPlayer: React.FC<{
 
     const handleLoadedData = () => setIsLoading(false);
     const handlePlaying = () => setIsLoading(false);
-    const handleWaiting = () => {
-      setIsLoading(true);
-      if (hlsInstance?.liveSyncPosition && video) {
-        const livePos = hlsInstance.liveSyncPosition;
-        if (Math.abs(video.currentTime - livePos) > 4) {
-          video.currentTime = livePos;
-          video.play().catch(() => {});
-        }
-      }
-    };
     const handleEnded = () => {
-      // Canlı yayın asla bitmemelidir; tampon sınırında durursa canlı kenara atlayıp devam ettir
+      // Canlı yayın asla bitmemelidir; tampon sınırında durursa canlı konuma atlayıp devam ettir
       if (hlsInstance?.liveSyncPosition && video) {
         video.currentTime = hlsInstance.liveSyncPosition;
         video.play().catch(() => {});
@@ -931,13 +878,11 @@ const TJKVideoPlayer: React.FC<{
 
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('playing', handlePlaying);
-    video.addEventListener('waiting', handleWaiting);
     video.addEventListener('ended', handleEnded);
 
     return () => {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('playing', handlePlaying);
-      video.removeEventListener('waiting', handleWaiting);
       video.removeEventListener('ended', handleEnded);
       if (hlsInstance) {
         hlsInstance.destroy();
@@ -1015,9 +960,9 @@ export const LiveRacePlayer: React.FC<{
       return race.video;
     }
     if (streamSource === 'tjktv2') {
-      return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz2/yaristayiz2_720p.m3u8';
+      return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz2/yaristayiz2.m3u8';
     }
-    return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz/yaristayiz_720p.m3u8';
+    return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz/yaristayiz.m3u8';
   };
 
   const activeStreamUrl = getStreamUrl();
@@ -1565,10 +1510,12 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
       if (!detail) setLoading(true);
       setErrorMsg(null);
       const resp = await fetchHorseRacingBulletin(targetPid, force);
-      setPrograms(resp.programs || []);
+      if (resp.programs && resp.programs.length > 0) {
+        setPrograms(resp.programs);
+      }
       const isTargetValid = targetPid && (resp.programs || []).some((p) => p.id === targetPid);
-      const pid = isTargetValid ? targetPid : (resp.selectedProgramId || resp.programs?.[0]?.id || null);
-      setSelectedProgramId(pid);
+      const pid = isTargetValid ? targetPid : (resp.selectedProgramId || resp.programs?.[0]?.id || selectedProgramId || null);
+      if (pid) setSelectedProgramId(pid);
       if (resp.activeProgramDetail) {
         setDetail(resp.activeProgramDetail);
         const nextActiveRace = resp.activeProgramDetail.races.find((r) => !r.isFinished);
@@ -1638,16 +1585,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
   const handleManualRefresh = async () => {
     setProgramLoading(true);
     try {
-      const b = await fetchHorseRacingBulletin(null, true);
-      setPrograms(b.programs || []);
-      const todayPid = b.selectedProgramId || b.programs?.[0]?.id || null;
-      if (todayPid) {
-        setSelectedProgramId(todayPid);
-        const d = await fetchHorseRacingProgram(todayPid, true);
-        setDetail(d);
-        const nextActive = d.races.find((r) => !r.isFinished);
-        setSelectedRaceNo(nextActive?.number || d.races[0]?.number || 1);
-      }
+      await loadBulletin(selectedProgramId, false);
       onShowToast?.('TJK Bülteni ve Canlı Koşular Güncellendi', 'success');
     } catch {
       onShowToast?.('Yenileme sırasında bağlantı hatası', 'warning');
