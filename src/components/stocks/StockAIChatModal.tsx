@@ -179,365 +179,30 @@ export const StockAIChatModal: React.FC<StockAIChatModalProps> = ({
       .map((s) => ({ stock: s, analysis: analysesMap.get(s.symbol) }))
       .filter((x): x is { stock: StockItem; analysis: StockQuantAnalysis } => Boolean(x.analysis));
 
-    // 🟡 1. ALTIN & KIYMETLİ MADENLER ANALİZİ (Gram Altın, Ons Altın, Çeyrek, ALTIN.S1)
-    const isGoldQuery =
-      q.includes('altın') ||
-      q.includes('altin') ||
-      q.includes('gold') ||
-      q.includes('ons') ||
-      q.includes('çeyrek') ||
-      q.includes('ceyrek') ||
-      q.includes('altins1') ||
-      q.includes('altın.s1');
-
-    if (isGoldQuery) {
-      const macroRates = await fetchLiveMacroRates();
-      const gramObj = macroRates.find((m) => m.symbol === 'GRAM_ALTIN');
-      const onsObj = macroRates.find((m) => m.symbol === 'GC=F');
-      const ceyrekObj = macroRates.find((m) => m.symbol === 'CEYREK_ALTIN');
-      const usdObj = macroRates.find((m) => m.symbol === 'USDTRY=X');
-
-      const gramPriceStr = gramObj ? `${gramObj.price.toLocaleString('tr-TR')} ₺` : 'Canlı Veri Alınıyor';
-      const gramChgStr = gramObj ? `(%${gramObj.changePct >= 0 ? '+' : ''}${gramObj.changePct}%)` : '';
-      const onsPriceStr = onsObj ? `$${onsObj.price.toLocaleString('tr-TR')}` : 'Canlı Veri Alınıyor';
-      const onsChgStr = onsObj ? `(%${onsObj.changePct >= 0 ? '+' : ''}${onsObj.changePct}%)` : '';
-      const ceyrekPriceStr = ceyrekObj ? `${ceyrekObj.price.toLocaleString('tr-TR')} ₺` : 'Canlı Veri Alınıyor';
-      const usdPriceStr = usdObj ? `${usdObj.price.toFixed(2)} ₺` : 'Canlı Veri Alınıyor';
-
-      // Find Darphane Altın Sertifikası in stocks if available
-      const altinS1Pick = enriched.filter(
-        (x) => x.stock.symbol === 'ALTIN.S1' || x.stock.symbol === 'ALTINS1' || x.stock.name.toLowerCase().includes('darphane')
-      );
-
-      return {
-        id: `st_${Date.now()}`,
-        sender: 'assistant',
-        timestamp: nowTime,
-        text:
-          `🟡 **Altın Piyasa Analizi & "Altın Alınır mı?" Değerlendirmesi**\n\n` +
-          `📊 **Canlı Piyasa Fiyatları:**\n` +
-          `• **Gram Altın (Kapalıçarşı/Serbest):** **${gramPriceStr}** ${gramChgStr}\n` +
-          `• **Ons Altın (Global XAU/USD):** **${onsPriceStr}** ${onsChgStr}\n` +
-          `• **Çeyrek Altın:** **${ceyrekPriceStr}**\n` +
-          `• **Dolar/TL Kuru:** **${usdPriceStr}**\n\n` +
-          `🧭 **Altın Alınır mı? — Makro Faktörler & Strateji:**\n\n` +
-          `1. **Global Faiz & Fed Döngüsü:**\n` +
-          `ABD Merkez Bankası (Fed) ve küresel merkez bankalarının faiz indirim sürecine girmesi, faiz getirisi olmayan altının getiri maliyetini düşürür. Tarihsel olarak faiz indirim dönemleri altının en güçlü ralli evreleridir.\n\n` +
-          `2. **Dolar/TL ve Çift Yönlü Güç:**\n` +
-          `Türkiye'de Gram Altın fiyatı \`(Ons Altın / 31.10) × Dolar/TL\` formülüyle hesaplanır. Yani ons fiyatı yerinde saysa dahi kurdaki artış veya ons yükselişi gram altına doğrudan çift yönlü getiri sağlar. Bu durum gram altını yerel enflasyona karşı en güçlü kalkanlardan biri yapar.\n\n` +
-          `3. **Jeopolitik Riskler & Merkez Bankası Rezervleri:**\n` +
-          `Küresel gerilimler ve dünya merkez bankalarının (Çin, Hindistan, Polonya ve TCMB) rekor seviyede altın alımları, geri çekilmelerde güçlü bir taban desteği oluşturmaktadır.\n\n` +
-          `🏛️ **Borsa İstanbul Alternatifi — Darphane Altın Sertifikası (ALTIN.S1):**\n` +
-          `Kuyumcu işçilik farkı ve banka alım-satım makaslarına takılmadan Borsa hesabınızdan **ALTIN.S1** kodlu Darphane Sertifikası ile hisse alır gibi 0.01 gramlık paylarla işlem yapabilirsiniz. Stopaj sıfırdır.\n\n` +
-          `💡 **Uygulanabilir Yatırım Stratejisi:**\n` +
-          `• **Kademeli Alım (DCA):** Tek seferde tüm sermayeyle almak yerine, olası geri çekilmeleri fırsat bilerek aylık/haftalık parçalar halinde biriktirmek riskinizi minimize eder.\n` +
-          `• **İdeal Sepet Ağırlığı:** Dengeli bir yatırım portföyünde altının payı **%15 ile %25** arasında güvenli liman kalkanı olarak tutulabilir.\n` +
-          `• **Vade:** Kısa vadeli al-sattan ziyade orta-uzun vadeli (en az 6-12 ay) servet koruma aracıdır.\n\n` +
-          `*(Yasal Uyarı: Burada yer alan bilgiler yatırım tavsiyesi niteliğinde olmayıp bilgilendirme amaçlıdır YTD.)*`,
-        picks: altinS1Pick,
-        quickSuggestions: [
-          '🪙 Darphane Altın Sertifikası (ALTIN.S1)',
-          '🥈 Gümüş Alınır mı?',
-          '💵 Dolar & Döviz Görünümü',
-          '📈 BIST 100 Endeks Yönü',
-          '🔥 5 Güçlü AL Hissesi',
-        ],
-      };
-    }
-
-    // 🥈 2. GÜMÜŞ & KIYMETLİ METALLER (Silver, GMSTR)
-    const isSilverQuery =
-      q.includes('gümüş') || q.includes('gumus') || q.includes('silver') || q.includes('gmstr');
-
-    if (isSilverQuery) {
-      const gmstrPick = enriched.filter((x) => x.stock.symbol === 'GMSTR' || x.stock.name.toLowerCase().includes('gümüş'));
-
-      return {
-        id: `st_${Date.now()}`,
-        sender: 'assistant',
-        timestamp: nowTime,
-        text:
-          `🥈 **Gümüş Piyasa Analizi & "Gümüş Alınır mı?" Değerlendirmesi**\n\n` +
-          `📊 **Gümüşü Öne Çıkaran Temel Dinamikler:**\n\n` +
-          `1. **Çift Yönlü Talep (Hem Yatırım Hem Sanayi):**\n` +
-          `Gümüş sadece bir kıymetli maden değil, aynı zamanda güneş panelleri (fotovoltaik hücreler), elektrikli araçlar, yapay zeka çip üretimi ve tıbbi cihazlarda alternatifi olmayan stratejik bir endüstriyel metaldir.\n\n` +
-          `2. **Altın/Gümüş Rasyosu (Gold/Silver Ratio):**\n` +
-          `Tarihsel ortalaması 60-65 seviyesinde olan rasyonun 80-85 üzerinde olması, gümüşün altına göre ucuz kaldığını ve güçlü bir ralli potansiyeli taşıdığını gösterir.\n\n` +
-          `3. **Yüksek Volatilite Uyarısı:**\n` +
-          `Gümüşün piyasa derinliği altından daha küçüktür. Bu nedenle yükselişleri altından çok daha sert (%50-%100 gibi) olabildiği gibi, düzeltmeleri de daha serttir.\n\n` +
-          `🏛️ **Borsa İstanbul Alternatifi:** Borsa hesabınızdan **GMSTR** (QNB Finansinvest Gümüş Borsa Yatırım Fonu) alarak fiziki gümüşe endeksli işlem yapabilirsiniz.\n\n` +
-          `💡 **Özet Strateji:** Yüksek risk toleransına sahip yatırımcılar için portföyün **%5-%10'u** oranında kademeli olarak değerlendirilebilir. (YTD)`,
-        picks: gmstrPick,
-        quickSuggestions: ['🟡 Altın Alınır mı?', '🔥 5 Güçlü AL Hissesi', '📈 BIST 100 Endeks Yönü'],
-      };
-    }
-
-    // 💵 3. DÖVİZ, DOLAR VE EURO (USD/TRY, EUR/TRY)
-    const isFxQuery =
-      q.includes('dolar') ||
-      q.includes('euro') ||
-      q.includes('döviz') ||
-      q.includes('doviz') ||
-      q.includes('usd') ||
-      q.includes('eur') ||
-      q.includes('sterlin') ||
-      q.includes('kur');
-
-    if (isFxQuery) {
-      const macroRates = await fetchLiveMacroRates();
-      const usdObj = macroRates.find((m) => m.symbol === 'USDTRY=X');
-      const eurObj = macroRates.find((m) => m.symbol === 'EURTRY=X');
-      const gbpObj = macroRates.find((m) => m.symbol === 'GBPTRY=X');
-
-      const usdStr = usdObj ? `${usdObj.price.toFixed(2)} ₺ (%${usdObj.changePct >= 0 ? '+' : ''}${usdObj.changePct}%)` : '34.60 ₺';
-      const eurStr = eurObj ? `${eurObj.price.toFixed(2)} ₺ (%${eurObj.changePct >= 0 ? '+' : ''}${eurObj.changePct}%)` : '36.50 ₺';
-      const gbpStr = gbpObj ? `${gbpObj.price.toFixed(2)} ₺ (%${gbpObj.changePct >= 0 ? '+' : ''}${gbpObj.changePct}%)` : '43.80 ₺';
-
-      return {
-        id: `st_${Date.now()}`,
-        sender: 'assistant',
-        timestamp: nowTime,
-        text:
-          `💵 **Döviz Piyasası & Dolar / Euro Görünümü**\n\n` +
-          `📊 **Canlı Kurlar:**\n` +
-          `• **Dolar (USD/TRY):** **${usdStr}**\n` +
-          `• **Euro (EUR/TRY):** **${eurStr}**\n` +
-          `• **İngiliz Sterlini (GBP/TRY):** **${gbpStr}**\n\n` +
-          `🧭 **Döviz Almak Mantıklı mı? (Makro Analiz):**\n\n` +
-          `1. **TCMB Para Politikası & Reel Faiz:**\n` +
-          `Türkiye Cumhuriyet Merkez Bankası'nın (TCMB) sürdürdüğü sıkı para politikası ve pozitif reel faiz ortamı, TL mevduat ve para piyasası fonlarını dövize kıyasla daha cazip kılmaktadır.\n\n` +
-          `2. **Dolar Bir Yatırım Aracı mıdır?:**\n` +
-          `Dolar kendi başına bir para birimidir ve ABD'deki yıllık %2.5-%3 enflasyona maruz kalarak küresel bazda değer kaybeder. Sadece kur artışından getiri beklemek yerine, döviz bazlı getiri sağlayan **Eurobond**, **yabancı hisse fonları** veya **ihracatçı BIST şirketleri** çok daha yüksek reel getiri üretir.\n\n` +
-          `💡 **Özet:** Kısa vadeli nakit ihtiyaçları haricinde salt döviz tutmak reel faiz ortamında TL mevduat veya Borsa/Altın karşısında fırsat maliyeti yaratabilir. (YTD)`,
-        picks: [],
-        quickSuggestions: ['🟡 Altın Alınır mı?', '📈 BIST 100 Endeks Yönü', '🔥 5 Güçlü AL Hissesi'],
-      };
-    }
-
-    // 📈 4. BORSA İSTANBUL & BIST 100 ENDEKS GÖRÜNÜMÜ
-    const isIndexQuery =
-      q.includes('bist') ||
-      q.includes('bist100') ||
-      q.includes('xu100') ||
-      q.includes('endeks') ||
-      q.includes('borsa ne olur') ||
-      q.includes('borsa düşer mi') ||
-      q.includes('borsa çıkar mı') ||
-      q.includes('borsa alınır mı') ||
-      q.includes('borsaya girilir mi');
-
-    if (isIndexQuery && !q.includes('hisse')) {
-      const macroRates = await fetchLiveMacroRates();
-      const xu100 = macroRates.find((m) => m.symbol === 'XU100.IS');
-      const indexStr = xu100 ? `${xu100.price.toLocaleString('tr-TR')} puan (%${xu100.changePct >= 0 ? '+' : ''}${xu100.changePct}%)` : '9,350+ puan';
-
-      return {
-        id: `st_${Date.now()}`,
-        sender: 'assistant',
-        timestamp: nowTime,
-        text:
-          `📈 **Borsa İstanbul (BIST 100) — Teknik & Makro Görünüm**\n\n` +
-          `📊 **Canlı Endeks Seviyesi:** **${indexStr}**\n\n` +
-          `🧭 **Borsa Ne Olur? — Temel Faktörler:**\n\n` +
-          `1. **Faiz İndirim Döngüsü:**\n` +
-          `Enflasyondaki kademeli düşüşle birlikte TCMB'nin faiz indirim sürecine başlaması, mevduattan çıkan likiditenin borsaya akmasını sağlayan en önemli katalizördür.\n\n` +
-          `2. **Çarpanlar & Şirket Değerlemeleri:**\n` +
-          `BIST 100 şirketleri F/K (Fiyat/Kazanç) ve PD/DD bazında gelişmekte olan ülke borsalarına kıyasla %35-%45 iskonto ile işlem görmektedir.\n\n` +
-          `3. **Yabancı Girişleri & Gri Liste Başarısı:**\n` +
-          `Kredi derecelendirme kuruluşlarının (S&P, Moody's, Fitch) not artışları ve CDS priminin 260 baz puan civarına gerilemesi orta vadede kurumsal fon akışını desteklemektedir.\n\n` +
-          `💡 **Strateji:** Endeks genelinden ziyade bilançosu güçlü, döviz fazlası olan, çarpanları ucuz ve pazar lideri şirketlere odaklanmak en yüksek alfa getirisini sağlar. (YTD)`,
-        picks: enriched.slice(0, 3),
-        quickSuggestions: ['🔥 5 Güçlü AL Portföyü Kur', '💎 Ucuz Değer Hisseleri', '🟡 Altın Alınır mı?'],
-      };
-    }
-
-    // 🪙 5. BİTCOİN & KRİPTO PARALAR
-    const isCryptoQuery =
-      q.includes('bitcoin') || q.includes('btc') || q.includes('kripto') || q.includes('ethereum') || q.includes('eth');
-
-    if (isCryptoQuery && !q.includes('hisse')) {
-      const macroRates = await fetchLiveMacroRates();
-      const btcObj = macroRates.find((m) => m.symbol === 'BTC-USD');
-      const btcStr = btcObj ? `$${btcObj.price.toLocaleString('tr-TR')} (%${btcObj.changePct >= 0 ? '+' : ''}${btcObj.changePct}%)` : '90,000$+';
-
-      return {
-        id: `st_${Date.now()}`,
-        sender: 'assistant',
-        timestamp: nowTime,
-        text:
-          `🪙 **Bitcoin & Kripto Varlık Analizi**\n\n` +
-          `📊 **Canlı Bitcoin (BTC/USD):** **${btcStr}**\n\n` +
-          `🧭 **Kripto Piyasası Dinamikleri:**\n` +
-          `• **Kurumsal ETF Girişleri:** BlackRock, Fidelity ve büyük kurumsal fonların spot ETF alımları piyasa arzını daraltmaya devam etmektedir.\n` +
-          `• **Halving Sonrası Döngü:** Tarihsel 4 yıllık döngülerde halving'i takip eden 6-18 aylık dönem boğa piyasasının en güçlü fazı olmuştur.\n` +
-          `• **Risk Yönetimi:** Kripto varlıklar yüksek volatilite barındırdığından toplam portföyün **%5 ile %10'unu** aşmayacak şekilde, stop-loss disipliniyle yönetilmelidir. (YTD)`,
-        picks: [],
-        quickSuggestions: ['🟡 Altın Alınır mı?', '📈 BIST 100 Endeks Yönü', '🔥 5 Güçlü AL Hissesi'],
-      };
-    }
-
-    // 💼 6. GENEL YATIRIM & PORTFÖY DAĞILIMI TAVSİYESİ
-    const isGeneralAdviceQuery =
-      q.includes('nasıl yatırım') ||
-      q.includes('ne almalı') ||
-      q.includes('ne alayım') ||
-      q.includes('altın mı borsa mı') ||
-      q.includes('borsa mı altın mı') ||
-      q.includes('portföy nasıl') ||
-      q.includes('sepet nasıl') ||
-      q.includes('paramı nasıl') ||
-      q.includes('yatırım tavsiyesi');
-
-    if (isGeneralAdviceQuery && !override) {
-      return {
-        id: `st_${Date.now()}`,
-        sender: 'assistant',
-        timestamp: nowTime,
-        text:
-          `💼 **İdeal Portföy Sepeti & Varlık Dağılım Modeli**\n\n` +
-          `Yatırımda en önemli kural tek bir varlığa bağlı kalmamaktır. Farklı ekonomik dönemlerde birbirini dengeleyen **Örnek 4 Ayaklı Portföy Modeli**:\n\n` +
-          `1. 📈 **%40 - %45 Kaliteli BIST Hisseleri / Fonları:**\n` +
-          `Büyüyen, temettü veren, ihracatçı veya yüksek özsermaye kârlılığına sahip öncü şirketler (Büyüme motoru).\n\n` +
-          `2. 🟡 **%20 - %25 Altın & Kıymetli Madenler (Gram / ALTIN.S1):**\n` +
-          `Enflasyon, jeopolitik krizler ve kur şoklarına karşı güvenli liman kalkanı.\n\n` +
-          `3. 💵 **%15 - %20 Para Piyasası / TL Mevduat Fonları:**\n` +
-          `Düzenli bileşik nakit akışı sağlar ve borsa düzeltmelerinde ucuzdan hisse almak için hazır likidite oluşturur.\n\n` +
-          `4. 🌐 **%10 - %15 Yabancı Hisse / Eurobond / Teknoloji Fonları:**\n` +
-          `Döviz bazlı global büyüme ve teknoloji rallisine katılım sağlar.\n\n` +
-          `💡 **Prensip:** Her ay düzenli kademeli alım yapıp düşüşleri fırsat görmek uzun vadede en yüksek bileşik getiriyi sağlar. (YTD)`,
-        picks: enriched.slice(0, 3),
-        quickSuggestions: ['🔥 5 Güçlü AL Portföyü Kur', '🟡 Altın Alınır mı?', '💎 Ucuz Değer Hisseleri'],
-      };
-    }
-
-    // 🏆 7. EN ÇOK YÜKSELENLER / DÜŞENLER / HACİM LİDERLERİ
-    const isGainersQuery = q.includes('en çok artan') || q.includes('en çok yükselen') || q.includes('kazandıran') || q.includes('tavan') || q.includes('lider');
-    const isLosersQuery = q.includes('en çok düşen') || q.includes('en çok azalan') || q.includes('taban') || q.includes('kaybettiren');
-    const isVolumeQuery = q.includes('hacim') || q.includes('para girişi') || q.includes('en çok işlem');
-
-    if (isGainersQuery && !override) {
-      const topGainers = [...enriched].sort((a, b) => b.stock.changePct - a.stock.changePct).slice(0, 5);
-      return {
-        id: `st_${Date.now()}`,
-        sender: 'assistant',
-        timestamp: nowTime,
-        text: `🚀 **${marketTitle} — Günün En Çok Yükselen 5 Hissesi:**\nAşağıdaki hisseler gün içinde en yüksek pozitif prim yapan lider varlıklardır:`,
-        picks: topGainers,
-        quickSuggestions: ['🔥 5 Güçlü AL Portföyü Kur', '💎 Ucuz Değer Hisseleri', '⚠️ SAT Sinyalleri'],
-      };
-    }
-
-    if (isLosersQuery && !override) {
-      const topLosers = [...enriched].sort((a, b) => a.stock.changePct - b.stock.changePct).slice(0, 5);
-      return {
-        id: `st_${Date.now()}`,
-        sender: 'assistant',
-        timestamp: nowTime,
-        text: `📉 **${marketTitle} — Günün En Çok Düşen 5 Hissesi:**\nAşağıdaki varlıklar gün içi en sert geri çekilmeyi yaşayan hisselerdir (Dip tepki potansiyeli için RSI kontrol edilebilir):`,
-        picks: topLosers,
-        quickSuggestions: ['⚡ RSI Dip Tepki Adayları', '🔥 5 Güçlü AL Portföyü Kur'],
-      };
-    }
-
-    if (isVolumeQuery && !override) {
-      const topVolume = [...enriched].sort((a, b) => (b.stock.volume || 0) - (a.stock.volume || 0)).slice(0, 5);
-      return {
-        id: `st_${Date.now()}`,
-        sender: 'assistant',
-        timestamp: nowTime,
-        text: `📊 **${marketTitle} — En Yüksek Hacimli / Para Girişi Yaşayan 5 Hisse:**\nKurumsal ve bireysel yatırımcı ilgisinin en yoğunlaştığı tahtalar:`,
-        picks: topVolume,
-        quickSuggestions: ['🔥 5 Güçlü AL Portföyü Kur', '💎 Ucuz Değer Hisseleri'],
-      };
-    }
-
-    // 🔍 8. ÖZEL BİR HİSSE / ŞİRKET SORGUSU (Şirket İsmi veya Sembol)
-    if (!override) {
-      // 8a. Check COMPANY_NAME_MAP first (e.g. "ereğli", "tüpraş", "aselsan", "thy")
-      let targetSymbol: string | null = null;
-      for (const [nameKey, sym] of Object.entries(COMPANY_NAME_MAP)) {
-        if (q.includes(nameKey)) {
-          targetSymbol = sym;
-          break;
-        }
-      }
-
-      // 8b. Match against enriched list by symbol or name
-      const matched = enriched.find((x) => {
-        if (targetSymbol && x.stock.symbol.toUpperCase() === targetSymbol.toUpperCase()) return true;
-        const sym = x.stock.symbol.toLowerCase();
-        // Exact symbol token match or surrounded by boundaries
-        const symRegex = new RegExp(`(^|\\b|\\s)${sym}(\\b|\\s|$)`, 'i');
-        if (symRegex.test(q)) return true;
-        const firstName = x.stock.name.toLowerCase().split(' ')[0];
-        if (firstName.length >= 4 && q.includes(firstName)) return true;
-        return false;
-      });
-
-      if (matched && !q.includes('portföy') && !q.includes('liste') && !q.includes('öner')) {
-        const { stock, analysis } = matched;
-        const deep = await fetchStockDeepAnalysis(stock.symbol, stock.market);
-        const memo = buildInstitutionalAIMemo(stock, analysis, deep);
-        const mtfLine = deep
-          ? `\n• **Çoklu Zaman Dilimi (MTF):** ${deep.mtfSummary.alignment} (${deep.mtf
-              .map((m) => `${m.timeframe.split(' ')[0]}: ${m.signal}`)
-              .join(' | ')})`
-          : '';
-        const analystLine = deep?.financials?.targetMeanPrice
-          ? `\n• **Kurumsal Analist Hedefi:** Ort. **${formatStockPrice(
-              deep.financials.targetMeanPrice,
-              stock.currency
-            )}** (%${deep.financials.upsidePct ?? 0} potansiyel • ${
-              deep.financials.numberOfAnalystOpinions ?? '-'
-            } kurum)`
-          : '';
-        const btLine =
-          deep?.backtest && deep.backtest.totalTrades > 0
-            ? `\n• **1Y Backtest Kanıtı:** ${deep.backtest.totalTrades} işlemde **%${deep.backtest.winRate}** kazanma, bileşik **%${deep.backtest.strategyReturnPct}** (Profit Factor: ${deep.backtest.profitFactor})`
-            : '';
-        const newsLine =
-          deep?.news && deep.news.length > 0
-            ? `\n• **Güncel Haber (${deep.news[0].sentiment}):** "${deep.news[0].title}"`
-            : '';
-
-        return {
-          id: `st_${Date.now()}`,
-          sender: 'assistant',
-          timestamp: nowTime,
-          text:
-            `📊 **${stock.symbol} — ${stock.name}** [${memo.convictionBadge}]\n\n` +
-            `• Güncel Fiyat: **${formatStockPrice(stock.close, stock.currency)}** (${stock.changePct >= 0 ? '+' : ''}%${stock.changePct.toFixed(2)})\n` +
-            `• Quant Sinyal: **${analysis.signal}** (AI Skor: **${analysis.score}/100** | Trend: %${analysis.trendScore} | Momentum: %${analysis.momentumScore} | Temel: %${analysis.fundamentalScore})` +
-            mtfLine +
-            analystLine +
-            btLine +
-            `\n• **İşlem Planı:** Stop-Loss **${formatStockPrice(analysis.tradePlan.stopLoss, stock.currency)}** (${analysis.tradePlan.stopLossPct}%) → Hedef 1 **${formatStockPrice(analysis.tradePlan.tp1, stock.currency)}** → Hedef 2 **${formatStockPrice(analysis.tradePlan.tp2, stock.currency)}** (R/R: 1:${analysis.tradePlan.riskReward})` +
-            newsLine +
-            `\n\n*(Yasal Uyarı: Bilgilendirme amaçlıdır, yatırım tavsiyesi içermez YTD.)*`,
-          picks: [matched],
-          quickSuggestions: ['🔥 5 Güçlü AL Portföyü Kur', '⚠️ Riskli / SAT Sinyalleri', '🟡 Altın Alınır mı?'],
-        };
-      }
-    }
-
-    // 🎯 9. AÇIKÇA HİSSE ÖNERİSİ / STRATEJİ TARAMASI İSTENDİĞİNDE
+    // 🎯 1. AÇIKÇA HİSSE ÖNERİSİ / STRATEJİ / PORTFÖY KURULUMU İSTENDİĞİNDE
+    // Önemli: "Portföy Kur" ifadesindeki "kur" kelimesinin döviz/kur kontrolüne takılmasını önlemek için İLK SIRADA değerlendirilir!
     const isExplicitPicksQuery =
       override !== undefined ||
-      q.includes('hisse') ||
       q.includes('portföy') ||
-      q.includes('liste') ||
-      q.includes('öner') ||
-      q.includes('al sinyali') ||
       q.includes('güçlü al') ||
-      q.includes('sat') ||
-      q.includes('risk') ||
-      q.includes('rsi') ||
-      q.includes('dip') ||
-      q.includes('tepki') ||
+      q.includes('hisse öner') ||
+      q.includes('hisse ver') ||
+      q.includes('hisseleri') ||
+      q.includes('al sinyali') ||
+      q.includes('al sinyalleri') ||
+      q.includes('al sinyalli') ||
+      q.includes('5 hisse') ||
+      q.includes('3 hisse') ||
+      q.includes('7 hisse') ||
+      q.includes('10 hisse') ||
+      q.includes('dip tepki') ||
+      q.includes('aşırı satım') ||
+      q.includes('ucuz değer') ||
       q.includes('temettü') ||
-      q.includes('ucuz') ||
-      q.includes('değer') ||
-      q.includes('f/k');
+      q.includes('temettu') ||
+      q.includes('sat sinyali') ||
+      q.includes('riskli hisse') ||
+      (q.includes('hisse') && (q.includes('al') || q.includes('öner') || q.includes('seç')));
 
     if (isExplicitPicksQuery) {
       const countMatch = q.match(/(\d+)\s*(?:hisse|adet|varlık)/);
@@ -611,7 +276,347 @@ export const StockAIChatModal: React.FC<StockAIChatModalProps> = ({
       };
     }
 
-    // 🤖 10. GENEL VE AKILLI DOĞAL DİL YANITI (Alakasız 5 hisse vermek yerine soruya doğrudan cevap ver)
+    // 🔍 2. ÖZEL BİR HİSSE / ŞİRKET SORGUSU (Şirket İsmi veya Sembol)
+    if (!override) {
+      let targetSymbol: string | null = null;
+      for (const [nameKey, sym] of Object.entries(COMPANY_NAME_MAP)) {
+        if (q.includes(nameKey)) {
+          targetSymbol = sym;
+          break;
+        }
+      }
+
+      const matched = enriched.find((x) => {
+        if (targetSymbol && x.stock.symbol.toUpperCase() === targetSymbol.toUpperCase()) return true;
+        const sym = x.stock.symbol.toLowerCase();
+        const symRegex = new RegExp(`(^|\\b|\\s)${sym}(\\b|\\s|$)`, 'i');
+        if (symRegex.test(q)) return true;
+        const firstName = x.stock.name.toLowerCase().split(' ')[0];
+        if (firstName.length >= 4 && q.includes(firstName)) return true;
+        return false;
+      });
+
+      if (matched && !q.includes('portföy') && !q.includes('liste') && !q.includes('öner')) {
+        const { stock, analysis } = matched;
+        const deep = await fetchStockDeepAnalysis(stock.symbol, stock.market);
+        const memo = buildInstitutionalAIMemo(stock, analysis, deep);
+        const mtfLine = deep
+          ? `\n• **Çoklu Zaman Dilimi (MTF):** ${deep.mtfSummary.alignment} (${deep.mtf
+              .map((m) => `${m.timeframe.split(' ')[0]}: ${m.signal}`)
+              .join(' | ')})`
+          : '';
+        const analystLine = deep?.financials?.targetMeanPrice
+          ? `\n• **Kurumsal Analist Hedefi:** Ort. **${formatStockPrice(
+              deep.financials.targetMeanPrice,
+              stock.currency
+            )}** (%${deep.financials.upsidePct ?? 0} potansiyel • ${
+              deep.financials.numberOfAnalystOpinions ?? '-'
+            } kurum)`
+          : '';
+        const btLine =
+          deep?.backtest && deep.backtest.totalTrades > 0
+            ? `\n• **1Y Backtest Kanıtı:** ${deep.backtest.totalTrades} işlemde **%${deep.backtest.winRate}** kazanma, bileşik **%${deep.backtest.strategyReturnPct}** (Profit Factor: ${deep.backtest.profitFactor})`
+            : '';
+        const newsLine =
+          deep?.news && deep.news.length > 0
+            ? `\n• **Güncel Haber (${deep.news[0].sentiment}):** "${deep.news[0].title}"`
+            : '';
+
+        return {
+          id: `st_${Date.now()}`,
+          sender: 'assistant',
+          timestamp: nowTime,
+          text:
+            `📊 **${stock.symbol} — ${stock.name}** [${memo.convictionBadge}]\n\n` +
+            `• Güncel Fiyat: **${formatStockPrice(stock.close, stock.currency)}** (${stock.changePct >= 0 ? '+' : ''}%${stock.changePct.toFixed(2)})\n` +
+            `• Quant Sinyal: **${analysis.signal}** (AI Skor: **${analysis.score}/100** | Trend: %${analysis.trendScore} | Momentum: %${analysis.momentumScore} | Temel: %${analysis.fundamentalScore})` +
+            mtfLine +
+            analystLine +
+            btLine +
+            `\n• **İşlem Planı:** Stop-Loss **${formatStockPrice(analysis.tradePlan.stopLoss, stock.currency)}** (${analysis.tradePlan.stopLossPct}%) → Hedef 1 **${formatStockPrice(analysis.tradePlan.tp1, stock.currency)}** → Hedef 2 **${formatStockPrice(analysis.tradePlan.tp2, stock.currency)}** (R/R: 1:${analysis.tradePlan.riskReward})` +
+            newsLine +
+            `\n\n*(Yasal Uyarı: Bilgilendirme amaçlıdır, yatırım tavsiyesi içermez YTD.)*`,
+          picks: [matched],
+          quickSuggestions: ['🔥 5 Güçlü AL Portföyü Kur', '⚠️ Riskli / SAT Sinyalleri', '🟡 Altın Alınır mı?'],
+        };
+      }
+    }
+
+    // 🟡 3. ALTIN & KIYMETLİ MADENLER ANALİZİ (Gram Altın, Ons Altın, Çeyrek, ALTIN.S1)
+    const isGoldQuery =
+      q.includes('altın') ||
+      q.includes('altin') ||
+      q.includes('gold') ||
+      q.includes('ons') ||
+      q.includes('çeyrek') ||
+      q.includes('ceyrek') ||
+      q.includes('altins1') ||
+      q.includes('altın.s1');
+
+    if (isGoldQuery) {
+      const macroRates = await fetchLiveMacroRates();
+      const gramObj = macroRates.find((m) => m.symbol === 'GRAM_ALTIN');
+      const onsObj = macroRates.find((m) => m.symbol === 'GC=F');
+      const ceyrekObj = macroRates.find((m) => m.symbol === 'CEYREK_ALTIN');
+      const usdObj = macroRates.find((m) => m.symbol === 'USDTRY=X');
+
+      const gramPriceStr = gramObj ? `${gramObj.price.toLocaleString('tr-TR')} ₺` : 'Canlı Veri Alınıyor';
+      const gramChgStr = gramObj ? `(%${gramObj.changePct >= 0 ? '+' : ''}${gramObj.changePct}%)` : '';
+      const onsPriceStr = onsObj ? `$${onsObj.price.toLocaleString('tr-TR')}` : 'Canlı Veri Alınıyor';
+      const onsChgStr = onsObj ? `(%${onsObj.changePct >= 0 ? '+' : ''}${onsObj.changePct}%)` : '';
+      const ceyrekPriceStr = ceyrekObj ? `${ceyrekObj.price.toLocaleString('tr-TR')} ₺` : 'Canlı Veri Alınıyor';
+      const usdPriceStr = usdObj ? `${usdObj.price.toFixed(2)} ₺` : 'Canlı Veri Alınıyor';
+
+      const altinS1Pick = enriched.filter(
+        (x) => x.stock.symbol === 'ALTIN.S1' || x.stock.symbol === 'ALTINS1' || x.stock.name.toLowerCase().includes('darphane')
+      );
+
+      return {
+        id: `st_${Date.now()}`,
+        sender: 'assistant',
+        timestamp: nowTime,
+        text:
+          `🟡 **Altın Piyasa Analizi & "Altın Alınır mı?" Değerlendirmesi**\n\n` +
+          `📊 **Canlı Piyasa Fiyatları:**\n` +
+          `• **Gram Altın (Kapalıçarşı/Serbest):** **${gramPriceStr}** ${gramChgStr}\n` +
+          `• **Ons Altın (Global XAU/USD):** **${onsPriceStr}** ${onsChgStr}\n` +
+          `• **Çeyrek Altın:** **${ceyrekPriceStr}**\n` +
+          `• **Dolar/TL Kuru:** **${usdPriceStr}**\n\n` +
+          `🧭 **Altın Alınır mı? — Makro Faktörler & Strateji:**\n\n` +
+          `1. **Global Faiz & Fed Döngüsü:**\n` +
+          `ABD Merkez Bankası (Fed) ve küresel merkez bankalarının faiz indirim sürecine girmesi, faiz getirisi olmayan altının getiri maliyetini düşürür. Tarihsel olarak faiz indirim dönemleri altının en güçlü ralli evreleridir.\n\n` +
+          `2. **Dolar/TL ve Çift Yönlü Güç:**\n` +
+          `Türkiye'de Gram Altın fiyatı \`(Ons Altın / 31.10) × Dolar/TL\` formülüyle hesaplanır. Yani ons fiyatı yerinde saysa dahi kurdaki artış veya ons yükselişi gram altına doğrudan çift yönlü getiri sağlar. Bu durum gram altını yerel enflasyona karşı en güçlü kalkanlardan biri yapar.\n\n` +
+          `3. **Jeopolitik Riskler & Merkez Bankası Rezervleri:**\n` +
+          `Küresel gerilimler ve dünya merkez bankalarının (Çin, Hindistan, Polonya ve TCMB) rekor seviyede altın alımları, geri çekilmelerde güçlü bir taban desteği oluşturmaktadır.\n\n` +
+          `🏛️ **Borsa İstanbul Alternatifi — Darphane Altın Sertifikası (ALTIN.S1):**\n` +
+          `Kuyumcu işçilik farkı ve banka alım-satım makaslarına takılmadan Borsa hesabınızdan **ALTIN.S1** kodlu Darphane Sertifikası ile hisse alır gibi 0.01 gramlık paylarla işlem yapabilirsiniz. Stopaj sıfırdır.\n\n` +
+          `💡 **Uygulanabilir Yatırım Stratejisi:**\n` +
+          `• **Kademeli Alım (DCA):** Tek seferde tüm sermayeyle almak yerine, olası geri çekilmeleri fırsat bilerek aylık/haftalık parçalar halinde biriktirmek riskinizi minimize eder.\n` +
+          `• **İdeal Sepet Ağırlığı:** Dengeli bir yatırım portföyünde altının payı **%15 ile %25** arasında güvenli liman kalkanı olarak tutulabilir.\n` +
+          `• **Vade:** Kısa vadeli al-sattan ziyade orta-uzun vadeli (en az 6-12 ay) servet koruma aracıdır.\n\n` +
+          `*(Yasal Uyarı: Burada yer alan bilgiler yatırım tavsiyesi niteliğinde olmayıp bilgilendirme amaçlıdır YTD.)*`,
+        picks: altinS1Pick,
+        quickSuggestions: [
+          '🪙 Darphane Altın Sertifikası (ALTIN.S1)',
+          '🥈 Gümüş Alınır mı?',
+          '💵 Dolar & Döviz Görünümü',
+          '📈 BIST 100 Endeks Yönü',
+          '🔥 5 Güçlü AL Portföyü Kur',
+        ],
+      };
+    }
+
+    // 🥈 4. GÜMÜŞ & KIYMETLİ METALLER (Silver, GMSTR)
+    const isSilverQuery =
+      q.includes('gümüş') || q.includes('gumus') || q.includes('silver') || q.includes('gmstr');
+
+    if (isSilverQuery) {
+      const gmstrPick = enriched.filter((x) => x.stock.symbol === 'GMSTR' || x.stock.name.toLowerCase().includes('gümüş'));
+
+      return {
+        id: `st_${Date.now()}`,
+        sender: 'assistant',
+        timestamp: nowTime,
+        text:
+          `🥈 **Gümüş Piyasa Analizi & "Gümüş Alınır mı?" Değerlendirmesi**\n\n` +
+          `📊 **Gümüşü Öne Çıkaran Temel Dinamikler:**\n\n` +
+          `1. **Çift Yönlü Talep (Hem Yatırım Hem Sanayi):**\n` +
+          `Gümüş sadece bir kıymetli maden değil, aynı zamanda güneş panelleri (fotovoltaik hücreler), elektrikli araçlar, yapay zeka çip üretimi ve tıbbi cihazlarda alternatifi olmayan stratejik bir endüstriyel metaldir.\n\n` +
+          `2. **Altın/Gümüş Rasyosu (Gold/Silver Ratio):**\n` +
+          `Tarihsel ortalaması 60-65 seviyesinde olan rasyonun 80-85 üzerinde olması, gümüşün altına göre ucuz kaldığını ve güçlü bir ralli potansiyeli taşıdığını gösterir.\n\n` +
+          `3. **Yüksek Volatilite Uyarısı:**\n` +
+          `Gümüşün piyasa derinliği altından daha küçüktür. Bu nedenle yükselişleri altından çok daha sert (%50-%100 gibi) olabildiği gibi, düzeltmeleri de daha serttir.\n\n` +
+          `🏛️ **Borsa İstanbul Alternatifi:** Borsa hesabınızdan **GMSTR** (QNB Finansinvest Gümüş Borsa Yatırım Fonu) alarak fiziki gümüşe endeksli işlem yapabilirsiniz.\n\n` +
+          `💡 **Özet Strateji:** Yüksek risk toleransına sahip yatırımcılar için portföyün **%5-%10'u** oranında kademeli olarak değerlendirilebilir. (YTD)`,
+        picks: gmstrPick,
+        quickSuggestions: ['🟡 Altın Alınır mı?', '🔥 5 Güçlü AL Portföyü Kur', '📈 BIST 100 Endeks Yönü'],
+      };
+    }
+
+    // 💵 5. DÖVİZ, DOLAR VE EURO (USD/TRY, EUR/TRY)
+    // DİKKAT: "Portföy Kur" gibi fiillerle çakışmaması için salt "kur" değil, döviz terimleri aranır!
+    const isFxQuery =
+      q.includes('dolar') ||
+      q.includes('euro') ||
+      q.includes('döviz') ||
+      q.includes('doviz') ||
+      q.includes('sterlin') ||
+      q.includes('döviz kuru') ||
+      q.includes('dolar kuru') ||
+      q.includes('euro kuru') ||
+      q.includes('döviz kurları') ||
+      q.includes('canlı kurlar');
+
+    if (isFxQuery) {
+      const macroRates = await fetchLiveMacroRates();
+      const usdObj = macroRates.find((m) => m.symbol === 'USDTRY=X');
+      const eurObj = macroRates.find((m) => m.symbol === 'EURTRY=X');
+      const gbpObj = macroRates.find((m) => m.symbol === 'GBPTRY=X');
+
+      const usdStr = usdObj ? `${usdObj.price.toFixed(2)} ₺ (%${usdObj.changePct >= 0 ? '+' : ''}${usdObj.changePct}%)` : '34.60 ₺';
+      const eurStr = eurObj ? `${eurObj.price.toFixed(2)} ₺ (%${eurObj.changePct >= 0 ? '+' : ''}${eurObj.changePct}%)` : '36.50 ₺';
+      const gbpStr = gbpObj ? `${gbpObj.price.toFixed(2)} ₺ (%${gbpObj.changePct >= 0 ? '+' : ''}${gbpObj.changePct}%)` : '43.80 ₺';
+
+      return {
+        id: `st_${Date.now()}`,
+        sender: 'assistant',
+        timestamp: nowTime,
+        text:
+          `💵 **Döviz Piyasası & Dolar / Euro Görünümü**\n\n` +
+          `📊 **Canlı Kurlar:**\n` +
+          `• **Dolar (USD/TRY):** **${usdStr}**\n` +
+          `• **Euro (EUR/TRY):** **${eurStr}**\n` +
+          `• **İngiliz Sterlini (GBP/TRY):** **${gbpStr}**\n\n` +
+          `🧭 **Döviz Almak Mantıklı mı? (Makro Analiz):**\n\n` +
+          `1. **TCMB Para Politikası & Reel Faiz:**\n` +
+          `Türkiye Cumhuriyet Merkez Bankası'nın (TCMB) sürdürdüğü sıkı para politikası ve pozitif reel faiz ortamı, TL mevduat ve para piyasası fonlarını dövize kıyasla daha cazip kılmaktadır.\n\n` +
+          `2. **Dolar Bir Yatırım Aracı mıdır?:**\n` +
+          `Dolar kendi başına bir para birimidir ve ABD'deki yıllık %2.5-%3 enflasyona maruz kalarak küresel bazda değer kaybeder. Sadece kur artışından getiri beklemek yerine, döviz bazlı getiri sağlayan **Eurobond**, **yabancı hisse fonları** veya **ihracatçı BIST şirketleri** çok daha yüksek reel getiri üretir.\n\n` +
+          `💡 **Özet:** Kısa vadeli nakit ihtiyaçları haricinde salt döviz tutmak reel faiz ortamında TL mevduat veya Borsa/Altın karşısında fırsat maliyeti yaratabilir. (YTD)`,
+        picks: [],
+        quickSuggestions: ['🟡 Altın Alınır mı?', '📈 BIST 100 Endeks Yönü', '🔥 5 Güçlü AL Portföyü Kur'],
+      };
+    }
+
+    // 📈 6. BORSA İSTANBUL & BIST 100 ENDEKS GÖRÜNÜMÜ
+    const isIndexQuery =
+      q.includes('bist 100') ||
+      q.includes('bist100') ||
+      q.includes('xu100') ||
+      q.includes('endeks') ||
+      q.includes('borsa ne olur') ||
+      q.includes('borsa düşer mi') ||
+      q.includes('borsa çıkar mı') ||
+      q.includes('borsa alınır mı') ||
+      q.includes('borsaya girilir mi');
+
+    if (isIndexQuery) {
+      const macroRates = await fetchLiveMacroRates();
+      const xu100 = macroRates.find((m) => m.symbol === 'XU100.IS');
+      const indexStr = xu100 ? `${xu100.price.toLocaleString('tr-TR')} puan (%${xu100.changePct >= 0 ? '+' : ''}${xu100.changePct}%)` : '9,350+ puan';
+
+      return {
+        id: `st_${Date.now()}`,
+        sender: 'assistant',
+        timestamp: nowTime,
+        text:
+          `📈 **Borsa İstanbul (BIST 100) — Teknik & Makro Görünüm**\n\n` +
+          `📊 **Canlı Endeks Seviyesi:** **${indexStr}**\n\n` +
+          `🧭 **Borsa Ne Olur? — Temel Faktörler:**\n\n` +
+          `1. **Faiz İndirim Döngüsü:**\n` +
+          `Enflasyondaki kademeli düşüşle birlikte TCMB'nin faiz indirim sürecine başlaması, mevduattan çıkan likiditenin borsaya akmasını sağlayan en önemli katalizördür.\n\n` +
+          `2. **Çarpanlar & Şirket Değerlemeleri:**\n` +
+          `BIST 100 şirketleri F/K (Fiyat/Kazanç) ve PD/DD bazında gelişmekte olan ülke borsalarına kıyasla %35-%45 iskonto ile işlem görmektedir.\n\n` +
+          `3. **Yabancı Girişleri & Gri Liste Başarısı:**\n` +
+          `Kredi derecelendirme kuruluşlarının (S&P, Moody's, Fitch) not artışları ve CDS priminin 260 baz puan civarına gerilemesi orta vadede kurumsal fon akışını desteklemektedir.\n\n` +
+          `💡 **Strateji:** Endeks genelinden ziyade bilançosu güçlü, döviz fazlası olan, çarpanları ucuz ve pazar lideri şirketlere odaklanmak en yüksek alfa getirisini sağlar. (YTD)`,
+        picks: enriched.slice(0, 3),
+        quickSuggestions: ['🔥 5 Güçlü AL Portföyü Kur', '💎 Ucuz Değer Hisseleri', '🟡 Altın Alınır mı?'],
+      };
+    }
+
+    // 🪙 7. BİTCOİN & KRİPTO PARALAR
+    const isCryptoQuery =
+      q.includes('bitcoin') || q.includes('btc') || q.includes('kripto') || q.includes('ethereum') || q.includes('eth');
+
+    if (isCryptoQuery) {
+      const macroRates = await fetchLiveMacroRates();
+      const btcObj = macroRates.find((m) => m.symbol === 'BTC-USD');
+      const btcStr = btcObj ? `$${btcObj.price.toLocaleString('tr-TR')} (%${btcObj.changePct >= 0 ? '+' : ''}${btcObj.changePct}%)` : '90,000$+';
+
+      return {
+        id: `st_${Date.now()}`,
+        sender: 'assistant',
+        timestamp: nowTime,
+        text:
+          `🪙 **Bitcoin & Kripto Varlık Analizi**\n\n` +
+          `📊 **Canlı Bitcoin (BTC/USD):** **${btcStr}**\n\n` +
+          `🧭 **Kripto Piyasası Dinamikleri:**\n` +
+          `• **Kurumsal ETF Girişleri:** BlackRock, Fidelity ve büyük kurumsal fonların spot ETF alımları piyasa arzını daraltmaya devam etmektedir.\n` +
+          `• **Halving Sonrası Döngü:** Tarihsel 4 yıllık döngülerde halving'i takip eden 6-18 aylık dönem boğa piyasasının en güçlü fazı olmuştur.\n` +
+          `• **Risk Yönetimi:** Kripto varlıklar yüksek volatilite barındırdığından toplam portföyün **%5 ile %10'unu** aşmayacak şekilde, stop-loss disipliniyle yönetilmelidir. (YTD)`,
+        picks: [],
+        quickSuggestions: ['🟡 Altın Alınır mı?', '📈 BIST 100 Endeks Yönü', '🔥 5 Güçlü AL Portföyü Kur'],
+      };
+    }
+
+    // 💼 8. GENEL YATIRIM & PORTFÖY DAĞILIMI TAVSİYESİ
+    const isGeneralAdviceQuery =
+      q.includes('nasıl yatırım') ||
+      q.includes('ne almalı') ||
+      q.includes('ne alayım') ||
+      q.includes('altın mı borsa mı') ||
+      q.includes('borsa mı altın mı') ||
+      q.includes('portföy nasıl') ||
+      q.includes('sepet nasıl') ||
+      q.includes('paramı nasıl') ||
+      q.includes('yatırım tavsiyesi');
+
+    if (isGeneralAdviceQuery && !override) {
+      return {
+        id: `st_${Date.now()}`,
+        sender: 'assistant',
+        timestamp: nowTime,
+        text:
+          `💼 **İdeal Portföy Sepeti & Varlık Dağılım Modeli**\n\n` +
+          `Yatırımda en önemli kural tek bir varlığa bağlı kalmamaktır. Farklı ekonomik dönemlerde birbirini dengeleyen **Örnek 4 Ayaklı Portföy Modeli**:\n\n` +
+          `1. 📈 **%40 - %45 Kaliteli BIST Hisseleri / Fonları:**\n` +
+          `Büyüyen, temettü veren, ihracatçı veya yüksek özsermaye kârlılığına sahip öncü şirketler (Büyüme motoru).\n\n` +
+          `2. 🟡 **%20 - %25 Altın & Kıymetli Madenler (Gram / ALTIN.S1):**\n` +
+          `Enflasyon, jeopolitik krizler ve kur şoklarına karşı güvenli liman kalkanı.\n\n` +
+          `3. 💵 **%15 - %20 Para Piyasası / TL Mevduat Fonları:**\n` +
+          `Düzenli bileşik nakit akışı sağlar ve borsa düzeltmelerinde ucuzdan hisse almak için hazır likidite oluşturur.\n\n` +
+          `4. 🌐 **%10 - %15 Yabancı Hisse / Eurobond / Teknoloji Fonları:**\n` +
+          `Döviz bazlı global büyüme ve teknoloji rallisine katılım sağlar.\n\n` +
+          `💡 **Prensip:** Her ay düzenli kademeli alım yapıp düşüşleri fırsat görmek uzun vadede en yüksek bileşik getiriyi sağlar. (YTD)`,
+        picks: enriched.slice(0, 3),
+        quickSuggestions: ['🔥 5 Güçlü AL Portföyü Kur', '🟡 Altın Alınır mı?', '💎 Ucuz Değer Hisseleri'],
+      };
+    }
+
+    // 🏆 9. EN ÇOK YÜKSELENLER / DÜŞENLER / HACİM LİDERLERİ
+    const isGainersQuery = q.includes('en çok artan') || q.includes('en çok yükselen') || q.includes('kazandıran') || q.includes('tavan') || q.includes('lider');
+    const isLosersQuery = q.includes('en çok düşen') || q.includes('en çok azalan') || q.includes('taban') || q.includes('kaybettiren');
+    const isVolumeQuery = q.includes('hacim') || q.includes('para girişi') || q.includes('en çok işlem');
+
+    if (isGainersQuery && !override) {
+      const topGainers = [...enriched].sort((a, b) => b.stock.changePct - a.stock.changePct).slice(0, 5);
+      return {
+        id: `st_${Date.now()}`,
+        sender: 'assistant',
+        timestamp: nowTime,
+        text: `🚀 **${marketTitle} — Günün En Çok Yükselen 5 Hissesi:**\nAşağıdaki hisseler gün içinde en yüksek pozitif prim yapan lider varlıklardır:`,
+        picks: topGainers,
+        quickSuggestions: ['🔥 5 Güçlü AL Portföyü Kur', '💎 Ucuz Değer Hisseleri', '⚠️ SAT Sinyalleri'],
+      };
+    }
+
+    if (isLosersQuery && !override) {
+      const topLosers = [...enriched].sort((a, b) => a.stock.changePct - b.stock.changePct).slice(0, 5);
+      return {
+        id: `st_${Date.now()}`,
+        sender: 'assistant',
+        timestamp: nowTime,
+        text: `📉 **${marketTitle} — Günün En Çok Düşen 5 Hissesi:**\nAşağıdaki varlıklar gün içi en sert geri çekilmeyi yaşayan hisselerdir (Dip tepki potansiyeli için RSI kontrol edilebilir):`,
+        picks: topLosers,
+        quickSuggestions: ['⚡ RSI Dip Tepki Adayları', '🔥 5 Güçlü AL Portföyü Kur'],
+      };
+    }
+
+    if (isVolumeQuery && !override) {
+      const topVolume = [...enriched].sort((a, b) => (b.stock.volume || 0) - (a.stock.volume || 0)).slice(0, 5);
+      return {
+        id: `st_${Date.now()}`,
+        sender: 'assistant',
+        timestamp: nowTime,
+        text: `📊 **${marketTitle} — En Yüksek Hacimli / Para Girişi Yaşayan 5 Hisse:**\nKurumsal ve bireysel yatırımcı ilgisinin en yoğunlaştığı tahtalar:`,
+        picks: topVolume,
+        quickSuggestions: ['🔥 5 Güçlü AL Portföyü Kur', '💎 Ucuz Değer Hisseleri'],
+      };
+    }
+
+    // 🤖 10. GENEL VE AKILLI DOĞAL DİL YANITI
     return {
       id: `st_${Date.now()}`,
       sender: 'assistant',
@@ -627,9 +632,9 @@ export const StockAIChatModal: React.FC<StockAIChatModalProps> = ({
         `Aşağıdaki hızlı butonlardan birine dokunabilir veya doğrudan hisse/varlık adı yazabilirsiniz:`,
       picks: [],
       quickSuggestions: [
+        '🔥 5 Güçlü AL Portföyü Kur',
         '🟡 Altın Alınır mı?',
         '📈 BIST 100 Endeks Yönü',
-        '🔥 5 Güçlü AL Portföyü Kur',
         '💎 Ucuz Değer Hisseleri',
         '💵 Dolar & Döviz Görünümü',
       ],

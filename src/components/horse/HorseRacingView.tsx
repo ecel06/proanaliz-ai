@@ -817,8 +817,12 @@ const TJKVideoPlayer: React.FC<{
         lowLatencyMode: false,
         liveDurationInfinity: true, // Tarayıcının canlı yayını 10. saniyede bitti sanıp durdurmasını engeller
         liveSyncDurationCount: 3, // Kesintisiz akış için 3 segment canlı tampon
+        liveMaxLatencyDurationCount: 6,
         maxBufferLength: 30, // 30 saniye tamponlama
         maxMaxBufferLength: 60,
+        nudgeOffset: 0.2,
+        nudgeMaxRetry: 10,
+        maxBufferHole: 0.5,
       });
       hlsInstance.loadSource(streamUrl);
       hlsInstance.attachMedia(video);
@@ -839,6 +843,12 @@ const TJKVideoPlayer: React.FC<{
       });
 
       hlsInstance.on(Hls.Events.ERROR, (_e, data) => {
+        // Tampon gecikmesi veya micro-gap durumunda videoyu otomatik 200ms ileri kaydırarak donmayı aş
+        if (data.details === 'bufferStalledError' || data.details === 'bufferNudgeOnStall') {
+          if (video && !video.paused) {
+            video.currentTime += 0.2;
+          }
+        }
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
@@ -866,6 +876,20 @@ const TJKVideoPlayer: React.FC<{
       attemptPlay();
     }
 
+    const handleWaiting = () => {
+      setIsLoading(true);
+      // Canlı yayın tampon sınırında beklemeye düşerse 800ms içinde otomatik canlı uca atlat
+      setTimeout(() => {
+        if (video && !video.paused && video.readyState < 3) {
+          if (hlsInstance?.liveSyncPosition) {
+            video.currentTime = hlsInstance.liveSyncPosition;
+          } else {
+            video.currentTime += 0.2;
+          }
+          video.play().catch(() => {});
+        }
+      }, 800);
+    };
     const handleLoadedData = () => setIsLoading(false);
     const handlePlaying = () => setIsLoading(false);
     const handleEnded = () => {
@@ -876,11 +900,15 @@ const TJKVideoPlayer: React.FC<{
       }
     };
 
+    video.addEventListener('waiting', handleWaiting);
+    video.addEventListener('stalled', handleWaiting);
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('playing', handlePlaying);
     video.addEventListener('ended', handleEnded);
 
     return () => {
+      video.removeEventListener('waiting', handleWaiting);
+      video.removeEventListener('stalled', handleWaiting);
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('playing', handlePlaying);
       video.removeEventListener('ended', handleEnded);
@@ -950,6 +978,17 @@ export const LiveRacePlayer: React.FC<{
 }) => {
   // Official TJK TV 1 HLS direct stream is the default primary source
   const [streamSource, setStreamSource] = useState<'tjktv1' | 'tjktv2' | 'youtube' | 'replay'>('tjktv1');
+  const [liveVideoId, setLiveVideoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchLiveRaceStream()
+      .then((data) => {
+        if (data?.videoId) {
+          setLiveVideoId(data.videoId);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   if (mode === 'off') return null;
 
@@ -967,8 +1006,10 @@ export const LiveRacePlayer: React.FC<{
 
   const activeStreamUrl = getStreamUrl();
 
-  // Canonical TJK TV YouTube Live channel embed
-  const youtubeEmbedUrl = `https://www.youtube-nocookie.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1&mute=0&rel=0&playsinline=1`;
+  // Canonical TJK TV YouTube Live stream embed (uses real live stream videoId when available)
+  const youtubeEmbedUrl = liveVideoId
+    ? `https://www.youtube-nocookie.com/embed/${liveVideoId}?autoplay=1&mute=0&rel=0&playsinline=1`
+    : `https://www.youtube-nocookie.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1&mute=0&rel=0&playsinline=1`;
 
   // 1. KÜÇÜK EKRAN MODU (Sayfada Köşede Kayan Mini Oynatıcı)
   if (mode === 'mini') {
