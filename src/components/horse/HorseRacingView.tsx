@@ -903,19 +903,24 @@ export const LiveRacePlayer: React.FC<{
   onSetMode: (mode: 'off' | 'mini' | 'modal') => void;
   race: RaceCard | null;
   programPlace?: string;
-}> = ({ mode, onSetMode, race, programPlace }) => {
-  const [streamSource, setStreamSource] = useState<'youtube' | 'tjktv1' | 'tjktv2' | 'replay'>('youtube');
-  const [liveVideoId, setLiveVideoId] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchLiveRaceStream()
-      .then((data) => {
-        if (data?.videoId) {
-          setLiveVideoId(data.videoId);
-        }
-      })
-      .catch(() => {});
-  }, []);
+  allRaces?: RaceCard[];
+  onSelectRace?: (raceNo: number) => void;
+  programs?: HippodromeProgram[];
+  selectedProgramId?: number | null;
+  onSelectProgram?: (programId: number) => void;
+}> = ({
+  mode,
+  onSetMode,
+  race,
+  programPlace,
+  allRaces = [],
+  onSelectRace,
+  programs = [],
+  selectedProgramId,
+  onSelectProgram,
+}) => {
+  // Official TJK TV 1 HLS direct stream is the default primary source
+  const [streamSource, setStreamSource] = useState<'tjktv1' | 'tjktv2' | 'youtube' | 'replay'>('tjktv1');
 
   if (mode === 'off') return null;
 
@@ -933,9 +938,8 @@ export const LiveRacePlayer: React.FC<{
 
   const activeStreamUrl = getStreamUrl();
 
-  const youtubeEmbedUrl = liveVideoId
-    ? `https://www.youtube-nocookie.com/embed/${liveVideoId}?autoplay=1&mute=0&rel=0&playsinline=1`
-    : `https://www.youtube.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1&mute=0&rel=0&playsinline=1`;
+  // Canonical TJK TV YouTube Live channel embed
+  const youtubeEmbedUrl = `https://www.youtube-nocookie.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1&mute=0&rel=0&playsinline=1`;
 
   // 1. KÜÇÜK EKRAN MODU (Sayfada Köşede Kayan Mini Oynatıcı)
   if (mode === 'mini') {
@@ -946,13 +950,13 @@ export const LiveRacePlayer: React.FC<{
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="text-xs font-black text-white">
-              {streamSource === 'youtube'
-                ? 'TJK TV Canlı (HD)'
+              {streamSource === 'tjktv1'
+                ? 'TJK TV 1 Canlı HD'
                 : streamSource === 'tjktv2'
                 ? 'TJK TV 2 Canlı'
                 : streamSource === 'replay'
                 ? 'Koşu Tekrarı'
-                : 'TJK TV 1 Canlı'}
+                : 'YouTube TJK'}
             </span>
             {race && (
               <span className="text-[10px] text-amber-400 font-mono font-bold">
@@ -997,35 +1001,45 @@ export const LiveRacePlayer: React.FC<{
         <div className="px-3 py-1.5 bg-slate-950/90 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
           <div className="flex items-center space-x-1.5">
             <button
-              onClick={() => setStreamSource(s => s === 'youtube' ? 'tjktv1' : 'youtube')}
+              onClick={() => setStreamSource('tjktv1')}
               className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                streamSource === 'youtube'
-                  ? 'bg-red-600 text-white'
+                streamSource === 'tjktv1'
+                  ? 'bg-red-600 text-white font-black'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
               }`}
             >
-              {streamSource === 'youtube' ? 'HLS Modu' : 'Canlı HD'}
+              TJK 1
             </button>
             <button
-              onClick={() => setStreamSource(s => s === 'tjktv2' ? 'youtube' : 'tjktv2')}
+              onClick={() => setStreamSource('tjktv2')}
               className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
                 streamSource === 'tjktv2'
-                  ? 'bg-red-600 text-white'
+                  ? 'bg-red-600 text-white font-black'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
               }`}
             >
               TJK 2
             </button>
+            <button
+              onClick={() => setStreamSource('youtube')}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                streamSource === 'youtube'
+                  ? 'bg-red-600 text-white font-black'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+              }`}
+            >
+              YouTube
+            </button>
             {hasReplayVideo && (
               <button
-                onClick={() => setStreamSource(s => s === 'replay' ? 'youtube' : 'replay')}
+                onClick={() => setStreamSource(s => s === 'replay' ? 'tjktv1' : 'replay')}
                 className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
                   streamSource === 'replay'
                     ? 'bg-emerald-500 text-slate-950 font-black'
                     : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
                 }`}
               >
-                {streamSource === 'replay' ? 'Canlı' : 'Tekrar'}
+                Tekrar
               </button>
             )}
           </div>
@@ -1043,20 +1057,20 @@ export const LiveRacePlayer: React.FC<{
     );
   }
 
-  // 2. BÜYÜK EKRAN MODAL MODU (Genişletilmiş Ekran + Koşu Atları Panosu)
+  // 2. BÜYÜK EKRAN MODAL MODU (Genişletilmiş Ekran + Koşu Seçici + Atlar & Oranlar Panosu)
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200"
       onClick={() => onSetMode('off')}
     >
       <div
-        className="w-full max-w-4xl max-h-[92vh] rounded-3xl bg-slate-900 border border-red-500/50 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+        className="w-full max-w-4xl max-h-[94vh] rounded-3xl bg-slate-900 border border-red-500/50 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-3.5 sm:p-4 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div className="p-3 sm:p-4 bg-slate-950/95 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-red-600/20 border border-red-500/40 flex items-center justify-center text-red-400">
+            <div className="w-9 h-9 rounded-2xl bg-red-600/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
               <Tv className="w-5 h-5" />
             </div>
             <div>
@@ -1069,44 +1083,52 @@ export const LiveRacePlayer: React.FC<{
                   <span>CANLI YAYIN</span>
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                {programPlace} • {race ? `${race.number}. Koşu (${race.hour})` : 'TJK TV Canlı Akış'}
+              <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+                <span className="font-bold text-amber-400">{programPlace}</span>
+                <span>•</span>
+                <span>{race ? `${race.number}. Koşu (${race.hour})` : 'TJK TV Canlı Akış'}</span>
+                {race && (
+                  <span className="text-[11px] text-slate-500">
+                    ({race.distance}m {race.raceCourseType})
+                  </span>
+                )}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 self-end sm:self-auto flex-wrap">
+            {/* Stream source tabs */}
             <div className="flex rounded-xl bg-slate-950 p-0.5 border border-slate-800 text-xs">
               <button
-                onClick={() => setStreamSource('youtube')}
+                onClick={() => setStreamSource('tjktv1')}
                 className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center space-x-1 ${
-                  streamSource === 'youtube'
-                    ? 'bg-red-600 text-white shadow-sm'
+                  streamSource === 'tjktv1'
+                    ? 'bg-red-600 text-white shadow-sm font-black'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                <span>TJK TV Canlı (HD)</span>
-              </button>
-              <button
-                onClick={() => setStreamSource('tjktv1')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                  streamSource === 'tjktv1'
-                    ? 'bg-red-600 text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                TJK 1 (Web)
+                <span>TJK 1 (HD)</span>
               </button>
               <button
                 onClick={() => setStreamSource('tjktv2')}
                 className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
                   streamSource === 'tjktv2'
-                    ? 'bg-red-600 text-white'
+                    ? 'bg-red-600 text-white font-black'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
                 TJK 2
+              </button>
+              <button
+                onClick={() => setStreamSource('youtube')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                  streamSource === 'youtube'
+                    ? 'bg-red-600 text-white font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                YouTube
               </button>
               {hasReplayVideo && (
                 <button
@@ -1155,13 +1177,68 @@ export const LiveRacePlayer: React.FC<{
           )}
         </div>
 
+        {/* 🏇 Koşular & Hipodrom Seçici Bar (Yayındaki Koşu ile Anında Eşleştirme) */}
+        {allRaces.length > 0 && (
+          <div className="px-3 py-2 bg-slate-950/98 border-t border-slate-800/90 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none shrink-0">
+            <div className="flex items-center space-x-1.5 shrink-0">
+              <span className="text-[11px] font-black text-amber-400 flex items-center gap-1 shrink-0 mr-1">
+                <Timer className="w-3.5 h-3.5" />
+                <span>Koşular:</span>
+              </span>
+              {allRaces.map((r) => {
+                const isCurrent = race?.number === r.number;
+                return (
+                  <button
+                    key={r.number}
+                    onClick={() => onSelectRace?.(r.number)}
+                    className={`shrink-0 px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                      isCurrent
+                        ? 'bg-amber-400 text-slate-950 font-black shadow-md shadow-amber-400/30 ring-1 ring-amber-300 scale-105'
+                        : r.isFinished
+                        ? 'bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800'
+                        : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40'
+                    }`}
+                  >
+                    <span>{r.number}. Koşu</span>
+                    <span className="text-[10px] opacity-80 font-mono">({r.hour})</span>
+                    {r.isFinished ? (
+                      <span className="text-[10px] opacity-70">✓</span>
+                    ) : !isCurrent ? (
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Hipodrom Switcher if multiple programs available */}
+            {programs.length > 1 && onSelectProgram && (
+              <div className="flex items-center space-x-1 shrink-0 pl-2 border-l border-slate-800">
+                {programs.filter(p => !p.isForeign).map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => onSelectProgram(p.id)}
+                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
+                      selectedProgramId === p.id
+                        ? 'bg-rose-600 text-white font-black shadow-sm'
+                        : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                    }`}
+                  >
+                    {p.place}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Live Race Runners & Ganyan Ticker Bar */}
         {race && race.horses && (
-          <div className="p-3 bg-slate-950/95 border-t border-slate-800 space-y-2 shrink-0">
-            <div className="flex items-center justify-between text-xs">
+          <div className="p-3 bg-slate-950/95 border-t border-slate-800 space-y-2 overflow-y-auto max-h-48 shrink">
+            <div className="flex items-center justify-between text-xs sticky top-0 bg-slate-950/95 pb-1 z-10">
               <span className="font-black text-amber-400 flex items-center space-x-1">
-                <span>🏇 {race.number}. Koşu Atları &amp; Oranları</span>
-                <span className="text-slate-500">({race.distance}m {race.raceCourseType})</span>
+                <span>🏇 {race.number}. Koşu Atları &amp; Canlı Oranları</span>
+                <span className="text-slate-500 font-normal">({race.distance}m {race.raceCourseType})</span>
               </span>
               <div className="flex items-center space-x-3">
                 <a
@@ -1170,16 +1247,9 @@ export const LiveRacePlayer: React.FC<{
                   rel="noopener noreferrer"
                   className="text-[11px] text-slate-400 hover:text-red-400 flex items-center space-x-1 font-bold"
                 >
-                  <span>YouTube Yayını</span>
+                  <span>Resmi YouTube</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
-                <button
-                  onClick={() => onSetMode('mini')}
-                  className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center space-x-1 font-bold cursor-pointer"
-                >
-                  <span>Sayfada Küçük Ekrana İndir</span>
-                  <Minimize2 className="w-3 h-3" />
-                </button>
               </div>
             </div>
 
@@ -1200,17 +1270,24 @@ export const LiveRacePlayer: React.FC<{
                       #{h.number}
                     </span>
                     <div className="min-w-0">
-                      <div className="font-bold truncate max-w-[100px] text-white leading-tight">
+                      <div className="font-bold truncate max-w-[110px] text-white leading-tight">
                         {h.name}
                       </div>
-                      <div className="text-[10px] text-slate-400 font-mono">
-                        {h.ganyan > 0
-                          ? `${h.ganyan.toFixed(2)} ₺`
-                          : h.fobOdd
-                          ? `${h.fobOdd.toFixed(2)} ₺`
-                          : h.agf?.[0]?.percentage
-                          ? `%${h.agf[0].percentage} AGF`
-                          : '-'}
+                      <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                        <span className="text-amber-300 font-bold">
+                          {h.ganyan > 0
+                            ? `${h.ganyan.toFixed(2)} ₺`
+                            : h.fobOdd
+                            ? `${h.fobOdd.toFixed(2)} ₺`
+                            : h.agf?.[0]?.percentage
+                            ? `%${h.agf[0].percentage} AGF`
+                            : '-'}
+                        </span>
+                        {h.jockey?.name && (
+                          <span className="text-slate-500 truncate max-w-[70px]">
+                            ({h.jockey.name})
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1300,6 +1377,20 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
   const [livePlayerMode, setLivePlayerMode] = useState<'off' | 'mini' | 'modal'>('off');
 
   // Kupon state: programId -> { raceNo -> horseNumbers[] } (persisted across pull-to-refresh & app reloads)
+  const handleToggleLivePlayer = () => {
+    if (livePlayerMode !== 'off') {
+      setLivePlayerMode('off');
+      return;
+    }
+    // Auto-advance to the upcoming active race if the currently selected race has concluded
+    if (detail?.races) {
+      const nextOpen = detail.races.find((r) => !r.isFinished);
+      if (nextOpen && activeRace?.isFinished) {
+        setSelectedRaceNo(nextOpen.number);
+      }
+    }
+    setLivePlayerMode('modal');
+  };
   const [selectionsByProgram, setSelectionsByProgram] = useState<
     Record<number, Record<number, number[]>>
   >(() => {
@@ -1871,7 +1962,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
               )}
             </button>
             <button
-              onClick={() => setLivePlayerMode((m) => (m === 'off' ? 'mini' : 'off'))}
+              onClick={handleToggleLivePlayer}
               className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 text-red-300 font-extrabold text-xs cursor-pointer transition-all"
             >
               <Tv className="w-3.5 h-3.5 text-red-400" />
@@ -2778,7 +2869,14 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                         {/* Quick Actions & Sort */}
                         <div className="flex flex-wrap items-center gap-1.5">
                           <button
-                            onClick={() => setLivePlayerMode((m) => (m === 'off' ? 'mini' : 'off'))}
+                            onClick={() => {
+                              if (livePlayerMode !== 'off') {
+                                setLivePlayerMode('off');
+                              } else {
+                                setSelectedRaceNo(activeRace.number);
+                                setLivePlayerMode('modal');
+                              }
+                            }}
                             className={`px-3 py-1.5 rounded-lg font-black text-[11px] cursor-pointer transition-all flex items-center space-x-1 shadow-md active:scale-95 border ${livePlayerMode !== 'off'
                               ? 'bg-red-700 text-white border-red-300 shadow-red-700/40 ring-2 ring-red-400'
                               : 'bg-gradient-to-r from-red-600 via-rose-600 to-red-500 hover:from-red-500 hover:to-rose-500 text-white border-rose-400/50 shadow-rose-600/30'
@@ -4034,6 +4132,11 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
         onSetMode={setLivePlayerMode}
         race={activeRace}
         programPlace={detail?.program.place}
+        allRaces={detail?.races || []}
+        onSelectRace={(raceNo) => setSelectedRaceNo(raceNo)}
+        programs={programs}
+        selectedProgramId={selectedProgramId}
+        onSelectProgram={(pid) => handleSelectProgram(pid)}
       />
 
       {/* Footer Yasal Uyarı / Sorumluluk Reddi */}

@@ -548,42 +548,8 @@ export async function fetchFullHorseRacingBulletin(requestedProgramId = null, fo
   };
 }
 
-let liveStreamCache = { videoId: null, expiresAt: 0 };
-
 export async function fetchLiveStreamId() {
-  const now = Date.now();
-  if (liveStreamCache.videoId && liveStreamCache.expiresAt > now) {
-    return liveStreamCache.videoId;
-  }
-  return new Promise((resolve) => {
-    const req = https.get(
-      'https://www.youtube.com/@TJKTVCANLIYAYIN/live',
-      {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        },
-      },
-      (res) => {
-        let raw = '';
-        res.on('data', (chunk) => {
-          raw += chunk;
-        });
-        res.on('end', () => {
-          const match = raw.match(/"videoId":"([a-zA-Z0-9_-]{11})"/);
-          if (match && match[1]) {
-            liveStreamCache = { videoId: match[1], expiresAt: now + 3 * 60 * 1000 };
-            return resolve(match[1]);
-          }
-          resolve(liveStreamCache.videoId || null);
-        });
-      }
-    );
-    req.on('error', () => resolve(liveStreamCache.videoId || null));
-    req.setTimeout(6000, () => {
-      req.destroy();
-      resolve(liveStreamCache.videoId || null);
-    });
-  });
+  // Official TJK TV channel ID is UCNLO4lpteIloZ4IKb9L2DoA.
+  // We do not scrape arbitrary video IDs from HTML to prevent matching unrelated trending news videos.
+  return null;
 }

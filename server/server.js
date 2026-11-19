@@ -296,24 +296,12 @@ app.get('/api/horse-racing/results', async (req, res) => {
 });
 
 app.get('/api/horse-racing/live-stream', async (req, res) => {
-  try {
-    const videoId = await fetchLiveStreamId();
-    res.json({
-      success: true,
-      videoId: videoId || 'UCNLO4lpteIloZ4IKb9L2DoA',
-      channelId: 'UCNLO4lpteIloZ4IKb9L2DoA',
-      embedUrl: videoId
-        ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=0&rel=0&playsinline=1`
-        : `https://www.youtube.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1&mute=0&rel=0&playsinline=1`
-    });
-  } catch (err) {
-    res.json({
-      success: true,
-      videoId: null,
-      channelId: 'UCNLO4lpteIloZ4IKb9L2DoA',
-      embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1&mute=0&rel=0&playsinline=1'
-    });
-  }
+  res.json({
+    success: true,
+    videoId: null,
+    channelId: 'UCNLO4lpteIloZ4IKb9L2DoA',
+    embedUrl: 'https://www.youtube-nocookie.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1&mute=0&rel=0&playsinline=1'
+  });
 });
 
 // 📺 High-Performance Live Sports Stream Proxy (Bypasses browser CORS & hotlink referer blocks)
@@ -877,7 +865,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.19.3';
+const APP_VERSION = '2026.11.19.4';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
