@@ -816,22 +816,23 @@ const TJKVideoPlayer: React.FC<{
     if (Hls.isSupported()) {
       hlsInstance = new Hls({
         enableWorker: true,
-        lowLatencyMode: false, // 2 saniyelik HLS parçalarında donmayı önlemek için false olmalıdır
+        lowLatencyMode: false,
+        liveDurationInfinity: true, // KRİTİK: Tarayıcının 10. saniyede (0:10 / 0:10) videoyu bitti sanıp durdurmasını engeller!
         liveSyncDurationCount: 3, // Oynatıcının donmaması için daima 3 segment (6sn) güvenli ön tampon tutar
-        liveMaxLatencyDurationCount: 6, // Canlı yayından en fazla 12sn geri kalır
+        liveMaxLatencyDurationCount: 8, // Canlı yayından en fazla 16sn geri kalır
         maxBufferLength: 20, // 20 saniye tamponlama
         maxMaxBufferLength: 40,
         maxBufferSize: 30 * 1000 * 1000,
         maxBufferHole: 0.5,
         highBufferWatchdogPeriod: 2,
-        nudgeOffset: 0.15,
+        nudgeOffset: 0.2,
         nudgeMaxRetry: 5,
-        manifestLoadingTimeOut: 10000,
-        manifestLoadingMaxRetry: 5,
-        levelLoadingTimeOut: 10000,
-        levelLoadingMaxRetry: 5,
-        fragLoadingTimeOut: 15000,
-        fragLoadingMaxRetry: 5,
+        manifestLoadingTimeOut: 15000,
+        manifestLoadingMaxRetry: 6,
+        levelLoadingTimeOut: 15000,
+        levelLoadingMaxRetry: 6,
+        fragLoadingTimeOut: 20000,
+        fragLoadingMaxRetry: 6,
       });
       hlsInstance.loadSource(streamUrl);
       hlsInstance.attachMedia(video);
@@ -840,9 +841,17 @@ const TJKVideoPlayer: React.FC<{
         attemptPlay();
       });
 
+      hlsInstance.on(Hls.Events.LEVEL_UPDATED, () => {
+        setIsLoading(false);
+        // Yeni canlı parçalar geldikçe videonun duraksamasını önle
+        if (video && video.paused && autoPlay && !video.ended) {
+          video.play().catch(() => {});
+        }
+      });
+
       hlsInstance.on(Hls.Events.FRAG_BUFFERED, () => {
         setIsLoading(false);
-        if (video && video.paused && autoPlay) {
+        if (video && video.paused && autoPlay && !video.ended) {
           attemptPlay();
         }
       });
@@ -867,7 +876,7 @@ const TJKVideoPlayer: React.FC<{
         } else if (data.details === 'bufferStalledError') {
           // Canlı akışta mikro tampon boşluğu oluşursa videoyu hafifçe ileri kaydır
           if (video && !video.paused) {
-            video.currentTime += 0.15;
+            video.currentTime += 0.2;
           }
         }
       });
@@ -882,7 +891,23 @@ const TJKVideoPlayer: React.FC<{
 
     const handleLoadedData = () => setIsLoading(false);
     const handlePlaying = () => setIsLoading(false);
-    const handleWaiting = () => setIsLoading(true);
+    const handleWaiting = () => {
+      setIsLoading(true);
+      if (hlsInstance?.liveSyncPosition && video) {
+        const livePos = hlsInstance.liveSyncPosition;
+        if (Math.abs(video.currentTime - livePos) > 4) {
+          video.currentTime = livePos;
+          video.play().catch(() => {});
+        }
+      }
+    };
+    const handleEnded = () => {
+      // Canlı yayın asla bitmemelidir; tampon sınırında durursa canlı kenara atlayıp devam ettir
+      if (hlsInstance?.liveSyncPosition && video) {
+        video.currentTime = hlsInstance.liveSyncPosition;
+        video.play().catch(() => {});
+      }
+    };
     const handleVolumeChange = () => {
       if (video) setIsMuted(video.muted);
     };
@@ -890,12 +915,14 @@ const TJKVideoPlayer: React.FC<{
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('playing', handlePlaying);
     video.addEventListener('waiting', handleWaiting);
+    video.addEventListener('ended', handleEnded);
     video.addEventListener('volumechange', handleVolumeChange);
 
     return () => {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('playing', handlePlaying);
       video.removeEventListener('waiting', handleWaiting);
+      video.removeEventListener('ended', handleEnded);
       video.removeEventListener('volumechange', handleVolumeChange);
       if (hlsInstance) {
         hlsInstance.destroy();
