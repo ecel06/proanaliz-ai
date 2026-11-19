@@ -775,6 +775,21 @@ export const SavedCouponCard: React.FC<{
   };
 
 
+// 📺 Canlı HLS Oynatıcı: .m3u8 dosyalarının tarayıcı önbelleğinde kalıp 10. saniyede donmasını önleyen dinamik yükleyici
+class LivePlaylistLoader extends (Hls.DefaultConfig.loader as any) {
+  constructor(config: any) {
+    super(config);
+    const originalLoad = this.load.bind(this);
+    this.load = function (context: any, config: any, callbacks: any) {
+      if (context && (context.type === 'manifest' || context.type === 'level')) {
+        const sep = context.url.includes('?') ? '&' : '?';
+        context.url = context.url + sep + '_cb=' + Date.now();
+      }
+      originalLoad(context, config, callbacks);
+    };
+  }
+}
+
 // 📺 TJK TV Resmi Canlı Yayın Oynatıcısı (Native HLS / HTML5 Video)
 const TJKVideoPlayer: React.FC<{
   streamUrl: string;
@@ -784,7 +799,6 @@ const TJKVideoPlayer: React.FC<{
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasError, setHasError] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isMuted, setIsMuted] = useState<boolean>(true);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -797,7 +811,6 @@ const TJKVideoPlayer: React.FC<{
     const attemptPlay = () => {
       if (!autoPlay || !video) return;
       video.muted = true; // Tarayıcı güvenlik kısıtlamalarına takılmadan anında oynatmak için sessiz başlar
-      setIsMuted(true);
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
@@ -833,6 +846,13 @@ const TJKVideoPlayer: React.FC<{
         levelLoadingMaxRetry: 6,
         fragLoadingTimeOut: 20000,
         fragLoadingMaxRetry: 6,
+        pLoader: LivePlaylistLoader as any,
+        xhrSetup: (xhr, url) => {
+          if (url.includes('.m3u8')) {
+            xhr.setRequestHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            xhr.setRequestHeader('Pragma', 'no-cache');
+          }
+        },
       });
       hlsInstance.loadSource(streamUrl);
       hlsInstance.attachMedia(video);
@@ -908,34 +928,22 @@ const TJKVideoPlayer: React.FC<{
         video.play().catch(() => {});
       }
     };
-    const handleVolumeChange = () => {
-      if (video) setIsMuted(video.muted);
-    };
 
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('playing', handlePlaying);
     video.addEventListener('waiting', handleWaiting);
     video.addEventListener('ended', handleEnded);
-    video.addEventListener('volumechange', handleVolumeChange);
 
     return () => {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('playing', handlePlaying);
       video.removeEventListener('waiting', handleWaiting);
       video.removeEventListener('ended', handleEnded);
-      video.removeEventListener('volumechange', handleVolumeChange);
       if (hlsInstance) {
         hlsInstance.destroy();
       }
     };
   }, [streamUrl, autoPlay]);
-
-  const handleToggleSound = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsMuted(videoRef.current.muted);
-    }
-  };
 
   return (
     <div className="relative w-full h-full bg-black flex items-center justify-center">
@@ -947,17 +955,6 @@ const TJKVideoPlayer: React.FC<{
         autoPlay={autoPlay}
         className={className}
       />
-      {/* Sesi Aç / Kapat Kısayol Butonu */}
-      {isMuted && !isLoading && !hasError && (
-        <button
-          onClick={handleToggleSound}
-          className="absolute top-3 left-3 z-20 px-3 py-1.5 rounded-xl bg-slate-950/85 hover:bg-slate-900 text-amber-300 hover:text-amber-200 border border-amber-400/50 shadow-xl text-xs font-black flex items-center space-x-1.5 cursor-pointer backdrop-blur-md animate-bounce"
-          title="Canlı yayının sesini aç"
-        >
-          <VolumeX className="w-4 h-4 text-amber-400" />
-          <span>Sesi Aç 🔊</span>
-        </button>
-      )}
       {isLoading && !hasError && (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
           <div className="flex flex-col items-center space-y-2">
