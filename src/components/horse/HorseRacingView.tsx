@@ -816,28 +816,58 @@ const TJKVideoPlayer: React.FC<{
     if (Hls.isSupported()) {
       hlsInstance = new Hls({
         enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 30,
-        manifestLoadingMaxRetry: 4,
-        levelLoadingMaxRetry: 4,
+        lowLatencyMode: false, // 2 saniyelik HLS parçalarında donmayı önlemek için false olmalıdır
+        liveSyncDurationCount: 3, // Oynatıcının donmaması için daima 3 segment (6sn) güvenli ön tampon tutar
+        liveMaxLatencyDurationCount: 6, // Canlı yayından en fazla 12sn geri kalır
+        maxBufferLength: 20, // 20 saniye tamponlama
+        maxMaxBufferLength: 40,
+        maxBufferSize: 30 * 1000 * 1000,
+        maxBufferHole: 0.5,
+        highBufferWatchdogPeriod: 2,
+        nudgeOffset: 0.15,
+        nudgeMaxRetry: 5,
+        manifestLoadingTimeOut: 10000,
+        manifestLoadingMaxRetry: 5,
+        levelLoadingTimeOut: 10000,
+        levelLoadingMaxRetry: 5,
+        fragLoadingTimeOut: 15000,
+        fragLoadingMaxRetry: 5,
       });
       hlsInstance.loadSource(streamUrl);
       hlsInstance.attachMedia(video);
+
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
         attemptPlay();
       });
+
+      hlsInstance.on(Hls.Events.FRAG_BUFFERED, () => {
+        setIsLoading(false);
+        if (video && video.paused && autoPlay) {
+          attemptPlay();
+        }
+      });
+
       hlsInstance.on(Hls.Events.ERROR, (_e, data) => {
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
+              console.warn('[HLS] Network error, recovering...');
               hlsInstance?.startLoad();
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
+              console.warn('[HLS] Media error, recovering...');
               hlsInstance?.recoverMediaError();
               break;
             default:
+              console.error('[HLS] Fatal error:', data);
+              hlsInstance?.destroy();
               setHasError(true);
               break;
+          }
+        } else if (data.details === 'bufferStalledError') {
+          // Canlı akışta mikro tampon boşluğu oluşursa videoyu hafifçe ileri kaydır
+          if (video && !video.paused) {
+            video.currentTime += 0.15;
           }
         }
       });
@@ -961,9 +991,9 @@ export const LiveRacePlayer: React.FC<{
       return race.video;
     }
     if (streamSource === 'tjktv2') {
-      return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz2/yaristayiz2.m3u8';
+      return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz2/yaristayiz2_720p.m3u8';
     }
-    return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz/yaristayiz.m3u8';
+    return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz/yaristayiz_720p.m3u8';
   };
 
   const activeStreamUrl = getStreamUrl();
