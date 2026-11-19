@@ -876,41 +876,25 @@ const TJKVideoPlayer: React.FC<{
       attemptPlay();
     }
 
-    const handleWaiting = () => {
-      setIsLoading(true);
-      // Canlı yayın tampon sınırında beklemeye düşerse 800ms içinde otomatik canlı uca atlat
-      setTimeout(() => {
-        if (video && !video.paused && video.readyState < 3) {
-          if (hlsInstance?.liveSyncPosition) {
-            video.currentTime = hlsInstance.liveSyncPosition;
-          } else {
-            video.currentTime += 0.2;
-          }
-          video.play().catch(() => {});
-        }
-      }, 800);
-    };
-    const handleLoadedData = () => setIsLoading(false);
+    const handleWaiting = () => setIsLoading(true);
     const handlePlaying = () => setIsLoading(false);
+    const handleLoadedData = () => setIsLoading(false);
     const handleEnded = () => {
-      // Canlı yayın asla bitmemelidir; tampon sınırında durursa canlı konuma atlayıp devam ettir
-      if (hlsInstance?.liveSyncPosition && video) {
-        video.currentTime = hlsInstance.liveSyncPosition;
+      // Akış biterse otomatik yeniden başlat
+      if (video && autoPlay) {
         video.play().catch(() => {});
       }
     };
 
     video.addEventListener('waiting', handleWaiting);
-    video.addEventListener('stalled', handleWaiting);
-    video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('playing', handlePlaying);
+    video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('ended', handleEnded);
 
     return () => {
       video.removeEventListener('waiting', handleWaiting);
-      video.removeEventListener('stalled', handleWaiting);
-      video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('playing', handlePlaying);
+      video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('ended', handleEnded);
       if (hlsInstance) {
         hlsInstance.destroy();
@@ -976,8 +960,8 @@ export const LiveRacePlayer: React.FC<{
   selectedProgramId,
   onSelectProgram,
 }) => {
-  // Official TJK TV 1 HLS direct stream is the default primary source
-  const [streamSource, setStreamSource] = useState<'tjktv1' | 'tjktv2' | 'youtube' | 'replay'>('tjktv1');
+  // YouTube Live stream is the rock-solid default primary source (never loops or freezes)
+  const [streamSource, setStreamSource] = useState<'youtube' | 'tjktv1' | 'tjktv2' | 'replay'>('youtube');
   const [liveVideoId, setLiveVideoId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1001,7 +985,7 @@ export const LiveRacePlayer: React.FC<{
     if (streamSource === 'tjktv2') {
       return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz2/yaristayiz2.m3u8';
     }
-    return 'https://nesine-spinemedia-live.ercdn.net/yaristayiz/yaristayiz.m3u8';
+    return 'https://tjktv-live.tjk.org/tjktv_1080p.m3u8';
   };
 
   const activeStreamUrl = getStreamUrl();
@@ -1020,13 +1004,13 @@ export const LiveRacePlayer: React.FC<{
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="text-xs font-black text-white">
-              {streamSource === 'tjktv1'
-                ? 'TJK TV 1 Canlı HD'
+              {streamSource === 'youtube'
+                ? 'TJK TV Canlı (HD)'
                 : streamSource === 'tjktv2'
                 ? 'TJK TV 2 Canlı'
                 : streamSource === 'replay'
                 ? 'Koşu Tekrarı'
-                : 'YouTube TJK'}
+                : 'TJK TV 1 Canlı'}
             </span>
             {race && (
               <span className="text-[10px] text-amber-400 font-mono font-bold">
@@ -1071,10 +1055,20 @@ export const LiveRacePlayer: React.FC<{
         <div className="px-3 py-1.5 bg-slate-950/90 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
           <div className="flex items-center space-x-1.5">
             <button
+              onClick={() => setStreamSource('youtube')}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                streamSource === 'youtube'
+                  ? 'bg-red-600 text-white font-black shadow-sm'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+              }`}
+            >
+              Canlı HD
+            </button>
+            <button
               onClick={() => setStreamSource('tjktv1')}
               className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
                 streamSource === 'tjktv1'
-                  ? 'bg-red-600 text-white font-black'
+                  ? 'bg-red-600 text-white font-black shadow-sm'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
               }`}
             >
@@ -1084,25 +1078,15 @@ export const LiveRacePlayer: React.FC<{
               onClick={() => setStreamSource('tjktv2')}
               className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
                 streamSource === 'tjktv2'
-                  ? 'bg-red-600 text-white font-black'
+                  ? 'bg-red-600 text-white font-black shadow-sm'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
               }`}
             >
               TJK 2
             </button>
-            <button
-              onClick={() => setStreamSource('youtube')}
-              className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                streamSource === 'youtube'
-                  ? 'bg-red-600 text-white font-black'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-              }`}
-            >
-              YouTube
-            </button>
             {hasReplayVideo && (
               <button
-                onClick={() => setStreamSource(s => s === 'replay' ? 'tjktv1' : 'replay')}
+                onClick={() => setStreamSource(s => s === 'replay' ? 'youtube' : 'replay')}
                 className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
                   streamSource === 'replay'
                     ? 'bg-emerald-500 text-slate-950 font-black'
@@ -1170,15 +1154,25 @@ export const LiveRacePlayer: React.FC<{
             {/* Stream source tabs */}
             <div className="flex rounded-xl bg-slate-950 p-0.5 border border-slate-800 text-xs">
               <button
-                onClick={() => setStreamSource('tjktv1')}
+                onClick={() => setStreamSource('youtube')}
                 className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center space-x-1 ${
-                  streamSource === 'tjktv1'
+                  streamSource === 'youtube'
                     ? 'bg-red-600 text-white shadow-sm font-black'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                <span>TJK 1 (HD)</span>
+                <span>TJK TV Canlı (HD)</span>
+              </button>
+              <button
+                onClick={() => setStreamSource('tjktv1')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                  streamSource === 'tjktv1'
+                    ? 'bg-red-600 text-white font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                TJK 1 (HLS)
               </button>
               <button
                 onClick={() => setStreamSource('tjktv2')}
@@ -1188,17 +1182,7 @@ export const LiveRacePlayer: React.FC<{
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                TJK 2
-              </button>
-              <button
-                onClick={() => setStreamSource('youtube')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                  streamSource === 'youtube'
-                    ? 'bg-red-600 text-white font-black'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                YouTube
+                TJK 2 (HLS)
               </button>
               {hasReplayVideo && (
                 <button
