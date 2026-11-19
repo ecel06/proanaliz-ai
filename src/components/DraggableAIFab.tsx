@@ -1,17 +1,17 @@
 // src/components/DraggableAIFab.tsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Sparkles, GripVertical } from 'lucide-react';
 
 export interface DraggableAIFabProps {
-  id: string; // e.g. 'football', 'stocks', 'horse'
+  id: 'football' | 'stocks' | 'horse';
   onClick: () => void;
   title: string;
   label: string;
-  gradientClass: string;
+  defaultBottomOffset?: number; // e.g. 84 on mobile (above bottom nav)
+  defaultRightOffset?: number; // e.g. 16
+  gradientClass?: string;
   borderColorClass?: string;
   shadowColorClass?: string;
-  defaultBottomOffset?: number; // e.g. 80 on mobile (above bottom nav)
-  defaultRightOffset?: number; // e.g. 16
 }
 
 interface Position {
@@ -19,22 +19,39 @@ interface Position {
   y: number;
 }
 
+const THEME_CONFIGS = {
+  football: {
+    bg: 'linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #059669 100%)',
+    border: '2px solid rgba(167, 243, 208, 0.9)',
+    shadow: '0 10px 25px -4px rgba(16, 185, 129, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35)',
+    textColor: '#020617',
+  },
+  stocks: {
+    bg: 'linear-gradient(135deg, #22d3ee 0%, #14b8a6 50%, #10b981 100%)',
+    border: '2px solid rgba(165, 243, 252, 0.9)',
+    shadow: '0 10px 25px -4px rgba(34, 211, 238, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35)',
+    textColor: '#020617',
+  },
+  horse: {
+    bg: 'linear-gradient(135deg, #f59e0b 0%, #facc15 50%, #eab308 100%)',
+    border: '2px solid rgba(254, 240, 138, 0.9)',
+    shadow: '0 10px 25px -4px rgba(245, 158, 11, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35)',
+    textColor: '#020617',
+  },
+};
+
 export const DraggableAIFab: React.FC<DraggableAIFabProps> = ({
   id,
   onClick,
   title,
   label,
-  gradientClass,
-  borderColorClass = 'border-white/40',
-  shadowColorClass = 'shadow-black/50',
   defaultBottomOffset = 84,
   defaultRightOffset = 16,
 }) => {
   const [position, setPosition] = useState<Position | null>(null);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const fabRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const posRef = useRef<Position>({ x: 0, y: 0 });
 
-  // Drag tracking refs
   const dragStartRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number }>({
     startX: 0,
     startY: 0,
@@ -42,63 +59,52 @@ export const DraggableAIFab: React.FC<DraggableAIFabProps> = ({
     initialY: 0,
   });
   const hasMovedRef = useRef<boolean>(false);
+  const isDraggingRef = useRef<boolean>(false);
 
-  const storageKey = `proanaliz_fab_pos_${id}_v1`;
+  const storageKey = `proanaliz_fab_pos_${id}_v2`;
+  const theme = THEME_CONFIGS[id] || THEME_CONFIGS.football;
 
-  // Clamp helper to keep inside screen boundaries
-  const clampPosition = useCallback((x: number, y: number, width: number, height: number): Position => {
-    const padding = 10;
+  const clampPosition = (x: number, y: number, width: number, height: number): Position => {
+    const padding = 8;
     const maxX = Math.max(padding, window.innerWidth - width - padding);
     const maxY = Math.max(padding, window.innerHeight - height - padding);
     return {
       x: Math.min(Math.max(padding, x), maxX),
       y: Math.min(Math.max(padding, y), maxY),
     };
-  }, []);
+  };
 
-  // Initialize position from localStorage or default viewport coordinates
+  // Initial mount: load saved position or calculate default
   useEffect(() => {
+    const w = buttonRef.current?.offsetWidth || 150;
+    const h = buttonRef.current?.offsetHeight || 44;
+
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (typeof parsed?.x === 'number' && typeof parsed?.y === 'number') {
-          const w = fabRef.current?.offsetWidth || 150;
-          const h = fabRef.current?.offsetHeight || 48;
-          setPosition(clampPosition(parsed.x, parsed.y, w, h));
+          const clamped = clampPosition(parsed.x, parsed.y, w, h);
+          posRef.current = clamped;
+          setPosition(clamped);
           return;
         }
       }
     } catch { }
 
-    // Default position: bottom-right
-    const w = fabRef.current?.offsetWidth || 150;
-    const h = fabRef.current?.offsetHeight || 48;
     const isMobile = window.innerWidth < 640;
     const defaultY = window.innerHeight - h - (isMobile ? defaultBottomOffset : 24);
     const defaultX = window.innerWidth - w - defaultRightOffset;
-    setPosition(clampPosition(defaultX, defaultY, w, h));
-  }, [clampPosition, defaultBottomOffset, defaultRightOffset, storageKey]);
+    const initPos = clampPosition(defaultX, defaultY, w, h);
+    posRef.current = initPos;
+    setPosition(initPos);
+  }, [defaultBottomOffset, defaultRightOffset, storageKey]);
 
-  // Adjust position if window is resized
-  useEffect(() => {
-    const handleResize = () => {
-      setPosition((prev) => {
-        if (!prev) return null;
-        const w = fabRef.current?.offsetWidth || 150;
-        const h = fabRef.current?.offsetHeight || 48;
-        return clampPosition(prev.x, prev.y, w, h);
-      });
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [clampPosition]);
-
-  // Touch Start (Mobile)
+  // Touch handlers (Mobile)
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
-    const rect = fabRef.current?.getBoundingClientRect();
+    const rect = buttonRef.current?.getBoundingClientRect();
     if (!rect) return;
 
     dragStartRef.current = {
@@ -108,48 +114,54 @@ export const DraggableAIFab: React.FC<DraggableAIFabProps> = ({
       initialY: rect.top,
     };
     hasMovedRef.current = false;
+    isDraggingRef.current = false;
   };
 
-  // Touch Move (Mobile)
   const handleTouchMove = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
     const deltaX = touch.clientX - dragStartRef.current.startX;
     const deltaY = touch.clientY - dragStartRef.current.startY;
 
-    if (!hasMovedRef.current && Math.hypot(deltaX, deltaY) > 6) {
+    if (!hasMovedRef.current && Math.hypot(deltaX, deltaY) > 5) {
       hasMovedRef.current = true;
-      setIsDragging(true);
+      isDraggingRef.current = true;
     }
 
-    if (hasMovedRef.current) {
-      const w = fabRef.current?.offsetWidth || 150;
-      const h = fabRef.current?.offsetHeight || 48;
-      const nextX = dragStartRef.current.initialX + deltaX;
-      const nextY = dragStartRef.current.initialY + deltaY;
-      setPosition(clampPosition(nextX, nextY, w, h));
+    if (hasMovedRef.current && buttonRef.current) {
+      const w = buttonRef.current.offsetWidth || 150;
+      const h = buttonRef.current.offsetHeight || 44;
+      const nextPos = clampPosition(
+        dragStartRef.current.initialX + deltaX,
+        dragStartRef.current.initialY + deltaY,
+        w,
+        h
+      );
+      posRef.current = nextPos;
+      // Direct DOM update for 60fps zero-lag performance!
+      buttonRef.current.style.left = `${nextPos.x}px`;
+      buttonRef.current.style.top = `${nextPos.y}px`;
+      buttonRef.current.style.right = 'auto';
+      buttonRef.current.style.bottom = 'auto';
     }
   };
 
-  // Touch End (Mobile)
   const handleTouchEnd = () => {
     if (hasMovedRef.current) {
-      setIsDragging(false);
-      if (position) {
-        try {
-          localStorage.setItem(storageKey, JSON.stringify(position));
-        } catch { }
-      }
+      isDraggingRef.current = false;
+      setPosition(posRef.current);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(posRef.current));
+      } catch { }
     } else {
-      // Normal Click
       onClick();
     }
   };
 
-  // Mouse Down (Desktop)
+  // Mouse handlers (Desktop)
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return; // Only left click
-    const rect = fabRef.current?.getBoundingClientRect();
+    if (e.button !== 0) return;
+    const rect = buttonRef.current?.getBoundingClientRect();
     if (!rect) return;
 
     dragStartRef.current = {
@@ -159,51 +171,58 @@ export const DraggableAIFab: React.FC<DraggableAIFabProps> = ({
       initialY: rect.top,
     };
     hasMovedRef.current = false;
+    isDraggingRef.current = false;
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const onMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - dragStartRef.current.startX;
       const deltaY = moveEvent.clientY - dragStartRef.current.startY;
 
       if (!hasMovedRef.current && Math.hypot(deltaX, deltaY) > 5) {
         hasMovedRef.current = true;
-        setIsDragging(true);
+        isDraggingRef.current = true;
       }
 
-      if (hasMovedRef.current) {
-        const w = fabRef.current?.offsetWidth || 150;
-        const h = fabRef.current?.offsetHeight || 48;
-        const nextX = dragStartRef.current.initialX + deltaX;
-        const nextY = dragStartRef.current.initialY + deltaY;
-        setPosition(clampPosition(nextX, nextY, w, h));
+      if (hasMovedRef.current && buttonRef.current) {
+        const w = buttonRef.current.offsetWidth || 150;
+        const h = buttonRef.current.offsetHeight || 44;
+        const nextPos = clampPosition(
+          dragStartRef.current.initialX + deltaX,
+          dragStartRef.current.initialY + deltaY,
+          w,
+          h
+        );
+        posRef.current = nextPos;
+        // Direct DOM update for zero-lag smooth dragging!
+        buttonRef.current.style.left = `${nextPos.x}px`;
+        buttonRef.current.style.top = `${nextPos.y}px`;
+        buttonRef.current.style.right = 'auto';
+        buttonRef.current.style.bottom = 'auto';
       }
     };
 
-    const handleMouseUp = () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
 
       if (hasMovedRef.current) {
-        setIsDragging(false);
-        setPosition((currentPos) => {
-          if (currentPos) {
-            try {
-              localStorage.setItem(storageKey, JSON.stringify(currentPos));
-            } catch { }
-          }
-          return currentPos;
-        });
+        isDraggingRef.current = false;
+        setPosition(posRef.current);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(posRef.current));
+        } catch { }
       } else {
         onClick();
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   };
 
   return (
-    <div
-      ref={fabRef}
+    <button
+      ref={buttonRef}
+      type="button"
       style={{
         position: 'fixed',
         left: position ? `${position.x}px` : undefined,
@@ -212,39 +231,38 @@ export const DraggableAIFab: React.FC<DraggableAIFabProps> = ({
         bottom: !position ? `${defaultBottomOffset}px` : undefined,
         zIndex: 50,
         touchAction: 'none',
+        background: theme.bg,
+        border: theme.border,
+        boxShadow: theme.shadow,
+        color: theme.textColor,
+        willChange: 'left, top',
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
-      className={`select-none transition-shadow ${
-        isDragging ? 'scale-105 opacity-90 cursor-grabbing' : 'cursor-grab'
-      }`}
+      className="theme-keep-color flex items-center space-x-2 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl font-black text-xs sm:text-sm select-none cursor-grab active:cursor-grabbing hover:scale-105 active:scale-95 transition-transform"
+      title={`${title} (İstediğiniz yere sürükleyip bırakabilirsiniz)`}
     >
-      <div
-        className={`flex items-center space-x-2 px-3 py-2.5 sm:px-4 sm:py-3 rounded-2xl ${gradientClass} text-slate-950 font-black text-xs sm:text-sm shadow-2xl ${shadowColorClass} border-2 ${borderColorClass} active:scale-95 transition-transform group hover:scale-105 backdrop-blur-sm`}
-        title={`${title} (Sürükleyip istediğiniz yere taşıyabilirsiniz)`}
-      >
-        {/* Subtle Grip Handle Indicator */}
-        <div className="text-slate-950/40 group-hover:text-slate-950/70 -ml-1 transition-colors">
-          <GripVertical className="w-3.5 h-3.5" />
-        </div>
+      {/* Drag Grip Handle */}
+      <span className="opacity-40 hover:opacity-80 transition-opacity -ml-1">
+        <GripVertical className="w-3.5 h-3.5 text-slate-950" />
+      </span>
 
-        {/* Animated Bot Icon */}
-        <div className="relative">
-          <Bot className="w-5 h-5 text-slate-950 group-hover:scale-110 transition-transform" />
-          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-950 opacity-50"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-950"></span>
-          </span>
-        </div>
-
-        {/* Label */}
-        <span className="font-black tracking-tight">{label}</span>
-
-        {/* Sparkles */}
-        <Sparkles className="w-4 h-4 text-slate-950 fill-current opacity-85 hidden sm:inline" />
+      {/* Bot Icon with Pulse */}
+      <div className="relative">
+        <Bot className="w-5 h-5 text-slate-950" />
+        <span className="absolute -top-1 -right-1 flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-950 opacity-60"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-950"></span>
+        </span>
       </div>
-    </div>
+
+      {/* Text Label - Guaranteed Solid High-Contrast Black */}
+      <span className="font-black tracking-tight text-slate-950">{label}</span>
+
+      {/* Sparkles */}
+      <Sparkles className="w-4 h-4 text-slate-950 fill-current opacity-85 hidden sm:inline" />
+    </button>
   );
 };

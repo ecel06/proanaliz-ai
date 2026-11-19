@@ -362,60 +362,13 @@ export const CouponShareModal: React.FC<CouponShareModalProps> = ({
               <span>proanaliz-ai.onrender.com</span>
             </div>
           </div>
-        </div>
-
-        {/* Visual Export Banner (Instagram Story & Ticket PNG) */}
-        <div className="px-4 sm:px-5 py-3 bg-gradient-to-r from-amber-500/10 via-slate-900 to-emerald-500/10 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2.5">
-          <div className="flex items-center space-x-2 text-xs">
-            <span className="p-1.5 rounded-lg bg-amber-400/20 text-amber-300 border border-amber-400/40">
-              <Camera className="w-4 h-4 text-amber-400" />
-            </span>
-            <div>
-              <span className="font-extrabold text-white block">Görsel Kupon Paylaşımı</span>
-              <span className="text-[10px] text-slate-400">Instagram Story veya WhatsApp durumu için HD PNG</span>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2 w-full sm:w-auto">
-            <button
-              disabled={isDownloading}
-              onClick={() => handleDownloadImage('story')}
-              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:opacity-90 text-white font-extrabold text-[11px] transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>📱 Story (9:16)</span>
-            </button>
-
-            <button
-              disabled={isDownloading}
-              onClick={() => handleDownloadImage('ticket')}
-              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-400/40 font-bold text-[11px] transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
-            >
-              <Ticket className="w-3.5 h-3.5" />
-              <span>🎫 Bilet İndir</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Modal Action Buttons */}
-        <div className="p-4 sm:p-5 border-t border-slate-800 bg-slate-950/90 grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {/* WhatsApp Share */}
-          <button
-            onClick={handleShareWhatsApp}
-            className="flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-all shadow-lg active:scale-95 cursor-pointer"
-          >
-            <span>💬</span>
-            <span>WhatsApp</span>
-          </button>
-
           {/* Copy Text */}
           <button
             onClick={handleCopyText}
-            className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer ${
-              copied
+            className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer ${copied
                 ? 'bg-emerald-500 text-slate-950 font-black'
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700'
-            }`}
+              }`}
           >
             {copied ? (
               <>
