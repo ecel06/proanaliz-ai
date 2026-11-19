@@ -42,6 +42,7 @@ import {
   RaceCard,
 } from '../../types/horseRacing';
 import { HorseAIChatModal } from './HorseAIChatModal';
+import { DraggableAIFab } from '../DraggableAIFab';
 import {
   fetchHorseRacingBulletin,
   fetchHorseRacingProgram,
@@ -4043,23 +4044,17 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
         </p>
       </div>
 
-      {/* Floating AI Altılı Robotu FAB (Horse Racing Only) */}
-      <button
+      {/* Floating AI Altılı Robotu FAB (Hareketli & İstenen Yere Taşınabilir) */}
+      <DraggableAIFab
+        id="horse"
         onClick={() => setIsHorseAIChatOpen(true)}
-        className={`fixed ${totalPicksInCoupon > 0 ? 'bottom-32 sm:bottom-6' : 'bottom-20 sm:bottom-6'
-          } right-4 sm:right-6 z-50 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-black text-xs sm:text-sm shadow-2xl shadow-amber-500/40 hover:shadow-amber-500/70 border-2 border-amber-200/70 active:scale-95 transition-all cursor-pointer group hover:scale-105`}
         title="AI At Yarışı & Altılı Ganyan Robotu"
-      >
-        <div className="relative">
-          <Bot className="w-5 h-5 text-slate-950 group-hover:scale-110 transition-transform" />
-          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-600 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
-          </span>
-        </div>
-        <span className="font-black tracking-tight">AI Altılı Robotu</span>
-        <Sparkles className="w-4 h-4 text-slate-950 fill-current opacity-85 hidden sm:inline" />
-      </button>
+        label="AI Altılı Robotu"
+        gradientClass="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500"
+        borderColorClass="border-amber-200/70"
+        shadowColorClass="shadow-amber-500/40 hover:shadow-amber-500/70"
+        defaultBottomOffset={totalPicksInCoupon > 0 ? 128 : 84}
+      />
     </div>
   );
 };

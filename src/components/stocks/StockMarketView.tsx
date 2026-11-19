@@ -78,6 +78,7 @@ import { StockWatchlistModal } from './StockWatchlistModal';
 import { StockCryptoWidgetsModal } from './StockCryptoWidgetsModal';
 import { StockViopModal } from './StockViopModal';
 import { StockTefasModal } from './StockTefasModal';
+import { DraggableAIFab } from '../DraggableAIFab';
 import { INITIAL_IPOS } from '../../data/ipoData';
 import { INITIAL_KAP_NEWS } from '../../data/kapNewsData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
@@ -2827,22 +2828,16 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         </p>
       </div>
 
-      {/* Floating Borsa AI Robotu FAB */}
-      <button
+      {/* Floating Borsa AI Robotu FAB (Hareketli & İstenen Yere Taşınabilir) */}
+      <DraggableAIFab
+        id="stocks"
         onClick={() => setIsAIChatOpen(true)}
-        className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 text-slate-950 font-black text-xs sm:text-sm shadow-2xl shadow-cyan-500/40 hover:shadow-cyan-500/70 border-2 border-cyan-200/70 active:scale-95 transition-all cursor-pointer group hover:scale-105"
         title="ProAnaliz Borsa AI & Sinyal Robotu"
-      >
-        <div className="relative">
-          <Bot className="w-5 h-5 text-slate-950 group-hover:scale-110 transition-transform" />
-          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-950 opacity-50"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-950"></span>
-          </span>
-        </div>
-        <span className="font-black tracking-tight">Borsa AI Robotu</span>
-        <Sparkles className="w-4 h-4 text-slate-950 fill-current opacity-85 hidden sm:inline" />
-      </button>
+        label="Borsa AI Robotu"
+        gradientClass="bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400"
+        borderColorClass="border-cyan-200/70"
+        shadowColorClass="shadow-cyan-500/40 hover:shadow-cyan-500/70"
+      />
     </div>
   );
 };

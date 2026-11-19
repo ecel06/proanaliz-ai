@@ -18,6 +18,7 @@ import { GoalNotificationToast, LiveGoalEvent } from './components/GoalNotificat
 import { AuthModal } from './components/AuthModal';
 import { HomeHub } from './components/HomeHub';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { DraggableAIFab } from './components/DraggableAIFab';
 import { User, getStoredUser, clearAuthSession, fetchCurrentUser, SiteAnnouncement, fetchAnnouncementApi } from './utils/authHelper';
 import { computeAIPerformance } from './utils/aiPerformanceHelper';
 import type { AIChatCoupon, AICouponItem } from './utils/aiChatEngine';
@@ -396,7 +397,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.19.1';
+  const CLIENT_BUILD_VERSION = '2026.11.19.2';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -2193,23 +2194,17 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* 🤖 Floating Futbol AI Kupon Robotu FAB */}
+        {/* 🤖 Floating Futbol AI Kupon Robotu FAB (Hareketli & İstenen Yere Taşınabilir) */}
         {activeSection === 'football' && !isAIChatOpen && (
-          <button
+          <DraggableAIFab
+            id="football"
             onClick={() => setIsAIChatOpen(true)}
-            className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center space-x-2 px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-slate-950 font-black text-xs sm:text-sm shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/70 border-2 border-emerald-200/70 active:scale-95 transition-all cursor-pointer group hover:scale-105"
             title="AI Kupon Robotu & Canlı Maç Asistanı"
-          >
-            <div className="relative">
-              <Bot className="w-5 h-5 text-slate-950 group-hover:scale-110 transition-transform" />
-              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-950 opacity-60"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-950"></span>
-              </span>
-            </div>
-            <span className="font-black tracking-tight">AI Kupon Robotu</span>
-            <Sparkles className="w-4 h-4 text-slate-950 fill-current opacity-85 hidden sm:inline" />
-          </button>
+            label="AI Kupon Robotu"
+            gradientClass="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600"
+            borderColorClass="border-emerald-200/70"
+            shadowColorClass="shadow-emerald-500/40 hover:shadow-emerald-500/70"
+          />
         )}
 
         {isBankrollModalOpen && (
