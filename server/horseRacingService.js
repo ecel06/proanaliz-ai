@@ -537,7 +537,8 @@ export async function fetchProgramDetail(programId, forceRefresh = false) {
 
 export async function fetchFullHorseRacingBulletin(requestedProgramId = null, forceRefresh = false) {
   const listData = await fetchProgramList(forceRefresh);
-  const targetId = requestedProgramId ? Number(requestedProgramId) : listData.selectedProgramId;
+  const exists = requestedProgramId && (listData.programs || []).some((p) => p.id === Number(requestedProgramId));
+  const targetId = exists ? Number(requestedProgramId) : listData.selectedProgramId;
   const activeProgramDetail = targetId ? await fetchProgramDetail(targetId, forceRefresh) : null;
   return {
     programs: listData.programs,
@@ -547,7 +548,7 @@ export async function fetchFullHorseRacingBulletin(requestedProgramId = null, fo
   };
 }
 
-let liveStreamCache = { videoId: 'Lq4RbOueIL0', expiresAt: 0 };
+let liveStreamCache = { videoId: null, expiresAt: 0 };
 
 export async function fetchLiveStreamId() {
   const now = Date.now();
@@ -575,14 +576,14 @@ export async function fetchLiveStreamId() {
             liveStreamCache = { videoId: match[1], expiresAt: now + 3 * 60 * 1000 };
             return resolve(match[1]);
           }
-          resolve(liveStreamCache.videoId || 'Lq4RbOueIL0');
+          resolve(liveStreamCache.videoId || null);
         });
       }
     );
-    req.on('error', () => resolve(liveStreamCache.videoId || 'Lq4RbOueIL0'));
+    req.on('error', () => resolve(liveStreamCache.videoId || null));
     req.setTimeout(6000, () => {
       req.destroy();
-      resolve(liveStreamCache.videoId || 'Lq4RbOueIL0');
+      resolve(liveStreamCache.videoId || null);
     });
   });
 }

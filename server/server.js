@@ -300,14 +300,18 @@ app.get('/api/horse-racing/live-stream', async (req, res) => {
     const videoId = await fetchLiveStreamId();
     res.json({
       success: true,
-      videoId: videoId || 'Lq4RbOueIL0',
-      embedUrl: `https://www.youtube.com/embed/${videoId || 'Lq4RbOueIL0'}?autoplay=1&mute=0&rel=0`
+      videoId: videoId || 'UCNLO4lpteIloZ4IKb9L2DoA',
+      channelId: 'UCNLO4lpteIloZ4IKb9L2DoA',
+      embedUrl: videoId
+        ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=0&rel=0&playsinline=1`
+        : `https://www.youtube.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1&mute=0&rel=0&playsinline=1`
     });
   } catch (err) {
     res.json({
       success: true,
-      videoId: 'Lq4RbOueIL0',
-      embedUrl: 'https://www.youtube.com/embed/Lq4RbOueIL0?autoplay=1&mute=0&rel=0'
+      videoId: null,
+      channelId: 'UCNLO4lpteIloZ4IKb9L2DoA',
+      embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1&mute=0&rel=0&playsinline=1'
     });
   }
 });
@@ -873,7 +877,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.18.11';
+const APP_VERSION = '2026.11.19.1';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

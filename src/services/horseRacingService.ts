@@ -33,7 +33,13 @@ export async function fetchHorseRacingProgram(
   return data.detail;
 }
 
-export async function fetchLiveRaceStream(): Promise<{ videoId: string; embedUrl: string }> {
+export interface LiveRaceStreamResponse {
+  videoId?: string | null;
+  embedUrl: string;
+  channelId?: string;
+}
+
+export async function fetchLiveRaceStream(): Promise<LiveRaceStreamResponse> {
   try {
     const res = await fetch('/api/horse-racing/live-stream');
     if (!res.ok) throw new Error('Live stream endpoint failed');
@@ -41,8 +47,9 @@ export async function fetchLiveRaceStream(): Promise<{ videoId: string; embedUrl
     return data;
   } catch {
     return {
-      videoId: 'Lq4RbOueIL0',
-      embedUrl: 'https://www.youtube.com/embed/Lq4RbOueIL0?autoplay=1&mute=0&rel=0',
+      videoId: null,
+      channelId: 'UCNLO4lpteIloZ4IKb9L2DoA',
+      embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1&mute=0',
     };
   }
 }

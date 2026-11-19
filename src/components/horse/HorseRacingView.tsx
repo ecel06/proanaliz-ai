@@ -903,7 +903,18 @@ export const LiveRacePlayer: React.FC<{
   race: RaceCard | null;
   programPlace?: string;
 }> = ({ mode, onSetMode, race, programPlace }) => {
-  const [streamSource, setStreamSource] = useState<'tjktv1' | 'tjktv2' | 'replay'>('tjktv1');
+  const [streamSource, setStreamSource] = useState<'youtube' | 'tjktv1' | 'tjktv2' | 'replay'>('youtube');
+  const [liveVideoId, setLiveVideoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchLiveRaceStream()
+      .then((data) => {
+        if (data?.videoId) {
+          setLiveVideoId(data.videoId);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   if (mode === 'off') return null;
 
@@ -921,6 +932,10 @@ export const LiveRacePlayer: React.FC<{
 
   const activeStreamUrl = getStreamUrl();
 
+  const youtubeEmbedUrl = liveVideoId
+    ? `https://www.youtube-nocookie.com/embed/${liveVideoId}?autoplay=1&mute=0&rel=0&playsinline=1`
+    : `https://www.youtube.com/embed/live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA&autoplay=1&mute=0&rel=0&playsinline=1`;
+
   // 1. KÜÇÜK EKRAN MODU (Sayfada Köşede Kayan Mini Oynatıcı)
   if (mode === 'mini') {
     return (
@@ -930,7 +945,13 @@ export const LiveRacePlayer: React.FC<{
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="text-xs font-black text-white">
-              {streamSource === 'tjktv2' ? 'TJK TV 2 Canlı' : streamSource === 'replay' ? 'Koşu Tekrarı' : 'TJK TV 1 Canlı'}
+              {streamSource === 'youtube'
+                ? 'TJK TV Canlı (HD)'
+                : streamSource === 'tjktv2'
+                ? 'TJK TV 2 Canlı'
+                : streamSource === 'replay'
+                ? 'Koşu Tekrarı'
+                : 'TJK TV 1 Canlı'}
             </span>
             {race && (
               <span className="text-[10px] text-amber-400 font-mono font-bold">
@@ -958,24 +979,52 @@ export const LiveRacePlayer: React.FC<{
 
         {/* Mini Video Embed */}
         <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
-          <TJKVideoPlayer streamUrl={activeStreamUrl} />
+          {streamSource === 'youtube' ? (
+            <iframe
+              src={youtubeEmbedUrl}
+              title="TJK TV Canlı Yayın"
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          ) : (
+            <TJKVideoPlayer streamUrl={activeStreamUrl} />
+          )}
         </div>
 
         {/* Mini Footer Bar */}
         <div className="px-3 py-1.5 bg-slate-950/90 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
           <div className="flex items-center space-x-1.5">
             <button
-              onClick={() => setStreamSource(s => s === 'tjktv1' ? 'tjktv2' : 'tjktv1')}
-              className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300"
+              onClick={() => setStreamSource(s => s === 'youtube' ? 'tjktv1' : 'youtube')}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                streamSource === 'youtube'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+              }`}
             >
-              {streamSource === 'tjktv1' ? 'TJK 2’ye Geç' : 'TJK 1’e Geç'}
+              {streamSource === 'youtube' ? 'HLS Modu' : 'Canlı HD'}
+            </button>
+            <button
+              onClick={() => setStreamSource(s => s === 'tjktv2' ? 'youtube' : 'tjktv2')}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                streamSource === 'tjktv2'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+              }`}
+            >
+              TJK 2
             </button>
             {hasReplayVideo && (
               <button
-                onClick={() => setStreamSource(s => s === 'replay' ? 'tjktv1' : 'replay')}
-                className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 text-[10px] font-bold"
+                onClick={() => setStreamSource(s => s === 'replay' ? 'youtube' : 'replay')}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                  streamSource === 'replay'
+                    ? 'bg-emerald-500 text-slate-950 font-black'
+                    : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                }`}
               >
-                {streamSource === 'replay' ? 'Canlıya Dön' : 'Tekrar'}
+                {streamSource === 'replay' ? 'Canlı' : 'Tekrar'}
               </button>
             )}
           </div>
@@ -1028,30 +1077,44 @@ export const LiveRacePlayer: React.FC<{
           <div className="flex items-center space-x-2">
             <div className="flex rounded-xl bg-slate-950 p-0.5 border border-slate-800 text-xs">
               <button
-                onClick={() => setStreamSource('tjktv1')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${streamSource === 'tjktv1'
-                  ? 'bg-red-600 text-white'
-                  : 'text-slate-400 hover:text-white'
-                  }`}
+                onClick={() => setStreamSource('youtube')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center space-x-1 ${
+                  streamSource === 'youtube'
+                    ? 'bg-red-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                TJK TV 1
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                <span>TJK TV Canlı (HD)</span>
+              </button>
+              <button
+                onClick={() => setStreamSource('tjktv1')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                  streamSource === 'tjktv1'
+                    ? 'bg-red-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                TJK 1 (Web)
               </button>
               <button
                 onClick={() => setStreamSource('tjktv2')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${streamSource === 'tjktv2'
-                  ? 'bg-red-600 text-white'
-                  : 'text-slate-400 hover:text-white'
-                  }`}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                  streamSource === 'tjktv2'
+                    ? 'bg-red-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                TJK TV 2
+                TJK 2
               </button>
               {hasReplayVideo && (
                 <button
                   onClick={() => setStreamSource('replay')}
-                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${streamSource === 'replay'
-                    ? 'bg-emerald-500 text-slate-950'
-                    : 'text-slate-400 hover:text-white'
-                    }`}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                    streamSource === 'replay'
+                      ? 'bg-emerald-500 text-slate-950 font-black'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
                 >
                   Koşu Tekrarı
                 </button>
@@ -1078,7 +1141,17 @@ export const LiveRacePlayer: React.FC<{
 
         {/* Video Player Container */}
         <div className="relative w-full bg-black aspect-video flex items-center justify-center overflow-hidden">
-          <TJKVideoPlayer streamUrl={activeStreamUrl} />
+          {streamSource === 'youtube' ? (
+            <iframe
+              src={youtubeEmbedUrl}
+              title="TJK TV Canlı Yayın"
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          ) : (
+            <TJKVideoPlayer streamUrl={activeStreamUrl} />
+          )}
         </div>
 
         {/* Live Race Runners & Ganyan Ticker Bar */}
@@ -1130,7 +1203,13 @@ export const LiveRacePlayer: React.FC<{
                         {h.name}
                       </div>
                       <div className="text-[10px] text-slate-400 font-mono">
-                        {h.ganyan > 0 ? `${h.ganyan.toFixed(2)} ₺` : '1.00 ₺'}
+                        {h.ganyan > 0
+                          ? `${h.ganyan.toFixed(2)} ₺`
+                          : h.fobOdd
+                          ? `${h.fobOdd.toFixed(2)} ₺`
+                          : h.agf?.[0]?.percentage
+                          ? `%${h.agf[0].percentage} AGF`
+                          : '-'}
                       </div>
                     </div>
                   </div>
@@ -1169,6 +1248,14 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
   const [programs, setPrograms] = useState<HippodromeProgram[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<number | null>(() => {
     try {
+      const savedDate = localStorage.getItem('proanaliz_hr_selected_date');
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (savedDate && savedDate !== todayStr) {
+        localStorage.removeItem('proanaliz_hr_selected_pid');
+        localStorage.removeItem('proanaliz_hr_selected_raceno');
+        localStorage.setItem('proanaliz_hr_selected_date', todayStr);
+        return null;
+      }
       const saved = localStorage.getItem('proanaliz_hr_selected_pid');
       return saved ? Number(saved) : null;
     } catch {
@@ -1178,6 +1265,9 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
   const [detail, setDetail] = useState<ProgramDetail | null>(null);
   const [selectedRaceNo, setSelectedRaceNo] = useState<number>(() => {
     try {
+      const savedDate = localStorage.getItem('proanaliz_hr_selected_date');
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (savedDate && savedDate !== todayStr) return 1;
       const saved = localStorage.getItem('proanaliz_hr_selected_raceno');
       return saved ? Number(saved) : 1;
     } catch {
@@ -1243,6 +1333,8 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
   useEffect(() => {
     if (selectedProgramId) {
       try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        localStorage.setItem('proanaliz_hr_selected_date', todayStr);
         localStorage.setItem('proanaliz_hr_selected_pid', String(selectedProgramId));
       } catch { }
     }
@@ -1251,6 +1343,8 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
   useEffect(() => {
     if (selectedRaceNo) {
       try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        localStorage.setItem('proanaliz_hr_selected_date', todayStr);
         localStorage.setItem('proanaliz_hr_selected_raceno', String(selectedRaceNo));
       } catch { }
     }
@@ -1296,21 +1390,24 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
       setErrorMsg(null);
       const resp = await fetchHorseRacingBulletin(targetPid, force);
       setPrograms(resp.programs || []);
-      const pid = targetPid || resp.selectedProgramId || resp.programs?.[0]?.id || null;
+      const isTargetValid = targetPid && (resp.programs || []).some((p) => p.id === targetPid);
+      const pid = isTargetValid ? targetPid : (resp.selectedProgramId || resp.programs?.[0]?.id || null);
       setSelectedProgramId(pid);
       if (resp.activeProgramDetail) {
         setDetail(resp.activeProgramDetail);
+        const nextActiveRace = resp.activeProgramDetail.races.find((r) => !r.isFinished);
+        const firstRace = resp.activeProgramDetail.races[0]?.number || 1;
         const savedRace = (() => {
           try {
             const r = localStorage.getItem('proanaliz_hr_selected_raceno');
             return r ? Number(r) : null;
           } catch { return null; }
         })();
-        const targetRace = savedRace && resp.activeProgramDetail.races.some((r) => r.number === savedRace)
+        const raceToSelect = (savedRace && resp.activeProgramDetail.races.some((r) => r.number === savedRace && !r.isFinished))
           ? savedRace
-          : (resp.activeProgramDetail.races.find((r) => !r.isFinished)?.number || resp.activeProgramDetail.races[0]?.number || 1);
+          : (nextActiveRace?.number || firstRace);
         if (force === false) {
-          setSelectedRaceNo(targetRace);
+          setSelectedRaceNo(raceToSelect);
         }
       }
     } catch (err: any) {
@@ -1363,23 +1460,23 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
   };
 
   const handleManualRefresh = async () => {
-    if (selectedProgramId) {
-      setProgramLoading(true);
-      try {
-        const [b, d] = await Promise.all([
-          fetchHorseRacingBulletin(selectedProgramId, true),
-          fetchHorseRacingProgram(selectedProgramId, true),
-        ]);
-        setPrograms(b.programs || []);
+    setProgramLoading(true);
+    try {
+      const b = await fetchHorseRacingBulletin(null, true);
+      setPrograms(b.programs || []);
+      const todayPid = b.selectedProgramId || b.programs?.[0]?.id || null;
+      if (todayPid) {
+        setSelectedProgramId(todayPid);
+        const d = await fetchHorseRacingProgram(todayPid, true);
         setDetail(d);
-        onShowToast?.('TJK & AGF oranları canlı güncellendi', 'success');
-      } catch {
-        onShowToast?.('Yenileme sırasında bağlantı hatası', 'warning');
-      } finally {
-        setProgramLoading(false);
+        const nextActive = d.races.find((r) => !r.isFinished);
+        setSelectedRaceNo(nextActive?.number || d.races[0]?.number || 1);
       }
-    } else {
-      await loadBulletin(null, true);
+      onShowToast?.('TJK Bülteni ve Canlı Koşular Güncellendi', 'success');
+    } catch {
+      onShowToast?.('Yenileme sırasında bağlantı hatası', 'warning');
+    } finally {
+      setProgramLoading(false);
     }
   };
 
@@ -1751,8 +1848,12 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
               <span>🏇</span>
               <span>TJK BÜLTEN</span>
             </span>
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-              Resmi TJK Programı, Canlı AGF &amp; AI Altılı Motoru
+            <span className="text-xs text-emerald-400 font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>{detail?.program?.date ? `📅 ${detail.program.date}` : 'Canlı Bülten'}</span>
+            </span>
+            <span className="text-xs text-slate-400 font-medium hidden md:inline">
+              • Canlı AGF &amp; AI Altılı Motoru
             </span>
           </div>
           <div className="flex items-center space-x-1.5 flex-wrap gap-1">
