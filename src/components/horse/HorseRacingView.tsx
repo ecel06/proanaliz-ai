@@ -119,7 +119,8 @@ export const AltiliResultsSummaryBoard: React.FC<{
   activeGame: GameConfig | null;
   onSelectRace: (raceNo: number) => void;
   onSelectGame: (gameId: any) => void;
-}> = ({ detail, availableGames, activeGame, onSelectRace, onSelectGame }) => {
+  initialCollapsed?: boolean;
+}> = ({ detail, availableGames, activeGame, onSelectRace, onSelectGame, initialCollapsed = true }) => {
   // Filter games that are Altılı or fallback to availableGames
   const altiliGames = useMemo(() => {
     const altilis = availableGames.filter(
@@ -168,7 +169,7 @@ export const AltiliResultsSummaryBoard: React.FC<{
   const isAllFinished =
     legsInfo.length > 0 && finishedLegs.length === legsInfo.length;
 
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => isAllFinished);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(initialCollapsed);
 
   const totalGanyanProduct = useMemo(() => {
     if (finishedLegs.length === 0) return 0;
@@ -2198,36 +2199,48 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                 </div>
               </div>
 
-              {/* Main View Sub-Tabs */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center gap-1.5">
-                {[
-                  { id: 'bulletin', label: 'Bülten & Kupon', icon: Ticket },
-                  { id: 'ai_coupons', label: `AI Altılı (${aiCoupons.length})`, icon: Sparkles },
-                  { id: 'ikili_cifte', label: `İkili & Çifte (${ikiliPicks.length})`, icon: Zap },
-                  { id: 'results', label: 'Sonuçlar', icon: Trophy },
-                  {
-                    id: 'changes',
-                    label: `Değişenler (${detail.scratches.length + detail.jockeyChanges.length})`,
-                    icon: AlertTriangle,
-                    colSpan: 'col-span-2 sm:col-span-1'
-                  },
-                ].map((t) => {
-                  const Icon = t.icon;
-                  const active = subTab === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => setSubTab(t.id as HRSubTab)}
-                      className={`w-full md:w-auto flex items-center justify-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${t.colSpan || ''} ${active
-                        ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20'
-                        : 'bg-slate-950/70 hover:bg-slate-800 text-slate-300 border-slate-800'
-                        }`}
-                    >
-                      <Icon className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">{t.label}</span>
-                    </button>
-                  );
-                })}
+              {/* Main View Sub-Tabs (Sadeleştirilmiş 3 Temel Başlık) */}
+              <div className="flex items-center gap-1.5 w-full md:w-auto">
+                <button
+                  onClick={() => setSubTab('bulletin')}
+                  className={`flex-1 md:flex-initial flex items-center justify-center space-x-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black border transition-all cursor-pointer ${subTab === 'bulletin'
+                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20'
+                    : 'bg-slate-950/70 hover:bg-slate-800 text-slate-300 border-slate-800'
+                    }`}
+                >
+                  <Ticket className="w-4 h-4 shrink-0" />
+                  <span>Bülten &amp; Kupon</span>
+                </button>
+
+                <button
+                  onClick={() => setSubTab(subTab === 'ikili_cifte' ? 'ikili_cifte' : 'ai_coupons')}
+                  className={`flex-1 md:flex-initial flex items-center justify-center space-x-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black border transition-all cursor-pointer ${subTab === 'ai_coupons' || subTab === 'ikili_cifte'
+                    ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-md shadow-amber-500/20 font-black'
+                    : 'bg-slate-950/70 hover:bg-slate-800 text-slate-300 border-slate-800'
+                    }`}
+                >
+                  <Sparkles className="w-4 h-4 shrink-0" />
+                  <span>AI Hazır Kuponlar</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${subTab === 'ai_coupons' || subTab === 'ikili_cifte' ? 'bg-slate-950 text-amber-300' : 'bg-slate-800 text-slate-300'}`}>
+                    {aiCoupons.length + ikiliPicks.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setSubTab(subTab === 'changes' ? 'changes' : 'results')}
+                  className={`flex-1 md:flex-initial flex items-center justify-center space-x-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black border transition-all cursor-pointer ${subTab === 'results' || subTab === 'changes'
+                    ? 'bg-cyan-400 text-slate-950 border-cyan-300 shadow-md shadow-cyan-500/20 font-black'
+                    : 'bg-slate-950/70 hover:bg-slate-800 text-slate-300 border-slate-800'
+                    }`}
+                >
+                  <Trophy className="w-4 h-4 shrink-0" />
+                  <span>Sonuçlar &amp; TV</span>
+                  {(detail.scratches.length + detail.jockeyChanges.length) > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-black">
+                      {detail.scratches.length + detail.jockeyChanges.length}
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
 
@@ -2257,12 +2270,13 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
             )}
           </section>
 
-          {/* 🏁 Toplu Altılı Ganyan Canlı Sonuçları & Ganyan Paneli */}
-          {subTab !== 'results' && (
+          {/* 🏁 Toplu Altılı Ganyan Canlı Sonuçları & Ganyan Paneli (Bültende kompakt, Sonuçlarda açık) */}
+          {(subTab === 'bulletin' || subTab === 'results') && (
             <AltiliResultsSummaryBoard
               detail={detail}
               availableGames={availableGames}
               activeGame={activeGame}
+              initialCollapsed={subTab === 'bulletin'}
               onSelectRace={(rNo) => {
                 setSelectedRaceNo(rNo);
                 setSubTab('bulletin');
@@ -2278,6 +2292,23 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
           {/* SUBTAB 2: AI ALTILI TEMPLATES */}
           {subTab === 'ai_coupons' && (
             <section className="space-y-4">
+              {/* AI Hazır Kuponlar / İkili & Çifte Alt Geçiş Çubuğu */}
+              <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 gap-1 max-w-md mx-auto">
+                <button
+                  onClick={() => setSubTab('ai_coupons')}
+                  className="flex-1 py-2 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center space-x-1.5 bg-amber-400 text-slate-950 shadow-md font-black"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>6'lı Ganyan AI ({aiCoupons.length})</span>
+                </button>
+                <button
+                  onClick={() => setSubTab('ikili_cifte')}
+                  className="flex-1 py-2 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white font-bold"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>İkili &amp; Çifte Robotu ({ikiliPicks.length})</span>
+                </button>
+              </div>
               {activeGameStatus.isClosed && (
                 <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-200 animate-in fade-in duration-200">
                   <div className="flex items-start space-x-3">
@@ -2444,6 +2475,23 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
           {/* SUBTAB: IKILI & CIFTE ROBOTU */}
           {subTab === 'ikili_cifte' && (
             <section className="space-y-4">
+              {/* AI Hazır Kuponlar / İkili & Çifte Alt Geçiş Çubuğu */}
+              <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 gap-1 max-w-md mx-auto">
+                <button
+                  onClick={() => setSubTab('ai_coupons')}
+                  className="flex-1 py-2 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white font-bold"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>6'lı Ganyan AI ({aiCoupons.length})</span>
+                </button>
+                <button
+                  onClick={() => setSubTab('ikili_cifte')}
+                  className="flex-1 py-2 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center space-x-1.5 bg-amber-400 text-slate-950 shadow-md font-black"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>İkili &amp; Çifte Robotu ({ikiliPicks.length})</span>
+                </button>
+              </div>
               <div className="bg-gradient-to-r from-amber-500/10 via-slate-900 to-indigo-950/40 p-4 rounded-2xl border border-amber-500/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20 font-black">
@@ -2609,6 +2657,23 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
           {/* SUBTAB 3: RESULTS & PAYOUTS */}
           {subTab === 'results' && (
             <section className="space-y-4">
+              {/* Sonuçlar / Değişenler Alt Geçiş Çubuğu */}
+              <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 gap-1 max-w-md mx-auto">
+                <button
+                  onClick={() => setSubTab('results')}
+                  className="flex-1 py-2 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center space-x-1.5 bg-cyan-400 text-slate-950 shadow-md font-black"
+                >
+                  <Trophy className="w-3.5 h-3.5" />
+                  <span>Koşu Sonuçları &amp; İkramiyeler</span>
+                </button>
+                <button
+                  onClick={() => setSubTab('changes')}
+                  className="flex-1 py-2 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white font-bold"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Değişenler ({detail.scratches.length + detail.jockeyChanges.length})</span>
+                </button>
+              </div>
               {detail.summary?.altiliResults && detail.summary.altiliResults.length > 0 ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {detail.summary.altiliResults.map((alt) => (
@@ -2745,7 +2810,25 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
 
           {/* SUBTAB 4: SCRATCHES & JOCKEY CHANGES */}
           {subTab === 'changes' && (
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              {/* Sonuçlar / Değişenler Alt Geçiş Çubuğu */}
+              <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 gap-1 max-w-md mx-auto">
+                <button
+                  onClick={() => setSubTab('results')}
+                  className="flex-1 py-2 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white font-bold"
+                >
+                  <Trophy className="w-3.5 h-3.5" />
+                  <span>Koşu Sonuçları &amp; İkramiyeler</span>
+                </button>
+                <button
+                  onClick={() => setSubTab('changes')}
+                  className="flex-1 py-2 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center space-x-1.5 bg-cyan-400 text-slate-950 shadow-md font-black"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Değişenler ({detail.scratches.length + detail.jockeyChanges.length})</span>
+                </button>
+              </div>
+              <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
                 <h3 className="text-sm font-black text-rose-300 flex items-center space-x-2">
                   <AlertTriangle className="w-4 h-4" />
@@ -2802,6 +2885,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                 )}
               </div>
             </section>
+          </div>
           )}
 
           {/* SUBTAB 1: MAIN NESINE BULLETIN & COUPON BUILDER */}
@@ -2809,6 +2893,26 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
             <div className="flex flex-col xl:flex-row gap-4 items-start">
               {/* LEFT / MAIN: RACE TABS + RUNNER TABLE */}
               <div className="flex-1 w-full min-w-0 space-y-3">
+                {/* Değişen At / Jokey Hızlı Uyarı Rozeti */}
+                {detail.scratches.length + detail.jockeyChanges.length > 0 && (
+                  <button
+                    onClick={() => setSubTab('changes')}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-bold hover:bg-amber-500/20 transition-all cursor-pointer shadow-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-md bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center shrink-0">
+                        !
+                      </span>
+                      <span>
+                        Bu programda <strong className="text-white underline">{detail.scratches.length + detail.jockeyChanges.length}</strong> jokey/at değişikliği var.
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-amber-300 font-black shrink-0 ml-2">
+                      Değişenleri İncele →
+                    </span>
+                  </button>
+                )}
+
                 {/* Race Selector Tabs (1. Koşu .. N. Koşu) - 100% Solid Responsive Grid, Zero Horizontal Cutoff */}
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1 sm:gap-1.5">
                   {detail.races.map((r) => {
@@ -3181,9 +3285,10 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                                     ) : null}
                                   </div>
 
-                                  {/* 🤝 Timeform / Racing Post: Jokey & Antrenör Sinerjisi (Strike Rate) */}
+                                  {/* 🤝 Timeform / Racing Post: Jokey & Antrenör Sinerjisi (Strike Rate) - Sadece Sıcak Sinerji veya Detay Açıkken */}
                                   {horse.jockey?.name && horse.coach && (() => {
                                     const synergy = calculateJockeyTrainerSynergy(horse.jockey.name, horse.coach);
+                                    if (!isExpanded && !synergy.isHot) return null;
                                     return (
                                       <div
                                         title={synergy.tacticalNote}
