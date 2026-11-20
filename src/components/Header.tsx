@@ -376,137 +376,238 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
         )}
 
-        {/* ROW 3: Dedicated Football Tools & Features Bar (Sleek, Centered, Zero Horizontal Overflow) */}
+        {/* ROW 3: Dedicated Football Tools & Features Bar */}
         {activeSection === 'football' && (
           <div className="w-full pb-1.5 pt-0.5">
-            <div className="flex items-center justify-start sm:justify-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 shadow-inner w-full max-w-5xl mx-auto overflow-x-auto no-scrollbar scroll-smooth">
-              {/* Renk & Takım Teması */}
-              {onOpenThemeModal && (
-                <button
-                  onClick={onOpenThemeModal}
-                  className="flex items-center space-x-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
-                  style={{
-                    backgroundColor: activeTheme?.badgeBg || 'rgba(16, 185, 129, 0.15)',
-                    borderColor: activeTheme?.cardBorder || 'rgba(16, 185, 129, 0.35)',
-                    color: activeTheme?.primaryColor || '#10b981'
-                  }}
-                  title={`Takım & Renk Teması Seçici (Aktif: ${activeTheme?.name || 'ProAnaliz'})`}
-                >
-                  <Palette className="w-3.5 h-3.5 group-hover:rotate-45 transition-transform shrink-0" />
-                  <span className="font-black text-xs">{activeTheme?.emoji || '🎨'}</span>
-                  <span className="font-bold text-xs">{activeTheme?.shortName || 'Renk'}</span>
-                </button>
-              )}
+            <div className="p-1 sm:p-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 shadow-inner w-full max-w-5xl mx-auto">
+              {/* 📱 Mobil Görünüm (2 Satır, Bütün Butonlar Eksiksiz ve Ekrana Tam Oturan Tasarım) */}
+              <div className="flex flex-col gap-1 sm:hidden">
+                {/* 1. Satır: Tema, Puan Durumu, Karne, Canlı TV */}
+                <div className="grid grid-cols-4 gap-1">
+                  {onOpenThemeModal && (
+                    <button
+                      onClick={onOpenThemeModal}
+                      className="flex items-center justify-center space-x-1 py-1.5 px-1 rounded-lg border font-bold text-xs transition-all cursor-pointer shadow-xs active:scale-95"
+                      style={{
+                        backgroundColor: activeTheme?.badgeBg || 'rgba(16, 185, 129, 0.15)',
+                        borderColor: activeTheme?.cardBorder || 'rgba(16, 185, 129, 0.35)',
+                        color: activeTheme?.primaryColor || '#10b981'
+                      }}
+                      title={`Takım & Renk Teması: ${activeTheme?.name || 'ProAnaliz'}`}
+                    >
+                      <span>{activeTheme?.emoji || '🎨'}</span>
+                      <span className="font-bold text-xs truncate">{activeTheme?.shortName || 'Renk'}</span>
+                    </button>
+                  )}
 
-              {/* Güncel Puan Durumu (Her ekranda görünür) */}
-              {onOpenStandings && (
-                <button
-                  onClick={onOpenStandings}
-                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
-                  title="Güncel Puan Durumu"
-                >
-                  <Activity className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span className="hidden sm:inline">Puan Durumu</span>
-                  <span className="sm:hidden">Puan</span>
-                </button>
-              )}
+                  {onOpenStandings && (
+                    <button
+                      onClick={onOpenStandings}
+                      className="flex items-center justify-center space-x-1 py-1.5 px-1 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shadow-xs active:scale-95"
+                      title="Güncel Puan Durumu"
+                    >
+                      <Activity className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>Puan</span>
+                    </button>
+                  )}
 
-              {/* AI Başarı Karnesi */}
-              {onOpenAIPerformance && (
-                <button
-                  onClick={onOpenAIPerformance}
-                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
-                  title="Yapay Zeka Başarı Karnesi & Şeffaf İstatistikler"
-                >
-                  <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span className="hidden sm:inline">Başarı Karnesi</span>
-                  <span className="sm:hidden">Karne</span>
-                </button>
-              )}
+                  {onOpenAIPerformance && (
+                    <button
+                      onClick={onOpenAIPerformance}
+                      className="flex items-center justify-center space-x-1 py-1.5 px-1 rounded-lg bg-slate-800 hover:bg-slate-750 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shadow-xs active:scale-95"
+                      title="Yapay Zeka Başarı Karnesi"
+                    >
+                      <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>Karne</span>
+                    </button>
+                  )}
 
-              {/* 📺 Canlı TV & Maç İzle */}
-              {onOpenLiveTV && (
-                <button
-                  onClick={onOpenLiveTV}
-                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs border border-rose-500/40 transition-all cursor-pointer shadow-md shadow-rose-500/15 active:scale-95 shrink-0 group"
-                  title="Canlı Maç & Spor TV Yayınlarını İzle (TRT Spor, TRT Yıldız, A Spor, HT Spor)"
-                >
-                  <span className="relative flex h-2 w-2 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
-                  </span>
-                  <Tv className="w-3.5 h-3.5 text-rose-400 group-hover:scale-110 transition-transform shrink-0" />
-                  <span>Canlı TV</span>
-                </button>
-              )}
+                  {onOpenLiveTV && (
+                    <button
+                      onClick={onOpenLiveTV}
+                      className="flex items-center justify-center space-x-1 py-1.5 px-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs border border-rose-500/40 transition-all cursor-pointer shadow-xs active:scale-95"
+                      title="Canlı Maç & TV Yayınları"
+                    >
+                      <span className="relative flex h-2 w-2 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                      </span>
+                      <Tv className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span>Canlı TV</span>
+                    </button>
+                  )}
+                </div>
 
-              {/* Kullanıcı Kuponu (Kuponum - Masaüstünde burada görünür) */}
-              {betslipCount > 0 && onOpenBetslip && (
-                <button
-                  onClick={onOpenBetslip}
-                  className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-extrabold text-xs border border-emerald-500/40 transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95 animate-pulse shrink-0"
-                  title="Kuponumu Aç & Hesapla"
-                >
-                  <Ticket className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Kuponum</span>
-                  <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 font-black text-[10px]">
-                    {betslipCount}
-                  </span>
-                </button>
-              )}
+                {/* 2. Satır: Kasa, Analiz, Ses, Bildirim */}
+                <div className="flex items-center gap-1">
+                  {onOpenBankroll && (
+                    <button
+                      onClick={onOpenBankroll}
+                      className="flex-1 flex items-center justify-center space-x-1 py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-white font-bold text-xs transition-all cursor-pointer shadow-xs active:scale-95 min-w-0"
+                      title="Sanal Kasa & Kupon Takibi"
+                    >
+                      <Wallet className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span className="font-mono font-black text-amber-400 text-xs truncate">
+                        {bankrollBalance.toLocaleString('tr-TR')} ₺
+                      </span>
+                    </button>
+                  )}
 
-              {/* Sanal Kasa */}
-              {onOpenBankroll && (
-                <button
-                  onClick={onOpenBankroll}
-                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-white font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
-                  title="Sanal Kasa & Kupon Takibi"
-                >
-                  <Wallet className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span className="font-mono font-black text-amber-400 text-xs">
-                    {bankrollBalance.toLocaleString('tr-TR')} ₺
-                  </span>
-                </button>
-              )}
+                  {onOpenCustomAnalyzer && (
+                    <button
+                      onClick={onOpenCustomAnalyzer}
+                      className="flex-1 flex items-center justify-center space-x-1 py-1.5 px-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-md shadow-emerald-500/20 transition-all active:scale-95 cursor-pointer min-w-0"
+                      title="Kendi Maçını Analiz Et"
+                    >
+                      <Calculator className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
+                      <span className="truncate">Analiz Et</span>
+                    </button>
+                  )}
 
-              {/* Canlı Gol Sesi Toggle */}
-              {onToggleMute && (
-                <button
-                  onClick={onToggleMute}
-                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-slate-300 hover:text-white transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
-                  title={isMuted ? 'Canlı Gol Sesini (GOOOOL!) Aç' : 'Canlı Gol Sesini Kapat'}
-                >
-                  {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400 shrink-0" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
-                </button>
-              )}
+                  {onToggleMute && (
+                    <button
+                      onClick={onToggleMute}
+                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-slate-300 hover:text-white transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
+                      title={isMuted ? 'Canlı Gol Sesini Aç' : 'Canlı Gol Sesini Kapat'}
+                    >
+                      {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400 shrink-0" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
+                    </button>
+                  )}
 
-              {/* Native Web Push Toggle (Her ekranda görünür) */}
-              {onTogglePush && (
-                <button
-                  onClick={onTogglePush}
-                  className={`p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 shadow-xs active:scale-95 ${
-                    isPushEnabled
-                      ? 'bg-amber-400/20 text-amber-300 border-amber-400/50 shadow-amber-500/20'
-                      : 'bg-slate-800 hover:bg-slate-750 text-slate-400 border-slate-700/80 hover:text-white'
-                  }`}
-                  title={isPushEnabled ? 'Anlık Push Bildirimleri Açık' : 'Anlık Push Bildirimlerini Aç'}
-                >
-                  {isPushEnabled ? <Bell className="w-3.5 h-3.5 text-amber-400 shrink-0" /> : <BellOff className="w-3.5 h-3.5 shrink-0" />}
-                </button>
-              )}
+                  {onTogglePush && (
+                    <button
+                      onClick={onTogglePush}
+                      className={`p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 shadow-xs active:scale-95 ${
+                        isPushEnabled
+                          ? 'bg-amber-400/20 text-amber-300 border-amber-400/50 shadow-amber-500/20'
+                          : 'bg-slate-800 hover:bg-slate-750 text-slate-400 border-slate-700/80 hover:text-white'
+                      }`}
+                      title={isPushEnabled ? 'Push Bildirimleri Açık' : 'Push Bildirimlerini Aç'}
+                    >
+                      {isPushEnabled ? <Bell className="w-3.5 h-3.5 text-amber-400 shrink-0" /> : <BellOff className="w-3.5 h-3.5 shrink-0" />}
+                    </button>
+                  )}
+                </div>
+              </div>
 
-              {/* Kendi Maçını Analiz Et (Her ekranda görünür) */}
-              {onOpenCustomAnalyzer && (
-                <button
-                  onClick={onOpenCustomAnalyzer}
-                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
-                  title="Kendi Maçını Analiz Et (Poisson & Form Hesaplayıcı)"
-                >
-                  <Calculator className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
-                  <span className="hidden sm:inline">Kendi Maçını Analiz Et</span>
-                  <span className="sm:hidden">Analiz</span>
-                </button>
-              )}
+              {/* 💻 Masaüstü Görünüm (Tek Satır, Ferah ve Geniş) */}
+              <div className="hidden sm:flex items-center justify-center gap-1.5 w-full">
+                {onOpenThemeModal && (
+                  <button
+                    onClick={onOpenThemeModal}
+                    className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
+                    style={{
+                      backgroundColor: activeTheme?.badgeBg || 'rgba(16, 185, 129, 0.15)',
+                      borderColor: activeTheme?.cardBorder || 'rgba(16, 185, 129, 0.35)',
+                      color: activeTheme?.primaryColor || '#10b981'
+                    }}
+                    title={`Takım & Renk Teması Seçici (Aktif: ${activeTheme?.name || 'ProAnaliz'})`}
+                  >
+                    <Palette className="w-3.5 h-3.5 group-hover:rotate-45 transition-transform shrink-0" />
+                    <span className="font-black text-xs">{activeTheme?.emoji || '🎨'}</span>
+                    <span className="font-bold text-xs">{activeTheme?.shortName || 'Renk'}</span>
+                  </button>
+                )}
+
+                {onOpenStandings && (
+                  <button
+                    onClick={onOpenStandings}
+                    className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
+                    title="Güncel Puan Durumu"
+                  >
+                    <Activity className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Puan Durumu</span>
+                  </button>
+                )}
+
+                {onOpenAIPerformance && (
+                  <button
+                    onClick={onOpenAIPerformance}
+                    className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
+                    title="Yapay Zeka Başarı Karnesi & Şeffaf İstatistikler"
+                  >
+                    <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>Başarı Karnesi</span>
+                  </button>
+                )}
+
+                {onOpenLiveTV && (
+                  <button
+                    onClick={onOpenLiveTV}
+                    className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs border border-rose-500/40 transition-all cursor-pointer shadow-md shadow-rose-500/15 active:scale-95 shrink-0 group"
+                    title="Canlı Maç & Spor TV Yayınlarını İzle (TRT Spor, TRT Yıldız, A Spor, HT Spor)"
+                  >
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                    </span>
+                    <Tv className="w-3.5 h-3.5 text-rose-400 group-hover:scale-110 transition-transform shrink-0" />
+                    <span>Canlı TV</span>
+                  </button>
+                )}
+
+                {betslipCount > 0 && onOpenBetslip && (
+                  <button
+                    onClick={onOpenBetslip}
+                    className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-extrabold text-xs border border-emerald-500/40 transition-all cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95 animate-pulse shrink-0"
+                    title="Kuponumu Aç & Hesapla"
+                  >
+                    <Ticket className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Kuponum</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 font-black text-[10px]">
+                      {betslipCount}
+                    </span>
+                  </button>
+                )}
+
+                {onOpenBankroll && (
+                  <button
+                    onClick={onOpenBankroll}
+                    className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-white font-bold text-xs transition-all cursor-pointer shadow-xs group shrink-0 active:scale-95"
+                    title="Sanal Kasa & Kupon Takibi"
+                  >
+                    <Wallet className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span className="font-mono font-black text-amber-400 text-xs">
+                      {bankrollBalance.toLocaleString('tr-TR')} ₺
+                    </span>
+                  </button>
+                )}
+
+                {onToggleMute && (
+                  <button
+                    onClick={onToggleMute}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-slate-300 hover:text-white transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
+                    title={isMuted ? 'Canlı Gol Sesini (GOOOOL!) Aç' : 'Canlı Gol Sesini Kapat'}
+                  >
+                    {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400 shrink-0" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
+                  </button>
+                )}
+
+                {onTogglePush && (
+                  <button
+                    onClick={onTogglePush}
+                    className={`p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 shadow-xs active:scale-95 ${
+                      isPushEnabled
+                        ? 'bg-amber-400/20 text-amber-300 border-amber-400/50 shadow-amber-500/20'
+                        : 'bg-slate-800 hover:bg-slate-750 text-slate-400 border-slate-700/80 hover:text-white'
+                    }`}
+                    title={isPushEnabled ? 'Anlık Push Bildirimleri Açık' : 'Anlık Push Bildirimlerini Aç'}
+                  >
+                    {isPushEnabled ? <Bell className="w-3.5 h-3.5 text-amber-400 shrink-0" /> : <BellOff className="w-3.5 h-3.5 shrink-0" />}
+                  </button>
+                )}
+
+                {onOpenCustomAnalyzer && (
+                  <button
+                    onClick={onOpenCustomAnalyzer}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
+                    title="Kendi Maçını Analiz Et (Poisson & Form Hesaplayıcı)"
+                  >
+                    <Calculator className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
+                    <span>Kendi Maçını Analiz Et</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}

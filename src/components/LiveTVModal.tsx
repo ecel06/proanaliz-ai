@@ -101,7 +101,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
   const [activeChannelId, setActiveChannelId] = useState<string>(initialChannelId);
   const [isMiniMode, setIsMiniMode] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [useHls, setUseHls] = useState<boolean>(false);
+  const [useHls, setUseHls] = useState<boolean>(true);
   const [retryKey, setRetryKey] = useState<number>(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -118,13 +118,19 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           setChannels(data.channels);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       isMounted = false;
     };
   }, [isOpen, retryKey]);
 
   const currentChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
+
+  // Kanal değiştiğinde streamUrl varsa doğrudan resmi canlı HLS akışına geç
+  useEffect(() => {
+    const hasStream = Boolean(currentChannel.streamUrl && currentChannel.streamUrl.trim());
+    setUseHls(hasStream);
+  }, [activeChannelId, currentChannel.streamUrl]);
 
   // HLS Modu aktifse Hls.js bağla
   useEffect(() => {
@@ -145,22 +151,56 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
     }
 
     const rawUrl = currentChannel.streamUrl;
-    const streamUrl = rawUrl.includes('daioncdn.net')
+    if (!rawUrl) return;
+
+    // Tüm canlı m3u8 akışlarını sunucu proxy'si üzerinden CORS engelsiz çek
+    const streamUrl = rawUrl.startsWith('http')
       ? `/api/stream-proxy?url=${encodeURIComponent(rawUrl)}`
       : rawUrl;
 
+    const playVideo = () => {
+      video.muted = isMuted;
+      video.play().catch(() => {
+        // Tarayıcı otomatik oynatma engellerse sessizce başlat
+        video.muted = true;
+        setIsMuted(true);
+        video.play().catch(() => {});
+      });
+    };
+
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = streamUrl;
-      video.muted = isMuted;
-      video.play().catch(() => {});
+      playVideo();
     } else if (Hls.isSupported()) {
-      const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 60
+      });
       hlsRef.current = hls;
       hls.loadSource(streamUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.muted = isMuted;
-        video.play().catch(() => {});
+        playVideo();
+      });
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              hls.recoverMediaError();
+              break;
+            default:
+              hls.destroy();
+              hlsRef.current = null;
+              if (currentChannel.youtubeId) {
+                setUseHls(false);
+              }
+              break;
+          }
+        }
       });
     }
 
@@ -174,9 +214,8 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
   if (!isOpen) return null;
 
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${currentChannel.youtubeId}?autoplay=1&mute=${
-    isMuted ? 1 : 0
-  }&playsinline=1&rel=0&modestbranding=1`;
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${currentChannel.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0
+    }&playsinline=1&rel=0&modestbranding=1`;
 
   // 📺 1. Küçük Ekran (Floating Mini Player) Modu
   if (isMiniMode) {
@@ -247,11 +286,10 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
             <button
               key={ch.id}
               onClick={() => setActiveChannelId(ch.id)}
-              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all shrink-0 cursor-pointer ${
-                activeChannelId === ch.id
-                  ? 'bg-emerald-500 text-slate-950 shadow-xs'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all shrink-0 cursor-pointer ${activeChannelId === ch.id
+                ? 'bg-emerald-500 text-slate-950 shadow-xs'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
             >
               {ch.logoText}
             </button>
@@ -287,14 +325,26 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           </div>
 
           <div className="flex items-center space-x-2">
-            {/* Stream Mode Switcher (HD Live vs HLS) */}
-            <button
-              onClick={() => setUseHls((h) => !h)}
-              className="hidden sm:inline-flex px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 border border-slate-700 transition-colors"
-              title="Yayın modunu değiştir"
-            >
-              {useHls ? '⚡ HLS Modu' : '🔴 HD Canlı Mod'}
-            </button>
+            {/* Stream Mode Switcher (Resmi Canlı TV vs YouTube) */}
+            {currentChannel.streamUrl && currentChannel.youtubeId && (
+              <button
+                onClick={() => setUseHls((h) => !h)}
+                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Yayın kaynağını değiştir"
+              >
+                {useHls ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <span>Resmi Canlı TV (HD)</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                    <span>YouTube Kaydı</span>
+                  </>
+                )}
+              </button>
+            )}
 
             <button
               onClick={() => setIsMuted((m) => !m)}
@@ -364,11 +414,10 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                 <button
                   key={ch.id}
                   onClick={() => setActiveChannelId(ch.id)}
-                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden ${
-                    isActive
-                      ? 'bg-slate-900 border-emerald-500/60 shadow-lg shadow-emerald-500/10'
-                      : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800 hover:border-slate-700'
-                  }`}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden ${isActive
+                    ? 'bg-slate-900 border-emerald-500/60 shadow-lg shadow-emerald-500/10'
+                    : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800 hover:border-slate-700'
+                    }`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span
@@ -378,11 +427,10 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                       {ch.name}
                     </span>
                     <span
-                      className={`text-[9px] font-black px-1.5 py-0.2 rounded-full ${
-                        isActive
-                          ? 'bg-emerald-500 text-slate-950'
-                          : 'bg-slate-800 text-slate-400'
-                      }`}
+                      className={`text-[9px] font-black px-1.5 py-0.2 rounded-full ${isActive
+                        ? 'bg-emerald-500 text-slate-950'
+                        : 'bg-slate-800 text-slate-400'
+                        }`}
                     >
                       {ch.badge}
                     </span>
