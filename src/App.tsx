@@ -14,6 +14,7 @@ import { FinishedMatchCard } from './components/FinishedMatchCard';
 import { MatchDetailModal } from './components/MatchDetailModal';
 import { BetslipDrawer } from './components/BetslipDrawer';
 import { MatchOfTheDayBanner } from './components/MatchOfTheDayBanner';
+import { AITripleComboCard } from './components/AITripleComboCard';
 import { GoalNotificationToast, LiveGoalEvent } from './components/GoalNotificationToast';
 import { AuthModal } from './components/AuthModal';
 import { HomeHub } from './components/HomeHub';
@@ -257,6 +258,18 @@ export const App: React.FC = () => {
     setTimeout(() => setRefreshToast(null), 2200);
   };
 
+  const handleAddComboToBetslip = (comboItems: { match: Match; pickOption: BettingPickOption }[]) => {
+    comboItems.forEach((item) => {
+      const alreadyIn = betslipItems.some((b) => b.matchId === item.match.id && b.pickKey === item.pickOption.key);
+      if (!alreadyIn) {
+        handleToggleBetslip(item.match, item.pickOption);
+      }
+    });
+    setIsBetslipOpen(true);
+    setRefreshToast(`⚡ VIP 3'lü Kombin Kupona Eklendi (${comboItems.length} Maç)`);
+    setTimeout(() => setRefreshToast(null), 3000);
+  };
+
   // Virtual Bankroll & Saved Slips State
   const [isBankrollModalOpen, setIsBankrollModalOpen] = useState(false);
   const [savedSlips, setSavedSlips] = useState<SavedSlip[]>(() => getSavedSlips());
@@ -398,7 +411,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.11';
+  const CLIENT_BUILD_VERSION = '2026.11.20.12';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1913,6 +1926,17 @@ export const App: React.FC = () => {
                           isAlreadyInBetslip={isHeroInBetslip}
                         />
                       </div>
+                    )}
+
+                    {/* 🏆 GÜNÜN PROANALİZ VIP SÜPER 3'LÜ AI KOMBİNİ */}
+                    {selectedCategory === 'all' && allMatches.length >= 3 && (
+                      <AITripleComboCard
+                        matches={allMatches}
+                        analyses={matchAnalysesMap}
+                        onSelectMatch={(m) => setSelectedMatch(m)}
+                        onAddComboToBetslip={handleAddComboToBetslip}
+                        betslipItems={betslipItems}
+                      />
                     )}
 
                     {/* AKTİF KATEGORİ FİLTRESİ BAŞLIK ŞERİDİ (Filtrelenen Sonuçlar) */}

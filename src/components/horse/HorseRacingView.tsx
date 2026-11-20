@@ -33,6 +33,7 @@ import {
   Minimize2,
   Volume2,
   VolumeX,
+  Flame,
 } from 'lucide-react';
 import { User } from '../../utils/authHelper';
 import {
@@ -1649,6 +1650,45 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
     return selectionsByProgram[selectedProgramId] || {};
   }, [selectionsByProgram, selectedProgramId]);
 
+  // Günün Hipodrom AI Zirvesi (Günün En Sağlam Teki & Günün Cazip Bombası)
+  const dayHighlights = useMemo(() => {
+    if (!detail || !detail.races || detail.races.length === 0) return null;
+
+    let bestBanko: { race: RaceCard; horse: HorseRunner; agfPct: number } | null = null;
+    let maxBankoScore = -1;
+
+    let bestBomba: { race: RaceCard; horse: HorseRunner; agfPct: number } | null = null;
+    let maxBombaScore = -1;
+
+    for (const r of detail.races) {
+      for (const h of r.horses) {
+        const agfInfo = getHorsePrimaryAgf(h);
+        const agfPct = agfInfo?.percentage || 0;
+        const hp = parseInt(h.handicap || '0', 10) || 0;
+        const isBankoTag = (h as any).tag === 'BANKO';
+        const bankoScore = (isBankoTag ? 60 : 0) + agfPct * 1.5 + hp * 0.2;
+
+        if (bankoScore > maxBankoScore && (isBankoTag || agfPct >= 20)) {
+          maxBankoScore = bankoScore;
+          bestBanko = { race: r, horse: h, agfPct };
+        }
+
+        const isBombaTag = (h as any).tag === 'BOMBA' || (h as any).tag === 'SÜRPRİZ';
+        const bombaScore = (isBombaTag ? 70 : 0) + (agfPct >= 4 && agfPct <= 18 ? 35 : 0) + hp * 0.25;
+
+        if (bombaScore > maxBombaScore && (isBombaTag || (agfPct >= 5 && agfPct <= 16))) {
+          if (!bestBanko || bestBanko.horse.number !== h.number || bestBanko.race.number !== r.number) {
+            maxBombaScore = bombaScore;
+            bestBomba = { race: r, horse: h, agfPct };
+          }
+        }
+      }
+    }
+
+    if (!bestBanko) return null;
+    return { banko: bestBanko, bomba: bestBomba };
+  }, [detail]);
+
   const toggleHorsePick = (raceNo: number, horseNo: number) => {
     if (!selectedProgramId) return;
     setSelectionsByProgram((prev) => {
@@ -2911,6 +2951,155 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                       Değişenleri İncele →
                     </span>
                   </button>
+                )}
+
+                {/* 🌟 GÜNÜN HİPODROM AI ZİRVESİ: GÜNÜN TEKİ & GÜNÜN BOMBASI */}
+                {dayHighlights && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 p-3 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-slate-900 to-amber-950/40 border border-emerald-500/30 shadow-xl animate-fadeIn">
+                    {/* GÜNÜN TEKİ */}
+                    {dayHighlights.banko && (() => {
+                      const b = dayHighlights.banko;
+                      const isSelected = currentSelections[b.race.number]?.includes(b.horse.number);
+                      const jockeyName = b.horse.jockey?.name || (typeof b.horse.jockey === 'string' ? b.horse.jockey : 'Jokey');
+
+                      return (
+                        <div
+                          onClick={() => {
+                            setSelectedRaceNo(b.race.number);
+                            setExpandedHorse(null);
+                          }}
+                          className="p-2.5 sm:p-3 rounded-xl bg-slate-950/70 border border-emerald-500/30 hover:border-emerald-400/60 transition-all cursor-pointer flex flex-col justify-between group shadow-sm"
+                        >
+                          <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black uppercase flex items-center gap-1">
+                              <Sparkles className="w-3 h-3 text-amber-400" />
+                              <span>Günün En Sağlam Teki</span>
+                            </span>
+                            <span className="text-[11px] font-mono font-bold text-slate-300">
+                              {b.race.number}. Koşu ({b.race.hour})
+                            </span>
+                          </div>
+
+                          <div className="pt-2 flex items-center justify-between">
+                            <div className="flex items-center space-x-2 truncate">
+                              <span className="w-7 h-7 rounded-lg bg-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center shrink-0">
+                                {b.horse.number}
+                              </span>
+                              <div className="truncate">
+                                <h4 className="text-xs sm:text-sm font-black text-white group-hover:text-emerald-300 transition-colors truncate">
+                                  {b.horse.name}
+                                </h4>
+                                <p className="text-[10px] text-slate-400 truncate">
+                                  {jockeyName} • {b.horse.weight}kg • HP: {b.horse.handicap || '-'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedRaceNo(b.race.number);
+                                if (!isSelected) {
+                                  toggleHorsePick(b.race.number, b.horse.number);
+                                  onShowToast?.(`🏇 ${b.horse.name} (${b.race.number}. Koşu) Tek Banko olarak kupona eklendi!`, 'success');
+                                }
+                              }}
+                              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-black shrink-0 transition-all cursor-pointer flex items-center space-x-1 ${
+                                isSelected
+                                  ? 'bg-emerald-500 text-slate-950 border border-emerald-400'
+                                  : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
+                              }`}
+                            >
+                              {isSelected ? (
+                                <>
+                                  <Check className="w-3 h-3" />
+                                  <span>Tek Kuponda</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Zap className="w-3 h-3" />
+                                  <span>%{b.agfPct} AGF • Tek Ekle</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* GÜNÜN BOMBASI */}
+                    {dayHighlights.bomba && (() => {
+                      const bm = dayHighlights.bomba;
+                      const isSelected = currentSelections[bm.race.number]?.includes(bm.horse.number);
+                      const jockeyName = bm.horse.jockey?.name || (typeof bm.horse.jockey === 'string' ? bm.horse.jockey : 'Jokey');
+
+                      return (
+                        <div
+                          onClick={() => {
+                            setSelectedRaceNo(bm.race.number);
+                            setExpandedHorse(null);
+                          }}
+                          className="p-2.5 sm:p-3 rounded-xl bg-slate-950/70 border border-amber-500/30 hover:border-amber-400/60 transition-all cursor-pointer flex flex-col justify-between group shadow-sm"
+                        >
+                          <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-black uppercase flex items-center gap-1">
+                              <Flame className="w-3 h-3 text-amber-400" />
+                              <span>Günün Cazip Bombası</span>
+                            </span>
+                            <span className="text-[11px] font-mono font-bold text-slate-300">
+                              {bm.race.number}. Koşu ({bm.race.hour})
+                            </span>
+                          </div>
+
+                          <div className="pt-2 flex items-center justify-between">
+                            <div className="flex items-center space-x-2 truncate">
+                              <span className="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center shrink-0">
+                                {bm.horse.number}
+                              </span>
+                              <div className="truncate">
+                                <h4 className="text-xs sm:text-sm font-black text-white group-hover:text-amber-300 transition-colors truncate">
+                                  {bm.horse.name}
+                                </h4>
+                                <p className="text-[10px] text-slate-400 truncate">
+                                  {jockeyName} • {bm.horse.weight}kg • HP: {bm.horse.handicap || '-'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedRaceNo(bm.race.number);
+                                if (!isSelected) {
+                                  toggleHorsePick(bm.race.number, bm.horse.number);
+                                  onShowToast?.(`💣 ${bm.horse.name} (${bm.race.number}. Koşu) Sürpriz olarak kupona eklendi!`, 'success');
+                                }
+                              }}
+                              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-black shrink-0 transition-all cursor-pointer flex items-center space-x-1 ${
+                                isSelected
+                                  ? 'bg-amber-500 text-slate-950 border border-amber-400'
+                                  : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40'
+                              }`}
+                            >
+                              {isSelected ? (
+                                <>
+                                  <Check className="w-3 h-3" />
+                                  <span>Kuponda</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Zap className="w-3 h-3" />
+                                  <span>Sürpriz Ekle</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 )}
 
                 {/* Race Selector Tabs (1. Koşu .. N. Koşu) - 100% Solid Responsive Grid, Zero Horizontal Cutoff */}
