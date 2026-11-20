@@ -347,3 +347,10 @@ export function startFormSyncScheduler(intervalMinutes = 10) {
     syncAllRealForms().catch(err => console.error('Recurring sync error:', err.message));
   }, intervalMinutes * 60 * 1000);
 }
+
+// Sunucu ilk başladığında önbelleği anında diskten RAM'e yükle (boş obje dönmesini engeller)
+try {
+  loadFormCacheFromDisk();
+} catch (e) {
+  console.warn('[RealFormService] Başlangıç disk önbelleği okuma uyarısı:', e.message);
+}

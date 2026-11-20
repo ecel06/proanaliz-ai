@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UserBetslipItem } from '../types';
 import { MonteCarloSimulationResult } from '../utils/monteCarloHelper';
-import { X, Copy, Check, Share2, Sparkles, Trophy, ShieldCheck, Download, Camera, Ticket } from 'lucide-react';
+import { X, Copy, Check, Share2, Sparkles, Trophy, ShieldCheck, Download, Camera, Ticket, MessageSquare, Send } from 'lucide-react';
 
 interface CouponShareModalProps {
   isOpen: boolean;
@@ -362,10 +362,14 @@ export const CouponShareModal: React.FC<CouponShareModalProps> = ({
               <span>proanaliz-ai.onrender.com</span>
             </div>
           </div>
+        </div>
+
+        {/* Modal Footer Share Actions */}
+        <div className="p-3 sm:p-4 bg-slate-950/95 border-t border-slate-800 grid grid-cols-3 gap-2 shrink-0">
           {/* Copy Text */}
           <button
             onClick={handleCopyText}
-            className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer ${copied
+            className={`flex items-center justify-center space-x-1.5 px-2.5 sm:px-3 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer ${copied
                 ? 'bg-emerald-500 text-slate-950 font-black'
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700'
               }`}
@@ -373,23 +377,32 @@ export const CouponShareModal: React.FC<CouponShareModalProps> = ({
             {copied ? (
               <>
                 <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
-                <span>Kopyalandı!</span>
+                <span className="truncate">Kopyalandı!</span>
               </>
             ) : (
               <>
                 <Copy className="w-4 h-4" />
-                <span>Metni Kopyala</span>
+                <span className="truncate">Kopyala</span>
               </>
             )}
+          </button>
+
+          {/* WhatsApp Share */}
+          <button
+            onClick={handleShareWhatsApp}
+            className="flex items-center justify-center space-x-1.5 px-2.5 sm:px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-md active:scale-95 cursor-pointer"
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span className="truncate">WhatsApp</span>
           </button>
 
           {/* Telegram Share */}
           <button
             onClick={handleShareTelegram}
-            className="col-span-2 sm:col-span-1 flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs transition-all shadow-md active:scale-95 cursor-pointer"
+            className="flex items-center justify-center space-x-1.5 px-2.5 sm:px-3 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs transition-all shadow-md active:scale-95 cursor-pointer"
           >
-            <span>✈️</span>
-            <span>Telegram</span>
+            <Send className="w-4 h-4" />
+            <span className="truncate">Telegram</span>
           </button>
         </div>
       </div>

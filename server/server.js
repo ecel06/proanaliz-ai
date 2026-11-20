@@ -707,8 +707,31 @@ app.post('/api/auth/redeem-code', authMiddleware, promoRateLimiter, (req, res) =
 
 app.post('/api/auth/vip-activate', authMiddleware, (req, res) => {
   const { planDays = 30, planName = 'Aylık VIP' } = req.body;
-  const result = activateUserVip(req.userId, planDays, planName);
-  res.json(result);
+  const user = getUserById(req.userId, req.userPayload);
+  if (!user) {
+    return res.status(401).json({ success: false, error: 'Kullanıcı bulunamadı.' });
+  }
+
+  // Adminler her zaman doğrudan VIP tanımlayabilir
+  if (user.role === 'admin') {
+    const result = activateUserVip(req.userId, planDays, planName);
+    return res.json(result);
+  }
+
+  // Normal kullanıcılar için: 7 günlük ücretsiz deneme (ömür boyu yalnızca 1 kez)
+  if (planDays <= 7 && !user.hasUsedTrial) {
+    user.hasUsedTrial = true;
+    const result = activateUserVip(req.userId, 7, '7 Günlük Deneme VIP');
+    return res.json(result);
+  }
+
+  // Yetkisiz ödemesiz VIP talepleri engellenir
+  return res.status(403).json({
+    success: false,
+    error: user.hasUsedTrial
+      ? '7 Günlük ücretsiz deneme sürenizi daha önce kullandınız. VIP üyeliğinizi uzatmak için lütfen geçerli bir promosyon kodu giriniz.'
+      : 'VIP üyelik aktivasyonu için lütfen geçerli bir promosyon kodu kullanınız veya müşteri desteği ile iletişime geçiniz.'
+  });
 });
 
 // --- 🛡️ Admin Panel Endpoints (Admin Only) ---
@@ -877,7 +900,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.19.13';
+const APP_VERSION = '2026.11.20.01';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
