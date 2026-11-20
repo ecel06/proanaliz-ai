@@ -379,7 +379,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* ROW 3: Dedicated Football Tools & Features Bar (Sleek, Centered, Zero Horizontal Overflow) */}
         {activeSection === 'football' && (
           <div className="w-full pb-1.5 pt-0.5">
-            <div className="flex items-center justify-between sm:justify-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 shadow-inner w-full max-w-5xl mx-auto overflow-hidden">
+            <div className="flex items-center justify-start sm:justify-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 shadow-inner w-full max-w-5xl mx-auto overflow-x-auto no-scrollbar scroll-smooth">
               {/* Renk & Takım Teması */}
               {onOpenThemeModal && (
                 <button
@@ -398,15 +398,16 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
 
-              {/* Güncel Puan Durumu (Mobilde alt menüde mevcuttur) */}
+              {/* Güncel Puan Durumu (Her ekranda görünür) */}
               {onOpenStandings && (
                 <button
                   onClick={onOpenStandings}
-                  className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
+                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700/80 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
                   title="Güncel Puan Durumu"
                 >
-                  <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Puan Durumu</span>
+                  <Activity className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="hidden sm:inline">Puan Durumu</span>
+                  <span className="sm:hidden">Puan</span>
                 </button>
               )}
 
@@ -417,7 +418,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-amber-300 font-bold text-xs border border-amber-400/30 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
                   title="Yapay Zeka Başarı Karnesi & Şeffaf İstatistikler"
                 >
-                  <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                  <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span className="hidden sm:inline">Başarı Karnesi</span>
                   <span className="sm:hidden">Karne</span>
                 </button>
@@ -430,16 +431,16 @@ export const Header: React.FC<HeaderProps> = ({
                   className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold text-xs border border-rose-500/40 transition-all cursor-pointer shadow-md shadow-rose-500/15 active:scale-95 shrink-0 group"
                   title="Canlı Maç & Spor TV Yayınlarını İzle (TRT Spor, TRT Yıldız, A Spor, HT Spor)"
                 >
-                  <span className="relative flex h-2 w-2">
+                  <span className="relative flex h-2 w-2 shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
                   </span>
-                  <Tv className="w-3.5 h-3.5 text-rose-400 group-hover:scale-110 transition-transform" />
+                  <Tv className="w-3.5 h-3.5 text-rose-400 group-hover:scale-110 transition-transform shrink-0" />
                   <span>Canlı TV</span>
                 </button>
               )}
 
-              {/* Kullanıcı Kuponu (Kuponum - Mobilde alt menüde mevcuttur, masaüstünde burada görünür) */}
+              {/* Kullanıcı Kuponu (Kuponum - Masaüstünde burada görünür) */}
               {betslipCount > 0 && onOpenBetslip && (
                 <button
                   onClick={onOpenBetslip}
@@ -475,34 +476,35 @@ export const Header: React.FC<HeaderProps> = ({
                   className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700/80 text-slate-300 hover:text-white transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
                   title={isMuted ? 'Canlı Gol Sesini (GOOOOL!) Aç' : 'Canlı Gol Sesini Kapat'}
                 >
-                  {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+                  {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400 shrink-0" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
                 </button>
               )}
 
-              {/* Native Web Push Toggle (Masaüstü) */}
+              {/* Native Web Push Toggle (Her ekranda görünür) */}
               {onTogglePush && (
                 <button
                   onClick={onTogglePush}
-                  className={`hidden sm:block p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 shadow-xs active:scale-95 ${
+                  className={`p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 shadow-xs active:scale-95 ${
                     isPushEnabled
                       ? 'bg-amber-400/20 text-amber-300 border-amber-400/50 shadow-amber-500/20'
                       : 'bg-slate-800 hover:bg-slate-750 text-slate-400 border-slate-700/80 hover:text-white'
                   }`}
                   title={isPushEnabled ? 'Anlık Push Bildirimleri Açık' : 'Anlık Push Bildirimlerini Aç'}
                 >
-                  {isPushEnabled ? <Bell className="w-3.5 h-3.5 text-amber-400" /> : <BellOff className="w-3.5 h-3.5" />}
+                  {isPushEnabled ? <Bell className="w-3.5 h-3.5 text-amber-400 shrink-0" /> : <BellOff className="w-3.5 h-3.5 shrink-0" />}
                 </button>
               )}
 
-              {/* Kendi Maçını Analiz Et */}
+              {/* Kendi Maçını Analiz Et (Her ekranda görünür) */}
               {onOpenCustomAnalyzer && (
                 <button
                   onClick={onOpenCustomAnalyzer}
-                  className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
-                  title="Kendi Maçını Analiz Et"
+                  className="flex items-center space-x-1 sm:space-x-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 cursor-pointer shrink-0"
+                  title="Kendi Maçını Analiz Et (Poisson & Form Hesaplayıcı)"
                 >
-                  <Calculator className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>Kendi Maçını Analiz Et</span>
+                  <Calculator className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
+                  <span className="hidden sm:inline">Kendi Maçını Analiz Et</span>
+                  <span className="sm:hidden">Analiz</span>
                 </button>
               )}
             </div>
