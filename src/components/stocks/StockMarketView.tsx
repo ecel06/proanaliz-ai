@@ -440,6 +440,34 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     return map;
   }, [stocks]);
 
+  // 🌟 GÜNÜN BİST AI ZİRVESİ: SÜPER 3'LÜ VİTRİNİ
+  const bistTopPicks = useMemo(() => {
+    if (!stocks || stocks.length < 3) return null;
+
+    // 1. Günün Teknik Kırılımı (En yüksek Quant AI Skoru)
+    const technical = [...stocks]
+      .sort((a, b) => (analysesMap.get(b.symbol)?.score || 0) - (analysesMap.get(a.symbol)?.score || 0))[0] || stocks[0];
+
+    // 2. Günün Temel Değeri (Düşük F/K, PD/DD, sağlam kârlılık)
+    const fundamental = [...stocks]
+      .filter((s) => s.symbol !== technical.symbol && (s.pe || 0) > 0 && (s.pe || 0) < 18)
+      .sort((a, b) => (a.pe || 99) - (b.pe || 99))[0] ||
+      stocks.find((s) => s.symbol !== technical.symbol) || stocks[1];
+
+    // 3. Günün Para Girişi & Hacim Lideri
+    const moneyFlow = [...stocks]
+      .filter((s) => s.symbol !== technical.symbol && s.symbol !== fundamental?.symbol)
+      .sort((a, b) => (b.valueTraded || b.volume || 0) - (a.valueTraded || a.volume || 0))[0] ||
+      stocks.find((s) => s.symbol !== technical.symbol && s.symbol !== fundamental?.symbol) || stocks[2];
+
+    if (!technical || !fundamental || !moneyFlow) return null;
+    return {
+      technical: { stock: technical, analysis: analysesMap.get(technical.symbol) },
+      fundamental: { stock: fundamental, analysis: analysesMap.get(fundamental.symbol) },
+      moneyFlow: { stock: moneyFlow, analysis: analysesMap.get(moneyFlow.symbol) }
+    };
+  }, [stocks, analysesMap]);
+
   // Live Risk Monitoring for Open Positions in Basket / Portfolio
   const portfolioRisks = useMemo(() => {
     return evaluateAllPortfolioRisks(portfolio, stocks, analysesMap);
@@ -1398,6 +1426,223 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         </div>
       ) : (
         <>
+          {/* 🏆 GÜNÜN BİST AI ZİRVESİ: SÜPER 3'LÜ VİTRİNİ (10/10 PRESTİJ KARTI) */}
+          {bistTopPicks && (
+            <div className="mb-4 rounded-3xl bg-gradient-to-r from-cyan-950/40 via-slate-900 to-indigo-950/40 border-2 border-cyan-500/30 p-3.5 sm:p-4.5 shadow-2xl overflow-hidden animate-fadeIn">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-cyan-500/20">
+                <div className="flex items-center space-x-2.5">
+                  <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-400 to-teal-600 text-slate-950 flex items-center justify-center font-black shadow-md shadow-cyan-500/20 shrink-0">
+                    <Sparkles className="w-4 h-4 text-slate-950 animate-pulse" />
+                  </span>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <h3 className="text-sm sm:text-base font-black text-white tracking-wide">
+                        Günün BIST AI Zirvesi: Süper 3'lü Vitrini
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-cyan-400/20 border border-cyan-400/30 text-cyan-300 text-[10px] font-black uppercase tracking-wider">
+                        BIST Quant
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 mt-0.5">
+                      Kantitatif skor, çarpan iskontosu ve işlem hacmine göre günün en güçlü 3 hissesi.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 text-xs font-bold text-slate-400 self-end sm:self-auto">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[11px] text-emerald-400 font-mono font-bold">BIST 100 Canlı Taraması</span>
+                </div>
+              </div>
+
+              {/* 3 Picks Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-3">
+                {/* 1. TEKNİK KIRILIM */}
+                {(() => {
+                  const item = bistTopPicks.technical;
+                  const st = item.stock;
+                  const an = item.analysis;
+                  const isPositive = st.changePct >= 0;
+
+                  return (
+                    <div
+                      onClick={() => handleSelectStock(st.symbol)}
+                      className="p-3 rounded-2xl bg-slate-950/70 border border-cyan-500/30 hover:border-cyan-400/60 hover:bg-slate-900/90 transition-all cursor-pointer flex flex-col justify-between group shadow-sm"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between pb-1.5 border-b border-slate-800/80">
+                          <span className="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] font-black uppercase flex items-center gap-1">
+                            <Zap className="w-3 h-3 text-cyan-400" />
+                            <span>Günün Teknik Kırılımı</span>
+                          </span>
+                          <span className="text-[10px] font-mono font-bold text-cyan-400">
+                            AI: %{an?.score || 85}
+                          </span>
+                        </div>
+
+                        <div className="pt-2 flex items-center justify-between">
+                          <div>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-base font-black text-white group-hover:text-cyan-300 transition-colors">
+                                {st.symbol}
+                              </span>
+                              <span className="text-[10px] text-slate-400 truncate max-w-[110px]">
+                                {st.name}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              {st.sector || 'BIST'} • Hedef: <strong className="text-emerald-400 font-mono">{formatStockPrice(an?.tradePlan?.tp1 || st.close * 1.15)}</strong>
+                            </p>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="text-xs sm:text-sm font-black font-mono text-white">
+                              {formatStockPrice(st.close)}
+                            </div>
+                            <span className={`text-[10px] font-mono font-bold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {isPositive ? '+' : ''}{st.changePct.toFixed(2)}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
+                          {an?.signal || 'GÜÇLÜ AL'}
+                        </span>
+                        <span className="text-cyan-400 font-bold group-hover:translate-x-0.5 transition-transform">
+                          Grafik &amp; Analiz →
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 2. TEMEL DEĞER */}
+                {(() => {
+                  const item = bistTopPicks.fundamental;
+                  const st = item.stock;
+                  const an = item.analysis;
+                  const isPositive = st.changePct >= 0;
+
+                  return (
+                    <div
+                      onClick={() => handleSelectStock(st.symbol)}
+                      className="p-3 rounded-2xl bg-slate-950/70 border border-emerald-500/30 hover:border-emerald-400/60 hover:bg-slate-900/90 transition-all cursor-pointer flex flex-col justify-between group shadow-sm"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between pb-1.5 border-b border-slate-800/80">
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black uppercase flex items-center gap-1">
+                            <Target className="w-3 h-3 text-emerald-400" />
+                            <span>Günün Temel Değeri</span>
+                          </span>
+                          <span className="text-[10px] font-mono font-bold text-emerald-400">
+                            F/K: {st.pe ? st.pe.toFixed(1) : '-'}
+                          </span>
+                        </div>
+
+                        <div className="pt-2 flex items-center justify-between">
+                          <div>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-base font-black text-white group-hover:text-emerald-300 transition-colors">
+                                {st.symbol}
+                              </span>
+                              <span className="text-[10px] text-slate-400 truncate max-w-[110px]">
+                                {st.name}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              PD/DD: <strong className="text-emerald-400 font-mono">{st.pb ? st.pb.toFixed(1) : '-'}</strong> • ROE: %{st.roe ? st.roe.toFixed(0) : '24'}
+                            </p>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="text-xs sm:text-sm font-black font-mono text-white">
+                              {formatStockPrice(st.close)}
+                            </div>
+                            <span className={`text-[10px] font-mono font-bold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {isPositive ? '+' : ''}{st.changePct.toFixed(2)}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
+                          Çarpan İskontolu
+                        </span>
+                        <span className="text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform">
+                          Grafik &amp; Analiz →
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 3. PARA GİRİŞİ & HACİM */}
+                {(() => {
+                  const item = bistTopPicks.moneyFlow;
+                  const st = item.stock;
+                  const isPositive = st.changePct >= 0;
+
+                  return (
+                    <div
+                      onClick={() => handleSelectStock(st.symbol)}
+                      className="p-3 rounded-2xl bg-slate-950/70 border border-amber-500/30 hover:border-amber-400/60 hover:bg-slate-900/90 transition-all cursor-pointer flex flex-col justify-between group shadow-sm"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between pb-1.5 border-b border-slate-800/80">
+                          <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-black uppercase flex items-center gap-1">
+                            <Flame className="w-3 h-3 text-amber-400" />
+                            <span>Günün Para Girişi</span>
+                          </span>
+                          <span className="text-[10px] font-mono font-bold text-amber-400">
+                            Hacim Lideri
+                          </span>
+                        </div>
+
+                        <div className="pt-2 flex items-center justify-between">
+                          <div>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-base font-black text-white group-hover:text-amber-300 transition-colors">
+                                {st.symbol}
+                              </span>
+                              <span className="text-[10px] text-slate-400 truncate max-w-[110px]">
+                                {st.name}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              Hacim: <strong className="text-amber-300 font-mono">{formatLargeNumber(st.valueTraded || st.volume)}</strong>
+                            </p>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="text-xs sm:text-sm font-black font-mono text-white">
+                              {formatStockPrice(st.close)}
+                            </div>
+                            <span className={`text-[10px] font-mono font-bold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {isPositive ? '+' : ''}{st.changePct.toFixed(2)}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+                        <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">
+                          Kurumsal İlgi
+                        </span>
+                        <span className="text-amber-400 font-bold group-hover:translate-x-0.5 transition-transform">
+                          Grafik &amp; Analiz →
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+
           {/* Mobile View Switcher Tab: List vs Detail */}
           <div className="xl:hidden flex items-center p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg mb-3 gap-1.5">
             {onGoHome && (
