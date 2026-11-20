@@ -1,6 +1,6 @@
 // src/components/LiveTVModal.tsx
 // Canlı Spor TV & Maç Yayınları Oynatıcısı (Resmi Canlı HLS / HTML5 Video & YouTube HD Canlı Akış)
-// Futbol ve At Yarışı kanalları: A Spor, HT Spor, TRT Spor, TJK TV ve Sports Digitale.
+// Kanallar: A Spor, HT Spor, TRT Spor ve Sports Digitale.
 // Küçük Ekran (PiP / Floating) ve Büyük Ekran (Sinema Modalı) destekler.
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -70,18 +70,6 @@ export const TV_CHANNELS: TVChannel[] = [
     description: 'A Milli Takım, UEFA Uluslar Ligi ve Avrupa maç özetleri'
   },
   {
-    id: 'tjktv',
-    name: 'TJK TV HD',
-    category: 'Resmi At Yarışları & Koşular',
-    badge: 'CANLI HD',
-    youtubeId: 'live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA',
-    streamUrl: 'https://nesine-spinemedia-live.ercdn.net/yaristayiz/yaristayiz_720p.m3u8',
-    fallbackWebUrl: 'https://www.tjk.org/TR/YarisSever/Static/TjkTv',
-    logoText: 'TJK TV',
-    accentColor: '#EF4444',
-    description: 'Resmi hipodrom canlı yarış yayınları, altılı ganyan bülteni ve padok analizi'
-  },
-  {
     id: 'sportsdigitale',
     name: 'Sports Digitale',
     category: 'Canlı Maç & Derbi Yorumları',
@@ -111,14 +99,12 @@ const HlsVideoPlayer: React.FC<{
   streamUrl: string;
   channelName: string;
   isMuted: boolean;
-  onToggleMute: () => void;
   onFallbackToYoutube?: () => void;
   hasYoutubeFallback?: boolean;
 }> = ({
   streamUrl,
   channelName,
   isMuted,
-  onToggleMute,
   onFallbackToYoutube,
   hasYoutubeFallback
 }) => {
@@ -164,11 +150,10 @@ const HlsVideoPlayer: React.FC<{
       }
     };
 
-    // Tüm canlı m3u8 akışlarını sunucu proxy'si üzerinden CORS engelsiz çek (nesine hariç)
-    const effectiveUrl =
-      streamUrl.startsWith('http') && !streamUrl.includes('nesine-spinemedia-live')
-        ? `/api/stream-proxy?url=${encodeURIComponent(streamUrl)}`
-        : streamUrl;
+    // Tüm canlı m3u8 akışlarını sunucu proxy'si üzerinden CORS engelsiz çek
+    const effectiveUrl = streamUrl.startsWith('http')
+      ? `/api/stream-proxy?url=${encodeURIComponent(streamUrl)}`
+      : streamUrl;
 
     // 1. Önce Hls.js desteği kontrol edilir (Chrome, Edge, Firefox, Android)
     if (Hls.isSupported()) {
@@ -191,8 +176,6 @@ const HlsVideoPlayer: React.FC<{
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.muted = isMuted;
-        video.play().catch(() => { });
         attemptPlay();
       });
 
@@ -299,17 +282,6 @@ const HlsVideoPlayer: React.FC<{
           <span className="text-xs font-bold text-white tracking-wide">{channelName} Canlı Yayını Bağlanıyor...</span>
           <span className="text-[10px] text-slate-400 mt-1">Lütfen bekleyin</span>
         </div>
-      )}
-
-      {/* Sesi Açma Uyarısı (Tarayıcı sessiz başlattıysa) */}
-      {isMuted && !isLoading && !hasError && (
-        <button
-          onClick={onToggleMute}
-          className="absolute top-3 left-3 z-20 px-3 py-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-emerald-500/60 text-white text-xs font-bold flex items-center space-x-1.5 shadow-xl shadow-emerald-500/20 backdrop-blur-md cursor-pointer transition-all active:scale-95 animate-pulse"
-        >
-          <VolumeX className="w-3.5 h-3.5 text-rose-400" />
-          <span>Sesi Açmak İçin Dokunun</span>
-        </button>
       )}
 
       {/* Duraklatıldıysa Büyük Oynat Butonu */}
@@ -465,7 +437,6 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
               streamUrl={currentChannel.streamUrl}
               channelName={currentChannel.name}
               isMuted={isMuted}
-              onToggleMute={() => setIsMuted((m) => !m)}
               hasYoutubeFallback={hasYoutube}
               onFallbackToYoutube={() => setStreamSource('youtube')}
             />
@@ -599,7 +570,6 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
               streamUrl={currentChannel.streamUrl}
               channelName={currentChannel.name}
               isMuted={isMuted}
-              onToggleMute={() => setIsMuted((m) => !m)}
               hasYoutubeFallback={hasYoutube}
               onFallbackToYoutube={() => setStreamSource('youtube')}
             />
@@ -618,7 +588,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
         {/* Channel Selection & Info Strip */}
         <div className="p-3 sm:p-4 bg-slate-950 border-t border-slate-800 space-y-3">
           {/* Channel Tabs */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {channels.map((ch) => {
               const isActive = activeChannelId === ch.id;
               return (

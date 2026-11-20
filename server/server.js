@@ -455,18 +455,6 @@ app.get('/api/sports-tv/channels', async (req, res) => {
         description: 'A Milli Takım, UEFA Uluslar Ligi ve Avrupa maç özetleri',
       },
       {
-        id: 'tjktv',
-        name: 'TJK TV HD',
-        category: 'Resmi At Yarışları & Koşular',
-        badge: 'CANLI HD',
-        youtubeId: 'live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA',
-        streamUrl: 'https://nesine-spinemedia-live.ercdn.net/yaristayiz/yaristayiz_720p.m3u8',
-        fallbackWebUrl: 'https://www.tjk.org/TR/YarisSever/Static/TjkTv',
-        logoText: 'TJK TV',
-        accentColor: '#EF4444',
-        description: 'Resmi hipodrom canlı yarış yayınları, altılı ganyan bülteni ve padok analizi',
-      },
-      {
         id: 'sportsdigitale',
         name: 'Sports Digitale',
         category: 'Canlı Maç & Derbi Yorumları',
@@ -911,7 +899,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.08';
+const APP_VERSION = '2026.11.20.09';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
