@@ -27,6 +27,7 @@ import {
   fetchMacroOverview,
   fetchLiveViopContracts
 } from './stockService.js';
+import { getLiveStandings } from './standingsService.js';
 import {
   registerUser,
   loginUser,
@@ -221,20 +222,15 @@ app.get('/api/leagues', (req, res) => {
   });
 });
 
-// 5. Proxy live standings for any league with strict 3s timeout
+// 5. Multi-Source High-Speed Live Standings (beIN SPORTS for Turkish Leagues, ESPN for Global, with 30-min cache & verified fallbacks)
 app.get('/api/standings/:leagueCode', async (req, res) => {
   const { leagueCode } = req.params;
+  const force = req.query.force === '1' || req.query.force === 'true';
   try {
-    const url = `https://site.api.espn.com/apis/v2/sports/soccer/${leagueCode}/standings`;
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(3000)
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
+    const data = await getLiveStandings(leagueCode, force);
     res.json(data);
   } catch (err) {
-    res.status(504).json({ error: 'Standings fetch timeout/failed', message: err.message });
+    res.status(500).json({ success: false, error: 'Standings fetch failed', message: err.message });
   }
 });
 
@@ -900,7 +896,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.03';
+const APP_VERSION = '2026.11.20.04';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
