@@ -428,7 +428,7 @@ app.get('/api/sports-tv/channels', async (req, res) => {
         fallbackWebUrl: 'https://www.aspor.com.tr/canli-yayin',
         logoText: 'A SPOR',
         accentColor: '#06B6D4',
-        description: 'Ziraat Türkiye Kupası maçları, canlı maç özetleri, flaş analizler ve skorlar',
+        description: '🔴 Canlı Yayın • Son Sayfa, Ziraat Türkiye Kupası & Flaş Analizler',
       },
       {
         id: 'htspor',
@@ -440,7 +440,7 @@ app.get('/api/sports-tv/channels', async (req, res) => {
         fallbackWebUrl: 'https://www.htspor.com/canli-yayin',
         logoText: 'HT SPOR',
         accentColor: '#8B5CF6',
-        description: 'Ciner Medya spor kanalı, 7/24 kesintisiz canlı yayın, taktik tahtası ve transferler',
+        description: '🔴 Canlı Yayın • Süper Lig, HT Futbol & Taktik Tahtası',
       },
       {
         id: 'trtspor',
@@ -452,7 +452,7 @@ app.get('/api/sports-tv/channels', async (req, res) => {
         fallbackWebUrl: 'https://www.trtspor.com.tr/canli-yayin-izle/trt-spor',
         logoText: 'TRT SPOR',
         accentColor: '#10B981',
-        description: 'A Milli Takım, UEFA Uluslar Ligi ve Avrupa maç özetleri',
+        description: '🔴 Canlı Yayın • A Milli Takım, UEFA Uluslar Ligi & Stadyum',
       },
       {
         id: 'sportsdigitale',
@@ -464,7 +464,7 @@ app.get('/api/sports-tv/channels', async (req, res) => {
         fallbackWebUrl: 'https://www.youtube.com/@SportsDigitale',
         logoText: 'DIGITALE',
         accentColor: '#F59E0B',
-        description: 'Canlı maç önü, maç sonu yorumları, Süper Lig ve Avrupa futbolu analizleri',
+        description: '🔴 Canlı Yayın • Canlı Maç Önü ve Maç Sonu Derbi Analizleri',
       },
     ];
 
@@ -899,7 +899,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.09';
+const APP_VERSION = '2026.11.20.10';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

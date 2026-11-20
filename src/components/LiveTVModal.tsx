@@ -1,6 +1,6 @@
 // src/components/LiveTVModal.tsx
 // Canlı Spor TV & Maç Yayınları Oynatıcısı (Resmi Canlı HLS / HTML5 Video & YouTube HD Canlı Akış)
-// Kanallar: A Spor, HT Spor, TRT Spor ve Sports Digitale.
+// Kanallar: A Spor HD, HT Spor HD, TRT Spor HD ve Sports Digitale.
 // Küçük Ekran (PiP / Floating) ve Büyük Ekran (Sinema Modalı) destekler.
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -43,7 +43,7 @@ export const TV_CHANNELS: TVChannel[] = [
     fallbackWebUrl: 'https://www.aspor.com.tr/canli-yayin',
     logoText: 'A SPOR',
     accentColor: '#06B6D4',
-    description: 'Ziraat Türkiye Kupası maçları, canlı maç özetleri, flaş analizler ve skorlar'
+    description: '🔴 Canlı Yayın • Son Sayfa, Ziraat Türkiye Kupası & Flaş Analizler'
   },
   {
     id: 'htspor',
@@ -55,7 +55,7 @@ export const TV_CHANNELS: TVChannel[] = [
     fallbackWebUrl: 'https://www.htspor.com/canli-yayin',
     logoText: 'HT SPOR',
     accentColor: '#8B5CF6',
-    description: 'Ciner Medya spor kanalı, 7/24 kesintisiz canlı yayın, taktik tahtası ve transferler'
+    description: '🔴 Canlı Yayın • Süper Lig, HT Futbol & Taktik Tahtası'
   },
   {
     id: 'trtspor',
@@ -67,7 +67,7 @@ export const TV_CHANNELS: TVChannel[] = [
     fallbackWebUrl: 'https://www.trtspor.com.tr/canli-yayin-izle/trt-spor',
     logoText: 'TRT SPOR',
     accentColor: '#10B981',
-    description: 'A Milli Takım, UEFA Uluslar Ligi ve Avrupa maç özetleri'
+    description: '🔴 Canlı Yayın • A Milli Takım, UEFA Uluslar Ligi & Stadyum'
   },
   {
     id: 'sportsdigitale',
@@ -79,7 +79,7 @@ export const TV_CHANNELS: TVChannel[] = [
     fallbackWebUrl: 'https://www.youtube.com/@SportsDigitale',
     logoText: 'DIGITALE',
     accentColor: '#F59E0B',
-    description: 'Canlı maç önü ve maç sonu yorumları, taktik tahtası ve futbol analizleri'
+    description: '🔴 Canlı Yayın • Canlı Maç Önü ve Maç Sonu Derbi Analizleri'
   }
 ];
 
@@ -347,11 +347,11 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
   const [channels, setChannels] = useState<TVChannel[]>(TV_CHANNELS);
   const [activeChannelId, setActiveChannelId] = useState<string>(initialChannelId);
   const [isMiniMode, setIsMiniMode] = useState<boolean>(false);
-  const [isMuted, setIsMuted] = useState<boolean>(true); // Güvenli autoplay için varsayılan true
+  const [isMuted, setIsMuted] = useState<boolean>(true);
   const [streamSource, setStreamSource] = useState<'hls' | 'youtube'>('hls');
   const [retryKey, setRetryKey] = useState<number>(0);
 
-  // Canlı Spor TV kanal akışlarını sunucudan dinamik çek (YouTube ID güncellemeleri için)
+  // Canlı Spor TV kanal akışlarını sunucudan dinamik çek
   useEffect(() => {
     if (!isOpen) return;
     let isMounted = true;
@@ -627,18 +627,22 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           {/* Active Channel Details & Direct Link */}
           <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs text-slate-300">
             <div className="flex items-center space-x-2 min-w-0">
-              <Radio className="w-3.5 h-3.5 text-emerald-400 shrink-0 animate-pulse" />
-              <span className="truncate text-slate-400">
-                <strong className="text-white">{currentChannel.name}:</strong> {currentChannel.description}
+              <span className="flex h-2 w-2 relative shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+              </span>
+              <span className="truncate text-slate-300 text-xs">
+                <strong className="text-white font-bold">{currentChannel.name}:</strong>{' '}
+                <span className="text-emerald-400 font-semibold">{currentChannel.description}</span>
               </span>
             </div>
             <a
               href={currentChannel.fallbackWebUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold shrink-0 flex items-center space-x-1 ml-2 transition-colors"
+              className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold shrink-0 flex items-center space-x-1 ml-2 transition-colors bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg border border-emerald-500/30"
             >
-              <span className="hidden sm:inline">Resmi Site</span>
+              <span>Resmi Web Yayını</span>
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>

@@ -440,28 +440,39 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                       onClick={() => onSelectMatch(match)}
                       className="flex-1 min-w-[170px] sm:min-w-[200px] cursor-pointer flex items-center justify-between gap-2.5 pr-2"
                     >
-                      {/* Teams: Side by Side Single Row */}
-                      <div className="flex items-center space-x-1.5 min-w-[140px] flex-1 truncate">
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: match.homeTeam.primaryColor || '#10b981' }}
-                        />
-                        <span className="font-black text-xs sm:text-sm text-white truncate group-hover:text-emerald-300 transition-colors">
-                          {match.homeTeam.name}
-                        </span>
-                        <span className="text-slate-500 font-bold text-xs shrink-0 px-0.5">-</span>
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: match.awayTeam.primaryColor || '#6366f1' }}
-                        />
-                        <span className="font-black text-xs sm:text-sm text-slate-300 truncate group-hover:text-indigo-300 transition-colors">
-                          {match.awayTeam.name}
-                        </span>
-                        {liveState.isLive && (
-                          <span className="font-mono font-black text-rose-400 text-xs ml-auto shrink-0 bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.2 rounded">
-                            {liveState.displayScore.home} - {liveState.displayScore.away}
+                      {/* Teams: Side by Side Single Row + Micro Stats */}
+                      <div className="flex flex-col min-w-[140px] flex-1 truncate">
+                        <div className="flex items-center space-x-1.5 truncate">
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: match.homeTeam.primaryColor || '#10b981' }}
+                          />
+                          <span className="font-black text-xs sm:text-sm text-white truncate group-hover:text-emerald-300 transition-colors">
+                            {match.homeTeam.name}
                           </span>
-                        )}
+                          <span className="text-slate-500 font-bold text-xs shrink-0 px-0.5">-</span>
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: match.awayTeam.primaryColor || '#6366f1' }}
+                          />
+                          <span className="font-black text-xs sm:text-sm text-slate-300 truncate group-hover:text-indigo-300 transition-colors">
+                            {match.awayTeam.name}
+                          </span>
+                          {liveState.isLive && (
+                            <span className="font-mono font-black text-rose-400 text-xs ml-auto shrink-0 bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.2 rounded">
+                              {liveState.displayScore.home} - {liveState.displayScore.away}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2 text-[10px] text-slate-400 font-medium pt-0.5">
+                          <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                            xG {analysis.expectedTotalGoals.toFixed(1)}
+                          </span>
+                          <span className="text-slate-600">•</span>
+                          <span className="text-purple-300 font-mono">KG %{analysis.bttsYes}</span>
+                          <span className="text-slate-600">•</span>
+                          <span className="text-amber-300 font-mono">2.5Ü %{analysis.over25}</span>
+                        </div>
                       </div>
 
                       {/* AI & Value Recommendation Pills (Stacked vertically when both exist to save 140px width!) */}
@@ -714,6 +725,21 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                       )}
                     </div>
 
+                    {/* Row 2.5: Micro Analytics Strip (xG, KG %, 2.5Ü %) */}
+                    <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 font-medium px-0.5 overflow-hidden">
+                      <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 shrink-0 truncate max-w-[150px]">
+                        AI: {primaryPrediction.label} (%{primaryPrediction.confidence})
+                      </span>
+                      <span className="text-slate-600 shrink-0">•</span>
+                      <span className="text-slate-300 font-mono shrink-0">
+                        xG {analysis.expectedTotalGoals.toFixed(1)}
+                      </span>
+                      <span className="text-slate-600 shrink-0">•</span>
+                      <span className="text-purple-300 font-mono shrink-0">
+                        KG %{analysis.bttsYes}
+                      </span>
+                    </div>
+
                     {/* Row 3: Quick Odds Bar (8 columns: 7 odds + 1 detail button) */}
                     <div className="grid grid-cols-8 gap-1 pt-1">
                       {QUICK_ODDS_DEFS.map((def) => {
@@ -749,9 +775,9 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                             type="button"
                             onClick={() => onToggleBetslip(match, option)}
                             title={`${def.getFullLabel(match)} - Oran: ${odd.toFixed(2)}${isAIPick ? ' • 🤖 Yapay Zeka Tercihi!' : ''}${isValueOdd ? ' • 🎯 Değer Bahsi!' : ''}${isCategoryTarget ? ' • ✨ Filtrelenen Tercih' : ''}`}
-                            className={`relative flex flex-col items-center justify-center p-1 rounded text-center transition-all cursor-pointer select-none active:scale-95 ${
+                            className={`relative flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-center transition-all cursor-pointer select-none active:scale-95 shadow-xs ${
                               isSelected
-                                ? 'bg-emerald-500 text-slate-950 font-black ring-1 ring-emerald-300'
+                                ? 'bg-emerald-500 text-slate-950 font-black ring-2 ring-emerald-300 shadow-md shadow-emerald-500/30'
                                 : isCategoryTarget
                                 ? selectedCategory === 'btts'
                                   ? 'bg-purple-950/70 text-purple-200 border border-purple-400/80 ring-1 ring-purple-400'
@@ -762,7 +788,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                                 ? 'bg-amber-950/40 text-amber-200 border border-amber-500/60 ring-1 ring-amber-400/50'
                                 : isAIPick
                                 ? 'bg-emerald-950/70 text-emerald-200 border-2 border-emerald-400/90 ring-1 ring-emerald-400 font-black shadow-sm'
-                                : 'bg-slate-950 hover:bg-slate-800 text-slate-200 border border-slate-800'
+                                : 'bg-slate-950/90 hover:bg-slate-800 text-slate-200 border border-slate-800/80'
                             }`}
                           >
                             {(isAIPick || isCategoryTarget || isValueOdd) && !isSelected && (
@@ -775,7 +801,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                               }`} />
                             )}
                             <span
-                              className={`text-[8px] uppercase tracking-wider font-extrabold leading-none mb-0.5 ${
+                              className={`text-[8.5px] uppercase tracking-wider font-extrabold leading-none mb-0.5 ${
                                 isSelected
                                   ? 'text-slate-950'
                                   : isCategoryTarget
@@ -792,11 +818,11 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                               {def.key === 'under25' ? 'Alt' : def.key === 'over25' ? 'Üst' : def.key === 'bttsYes' ? 'Var' : def.key === 'bttsNo' ? 'Yok' : def.shortLabel}
                             </span>
                             <span
-                              className={`font-mono text-[11px] font-bold leading-none ${
+                              className={`font-mono text-xs font-black leading-none ${
                                 isSelected
                                   ? 'text-slate-950 font-black'
                                   : isAIPick || isCategoryTarget
-                                  ? 'text-white font-black'
+                                  ? 'text-emerald-300 font-black'
                                   : 'text-white'
                               }`}
                             >
@@ -810,11 +836,11 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                       <button
                         type="button"
                         onClick={() => onSelectMatch(match)}
-                        className="flex flex-col items-center justify-center p-1 rounded bg-slate-950 hover:bg-slate-800 text-emerald-400 border border-slate-800 text-xs font-bold font-mono cursor-pointer"
+                        className="flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg bg-slate-950/90 hover:bg-slate-800 text-emerald-400 border border-slate-800/80 text-xs font-bold font-mono cursor-pointer active:scale-95 transition-all"
                         title="Tüm Oranlar & Analiz"
                       >
                         <span className="text-[8px] text-slate-400 leading-none mb-0.5">TÜM</span>
-                        <span className="text-[11px] text-emerald-400 font-bold leading-none">+24</span>
+                        <span className="text-[11px] text-emerald-400 font-black leading-none">+24</span>
                       </button>
                     </div>
                   </div>

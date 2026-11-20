@@ -354,6 +354,40 @@ export const Filters: React.FC<FiltersProps> = ({
           </div>
         </div>
 
+        {/* Row C: ⚡ Hızlı AI Filtre Şeridi (Günün Bankoları, Değer Bahisleri, 2.5 Üst, KG Var) */}
+        <div className="w-full pt-0.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+            {categories.map((cat) => {
+              const isCatActive = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all cursor-pointer border select-none active:scale-95 ${
+                    isCatActive
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 border-emerald-300 shadow-md shadow-emerald-500/20 ring-1 ring-emerald-300'
+                      : 'bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-800/80 hover:border-slate-700'
+                  }`}
+                  title={cat.description}
+                >
+                  <span className="shrink-0">{cat.icon}</span>
+                  <span className="whitespace-nowrap">{cat.label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black ${
+                      isCatActive
+                        ? 'bg-slate-950 text-emerald-300'
+                        : 'bg-slate-950 text-slate-400 border border-slate-800'
+                    }`}
+                  >
+                    {cat.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
       </div>
 
       {/* Selected League Active Filter Banner (if a single league is filtered) */}
