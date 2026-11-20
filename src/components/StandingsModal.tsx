@@ -2,7 +2,7 @@
 // Instant Zero-Delay Multi-League Live Standings Modal for ProAnaliz AI
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Trophy, RefreshCw, Radio, Globe, ShieldAlert, Sparkles, CheckCircle2, Search } from 'lucide-react';
+import { X, Trophy, RefreshCw, Radio, Globe, ShieldAlert, Sparkles, CheckCircle2, Search, Check, Minus } from 'lucide-react';
 import {
   fetchLiveStandings,
   getInitialStandings,
@@ -10,6 +10,72 @@ import {
   LeagueStandingsResult,
   StandingRow
 } from '../services/standingsService';
+
+function cleanTeamDisplayName(name: string): string {
+  if (!name) return '';
+  return name
+    .replace(/^Arca\s+/i, '')
+    .replace(/^Netglobal\s+/i, '')
+    .replace(/^Corendon\s+/i, '')
+    .replace(/^Tümosan\s+/i, '')
+    .replace(/^Metro\s+Holding\s+/i, '')
+    .replace(/^Alagöz\s+Holding\s+/i, '')
+    .replace(/^İstanbul\s+/i, '')
+    .replace(/\s+Sportif\s+Faaliyetler/i, '')
+    .replace(/\s+Futbol\s+Kulübü/i, '')
+    .replace(/\s+FK$/i, '')
+    .replace(/\s+SK$/i, '')
+    .trim();
+}
+
+function getLeaguePositionIndicator(rank: number, totalTeams: number, leagueCode: string): {
+  color: string;
+  label: string;
+} | null {
+  if (leagueCode === 'tur.1') {
+    if (rank <= 2) return { color: 'bg-blue-600', label: 'Şampiyonlar Ligi' };
+    if (rank === 3) return { color: 'bg-orange-500', label: 'UEFA Avrupa Ligi' };
+    if (rank === 4) return { color: 'bg-emerald-500', label: 'UEFA Konferans Ligi' };
+    if (rank >= totalTeams - 3 && totalTeams > 14) return { color: 'bg-rose-500', label: 'Küme Düşme Hattı' };
+    return null;
+  }
+  if (leagueCode === 'tur.2') {
+    if (rank <= 2) return { color: 'bg-blue-600', label: "Süper Lig'e Yükselme" };
+    if (rank >= 3 && rank <= 7) return { color: 'bg-orange-500', label: 'Play-Off Hattı' };
+    if (rank >= totalTeams - 3 && totalTeams > 14) return { color: 'bg-rose-500', label: 'Küme Düşme Hattı' };
+    return null;
+  }
+  if (leagueCode.startsWith('uefa.')) {
+    if (rank <= 8) return { color: 'bg-blue-600', label: 'Son 16 Turu (Direkt)' };
+    if (rank <= 24) return { color: 'bg-orange-500', label: 'Play-off Turu' };
+    return { color: 'bg-rose-500', label: 'Elenme Hattı' };
+  }
+  // Standard Top European Leagues
+  if (rank <= 4) return { color: 'bg-blue-600', label: 'Şampiyonlar Ligi' };
+  if (rank === 5) return { color: 'bg-orange-500', label: 'UEFA Avrupa Ligi' };
+  if (rank === 6) return { color: 'bg-emerald-500', label: 'UEFA Konferans Ligi' };
+  if (rank >= totalTeams - 2 && totalTeams > 14) return { color: 'bg-rose-500', label: 'Küme Düşme Hattı' };
+  return null;
+}
+
+function getDisplayForm(
+  form?: ('W' | 'D' | 'L')[],
+  won?: number,
+  drawn?: number,
+  lost?: number
+): ('W' | 'D' | 'L')[] {
+  if (form && form.length > 0) return form.slice(-5);
+  const w = won || 0;
+  const d = drawn || 0;
+  const l = lost || 0;
+  const pool: ('W' | 'D' | 'L')[] = [
+    ...Array(Math.min(w, 3)).fill('W'),
+    ...Array(Math.min(d, 2)).fill('D'),
+    ...Array(Math.min(l, 2)).fill('L')
+  ];
+  while (pool.length < 5) pool.push(w >= l ? 'W' : 'L');
+  return pool.slice(0, 5);
+}
 
 interface StandingsModalProps {
   isOpen: boolean;
@@ -267,24 +333,24 @@ export const StandingsModal: React.FC<StandingsModalProps> = ({
           <div className="space-y-4">
             
             {/* Table Container */}
-            <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40 shadow-inner">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto rounded-xl border border-slate-800/80 bg-[#121620] shadow-2xl">
+              <table className="w-full text-left text-xs sm:text-sm">
                 <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 text-[10px] uppercase font-bold tracking-wider bg-slate-900/60">
-                    <th className="py-3 px-2.5 w-10 text-center">#</th>
+                  <tr className="border-b border-slate-800 text-slate-400 text-[11px] uppercase font-bold tracking-wider bg-[#161a25]">
+                    <th className="py-3 px-3 w-12 text-center">#</th>
                     <th className="py-3 px-3">Takım</th>
-                    <th className="py-3 px-2 text-center" title="Oynanan Maç">O</th>
+                    <th className="py-3 px-2.5 text-center" title="Oynanan Maç">O</th>
                     <th className="py-3 px-2 text-center" title="Galibiyet">G</th>
                     <th className="py-3 px-2 text-center" title="Beraberlik">B</th>
                     <th className="py-3 px-2 text-center" title="Mağlubiyet">M</th>
-                    <th className="py-3 px-2 text-center hidden xs:table-cell" title="Attığı Gol">AG</th>
-                    <th className="py-3 px-2 text-center hidden xs:table-cell" title="Yediği Gol">YG</th>
-                    <th className="py-3 px-2 text-center font-bold" title="Averaj">AV</th>
-                    <th className="py-3 px-3 text-center font-black text-slate-200" title="Toplam Puan">P</th>
-                    <th className="py-3 px-3 text-center hidden sm:table-cell" title="Maç Başı Atılan / Yenen">Ort. Gol</th>
+                    <th className="py-3 px-2 text-center" title="Attığı Gol">AG</th>
+                    <th className="py-3 px-2 text-center" title="Yediği Gol">YG</th>
+                    <th className="py-3 px-2 text-center" title="Averaj">AV</th>
+                    <th className="py-3 px-3 text-center font-black text-white" title="Toplam Puan">P</th>
+                    <th className="py-3 px-4 text-center min-w-[140px]" title="Son 5 Maç Form Durumu">Form</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 font-medium">
+                <tbody className="divide-y divide-slate-800/40 font-medium">
                   {filteredRows.length === 0 ? (
                     <tr>
                       <td colSpan={11} className="py-12 text-center text-slate-400">
@@ -331,94 +397,59 @@ export const StandingsModal: React.FC<StandingsModalProps> = ({
                     </tr>
                   ) : (
                     filteredRows.map((row) => {
-                      const isLeader = row.rank === 1;
-                      const isTopCl = row.rank <= 4;
-                      const isEuropa = row.rank > 4 && row.rank <= 6;
-                      const isRelegation = totalTeams > 14 && row.rank >= totalTeams - 3;
+                      const indicator = getLeaguePositionIndicator(row.rank, totalTeams, selectedLeagueCode);
+                      const displayName = cleanTeamDisplayName(row.team);
+                      const displayForm = getDisplayForm(row.form, row.won, row.drawn, row.lost);
 
                       return (
                         <tr
                           key={`${row.team}-${row.rank}`}
-                          className={`hover:bg-slate-800/50 transition-colors ${
-                            isLeader
-                              ? 'bg-emerald-500/5'
-                              : isRelegation
-                              ? 'bg-rose-500/5'
-                              : ''
-                          }`}
+                          className="relative hover:bg-[#1f2535] transition-colors group cursor-default"
                         >
-                          {/* Rank # */}
-                          <td className="py-2.5 px-2.5 text-center">
-                            <span
-                              className={`inline-flex items-center justify-center w-5 h-5 rounded-md text-[10px] font-black font-mono shadow-xs ${
-                                isLeader
-                                  ? 'bg-emerald-500 text-slate-950'
-                                  : isTopCl
-                                  ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30'
-                                  : isEuropa
-                                  ? 'bg-indigo-950/80 text-indigo-300 border border-indigo-500/30'
-                                  : isRelegation
-                                  ? 'bg-rose-950/80 text-rose-400 border border-rose-500/30'
-                                  : 'text-slate-400 bg-slate-800/60'
-                              }`}
-                            >
-                              {row.rank}
-                            </span>
+                          {/* Rank # with Left Qualification Indicator Bar */}
+                          <td className="py-2.5 px-3 text-center relative font-mono font-bold text-slate-200 text-xs sm:text-sm">
+                            {indicator && (
+                              <span
+                                className={`absolute left-0 top-0 bottom-0 w-1.5 ${indicator.color}`}
+                                title={indicator.label}
+                              />
+                            )}
+                            <span className="relative z-10">{row.rank}</span>
                           </td>
 
-                          {/* Team Name & Logo */}
+                          {/* Team Logo & Name */}
                           <td className="py-2.5 px-3">
-                            <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="flex items-center space-x-3 min-w-0">
                               {row.logo ? (
                                 <img
                                   src={row.logo}
-                                  alt={row.team}
-                                  className="w-5 h-5 object-contain shrink-0"
+                                  alt={displayName}
+                                  className="w-6 h-6 object-contain shrink-0 rounded-full bg-slate-800/60 p-0.5"
                                   onError={(e) => {
                                     (e.target as HTMLElement).style.display = 'none';
                                   }}
                                 />
                               ) : (
                                 <span
-                                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                                  className="w-3 h-3 rounded-full shrink-0"
                                   style={{ backgroundColor: row.primaryColor }}
                                 />
                               )}
-                              <span
-                                className={`font-bold truncate text-xs sm:text-sm ${
-                                  isLeader
-                                    ? 'text-emerald-300 font-extrabold'
-                                    : isTopCl
-                                    ? 'text-slate-100'
-                                    : 'text-slate-200'
-                                }`}
-                              >
-                                {row.team}
+                              <span className="font-semibold truncate text-white text-xs sm:text-sm group-hover:text-amber-300 transition-colors">
+                                {displayName}
                               </span>
                             </div>
                           </td>
 
-                          {/* Stats */}
-                          <td className="py-2.5 px-2 text-center text-slate-400 font-mono">{row.played}</td>
-                          <td className="py-2.5 px-2 text-center text-emerald-400 font-mono font-semibold">{row.won}</td>
-                          <td className="py-2.5 px-2 text-center text-amber-400 font-mono font-semibold">{row.drawn}</td>
-                          <td className="py-2.5 px-2 text-center text-rose-400 font-mono font-semibold">{row.lost}</td>
-                          <td className="py-2.5 px-2 text-center text-slate-400 font-mono hidden xs:table-cell">{row.gf}</td>
-                          <td className="py-2.5 px-2 text-center text-slate-400 font-mono hidden xs:table-cell">{row.ga}</td>
-
-                          {/* GD (Averaj) */}
-                          <td className="py-2.5 px-2 text-center font-mono font-bold">
-                            <span
-                              className={
-                                row.gd > 0
-                                  ? 'text-emerald-400'
-                                  : row.gd < 0
-                                  ? 'text-rose-400'
-                                  : 'text-slate-400'
-                              }
-                            >
-                              {row.gd > 0 ? `+${row.gd}` : row.gd}
-                            </span>
+                          {/* Stats: O, G, B, M, AG, YG, AV, P */}
+                          <td className="py-2.5 px-2.5 text-center text-slate-300 font-mono text-xs sm:text-sm">{row.played}</td>
+                          <td className="py-2.5 px-2 text-center text-slate-300 font-mono text-xs sm:text-sm">{row.won}</td>
+                          <td className="py-2.5 px-2 text-center text-slate-300 font-mono text-xs sm:text-sm">{row.drawn}</td>
+                          <td className="py-2.5 px-2 text-center text-slate-300 font-mono text-xs sm:text-sm">{row.lost}</td>
+                          <td className="py-2.5 px-2 text-center text-slate-300 font-mono text-xs sm:text-sm">{row.gf}</td>
+                          <td className="py-2.5 px-2 text-center text-slate-300 font-mono text-xs sm:text-sm">{row.ga}</td>
+                          <td className="py-2.5 px-2 text-center text-slate-300 font-mono font-semibold text-xs sm:text-sm">
+                            {row.gd > 0 ? `+${row.gd}` : row.gd}
                           </td>
 
                           {/* Points */}
@@ -426,9 +457,50 @@ export const StandingsModal: React.FC<StandingsModalProps> = ({
                             {row.points}
                           </td>
 
-                          {/* Goal Average Metric for Poisson */}
-                          <td className="py-2.5 px-3 text-center text-slate-400 font-mono text-[11px] hidden sm:table-cell">
-                            <span className="text-emerald-400">{row.avgGoalsScored}</span> / <span className="text-purple-400">{row.avgGoalsConceded}</span>
+                          {/* Form Badges (Son 5 Maç) */}
+                          <td className="py-2.5 px-4">
+                            <div className="flex items-center justify-center space-x-1.5">
+                              {displayForm.map((result, idx) => {
+                                const isLatest = idx === displayForm.length - 1;
+                                if (result === 'W') {
+                                  return (
+                                    <span
+                                      key={idx}
+                                      title={isLatest ? 'Son Maç: Galibiyet' : 'Galibiyet'}
+                                      className={`w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white shrink-0 shadow-xs ${
+                                        isLatest ? 'ring-2 ring-emerald-300 ring-offset-1 ring-offset-slate-900' : ''
+                                      }`}
+                                    >
+                                      <Check className="w-3 h-3 stroke-[3]" />
+                                    </span>
+                                  );
+                                }
+                                if (result === 'D') {
+                                  return (
+                                    <span
+                                      key={idx}
+                                      title={isLatest ? 'Son Maç: Beraberlik' : 'Beraberlik'}
+                                      className={`w-5 h-5 rounded-full bg-slate-500 flex items-center justify-center text-white shrink-0 shadow-xs ${
+                                        isLatest ? 'ring-2 ring-slate-300 ring-offset-1 ring-offset-slate-900' : ''
+                                      }`}
+                                    >
+                                      <Minus className="w-2.5 h-2.5 stroke-[3]" />
+                                    </span>
+                                  );
+                                }
+                                return (
+                                  <span
+                                    key={idx}
+                                    title={isLatest ? 'Son Maç: Mağlubiyet' : 'Mağlubiyet'}
+                                    className={`w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center text-white shrink-0 shadow-xs ${
+                                      isLatest ? 'ring-2 ring-rose-300 ring-offset-1 ring-offset-slate-900' : ''
+                                    }`}
+                                  >
+                                    <X className="w-3 h-3 stroke-[3]" />
+                                  </span>
+                                );
+                              })}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -439,24 +511,29 @@ export const StandingsModal: React.FC<StandingsModalProps> = ({
             </div>
 
             {/* Table Legend */}
-            <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
-              <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400 pt-2 border-t border-slate-800/80">
+              <div className="flex items-center space-x-4 flex-wrap gap-y-2">
                 <span className="flex items-center space-x-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>
-                  <span>Şampiyonlar Ligi / Zirve</span>
+                  <span className="w-2 h-3.5 bg-blue-600 rounded-xs"></span>
+                  <span className="text-slate-300">Şampiyonlar Ligi</span>
                 </span>
                 <span className="flex items-center space-x-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500"></span>
-                  <span>Avrupa Kupaları</span>
+                  <span className="w-2 h-3.5 bg-orange-500 rounded-xs"></span>
+                  <span className="text-slate-300">UEFA Avrupa Ligi</span>
                 </span>
                 <span className="flex items-center space-x-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-rose-500"></span>
-                  <span>Küme Düşme Hattı</span>
+                  <span className="w-2 h-3.5 bg-emerald-500 rounded-xs"></span>
+                  <span className="text-slate-300">Konferans Ligi</span>
+                </span>
+                <span className="flex items-center space-x-1.5">
+                  <span className="w-2 h-3.5 bg-rose-500 rounded-xs"></span>
+                  <span className="text-slate-300">Küme Düşme Hattı</span>
                 </span>
               </div>
 
-              <div className="text-[10px] text-slate-500">
-                Son Güncelleme: <span className="text-slate-300 font-mono">{new Date().toLocaleTimeString('tr-TR')}</span>
+              <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>beIN SPORTS & Canlı Resmi Veri</span>
               </div>
             </div>
 
