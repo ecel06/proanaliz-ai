@@ -15,7 +15,7 @@ interface MatchCardProps {
   onToggleFavorite?: (matchId: string) => void;
 }
 
-export const MatchCard: React.FC<MatchCardProps> = ({
+const MatchCardComponent: React.FC<MatchCardProps> = ({
   match,
   analysis,
   onSelect,
@@ -363,4 +363,6 @@ export const MatchCard: React.FC<MatchCardProps> = ({
     </div>
   );
 };
+
+export const MatchCard = React.memo(MatchCardComponent);
 

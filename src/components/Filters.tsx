@@ -45,7 +45,7 @@ interface FiltersProps {
   };
 }
 
-export const Filters: React.FC<FiltersProps> = ({
+const FiltersComponent: React.FC<FiltersProps> = ({
   searchQuery,
   setSearchQuery,
   selectedCategory,
@@ -292,3 +292,5 @@ export const Filters: React.FC<FiltersProps> = ({
     </div>
   );
 };
+
+export const Filters = React.memo(FiltersComponent);

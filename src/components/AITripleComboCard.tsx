@@ -21,7 +21,7 @@ interface ComboPickItem {
   categoryColor: string;
 }
 
-export const AITripleComboCard: React.FC<AITripleComboCardProps> = ({
+const AITripleComboCardComponent: React.FC<AITripleComboCardProps> = ({
   matches,
   analyses,
   onSelectMatch,
@@ -347,3 +347,5 @@ export const AITripleComboCard: React.FC<AITripleComboCardProps> = ({
     </div>
   );
 };
+
+export const AITripleComboCard = React.memo(AITripleComboCardComponent);

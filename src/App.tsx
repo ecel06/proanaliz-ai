@@ -411,7 +411,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.12';
+  const CLIENT_BUILD_VERSION = '2026.11.20.13';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -752,6 +752,14 @@ export const App: React.FC = () => {
   const [activeTabMode, setActiveTabMode] = useState<'upcoming' | 'coupons' | 'finished'>('upcoming');
   const [isMobileLeagueTreeOpen, setIsMobileLeagueTreeOpen] = useState(false);
   const [showRadarDemo, setShowRadarDemo] = useState(false);
+  const [visibleMatchesCount, setVisibleMatchesCount] = useState<number>(36);
+  const [visibleFinishedCount, setVisibleFinishedCount] = useState<number>(30);
+
+  // Reset pagination when any filter changes for lightning-fast 60fps rendering
+  useEffect(() => {
+    setVisibleMatchesCount(36);
+    setVisibleFinishedCount(30);
+  }, [selectedCategory, selectedLeague, selectedDate, searchQuery, sortOption]);
 
   // Modals
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
@@ -1073,6 +1081,15 @@ export const App: React.FC = () => {
     // En son tamamlanan maçlar en üstte görünsün (kronolojik azalan)
     return list.sort((m1, m2) => parseMatchKickoffEpoch(m2) - parseMatchKickoffEpoch(m1));
   }, [allMatches, currentTime, searchQuery, selectedLeague, selectedDate, selectedCategory, matchAnalysesMap, favorites]);
+
+  // Progressive view slice for smooth 60fps DOM performance
+  const displayedUpcoming = useMemo(() => {
+    return upcomingFiltered.slice(0, visibleMatchesCount);
+  }, [upcomingFiltered, visibleMatchesCount]);
+
+  const displayedFinished = useMemo(() => {
+    return finishedFiltered.slice(0, visibleFinishedCount);
+  }, [finishedFiltered, visibleFinishedCount]);
 
   // Live Goal Radar Alerts (Momentum & Pressure detection for in-play matches)
   const liveGoalAlerts = useMemo(() => {
@@ -1997,22 +2014,48 @@ export const App: React.FC = () => {
                           />
                         </React.Suspense>
                       ) : (
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
-                          {upcomingFiltered?.map((match) => {
-                            const analysis = matchAnalysesMap.get(match.id);
-                            if (!analysis) return null;
-                            return (
-                              <MatchCard
-                                key={match.id}
-                                match={match}
-                                analysis={analysis}
-                                onSelect={(m) => setSelectedMatch(m)}
-                                isFavorite={favorites.includes(match.id)}
-                                onToggleFavorite={toggleFavorite}
-                              />
-                            );
-                          })}
-                        </div>
+                        <>
+                          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
+                            {displayedUpcoming.map((match) => {
+                              const analysis = matchAnalysesMap.get(match.id);
+                              if (!analysis) return null;
+                              return (
+                                <MatchCard
+                                  key={match.id}
+                                  match={match}
+                                  analysis={analysis}
+                                  onSelect={(m) => setSelectedMatch(m)}
+                                  isFavorite={favorites.includes(match.id)}
+                                  onToggleFavorite={toggleFavorite}
+                                />
+                              );
+                            })}
+                          </div>
+
+                          {upcomingFiltered.length > displayedUpcoming.length && (
+                            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                              <button
+                                type="button"
+                                onClick={() => setVisibleMatchesCount((prev) => prev + 36)}
+                                className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-slate-900 border border-slate-700 hover:border-emerald-500/50 hover:bg-slate-800 text-white font-black text-xs shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
+                              >
+                                <span>Daha Fazla Maç Göster (+36)</span>
+                                <span className="text-[10px] font-mono text-emerald-400 font-bold">
+                                  ({displayedUpcoming.length} / {upcomingFiltered.length})
+                                </span>
+                              </button>
+                              {upcomingFiltered.length > displayedUpcoming.length + 36 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setVisibleMatchesCount(upcomingFiltered.length)}
+                                  className="text-xs text-slate-400 hover:text-white underline cursor-pointer py-1"
+                                >
+                                  Tümünü Göster ({upcomingFiltered.length})
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </>
                       )
                     ) : liveFiltered.length === 0 ? (
                       <div className="p-12 text-center rounded-3xl bg-slate-900/60 border border-slate-800 space-y-3">
@@ -2095,11 +2138,28 @@ export const App: React.FC = () => {
                       </div>
 
                       {finishedFiltered.length > 0 ? (
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-                          {finishedFiltered?.map((match) => (
-                            <FinishedMatchCard key={match.id} match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
-                          ))}
-                        </div>
+                        <>
+                          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                            {displayedFinished.map((match) => (
+                              <FinishedMatchCard key={match.id} match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
+                            ))}
+                          </div>
+
+                          {finishedFiltered.length > displayedFinished.length && (
+                            <div className="pt-3 flex items-center justify-center">
+                              <button
+                                type="button"
+                                onClick={() => setVisibleFinishedCount((prev) => prev + 30)}
+                                className="px-5 py-2 rounded-xl bg-slate-900 border border-slate-700 hover:border-slate-600 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center space-x-2"
+                              >
+                                <span>Daha Fazla Sonuç Göster (+30)</span>
+                                <span className="text-[10px] font-mono text-slate-400">
+                                  ({displayedFinished.length} / {finishedFiltered.length})
+                                </span>
+                              </button>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <div className="p-10 text-center rounded-3xl bg-slate-900/60 border border-slate-800 space-y-3">
                           <CalendarCheck className="w-8 h-8 text-slate-600 mx-auto mb-2" />

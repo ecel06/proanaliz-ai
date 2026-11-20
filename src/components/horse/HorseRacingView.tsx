@@ -1744,12 +1744,12 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
     setRacePicks(activeRace.number, ranked);
   };
 
-  // Real-time race countdown ticker
+  // Real-time race countdown ticker (Ticked every 15s to maintain 60fps buttery smooth performance)
   const [currentTimeMs, setCurrentTimeMs] = useState<number>(Date.now());
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTimeMs(Date.now());
-    }, 1000);
+    }, 15000);
     return () => clearInterval(timer);
   }, []);
 

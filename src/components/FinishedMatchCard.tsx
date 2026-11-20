@@ -15,7 +15,7 @@ interface FinishedMatchCardProps {
   analysis?: MatchAnalysis | null;
 }
 
-export const FinishedMatchCard: React.FC<FinishedMatchCardProps> = ({ match, now, analysis }) => {
+const FinishedMatchCardComponent: React.FC<FinishedMatchCardProps> = ({ match, now, analysis }) => {
   const { homeTeam, awayTeam } = match;
   const liveState = getMatchLiveState(match, now);
   const { isLive, isFinished, liveMinute, displayScore } = liveState;
@@ -257,3 +257,5 @@ export const FinishedMatchCard: React.FC<FinishedMatchCardProps> = ({ match, now
     </div>
   );
 };
+
+export const FinishedMatchCard = React.memo(FinishedMatchCardComponent);
