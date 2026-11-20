@@ -1,6 +1,6 @@
 // src/components/LiveTVModal.tsx
-// Canlı Spor TV & Maç Yayınları Oynatıcısı (YouTube HD Canlı Akış & Native HLS / Web)
-// Tıpkı At Yarışı'ndaki TJK TV gibi futbol için A Spor, HT Spor, TRT Spor ve TJK TV resmi canlı yayınlarını sunar.
+// Canlı Spor TV & Maç Yayınları Oynatıcısı (Resmi Canlı HLS / HTML5 Video & YouTube HD Canlı Akış)
+// Futbol ve At Yarışı kanalları: A Spor, HT Spor, TRT Spor, TJK TV ve Sports Digitale.
 // Küçük Ekran (PiP / Floating) ve Büyük Ekran (Sinema Modalı) destekler.
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -14,10 +14,7 @@ import {
   VolumeX,
   ExternalLink,
   Radio,
-  Sparkles,
   RefreshCw,
-  Flame,
-  CheckCircle2,
   AlertCircle,
   Play
 } from 'lucide-react';
@@ -45,7 +42,7 @@ export const TV_CHANNELS: TVChannel[] = [
     streamUrl: 'https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8',
     fallbackWebUrl: 'https://www.aspor.com.tr/canli-yayin',
     logoText: 'A SPOR',
-    accentColor: '#06B6D4', // cyan
+    accentColor: '#06B6D4',
     description: 'Ziraat Türkiye Kupası maçları, canlı maç özetleri, flaş analizler ve skorlar'
   },
   {
@@ -57,7 +54,7 @@ export const TV_CHANNELS: TVChannel[] = [
     streamUrl: 'https://ciner.daioncdn.net/ht-spor/ht-spor.m3u8?app=web',
     fallbackWebUrl: 'https://www.htspor.com/canli-yayin',
     logoText: 'HT SPOR',
-    accentColor: '#8B5CF6', // purple
+    accentColor: '#8B5CF6',
     description: 'Ciner Medya spor kanalı, 7/24 kesintisiz canlı yayın, taktik tahtası ve transferler'
   },
   {
@@ -65,26 +62,304 @@ export const TV_CHANNELS: TVChannel[] = [
     name: 'TRT Spor HD',
     category: 'Milli Maçlar & Uluslar Ligi',
     badge: 'RESMİ CANLI',
-    youtubeId: 'hJ6KygUV_F8',
+    youtubeId: '',
     streamUrl: 'https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor',
     fallbackWebUrl: 'https://www.trtspor.com.tr/canli-yayin-izle/trt-spor',
     logoText: 'TRT SPOR',
-    accentColor: '#10B981', // emerald
+    accentColor: '#10B981',
     description: 'A Milli Takım, UEFA Uluslar Ligi ve Avrupa maç özetleri'
+  },
+  {
+    id: 'tjktv',
+    name: 'TJK TV HD',
+    category: 'Resmi At Yarışları & Koşular',
+    badge: 'CANLI HD',
+    youtubeId: 'live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA',
+    streamUrl: 'https://nesine-spinemedia-live.ercdn.net/yaristayiz/yaristayiz_720p.m3u8',
+    fallbackWebUrl: 'https://www.tjk.org/TR/YarisSever/Static/TjkTv',
+    logoText: 'TJK TV',
+    accentColor: '#EF4444',
+    description: 'Resmi hipodrom canlı yarış yayınları, altılı ganyan bülteni ve padok analizi'
   },
   {
     id: 'sportsdigitale',
     name: 'Sports Digitale',
     category: 'Canlı Maç & Derbi Yorumları',
     badge: 'CANLI HD',
-    youtubeId: '-tBXTOmSAYU',
+    youtubeId: '5PvmYQcOKu4',
     streamUrl: '',
     fallbackWebUrl: 'https://www.youtube.com/@SportsDigitale',
     logoText: 'DIGITALE',
-    accentColor: '#F59E0B', // amber
+    accentColor: '#F59E0B',
     description: 'Canlı maç önü ve maç sonu yorumları, taktik tahtası ve futbol analizleri'
   }
 ];
+
+// 🔄 Canlı HLS Playlist Cache-Buster Loader (Edge sunucuların eski sequence döndürmesini önler)
+const LivePlaylistLoader = class extends (Hls.DefaultConfig.loader as any) {
+  load(context: any, config: any, callbacks: any) {
+    if (context.type === 'manifest' || context.type === 'level') {
+      const sep = context.url.includes('?') ? '&' : '?';
+      context.url = `${context.url}${sep}_t=${Date.now()}`;
+    }
+    super.load(context, config, callbacks);
+  }
+} as any;
+
+// 📺 Yüksek Performanslı Resmi HLS Video Oynatıcısı
+const HlsVideoPlayer: React.FC<{
+  streamUrl: string;
+  channelName: string;
+  isMuted: boolean;
+  onToggleMute: () => void;
+  onFallbackToYoutube?: () => void;
+  hasYoutubeFallback?: boolean;
+}> = ({
+  streamUrl,
+  channelName,
+  isMuted,
+  onToggleMute,
+  onFallbackToYoutube,
+  hasYoutubeFallback
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasError, setHasError] = useState<boolean>(false);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [reloadTrigger, setReloadTrigger] = useState<number>(0);
+  const hlsRef = useRef<Hls | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !streamUrl) return;
+
+    setIsLoading(true);
+    setHasError(false);
+    setIsPaused(false);
+
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+
+    // Tarayıcı güvenlik ve autoplay kısıtlamalarına takılmadan anında oynatmak için sessiz başlar
+    const attemptPlay = () => {
+      if (!video) return;
+      video.muted = isMuted;
+      const promise = video.play();
+      if (promise !== undefined) {
+        promise
+          .then(() => {
+            setIsPaused(false);
+          })
+          .catch((err) => {
+            console.warn('[HLS Autoplay Warning]:', err?.message);
+            // Tarayıcı sesli otomatik oynatmayı engellediyse sessizce devam ettir
+            video.muted = true;
+            video
+              .play()
+              .then(() => setIsPaused(false))
+              .catch(() => setIsPaused(true));
+          });
+      }
+    };
+
+    // Tüm canlı m3u8 akışlarını sunucu proxy'si üzerinden CORS engelsiz çek (nesine hariç)
+    const effectiveUrl =
+      streamUrl.startsWith('http') && !streamUrl.includes('nesine-spinemedia-live')
+        ? `/api/stream-proxy?url=${encodeURIComponent(streamUrl)}`
+        : streamUrl;
+
+    // 1. Önce Hls.js desteği kontrol edilir (Chrome, Edge, Firefox, Android)
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        pLoader: LivePlaylistLoader,
+        enableWorker: true,
+        lowLatencyMode: false,
+        liveDurationInfinity: true,
+        liveSyncDurationCount: 3,
+        liveMaxLatencyDurationCount: 6,
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
+        nudgeOffset: 0.2,
+        nudgeMaxRetry: 10,
+        maxBufferHole: 0.5
+      });
+      hlsRef.current = hls;
+
+      hls.loadSource(effectiveUrl);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.muted = isMuted;
+        video.play().catch(() => { });
+        attemptPlay();
+      });
+
+      hls.on(Hls.Events.LEVEL_UPDATED, () => {
+        setIsLoading(false);
+        if (video && video.paused && !video.ended) {
+          video.play().catch(() => {});
+        }
+      });
+
+      hls.on(Hls.Events.FRAG_BUFFERED, () => {
+        setIsLoading(false);
+      });
+
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (data.details === 'bufferStalledError' || data.details === 'bufferNudgeOnStall') {
+          if (video && !video.paused) {
+            video.currentTime += 0.2;
+          }
+        }
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              console.warn('[HLS] Ağ hatası, akış yeniden bağlanıyor...');
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              console.warn('[HLS] Medya hatası, gideriliyor...');
+              hls.recoverMediaError();
+              break;
+            default:
+              console.error('[HLS] Kritik hata:', data);
+              hls.destroy();
+              hlsRef.current = null;
+              setHasError(true);
+              setIsLoading(false);
+              break;
+          }
+        }
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // 2. Safari / iOS için yerel HLS oynatımı
+      video.src = effectiveUrl;
+      const onLoadedMetadata = () => {
+        setIsLoading(false);
+        attemptPlay();
+      };
+      video.addEventListener('loadedmetadata', onLoadedMetadata);
+    } else {
+      video.src = effectiveUrl;
+      attemptPlay();
+    }
+
+    const onPlay = () => setIsPaused(false);
+    const onPause = () => setIsPaused(true);
+    const onWaiting = () => setIsLoading(true);
+    const onPlaying = () => {
+      setIsLoading(false);
+      setIsPaused(false);
+    };
+    const onLoadedData = () => setIsLoading(false);
+
+    video.addEventListener('play', onPlay);
+    video.addEventListener('pause', onPause);
+    video.addEventListener('waiting', onWaiting);
+    video.addEventListener('playing', onPlaying);
+    video.addEventListener('loadeddata', onLoadedData);
+
+    return () => {
+      video.removeEventListener('play', onPlay);
+      video.removeEventListener('pause', onPause);
+      video.removeEventListener('waiting', onWaiting);
+      video.removeEventListener('playing', onPlaying);
+      video.removeEventListener('loadeddata', onLoadedData);
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [streamUrl, reloadTrigger]);
+
+  // Ses durumu değiştiğinde video elemanına yansıt
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  return (
+    <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden group select-none">
+      <video
+        ref={videoRef}
+        playsInline
+        controls
+        autoPlay
+        muted={isMuted}
+        className="w-full h-full object-contain"
+      />
+
+      {/* Yükleniyor Göstergesi */}
+      {isLoading && !hasError && (
+        <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-[2px] transition-opacity z-10">
+          <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin mb-2" />
+          <span className="text-xs font-bold text-white tracking-wide">{channelName} Canlı Yayını Bağlanıyor...</span>
+          <span className="text-[10px] text-slate-400 mt-1">Lütfen bekleyin</span>
+        </div>
+      )}
+
+      {/* Sesi Açma Uyarısı (Tarayıcı sessiz başlattıysa) */}
+      {isMuted && !isLoading && !hasError && (
+        <button
+          onClick={onToggleMute}
+          className="absolute top-3 left-3 z-20 px-3 py-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-emerald-500/60 text-white text-xs font-bold flex items-center space-x-1.5 shadow-xl shadow-emerald-500/20 backdrop-blur-md cursor-pointer transition-all active:scale-95 animate-pulse"
+        >
+          <VolumeX className="w-3.5 h-3.5 text-rose-400" />
+          <span>Sesi Açmak İçin Dokunun</span>
+        </button>
+      )}
+
+      {/* Duraklatıldıysa Büyük Oynat Butonu */}
+      {isPaused && !isLoading && !hasError && (
+        <button
+          onClick={() => {
+            if (videoRef.current) {
+              videoRef.current.play().catch(() => {});
+            }
+          }}
+          className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-emerald-500/90 hover:bg-emerald-400 text-slate-950 flex items-center justify-center shadow-2xl shadow-emerald-500/50 transition-all hover:scale-110 cursor-pointer z-20"
+          title="Yayını Başlat"
+        >
+          <Play className="w-7 h-7 fill-current translate-x-0.5" />
+        </button>
+      )}
+
+      {/* Hata Durumu ve Alternatife Geçiş */}
+      {hasError && (
+        <div className="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-4 text-center space-y-3 z-30">
+          <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-white">Canlı HD akışa bağlanılamadı</p>
+            <p className="text-xs text-slate-400 mt-0.5">Yayın kaynağı anlık olarak yanıt vermiyor olabilir.</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setReloadTrigger((t) => t + 1)}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white border border-slate-700 flex items-center space-x-1 cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Tekrar Dene</span>
+            </button>
+            {hasYoutubeFallback && onFallbackToYoutube && (
+              <button
+                onClick={onFallbackToYoutube}
+                className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white shadow-lg shadow-rose-600/30 flex items-center space-x-1.5 cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>YouTube Yayınına Geç</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface LiveTVModalProps {
   isOpen: boolean;
@@ -100,12 +375,9 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
   const [channels, setChannels] = useState<TVChannel[]>(TV_CHANNELS);
   const [activeChannelId, setActiveChannelId] = useState<string>(initialChannelId);
   const [isMiniMode, setIsMiniMode] = useState<boolean>(false);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [useHls, setUseHls] = useState<boolean>(true);
+  const [isMuted, setIsMuted] = useState<boolean>(true); // Güvenli autoplay için varsayılan true
+  const [streamSource, setStreamSource] = useState<'hls' | 'youtube'>('hls');
   const [retryKey, setRetryKey] = useState<number>(0);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
 
   // Canlı Spor TV kanal akışlarını sunucudan dinamik çek (YouTube ID güncellemeleri için)
   useEffect(() => {
@@ -118,7 +390,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           setChannels(data.channels);
         }
       })
-      .catch(() => { });
+      .catch(() => {});
     return () => {
       isMounted = false;
     };
@@ -126,96 +398,25 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
   const currentChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
 
-  // Kanal değiştiğinde streamUrl varsa doğrudan resmi canlı HLS akışına geç
+  // Kanal değiştiğinde akış kaynağını ayarla
   useEffect(() => {
-    const hasStream = Boolean(currentChannel.streamUrl && currentChannel.streamUrl.trim());
-    setUseHls(hasStream);
+    if (currentChannel.streamUrl) {
+      setStreamSource('hls');
+    } else {
+      setStreamSource('youtube');
+    }
   }, [activeChannelId, currentChannel.streamUrl]);
-
-  // HLS Modu aktifse Hls.js bağla
-  useEffect(() => {
-    if (!isOpen || !useHls) {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
-      return;
-    }
-
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
-
-    const rawUrl = currentChannel.streamUrl;
-    if (!rawUrl) return;
-
-    // Tüm canlı m3u8 akışlarını sunucu proxy'si üzerinden CORS engelsiz çek
-    const streamUrl = rawUrl.startsWith('http')
-      ? `/api/stream-proxy?url=${encodeURIComponent(rawUrl)}`
-      : rawUrl;
-
-    const playVideo = () => {
-      video.muted = isMuted;
-      video.play().catch(() => {
-        // Tarayıcı otomatik oynatma engellerse sessizce başlat
-        video.muted = true;
-        setIsMuted(true);
-        video.play().catch(() => {});
-      });
-    };
-
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = streamUrl;
-      playVideo();
-    } else if (Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 60
-      });
-      hlsRef.current = hls;
-      hls.loadSource(streamUrl);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        playVideo();
-      });
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              hls.startLoad();
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              hls.recoverMediaError();
-              break;
-            default:
-              hls.destroy();
-              hlsRef.current = null;
-              if (currentChannel.youtubeId) {
-                setUseHls(false);
-              }
-              break;
-          }
-        }
-      });
-    }
-
-    return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
-    };
-  }, [isOpen, activeChannelId, useHls, currentChannel.streamUrl, retryKey]);
 
   if (!isOpen) return null;
 
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${currentChannel.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0
-    }&playsinline=1&rel=0&modestbranding=1`;
+  const hasHls = Boolean(currentChannel.streamUrl && currentChannel.streamUrl.trim());
+  const hasYoutube = Boolean(currentChannel.youtubeId && currentChannel.youtubeId.trim());
+
+  const youtubeEmbedUrl = hasYoutube
+    ? `https://www.youtube-nocookie.com/embed/${currentChannel.youtubeId}?autoplay=1&mute=${
+        isMuted ? 1 : 0
+      }&playsinline=1&rel=0&modestbranding=1`
+    : '';
 
   // 📺 1. Küçük Ekran (Floating Mini Player) Modu
   if (isMiniMode) {
@@ -259,19 +460,19 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
         {/* Video Area */}
         <div className="relative aspect-video bg-black flex items-center justify-center">
-          {useHls ? (
-            <video
-              ref={videoRef}
-              className="w-full h-full object-contain"
-              playsInline
-              controls
-              autoPlay
-              muted={isMuted}
+          {streamSource === 'hls' && hasHls ? (
+            <HlsVideoPlayer
+              streamUrl={currentChannel.streamUrl}
+              channelName={currentChannel.name}
+              isMuted={isMuted}
+              onToggleMute={() => setIsMuted((m) => !m)}
+              hasYoutubeFallback={hasYoutube}
+              onFallbackToYoutube={() => setStreamSource('youtube')}
             />
           ) : (
             <iframe
               key={`${currentChannel.id}-${isMuted}-${retryKey}`}
-              src={embedUrl}
+              src={youtubeEmbedUrl}
               title={currentChannel.name}
               className="w-full h-full border-0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -286,10 +487,11 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
             <button
               key={ch.id}
               onClick={() => setActiveChannelId(ch.id)}
-              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all shrink-0 cursor-pointer ${activeChannelId === ch.id
-                ? 'bg-emerald-500 text-slate-950 shadow-xs'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all shrink-0 cursor-pointer ${
+                activeChannelId === ch.id
+                  ? 'bg-emerald-500 text-slate-950 shadow-xs'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
             >
               {ch.logoText}
             </button>
@@ -326,24 +528,33 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
           <div className="flex items-center space-x-2">
             {/* Stream Mode Switcher (Resmi Canlı TV vs YouTube) */}
-            {currentChannel.streamUrl && currentChannel.youtubeId && (
-              <button
-                onClick={() => setUseHls((h) => !h)}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
-                title="Yayın kaynağını değiştir"
-              >
-                {useHls ? (
-                  <>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                    <span>Resmi Canlı TV (HD)</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
-                    <span>YouTube Kaydı</span>
-                  </>
-                )}
-              </button>
+            {hasHls && hasYoutube && (
+              <div className="flex items-center bg-slate-800/90 rounded-lg p-0.5 border border-slate-700">
+                <button
+                  onClick={() => setStreamSource('hls')}
+                  className={`px-2 py-1 rounded-md text-[10px] font-bold transition-colors flex items-center gap-1 cursor-pointer ${
+                    streamSource === 'hls'
+                      ? 'bg-emerald-500 text-slate-950 shadow-xs'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Resmi HD Canlı Yayın"
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${streamSource === 'hls' ? 'bg-slate-950' : 'bg-emerald-400 animate-pulse'}`} />
+                  <span>Resmi HD</span>
+                </button>
+                <button
+                  onClick={() => setStreamSource('youtube')}
+                  className={`px-2 py-1 rounded-md text-[10px] font-bold transition-colors flex items-center gap-1 cursor-pointer ${
+                    streamSource === 'youtube'
+                      ? 'bg-rose-500 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="YouTube Canlı Yayını"
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${streamSource === 'youtube' ? 'bg-white' : 'bg-rose-400'}`} />
+                  <span>YouTube</span>
+                </button>
+              </div>
             )}
 
             <button
@@ -383,19 +594,19 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
         {/* Video Player Main Canvas */}
         <div className="relative aspect-video bg-black flex items-center justify-center shrink-0">
-          {useHls ? (
-            <video
-              ref={videoRef}
-              className="w-full h-full object-contain"
-              playsInline
-              controls
-              autoPlay
-              muted={isMuted}
+          {streamSource === 'hls' && hasHls ? (
+            <HlsVideoPlayer
+              streamUrl={currentChannel.streamUrl}
+              channelName={currentChannel.name}
+              isMuted={isMuted}
+              onToggleMute={() => setIsMuted((m) => !m)}
+              hasYoutubeFallback={hasYoutube}
+              onFallbackToYoutube={() => setStreamSource('youtube')}
             />
           ) : (
             <iframe
               key={`${currentChannel.id}-${isMuted}-${retryKey}`}
-              src={embedUrl}
+              src={youtubeEmbedUrl}
               title={currentChannel.name}
               className="w-full h-full border-0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -407,17 +618,18 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
         {/* Channel Selection & Info Strip */}
         <div className="p-3 sm:p-4 bg-slate-950 border-t border-slate-800 space-y-3">
           {/* Channel Tabs */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             {channels.map((ch) => {
               const isActive = activeChannelId === ch.id;
               return (
                 <button
                   key={ch.id}
                   onClick={() => setActiveChannelId(ch.id)}
-                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden ${isActive
-                    ? 'bg-slate-900 border-emerald-500/60 shadow-lg shadow-emerald-500/10'
-                    : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800 hover:border-slate-700'
-                    }`}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden ${
+                    isActive
+                      ? 'bg-slate-900 border-emerald-500/60 shadow-lg shadow-emerald-500/10'
+                      : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800 hover:border-slate-700'
+                  }`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span
@@ -427,10 +639,11 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                       {ch.name}
                     </span>
                     <span
-                      className={`text-[9px] font-black px-1.5 py-0.2 rounded-full ${isActive
-                        ? 'bg-emerald-500 text-slate-950'
-                        : 'bg-slate-800 text-slate-400'
-                        }`}
+                      className={`text-[9px] font-black px-1.5 py-0.2 rounded-full ${
+                        isActive
+                          ? 'bg-emerald-500 text-slate-950'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}
                     >
                       {ch.badge}
                     </span>

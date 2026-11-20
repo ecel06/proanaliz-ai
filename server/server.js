@@ -331,7 +331,9 @@ app.get('/api/stream-proxy', async (req, res) => {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         'Referer': referer,
-        'Origin': new URL(referer).origin
+        'Origin': new URL(referer).origin,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
       }
     });
 
@@ -342,6 +344,7 @@ app.get('/api/stream-proxy', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 
     const contentType = upstreamRes.headers.get('content-type') || 'application/vnd.apple.mpegurl';
     res.setHeader('Content-Type', contentType);
@@ -444,7 +447,7 @@ app.get('/api/sports-tv/channels', async (req, res) => {
         name: 'TRT Spor HD',
         category: 'Milli Maçlar & Uluslar Ligi',
         badge: 'RESMİ CANLI',
-        youtubeId: trtsporId || 'hJ6KygUV_F8',
+        youtubeId: '',
         streamUrl: 'https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor',
         fallbackWebUrl: 'https://www.trtspor.com.tr/canli-yayin-izle/trt-spor',
         logoText: 'TRT SPOR',
@@ -452,11 +455,23 @@ app.get('/api/sports-tv/channels', async (req, res) => {
         description: 'A Milli Takım, UEFA Uluslar Ligi ve Avrupa maç özetleri',
       },
       {
+        id: 'tjktv',
+        name: 'TJK TV HD',
+        category: 'Resmi At Yarışları & Koşular',
+        badge: 'CANLI HD',
+        youtubeId: 'live_stream?channel=UCNLO4lpteIloZ4IKb9L2DoA',
+        streamUrl: 'https://nesine-spinemedia-live.ercdn.net/yaristayiz/yaristayiz_720p.m3u8',
+        fallbackWebUrl: 'https://www.tjk.org/TR/YarisSever/Static/TjkTv',
+        logoText: 'TJK TV',
+        accentColor: '#EF4444',
+        description: 'Resmi hipodrom canlı yarış yayınları, altılı ganyan bülteni ve padok analizi',
+      },
+      {
         id: 'sportsdigitale',
         name: 'Sports Digitale',
         category: 'Canlı Maç & Derbi Yorumları',
         badge: 'CANLI HD',
-        youtubeId: sportsDigitaleId || '-tBXTOmSAYU',
+        youtubeId: sportsDigitaleId || '5PvmYQcOKu4',
         streamUrl: '',
         fallbackWebUrl: 'https://www.youtube.com/@SportsDigitale',
         logoText: 'DIGITALE',
@@ -896,7 +911,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.07';
+const APP_VERSION = '2026.11.20.08';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
