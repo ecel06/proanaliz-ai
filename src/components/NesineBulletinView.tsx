@@ -789,7 +789,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                                   : 'text-slate-400'
                               }`}
                             >
-                              {def.shortLabel}
+                              {def.key === 'under25' ? 'Alt' : def.key === 'over25' ? 'Üst' : def.key === 'bttsYes' ? 'Var' : def.key === 'bttsNo' ? 'Yok' : def.shortLabel}
                             </span>
                             <span
                               className={`font-mono text-[11px] font-bold leading-none ${

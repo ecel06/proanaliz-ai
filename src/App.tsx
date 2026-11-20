@@ -121,6 +121,7 @@ export const App: React.FC = () => {
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [isAllLiveExpanded, setIsAllLiveExpanded] = useState(false);
 
   // User Betslip (Kullanıcı Kuponu & Hesaplayıcı)
   const [betslipItems, setBetslipItems] = useState<UserBetslipItem[]>(() => {
@@ -397,7 +398,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.02';
+  const CLIENT_BUILD_VERSION = '2026.11.20.03';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1876,7 +1877,7 @@ export const App: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
-                          {liveFiltered.map((match) => (
+                          {(isAllLiveExpanded ? liveFiltered : liveFiltered.slice(0, 4)).map((match) => (
                             <div
                               key={match.id}
                               onClick={() => setSelectedMatch(match)}
@@ -1886,6 +1887,18 @@ export const App: React.FC = () => {
                             </div>
                           ))}
                         </div>
+
+                        {liveFiltered.length > 4 && (
+                          <div className="pt-2 text-center border-t border-rose-500/20">
+                            <button
+                              type="button"
+                              onClick={() => setIsAllLiveExpanded(!isAllLiveExpanded)}
+                              className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-rose-300 text-xs font-black border border-rose-500/30 transition-all cursor-pointer shadow-sm"
+                            >
+                              {isAllLiveExpanded ? '▲ Daha Az Göster (İlk 4 Maç)' : `▼ Tüm Canlı Maçları Göster (+${liveFiltered.length - 4} Maç)`}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
 

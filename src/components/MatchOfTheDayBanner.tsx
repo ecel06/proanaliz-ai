@@ -22,7 +22,23 @@ export const MatchOfTheDayBanner: React.FC<MatchOfTheDayBannerProps> = ({
   onAddToBetslip,
   isAlreadyInBetslip = false
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('proanaliz_hero_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapsed = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('proanaliz_hero_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
 
   useEffect(() => {
@@ -85,7 +101,17 @@ export const MatchOfTheDayBanner: React.FC<MatchOfTheDayBannerProps> = ({
           <span className="text-xs text-emerald-400 font-bold hidden sm:inline">{match.league}</span>
         </div>
 
-        <div className="flex items-center space-x-3">
+        {isCollapsed && (
+          <div
+            onClick={() => onSelectMatch(match)}
+            className="flex-1 flex items-center justify-center space-x-2 truncate cursor-pointer hover:text-emerald-300 transition-colors px-2"
+          >
+            <span className="font-black text-xs text-white truncate">{match.homeTeam.name} vs {match.awayTeam.name}</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold hidden sm:inline">{pred.label} (%{pred.confidence})</span>
+          </div>
+        )}
+
+        <div className="flex items-center space-x-3 shrink-0">
           {timeLeft && (
             <div className="flex items-center space-x-1.5 text-xs font-mono font-bold text-amber-300 bg-amber-400/10 border border-amber-400/30 px-2.5 py-1 rounded-xl shadow-xs">
               <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
@@ -100,7 +126,7 @@ export const MatchOfTheDayBanner: React.FC<MatchOfTheDayBannerProps> = ({
           )}
 
           <button
-            onClick={() => setIsCollapsed(prev => !prev)}
+            onClick={toggleCollapsed}
             className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
             title={isCollapsed ? 'Genişlet' : 'Daralt'}
           >
