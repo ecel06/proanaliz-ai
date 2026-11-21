@@ -411,7 +411,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.14';
+  const CLIENT_BUILD_VERSION = '2026.11.20.15';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1808,7 +1808,13 @@ export const App: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                       {liveFiltered?.map((match) => (
-                        <FinishedMatchCard key={match.id} match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
+                        <FinishedMatchCard
+                          key={match.id}
+                          match={match}
+                          now={currentTime}
+                          analysis={matchAnalysesMap.get(match.id)}
+                          onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                        />
                       ))}
                     </div>
                   </div>
@@ -1849,6 +1855,7 @@ export const App: React.FC = () => {
                               onSelect={(m) => setSelectedMatch(m)}
                               isFavorite={favorites.includes(match.id)}
                               onToggleFavorite={toggleFavorite}
+                              onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
                             />
                           );
                         })}
@@ -1871,7 +1878,13 @@ export const App: React.FC = () => {
                   {finishedFiltered.length > 0 ? (
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                       {finishedFiltered?.map((match) => (
-                        <FinishedMatchCard key={match.id} match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
+                        <FinishedMatchCard
+                          key={match.id}
+                          match={match}
+                          now={currentTime}
+                          analysis={matchAnalysesMap.get(match.id)}
+                          onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                        />
                       ))}
                     </div>
                   ) : (
@@ -1913,7 +1926,12 @@ export const App: React.FC = () => {
                               onClick={() => setSelectedMatch(match)}
                               className="cursor-pointer transform hover:scale-[1.01] transition-all"
                             >
-                              <FinishedMatchCard match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
+                              <FinishedMatchCard
+                                match={match}
+                                now={currentTime}
+                                analysis={matchAnalysesMap.get(match.id)}
+                                onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                              />
                             </div>
                           ))}
                         </div>
@@ -2027,6 +2045,7 @@ export const App: React.FC = () => {
                                   onSelect={(m) => setSelectedMatch(m)}
                                   isFavorite={favorites.includes(match.id)}
                                   onToggleFavorite={toggleFavorite}
+                                  onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
                                 />
                               );
                             })}
@@ -2124,7 +2143,13 @@ export const App: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                           {liveFiltered?.map((match) => (
-                            <FinishedMatchCard key={match.id} match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
+                            <FinishedMatchCard
+                              key={match.id}
+                              match={match}
+                              now={currentTime}
+                              analysis={matchAnalysesMap.get(match.id)}
+                              onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                            />
                           ))}
                         </div>
                       </div>
@@ -2141,7 +2166,13 @@ export const App: React.FC = () => {
                         <>
                           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                             {displayedFinished.map((match) => (
-                              <FinishedMatchCard key={match.id} match={match} now={currentTime} analysis={matchAnalysesMap.get(match.id)} />
+                              <FinishedMatchCard
+                                key={match.id}
+                                match={match}
+                                now={currentTime}
+                                analysis={matchAnalysesMap.get(match.id)}
+                                onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                              />
                             ))}
                           </div>
 
@@ -2201,6 +2232,7 @@ export const App: React.FC = () => {
           betslipItems={betslipItems}
           onToggleBetslip={handleToggleBetslip}
           onOpenBetslip={() => setIsBetslipOpen(true)}
+          onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
         />
       )}
 
@@ -2213,6 +2245,7 @@ export const App: React.FC = () => {
         onRemoveItem={handleRemoveBetslipItem}
         onClearAll={handleClearBetslip}
         onConsultAI={handleConsultAIFromSlip}
+        onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
         onSaveToBankroll={(items, stake, totalOdds, systemConfig) => {
           saveNewSlip(items, stake, totalOdds, systemConfig);
           setSavedSlips(getSavedSlips());

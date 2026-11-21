@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { Match, MatchAnalysis } from '../types';
-import { CheckCircle2, Flag, FileWarning, MapPin, Radio, Activity, Sparkles, Check, X } from 'lucide-react';
+import { CheckCircle2, Flag, FileWarning, MapPin, Radio, Activity, Sparkles, Check, X, Play } from 'lucide-react';
 import { getMatchLiveState } from '../utils/liveMatchHelper';
 import { formatDynamicMatchTime } from '../utils/dateHelper';
 import { evaluatePredictionStatus } from '../utils/predictionTrackerHelper';
@@ -13,9 +13,10 @@ interface FinishedMatchCardProps {
   match: Match;
   now?: Date;
   analysis?: MatchAnalysis | null;
+  onOpenLiveTV?: (match: Match) => void;
 }
 
-const FinishedMatchCardComponent: React.FC<FinishedMatchCardProps> = ({ match, now, analysis }) => {
+const FinishedMatchCardComponent: React.FC<FinishedMatchCardProps> = ({ match, now, analysis, onOpenLiveTV }) => {
   const { homeTeam, awayTeam } = match;
   const liveState = getMatchLiveState(match, now);
   const { isLive, isFinished, liveMinute, displayScore } = liveState;
@@ -68,19 +69,36 @@ const FinishedMatchCardComponent: React.FC<FinishedMatchCardProps> = ({ match, n
 
         <div className="flex items-center space-x-1.5 text-[10px] sm:text-[11px] shrink-0">
           {isLive ? (
-            <span className={`flex items-center space-x-1 font-extrabold px-2 py-0.5 rounded-md border animate-pulse ${
-              liveMinute === 'Devre Arası'
-                ? 'text-amber-300 bg-amber-500/20 border-amber-500/40'
-                : 'text-rose-300 bg-rose-500/20 border-rose-500/40'
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full animate-ping inline-block ${
-                liveMinute === 'Devre Arası' ? 'bg-amber-400' : 'bg-rose-500'
-              }`} />
-              <Radio className={`w-3 h-3 animate-pulse ${
-                liveMinute === 'Devre Arası' ? 'text-amber-400' : 'text-rose-400'
-              }`} />
-              <span>{liveMinute === 'Devre Arası' ? 'DEVRE ARASI' : `CANLI • ${liveMinute || 'Oynanıyor'}`}</span>
-            </span>
+            <div className="flex items-center space-x-1.5">
+              <span className={`flex items-center space-x-1 font-extrabold px-2 py-0.5 rounded-md border animate-pulse ${
+                liveMinute === 'Devre Arası'
+                  ? 'text-amber-300 bg-amber-500/20 border-amber-500/40'
+                  : 'text-rose-300 bg-rose-500/20 border-rose-500/40'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full animate-ping inline-block ${
+                  liveMinute === 'Devre Arası' ? 'bg-amber-400' : 'bg-rose-500'
+                }`} />
+                <Radio className={`w-3 h-3 animate-pulse ${
+                  liveMinute === 'Devre Arası' ? 'text-amber-400' : 'text-rose-400'
+                }`} />
+                <span>{liveMinute === 'Devre Arası' ? 'DEVRE ARASI' : `CANLI • ${liveMinute || 'Oynanıyor'}`}</span>
+              </span>
+
+              {onOpenLiveTV && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenLiveTV(match);
+                  }}
+                  className="px-2 py-0.5 rounded-md bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 font-black text-[10px] flex items-center gap-1 shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer animate-pulse"
+                  title="Canlı Maç Yayınını Aç"
+                >
+                  <Play className="w-2.5 h-2.5 fill-slate-950" />
+                  <span>İZLE</span>
+                </button>
+              )}
+            </div>
           ) : (
             <span className="flex items-center space-x-1 text-slate-300 font-bold bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700">
               <CheckCircle2 className="w-3 h-3 text-slate-400" />

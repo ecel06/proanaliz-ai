@@ -12,6 +12,7 @@ import {
 import { TeamRadarChart } from './TeamRadarChart';
 import { FormBadgeTooltip } from './FormBadgeTooltip';
 import { getFormDetails } from '../utils/formDetails';
+import { getMatchLiveState } from '../utils/liveMatchHelper';
 import {
   X,
   Bot,
@@ -40,7 +41,8 @@ import {
   History,
   Stethoscope,
   Users,
-  MapPin
+  MapPin,
+  Play
 } from 'lucide-react';
 
 interface MatchDetailModalProps {
@@ -50,6 +52,7 @@ interface MatchDetailModalProps {
   betslipItems?: UserBetslipItem[];
   onToggleBetslip?: (match: Match, option: BettingPickOption) => void;
   onOpenBetslip?: () => void;
+  onOpenLiveTV?: (match?: Match) => void;
 }
 
 export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
@@ -58,7 +61,8 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   onClose,
   betslipItems = [],
   onToggleBetslip,
-  onOpenBetslip
+  onOpenBetslip,
+  onOpenLiveTV
 }) => {
   const [activeTab, setActiveTab] = useState<'markets' | 'momentum' | 'h2h' | 'squad-ref' | 'analysis' | 'monte-carlo' | 'fair-odds'>('markets');
   const [hoveredMomentumMinute, setHoveredMomentumMinute] = useState<number | null>(null);
@@ -73,6 +77,10 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
     awayAttackerOut: false,
     awayDefenderOut: false
   });
+
+  const liveState = useMemo(() => {
+    return match ? getMatchLiveState(match) : null;
+  }, [match]);
 
   // SofaScore-style Attack Momentum & Pressure timeline computation
   const momentumData = useMemo(() => {
@@ -306,6 +314,19 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Canlı Yayın İzle Butonu */}
+            {liveState?.isLive && onOpenLiveTV && (
+              <button
+                type="button"
+                onClick={() => onOpenLiveTV(match || undefined)}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 font-black text-xs shadow-lg shadow-[#c6f052]/30 active:scale-95 transition-all cursor-pointer animate-pulse"
+                title="Canlı Maç Yayınını Aç"
+              >
+                <Play className="w-3.5 h-3.5 fill-slate-950" />
+                <span>CANLI İZLE</span>
+              </button>
+            )}
+
             {/* Share / Copy Report Button */}
             <button
               onClick={handleCopyReport}
@@ -478,18 +499,42 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
               {/* Center Match Status & Primary Badge */}
               <div className="space-y-2">
-                <span className="inline-block text-xs uppercase tracking-widest font-black text-slate-500">
-                  VS
-                </span>
-                
-                <div className="px-3 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700 text-center">
-                  <div className="text-[10px] text-slate-400 uppercase font-semibold">Toplam xG</div>
-                  <div className="text-sm sm:text-base font-black text-amber-400 font-mono">{expectedTotalGoals} Gol</div>
-                </div>
+                {liveState?.isLive ? (
+                  <div className="flex flex-col items-center gap-1.5 py-1">
+                    <span className="flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-mono font-black animate-pulse">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping inline-block" />
+                      <span>CANLI • {liveState.liveMinute || "Oynanıyor"}</span>
+                    </span>
+                    <div className="text-2xl sm:text-3xl font-black font-mono text-white tracking-wider">
+                      {liveState.displayScore.home} - {liveState.displayScore.away}
+                    </div>
+                    {onOpenLiveTV && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenLiveTV(match || undefined)}
+                        className="mt-1 flex items-center space-x-1 px-3 py-1 rounded-xl bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 text-xs font-black shadow-md shadow-[#c6f052]/20 active:scale-95 transition-all cursor-pointer animate-pulse"
+                      >
+                        <Play className="w-3 h-3 fill-slate-950" />
+                        <span>CANLI İZLE</span>
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <span className="inline-block text-xs uppercase tracking-widest font-black text-slate-500">
+                      VS
+                    </span>
+                    
+                    <div className="px-3 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700 text-center">
+                      <div className="text-[10px] text-slate-400 uppercase font-semibold">Toplam xG</div>
+                      <div className="text-sm sm:text-base font-black text-amber-400 font-mono">{expectedTotalGoals} Gol</div>
+                    </div>
 
-                <div className="text-[10px] text-slate-400">
-                  {match.round}
-                </div>
+                    <div className="text-[10px] text-slate-400">
+                      {match.round}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Away */}

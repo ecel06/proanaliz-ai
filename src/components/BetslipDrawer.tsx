@@ -6,6 +6,7 @@ import { Match, UserBetslipItem } from '../types';
 import { simulateBetslipMonteCarlo } from '../utils/monteCarloHelper';
 import { calculateSystemBet, getAvailableSystemNumbers, SavedSystemConfig } from '../utils/systemBetHelper';
 import { formatDynamicMatchTime } from '../utils/dateHelper';
+import { getMatchLiveState } from '../utils/liveMatchHelper';
 import { CouponShareModal } from './CouponShareModal';
 import {
   Ticket,
@@ -23,7 +24,8 @@ import {
   ChevronDown,
   ShieldCheck,
   Share2,
-  Wallet
+  Wallet,
+  Play
 } from 'lucide-react';
 
 interface BetslipDrawerProps {
@@ -35,6 +37,7 @@ interface BetslipDrawerProps {
   onClearAll: () => void;
   onConsultAI?: (couponSummary: string) => void;
   onSaveToBankroll?: (items: UserBetslipItem[], stake: number, totalOdds: number, systemConfig?: SavedSystemConfig) => void;
+  onOpenLiveTV?: (match?: Match) => void;
 }
 
 export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
@@ -45,7 +48,8 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
   onRemoveItem,
   onClearAll,
   onConsultAI,
-  onSaveToBankroll
+  onSaveToBankroll,
+  onOpenLiveTV
 }) => {
   const [stake, setStake] = useState<number>(100);
   const [copied, setCopied] = useState(false);
@@ -278,6 +282,7 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
               <div className="space-y-2">
                 {items.map((item, idx) => {
                   const isBanko = bankoMatchIds.includes(item.matchId);
+                  const itemLiveState = getMatchLiveState(item.match);
                   return (
                     <div
                       key={item.id}
@@ -298,10 +303,33 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                           <span className="font-semibold text-emerald-400 truncate max-w-[140px]">{item.match.league}</span>
                           <span>•</span>
                           <span>{formatDynamicMatchTime(item.match)}</span>
+                          {itemLiveState.isLive && (
+                            <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-bold border border-rose-500/40 text-[9px] animate-pulse">
+                              CANLI {itemLiveState.liveMinute ? `• ${itemLiveState.liveMinute}` : ''}
+                            </span>
+                          )}
                         </div>
 
-                        <div className="text-xs sm:text-sm font-extrabold text-white truncate">
-                          {item.match.homeTeam.name} <span className="text-slate-500 font-normal">vs</span> {item.match.awayTeam.name}
+                        <div className="flex items-center justify-between gap-1.5 min-w-0">
+                          <div className="text-xs sm:text-sm font-extrabold text-white truncate">
+                            {item.match.homeTeam.name} <span className="text-slate-500 font-normal">vs</span> {item.match.awayTeam.name}
+                          </div>
+
+                          {/* CANLI İZLE BUTONU (Fotoğraftaki gibi sarı/yeşil parlayan buton) */}
+                          {itemLiveState.isLive && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenLiveTV?.(item.match);
+                              }}
+                              className="px-2 py-0.5 rounded-md bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 font-black text-[10px] sm:text-[11px] flex items-center gap-1 shrink-0 shadow-sm shadow-[#c6f052]/20 active:scale-95 transition-all cursor-pointer animate-pulse"
+                              title="Canlı Maç Yayınını Aç"
+                            >
+                              <Play className="w-2.5 h-2.5 fill-slate-950" />
+                              <span>İZLE</span>
+                            </button>
+                          )}
                         </div>
 
                         <div className="flex items-center space-x-2 mt-1">
