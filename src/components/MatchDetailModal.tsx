@@ -13,6 +13,7 @@ import { TeamRadarChart } from './TeamRadarChart';
 import { FormBadgeTooltip } from './FormBadgeTooltip';
 import { getFormDetails } from '../utils/formDetails';
 import { getMatchLiveState } from '../utils/liveMatchHelper';
+import { getBroadcasterShortLabel } from '../utils/broadcasterHelper';
 import {
   X,
   Bot,
@@ -320,10 +321,13 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 type="button"
                 onClick={() => onOpenLiveTV(match || undefined)}
                 className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 font-black text-xs shadow-lg shadow-[#c6f052]/30 active:scale-95 transition-all cursor-pointer animate-pulse"
-                title="Canlı Maç Yayınını Aç"
+                title={`Canlı Maç Yayınını Aç (${getBroadcasterShortLabel(match)})`}
               >
                 <Play className="w-3.5 h-3.5 fill-slate-950" />
                 <span>CANLI İZLE</span>
+                <span className="text-[10px] font-extrabold opacity-80 border-l border-slate-950/30 pl-1.5">
+                  {getBroadcasterShortLabel(match)}
+                </span>
               </button>
             )}
 
@@ -513,9 +517,13 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                         type="button"
                         onClick={() => onOpenLiveTV(match || undefined)}
                         className="mt-1 flex items-center space-x-1 px-3 py-1 rounded-xl bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 text-xs font-black shadow-md shadow-[#c6f052]/20 active:scale-95 transition-all cursor-pointer animate-pulse"
+                        title={`Canlı Maç Yayınını Aç (${getBroadcasterShortLabel(match)})`}
                       >
                         <Play className="w-3 h-3 fill-slate-950" />
                         <span>CANLI İZLE</span>
+                        <span className="text-[10px] font-extrabold opacity-80 border-l border-slate-950/30 pl-1">
+                          {getBroadcasterShortLabel(match)}
+                        </span>
                       </button>
                     )}
                   </div>

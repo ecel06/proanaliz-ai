@@ -8,6 +8,7 @@ import { CheckCircle2, Flag, FileWarning, MapPin, Radio, Activity, Sparkles, Che
 import { getMatchLiveState } from '../utils/liveMatchHelper';
 import { formatDynamicMatchTime } from '../utils/dateHelper';
 import { evaluatePredictionStatus } from '../utils/predictionTrackerHelper';
+import { getBroadcasterShortLabel } from '../utils/broadcasterHelper';
 
 interface FinishedMatchCardProps {
   match: Match;
@@ -92,10 +93,13 @@ const FinishedMatchCardComponent: React.FC<FinishedMatchCardProps> = ({ match, n
                     onOpenLiveTV(match);
                   }}
                   className="px-2 py-0.5 rounded-md bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 font-black text-[10px] flex items-center gap-1 shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer animate-pulse"
-                  title="Canlı Maç Yayınını Aç"
+                  title={`Canlı Maç Yayınını Aç (${getBroadcasterShortLabel(match)})`}
                 >
                   <Play className="w-2.5 h-2.5 fill-slate-950" />
                   <span>İZLE</span>
+                  <span className="text-[9px] font-extrabold opacity-75 border-l border-slate-950/30 pl-1">
+                    {getBroadcasterShortLabel(match)}
+                  </span>
                 </button>
               )}
             </div>

@@ -385,6 +385,12 @@ export const App: React.FC = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isLiveTVModalOpen, setIsLiveTVModalOpen] = useState(false);
+  const [liveTVTargetMatch, setLiveTVTargetMatch] = useState<Match | null>(null);
+
+  const handleOpenLiveTV = (match?: Match) => {
+    setLiveTVTargetMatch(match || null);
+    setIsLiveTVModalOpen(true);
+  };
 
   // Section-specific mobile subtabs & actions
   const [horseRacingSubTab, setHorseRacingSubTab] = useState<'bulletin' | 'ai_coupons' | 'ikili_cifte' | 'results' | 'changes'>('bulletin');
@@ -411,7 +417,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.15';
+  const CLIENT_BUILD_VERSION = '2026.11.20.16';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -793,7 +799,11 @@ export const App: React.FC = () => {
       // 2. If any overlay modal or selected match detail is open, close it first
       if (selectedMatch) { setSelectedMatch(null); return; }
       if (isFeedbackModalOpen) { setIsFeedbackModalOpen(false); return; }
-      if (isLiveTVModalOpen) { setIsLiveTVModalOpen(false); return; }
+      if (isLiveTVModalOpen) {
+        setIsLiveTVModalOpen(false);
+        setLiveTVTargetMatch(null);
+        return;
+      }
       if (isAuthModalOpen) { setIsAuthModalOpen(false); return; }
       if (isProfileModalOpen) { setIsProfileModalOpen(false); return; }
       if (isVipModalOpen) { setIsVipModalOpen(false); return; }
@@ -1464,7 +1474,7 @@ export const App: React.FC = () => {
         onOpenCoupons={() => setActiveTabMode('coupons')}
         onOpenInstallApp={() => setIsInstallModalOpen(true)}
         onOpenAIChat={() => setIsAIChatOpen(true)}
-        onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+        onOpenLiveTV={() => handleOpenLiveTV()}
         onRefreshLiveBulletin={handleRefreshBulletin}
         isRefreshing={isRefreshing}
         lastUpdatedText={lastUpdatedDisplay}
@@ -1813,7 +1823,7 @@ export const App: React.FC = () => {
                           match={match}
                           now={currentTime}
                           analysis={matchAnalysesMap.get(match.id)}
-                          onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                          onOpenLiveTV={handleOpenLiveTV}
                         />
                       ))}
                     </div>
@@ -1855,7 +1865,7 @@ export const App: React.FC = () => {
                               onSelect={(m) => setSelectedMatch(m)}
                               isFavorite={favorites.includes(match.id)}
                               onToggleFavorite={toggleFavorite}
-                              onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                              onOpenLiveTV={handleOpenLiveTV}
                             />
                           );
                         })}
@@ -1883,7 +1893,7 @@ export const App: React.FC = () => {
                           match={match}
                           now={currentTime}
                           analysis={matchAnalysesMap.get(match.id)}
-                          onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                          onOpenLiveTV={handleOpenLiveTV}
                         />
                       ))}
                     </div>
@@ -1930,7 +1940,7 @@ export const App: React.FC = () => {
                                 match={match}
                                 now={currentTime}
                                 analysis={matchAnalysesMap.get(match.id)}
-                                onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                                onOpenLiveTV={handleOpenLiveTV}
                               />
                             </div>
                           ))}
@@ -2045,7 +2055,7 @@ export const App: React.FC = () => {
                                   onSelect={(m) => setSelectedMatch(m)}
                                   isFavorite={favorites.includes(match.id)}
                                   onToggleFavorite={toggleFavorite}
-                                  onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                                  onOpenLiveTV={handleOpenLiveTV}
                                 />
                               );
                             })}
@@ -2148,7 +2158,7 @@ export const App: React.FC = () => {
                               match={match}
                               now={currentTime}
                               analysis={matchAnalysesMap.get(match.id)}
-                              onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                              onOpenLiveTV={handleOpenLiveTV}
                             />
                           ))}
                         </div>
@@ -2171,7 +2181,7 @@ export const App: React.FC = () => {
                                 match={match}
                                 now={currentTime}
                                 analysis={matchAnalysesMap.get(match.id)}
-                                onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+                                onOpenLiveTV={handleOpenLiveTV}
                               />
                             ))}
                           </div>
@@ -2232,7 +2242,7 @@ export const App: React.FC = () => {
           betslipItems={betslipItems}
           onToggleBetslip={handleToggleBetslip}
           onOpenBetslip={() => setIsBetslipOpen(true)}
-          onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+          onOpenLiveTV={handleOpenLiveTV}
         />
       )}
 
@@ -2245,7 +2255,7 @@ export const App: React.FC = () => {
         onRemoveItem={handleRemoveBetslipItem}
         onClearAll={handleClearBetslip}
         onConsultAI={handleConsultAIFromSlip}
-        onOpenLiveTV={() => setIsLiveTVModalOpen(true)}
+        onOpenLiveTV={handleOpenLiveTV}
         onSaveToBankroll={(items, stake, totalOdds, systemConfig) => {
           saveNewSlip(items, stake, totalOdds, systemConfig);
           setSavedSlips(getSavedSlips());
@@ -2452,7 +2462,11 @@ export const App: React.FC = () => {
         {isLiveTVModalOpen && (
           <LiveTVModal
             isOpen={isLiveTVModalOpen}
-            onClose={() => setIsLiveTVModalOpen(false)}
+            targetMatch={liveTVTargetMatch}
+            onClose={() => {
+              setIsLiveTVModalOpen(false);
+              setLiveTVTargetMatch(null);
+            }}
           />
         )}
       </React.Suspense>

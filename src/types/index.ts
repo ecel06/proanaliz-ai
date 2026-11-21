@@ -80,6 +80,8 @@ export interface Match {
   awayTeam: TeamStats;
   status?: 'upcoming' | 'live' | 'finished' | 'postponed' | 'cancelled';
   liveMinute?: string;
+  broadcaster?: string;
+  broadcastChannel?: string;
   currentScore?: {
     home: number;
     away: number;

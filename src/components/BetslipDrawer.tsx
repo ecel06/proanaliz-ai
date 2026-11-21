@@ -7,6 +7,7 @@ import { simulateBetslipMonteCarlo } from '../utils/monteCarloHelper';
 import { calculateSystemBet, getAvailableSystemNumbers, SavedSystemConfig } from '../utils/systemBetHelper';
 import { formatDynamicMatchTime } from '../utils/dateHelper';
 import { getMatchLiveState } from '../utils/liveMatchHelper';
+import { getBroadcasterShortLabel } from '../utils/broadcasterHelper';
 import { CouponShareModal } from './CouponShareModal';
 import {
   Ticket,
@@ -315,7 +316,7 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                             {item.match.homeTeam.name} <span className="text-slate-500 font-normal">vs</span> {item.match.awayTeam.name}
                           </div>
 
-                          {/* CANLI İZLE BUTONU (Fotoğraftaki gibi sarı/yeşil parlayan buton) */}
+                          {/* CANLI İZLE BUTONU (Fotoğraftaki gibi sarı/yeşil parlayan buton + Maçın Kanalı) */}
                           {itemLiveState.isLive && (
                             <button
                               type="button"
@@ -324,10 +325,13 @@ export const BetslipDrawer: React.FC<BetslipDrawerProps> = ({
                                 onOpenLiveTV?.(item.match);
                               }}
                               className="px-2 py-0.5 rounded-md bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 font-black text-[10px] sm:text-[11px] flex items-center gap-1 shrink-0 shadow-sm shadow-[#c6f052]/20 active:scale-95 transition-all cursor-pointer animate-pulse"
-                              title="Canlı Maç Yayınını Aç"
+                              title={`Canlı Maç Yayınını Aç (${getBroadcasterShortLabel(item.match)})`}
                             >
                               <Play className="w-2.5 h-2.5 fill-slate-950" />
                               <span>İZLE</span>
+                              <span className="text-[9px] font-extrabold opacity-75 border-l border-slate-950/30 pl-1">
+                                {getBroadcasterShortLabel(item.match)}
+                              </span>
                             </button>
                           )}
                         </div>
