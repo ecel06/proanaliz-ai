@@ -1,7 +1,7 @@
 // src/components/LiveTVModal.tsx
-// Nesine.com Birebir Canlı Maç İzleme Oynatıcısı, 2D Saha Radarı & Anlık İddaa Oranları Merkezi
-// Kullanıcının Nesine'de gördüğü birebir pop-up oynatıcı tasarımını (Üst Banner, Siyah Ekran, Nesine Kontrolleri,
-// ve resmi nesine.com/canli-mac-izle/Player popup bağlantısını) sunar.
+// 2D Canlı Futbol Sahası Radarı & Kesintisiz Canlı TV Spor Kanalları Merkezi
+// Kullanıcı maç detayından veya bültenden tıkladığında 2D saha simülasyonu (top takibi, atak durumu, istatistikler)
+// veya doğrudan çalışan şifresiz HD canlı spor kanallarını (TRT Spor, A Spor, HT Spor, TJK TV) kesintisiz açar.
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Hls from 'hls.js';
@@ -23,17 +23,11 @@ import {
   TrendingUp,
   Clock,
   Check,
-  Globe,
-  Lock
+  Flame,
+  ShieldCheck
 } from 'lucide-react';
 import { Match, UserBetslipItem } from '../types';
 import { BettingPickOption } from '../utils/oddsHelper';
-import {
-  getMatchBroadcaster,
-  getNesinePlayerUrl,
-  openNesinePlayerPopup,
-  COUNTRY_BROADCASTER_PRESETS
-} from '../utils/broadcasterHelper';
 import { getMatchLiveState } from '../utils/liveMatchHelper';
 
 export interface TVChannel {
@@ -50,7 +44,6 @@ export interface TVChannel {
   logoText: string;
   accentColor: string;
   description: string;
-  isLivePlayable?: boolean;
 }
 
 export const TV_CHANNELS: TVChannel[] = [
@@ -67,8 +60,7 @@ export const TV_CHANNELS: TVChannel[] = [
     officialStreamUrl: 'https://www.trtspor.com.tr/canli-yayin-izle/trt-spor',
     logoText: 'TRT SPOR',
     accentColor: '#10B981',
-    description: '🔴 Canlı Yayın • Trendyol 1. Lig & Milli Maçlar',
-    isLivePlayable: true
+    description: '🔴 Canlı Yayın • Trendyol 1. Lig & Milli Maçlar'
   },
   {
     id: 'aspor',
@@ -83,8 +75,7 @@ export const TV_CHANNELS: TVChannel[] = [
     officialStreamUrl: 'https://www.aspor.com.tr/canli-yayin',
     logoText: 'A SPOR',
     accentColor: '#06B6D4',
-    description: '🔴 Canlı Yayın • Ziraat Türkiye Kupası & Canlı Yorumlar',
-    isLivePlayable: true
+    description: '🔴 Canlı Yayın • Ziraat Türkiye Kupası & Canlı Yorumlar'
   },
   {
     id: 'htspor',
@@ -99,88 +90,22 @@ export const TV_CHANNELS: TVChannel[] = [
     officialStreamUrl: 'https://www.htspor.com/canli-yayin',
     logoText: 'HT SPOR',
     accentColor: '#8B5CF6',
-    description: '🔴 Canlı Yayın • Süper Lig & Taktik Analizleri',
-    isLivePlayable: true
+    description: '🔴 Canlı Yayın • Süper Lig & Taktik Analizleri'
   },
   {
-    id: 'skysports_uk',
-    name: 'Sky Sports Main Event HD',
-    country: 'İngiltere',
-    countryFlag: '🇬🇧',
-    category: 'İngiltere Premier Lig & Kupa',
-    badge: '🇬🇧 İNGİLTERE',
-    youtubeId: '',
-    streamUrl: '',
-    fallbackWebUrl: 'https://www.skysports.com/football',
-    officialStreamUrl: 'https://www.skysports.com/watch',
-    logoText: 'SKY SPORTS',
-    accentColor: '#3B82F6',
-    description: '🔴 Canlı Yayın • İngiltere Resmi Yayıncısı',
-    isLivePlayable: false
-  },
-  {
-    id: 'skysports_scotland',
-    name: 'Sky Sports Football UK',
-    country: 'İskoçya',
-    countryFlag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
-    category: 'İskoçya Premiership (Celtic, Rangers)',
-    badge: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 İSKOÇYA',
-    youtubeId: '',
-    streamUrl: '',
-    fallbackWebUrl: 'https://www.skysports.com/scottish-football',
-    officialStreamUrl: 'https://www.skysports.com/watch',
-    logoText: 'SKY FOOTBALL',
-    accentColor: '#0EA5E9',
-    description: '🔴 Canlı Yayın • İskoçya Resmi Yayıncısı',
-    isLivePlayable: false
-  },
-  {
-    id: 'movistar_es',
-    name: 'Movistar+ LaLiga HD',
-    country: 'İspanya',
-    countryFlag: '🇪🇸',
-    category: 'İspanya La Liga',
-    badge: '🇪🇸 İSPANYA',
-    youtubeId: '',
-    streamUrl: '',
-    fallbackWebUrl: 'https://www.laliga.com',
-    officialStreamUrl: 'https://ver.movistarplus.es',
-    logoText: 'MOVISTAR+',
-    accentColor: '#F59E0B',
-    description: '🔴 Canlı Yayın • İspanya Resmi Yayıncısı',
-    isLivePlayable: false
-  },
-  {
-    id: 'skysport_it',
-    name: 'Sky Sport Calcio HD',
-    country: 'İtalya',
-    countryFlag: '🇮🇹',
-    category: 'İtalya Serie A',
-    badge: '🇮🇹 İTALYA',
-    youtubeId: '',
-    streamUrl: '',
-    fallbackWebUrl: 'https://sport.sky.it/calcio',
-    officialStreamUrl: 'https://sport.sky.it/calcio/serie-a',
-    logoText: 'SKY CALCIO',
-    accentColor: '#EC4899',
-    description: '🔴 Canlı Yayın • İtalya Resmi Yayıncısı',
-    isLivePlayable: false
-  },
-  {
-    id: 'bein1',
-    name: 'beIN SPORTS 1 HD',
+    id: 'tjktv',
+    name: 'TJK TV HD',
     country: 'Türkiye',
     countryFlag: '🇹🇷',
-    category: 'Trendyol Süper Lig & Derbiler',
-    badge: '🇹🇷 SÜPER LİG',
+    category: 'Canlı At Yarışları & Yurt İçi/Dışı',
+    badge: 'AT YARIŞI HD',
     youtubeId: '',
-    streamUrl: '',
-    fallbackWebUrl: 'https://beinsports.com.tr',
-    officialStreamUrl: 'https://www.todtv.com.tr',
-    logoText: 'beIN 1',
-    accentColor: '#9333EA',
-    description: '🔴 Canlı Yayın • Trendyol Süper Lig Resmi Yayıncısı',
-    isLivePlayable: false
+    streamUrl: 'https://tjktv.ercdn.net/tjktv/tjktv.m3u8',
+    fallbackWebUrl: 'https://www.tjk.org/TR/YarisSever/Static/CanliYayin/TjkTv',
+    officialStreamUrl: 'https://www.tjk.org/TR/YarisSever/Static/CanliYayin/TjkTv',
+    logoText: 'TJK TV',
+    accentColor: '#F59E0B',
+    description: '🔴 Canlı Yayın • Türkiye Jokey Kulübü Resmi Canlı Yayını'
   }
 ];
 
@@ -195,7 +120,7 @@ const LivePlaylistLoader = class extends (Hls.DefaultConfig.loader as any) {
   }
 } as any;
 
-// 📺 Yüksek Performanslı Resmi HLS Video Oynatıcısı
+// 📺 Yüksek Performanslı Kesintisiz HLS Canlı Video Oynatıcısı
 const HlsVideoPlayer: React.FC<{
   streamUrl: string;
   channelName: string;
@@ -285,15 +210,15 @@ const HlsVideoPlayer: React.FC<{
       {isLoading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 backdrop-blur-[2px] z-10">
           <RefreshCw className="w-8 h-8 text-[#c6f052] animate-spin mb-2" />
-          <span className="text-xs font-bold text-white">{channelName} Canlı Yayını Bağlanıyor...</span>
+          <span className="text-xs font-bold text-white">{channelName} Yayını Bağlanıyor...</span>
         </div>
       )}
     </div>
   );
 };
 
-// 🏟️ Nesine Tarzı 2D Canlı Futbol Sahası Simülatörü
-const NesineLivePitchRadar: React.FC<{
+// 🏟️ 2D Canlı Futbol Sahası Simülatörü (Top Takibi, Ataklar, Canlı Skor)
+const LivePitchRadar: React.FC<{
   match: Match;
   liveState: ReturnType<typeof getMatchLiveState>;
 }> = ({ match, liveState }) => {
@@ -351,12 +276,12 @@ const NesineLivePitchRadar: React.FC<{
       <div className="absolute top-1/2 left-2 w-12 h-24 border-2 border-white/40 border-l-0 pointer-events-none -translate-y-1/2" />
       <div className="absolute top-1/2 right-2 w-12 h-24 border-2 border-white/40 border-r-0 pointer-events-none -translate-y-1/2" />
 
-      {/* Üst Bilgi Barı */}
-      <div className="relative z-10 flex items-center justify-between bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/60 shadow-lg">
+      {/* Üst Canlı Skor & Atak Durumu */}
+      <div className="relative z-10 flex items-center justify-between bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/60 shadow-lg">
         <div className="flex items-center space-x-2">
           <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
           <span className="text-xs font-black text-white">{match.homeTeam.name}</span>
-          <span className="px-2 py-0.5 rounded bg-black/60 font-mono text-sm font-black text-[#c6f052] border border-white/10">
+          <span className="px-2 py-0.5 rounded bg-black/70 font-mono text-sm font-black text-[#c6f052] border border-white/10">
             {liveState.displayScore.home} - {liveState.displayScore.away}
           </span>
           <span className="text-xs font-black text-white">{match.awayTeam.name}</span>
@@ -396,7 +321,7 @@ const NesineLivePitchRadar: React.FC<{
         </div>
         <div className="flex items-center space-x-1.5 text-[#c6f052] font-black text-[10px] tracking-wider uppercase">
           <Activity className="w-3.5 h-3.5 animate-bounce" />
-          <span>Nesine Canlı Radar</span>
+          <span>2D Saha Radarı</span>
         </div>
       </div>
     </div>
@@ -422,12 +347,13 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
   onSelectMatch,
   onToggleBetslip,
   betslipItems = [],
-  initialChannelId = 'skysports_uk'
+  initialChannelId = 'trtspor'
 }) => {
   const [activeMatch, setActiveMatch] = useState<Match | null>(targetMatch);
-  const [channels, setChannels] = useState<TVChannel[]>(TV_CHANNELS);
+  const [channels] = useState<TVChannel[]>(TV_CHANNELS);
   const [activeChannelId, setActiveChannelId] = useState<string>(initialChannelId);
-  const [activeViewMode, setActiveViewMode] = useState<'video' | 'radar'>('radar');
+  // Varsayılan: Eğer bir maça tıklandıysa 2D Saha Radarı, maç yoksa Canlı TV
+  const [activeViewMode, setActiveViewMode] = useState<'radar' | 'tv'>('radar');
   const [isMiniMode, setIsMiniMode] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
@@ -436,19 +362,11 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
   useEffect(() => {
     if (targetMatch) {
       setActiveMatch(targetMatch);
-      const detected = getMatchBroadcaster(targetMatch);
-      setActiveChannelId(detected.channelId);
-      if (detected.isLivePlayable) {
-        setActiveViewMode('video');
-      } else {
-        // Doğrudan açık video akışı yoksa kesintisiz 2D Canlı Futbol Sahası Radarını aç
-        setActiveViewMode('radar');
-      }
+      setActiveViewMode('radar');
     }
   }, [targetMatch, isOpen]);
 
   const currentMatch = activeMatch || targetMatch;
-  const matchBroadcaster = useMemo(() => currentMatch ? getMatchBroadcaster(currentMatch) : null, [currentMatch]);
   const currentChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
   const liveState = useMemo(() => currentMatch ? getMatchLiveState(currentMatch) : null, [currentMatch]);
 
@@ -456,24 +374,12 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
   const matchTitle = currentMatch
     ? `${currentMatch.homeTeam.name} - ${currentMatch.awayTeam.name}`
-    : 'Canlı Maç Yayını';
-  const bcid = currentMatch?.iddaaCode || currentMatch?.id?.replace(/\D/g, '') || '698990';
-  const nesineUrlDisplay = `nesine.com/canli-mac-izle/Player?bcid=${bcid}&p=14&et=${encodeURIComponent(matchTitle)}`;
-
-  const handleOpenNativePopup = () => {
-    openNesinePlayerPopup(currentMatch);
-  };
+    : currentChannel.name;
 
   const handleMatchChange = (m: Match) => {
     setActiveMatch(m);
     onSelectMatch?.(m);
-    const detected = getMatchBroadcaster(m);
-    setActiveChannelId(detected.channelId);
-    if (detected.isLivePlayable) {
-      setActiveViewMode('video');
-    } else {
-      setActiveViewMode('radar');
-    }
+    setActiveViewMode('radar');
   };
 
   // 📺 1. Küçük Ekran (Floating PiP Modu)
@@ -484,18 +390,11 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           <div className="flex items-center space-x-2 truncate">
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
             <span className="text-xs font-black text-white truncate">
-              {matchTitle}
+              {activeViewMode === 'radar' && currentMatch ? matchTitle : currentChannel.name}
             </span>
           </div>
 
           <div className="flex items-center space-x-1">
-            <button
-              onClick={handleOpenNativePopup}
-              className="p-1 rounded text-slate-400 hover:text-[#c6f052]"
-              title="Ayrı Nesine Penceresinde Aç"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-            </button>
             <button
               onClick={() => setIsMiniMode(false)}
               className="p-1 rounded text-slate-400 hover:text-white"
@@ -514,7 +413,9 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
         </div>
 
         <div className="relative aspect-video bg-black flex items-center justify-center">
-          {currentChannel.isLivePlayable && currentChannel.streamUrl ? (
+          {activeViewMode === 'radar' && currentMatch && liveState ? (
+            <LivePitchRadar match={currentMatch} liveState={liveState} />
+          ) : (
             <HlsVideoPlayer
               streamUrl={currentChannel.streamUrl}
               channelName={currentChannel.name}
@@ -522,70 +423,74 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
               isPlaying={isPlaying}
               volume={volume}
             />
-          ) : currentMatch && liveState ? (
-            <NesineLivePitchRadar match={currentMatch} liveState={liveState} />
-          ) : (
-            <div className="text-xs text-slate-400 p-4 text-center">Yayın Yükleniyor...</div>
           )}
         </div>
       </div>
     );
   }
 
-  // 📺 2. Birebir Nesine.com Canlı Maç Player Ekranı (Kullanıcının Gönderdiği Görselin Aynısı)
+  // 📺 2. Ana Oynatıcı Modalı (2D Radar & Canlı TV Kanalları)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-4xl rounded-2xl bg-black border border-slate-800 shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[96vh]">
+      <div className="relative w-full max-w-4xl rounded-2xl bg-[#090d16] border border-slate-800 shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[96vh]">
         
-        {/* 🌐 1. Nesine Tarayıcı Adres Çubuğu & Pencere Başlığı */}
-        <div className="px-3 py-2 bg-[#12161f] border-b border-slate-800/90 flex items-center justify-between shrink-0">
+        {/* Üst Başlık & Sekme Seçici Barı */}
+        <div className="px-3 py-2.5 bg-[#12161f] border-b border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2 min-w-0 flex-1 pr-2">
-            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-black/60 border border-slate-700/60 max-w-xl w-full truncate">
-              <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="font-mono text-[11px] text-slate-300 truncate select-all">
-                {nesineUrlDisplay}
-              </span>
-            </div>
+            {activeViewMode === 'radar' && currentMatch && liveState ? (
+              <div className="flex items-center space-x-2 truncate">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+                <span className="text-xs sm:text-sm font-black text-white truncate">
+                  ⚽ {currentMatch.homeTeam.name}{' '}
+                  <span className="text-[#c6f052] font-mono mx-1">
+                    {liveState.displayScore.home} - {liveState.displayScore.away}
+                  </span>{' '}
+                  {currentMatch.awayTeam.name}
+                </span>
+                <span className="px-2 py-0.5 rounded bg-rose-600/30 text-rose-400 font-mono text-[10px] font-bold border border-rose-500/40">
+                  {liveState.liveMinute || 'Canlı'}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2 truncate">
+                <span className="text-base">{currentChannel.countryFlag}</span>
+                <span className="text-xs sm:text-sm font-black text-white truncate">
+                  {currentChannel.name}
+                </span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold border border-emerald-500/40">
+                  {currentChannel.badge}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center space-x-2 shrink-0">
-            {/* Pop-up Butonu: Nesine'nin kendi penceresini anında açar */}
-            <button
-              type="button"
-              onClick={handleOpenNativePopup}
-              className="px-2.5 py-1 rounded-lg bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 font-black text-[11px] flex items-center space-x-1 shadow-sm active:scale-95 transition-all cursor-pointer"
-              title="Resmi Nesine Canlı TV Pop-up Penceresini Aç"
-            >
-              <ExternalLink className="w-3 h-3 fill-slate-950" />
-              <span className="hidden sm:inline">Pop-up Pencerede Aç</span>
-              <span className="sm:hidden">Pop-up</span>
-            </button>
-
-            {/* Radar / Video Sekme Değiştirici */}
+            {/* Sekme Değiştirici: 2D Saha Radarı vs Canlı TV */}
             <div className="flex items-center bg-slate-900 rounded-lg p-0.5 border border-slate-800">
               <button
                 type="button"
-                onClick={() => setActiveViewMode('video')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center space-x-1 cursor-pointer ${
-                  activeViewMode === 'video'
-                    ? 'bg-slate-800 text-white shadow-xs font-black'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Tv className="w-3 h-3 text-[#c6f052]" />
-                <span className="hidden sm:inline">Yayın</span>
-              </button>
-              <button
-                type="button"
                 onClick={() => setActiveViewMode('radar')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center space-x-1 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                   activeViewMode === 'radar'
                     ? 'bg-[#c6f052] text-slate-950 shadow-xs font-black'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Activity className="w-3 h-3" />
-                <span className="hidden sm:inline">2D Radar</span>
+                <Activity className="w-3.5 h-3.5" />
+                <span>2D Saha Radarı</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveViewMode('tv')}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  activeViewMode === 'tv'
+                    ? 'bg-[#c6f052] text-slate-950 shadow-xs font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Tv className="w-3.5 h-3.5" />
+                <span>Canlı TV Kanalları</span>
               </button>
             </div>
 
@@ -607,45 +512,36 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           </div>
         </div>
 
-        {/* 🏇 2. Nesine At Yarışları Banner'ı (Görseldeki Birebir Banner) */}
-        <div className="relative bg-gradient-to-r from-[#111111] via-[#2a1c06] to-[#111111] border-b border-amber-900/40 px-4 py-2 flex items-center justify-between shrink-0 select-none overflow-hidden">
-          {/* Arka plan süslemesi */}
-          <div className="absolute right-24 top-0 bottom-0 w-48 bg-gradient-to-l from-amber-500/15 to-transparent pointer-events-none" />
-
-          <div className="flex items-center space-x-3 z-10">
-            {/* Sarı/Siyah At Yarışları Rozeti */}
-            <div className="flex items-center space-x-1.5">
-              <span className="text-xs sm:text-sm font-black text-amber-400 uppercase tracking-tight">
-                AT YARIŞLARI ARTIK
-              </span>
-              <span className="px-2 py-0.5 rounded bg-black text-white font-black text-xs sm:text-sm border border-amber-400/80 shadow-md">
-                NESİNE'DE!
-              </span>
-            </div>
-
-            <span className="hidden md:inline text-xs text-amber-200/90 font-medium italic">
-              Hemen oyna, heyecanı başka bir seviyede yaşa!
-            </span>
+        {/* Canlı TV Modundaysa Kanal Değiştirici Haplar */}
+        {activeViewMode === 'tv' && (
+          <div className="px-3 py-2 bg-[#0d121c] border-b border-slate-800 flex items-center space-x-2 overflow-x-auto shrink-0 select-none">
+            <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">Kanal:</span>
+            {channels.map((ch) => {
+              const isSelected = ch.id === activeChannelId;
+              return (
+                <button
+                  key={ch.id}
+                  type="button"
+                  onClick={() => setActiveChannelId(ch.id)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 shrink-0 cursor-pointer ${
+                    isSelected
+                      ? 'bg-slate-800 text-[#c6f052] border border-[#c6f052]/80 shadow-sm'
+                      : 'bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  <span>{ch.countryFlag}</span>
+                  <span>{ch.name}</span>
+                </button>
+              );
+            })}
           </div>
+        )}
 
-          <div className="flex items-center space-x-2 z-10">
-            <span className="text-xl">🏇</span>
-            <a
-              href="https://www.nesine.com/at-yarisi"
-              target="_blank"
-              rel="noreferrer"
-              className="px-3.5 py-1 rounded-full bg-[#e11d48] hover:bg-[#be123c] text-white font-black text-xs uppercase tracking-wider shadow-md shadow-rose-900/40 active:scale-95 transition-all"
-            >
-              HEMEN OYNA
-            </a>
-          </div>
-        </div>
-
-        {/* 📺 3. Ana Video & Yayın Ekranı (Pure Black Canvas) */}
+        {/* Ana Ekran (2D Radar veya Canlı TV Player) */}
         <div className="relative aspect-video w-full bg-black flex items-center justify-center shrink-0 overflow-hidden">
           {activeViewMode === 'radar' && currentMatch && liveState ? (
-            <NesineLivePitchRadar match={currentMatch} liveState={liveState} />
-          ) : currentChannel.isLivePlayable && currentChannel.streamUrl ? (
+            <LivePitchRadar match={currentMatch} liveState={liveState} />
+          ) : (
             <HlsVideoPlayer
               streamUrl={currentChannel.streamUrl}
               channelName={currentChannel.name}
@@ -653,196 +549,66 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
               isPlaying={isPlaying}
               volume={volume}
             />
-          ) : (
-            /* Nesine Canlı Maç Yayın Merkezi (Resmi Nesine Yayını & Pop-up Tetikleyici) */
-            <div className="relative w-full h-full bg-black flex flex-col items-center justify-center text-center p-6 space-y-4">
-              {/* Canlı Yayın Durum Bildirimi */}
-              <div className="flex items-center space-x-2">
-                <span className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
-                <span className="px-3 py-1 rounded-full bg-rose-600/20 text-rose-400 border border-rose-500/40 text-xs font-black uppercase tracking-wider">
-                  CANLI MAÇ YAYINI
-                </span>
-                {currentMatch && liveState && (
-                  <span className="px-2.5 py-1 rounded-full bg-black text-[#c6f052] font-mono text-xs font-bold border border-[#c6f052]/40">
-                    {liveState.liveMinute || 'Canlı'}
-                  </span>
-                )}
-              </div>
-
-              {/* Maç İsmi & Canlı Skor */}
-              {currentMatch && (
-                <div className="space-y-1">
-                  <h3 className="text-lg sm:text-2xl font-black text-white">
-                    {currentMatch.homeTeam.name}
-                    {liveState && (
-                      <span className="text-[#c6f052] mx-3 font-mono">
-                        {liveState.displayScore.home} - {liveState.displayScore.away}
-                      </span>
-                    )}
-                    {currentMatch.awayTeam.name}
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    {currentChannel.countryFlag} {currentChannel.name} • {currentMatch.league}
-                  </p>
-                </div>
-              )}
-
-              {/* Aksiyon Butonları: 2D Radar & Nesine Pop-up */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setActiveViewMode('radar')}
-                  className="px-6 py-3 rounded-xl bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 font-black text-sm shadow-[0_0_30px_rgba(198,240,82,0.4)] flex items-center space-x-2.5 active:scale-95 transition-all cursor-pointer animate-pulse"
-                >
-                  <Activity className="w-5 h-5 text-slate-950" />
-                  <span>2D CANLI SAHA RADARINI AÇ (KESİNTİSİZ)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleOpenNativePopup}
-                  className="px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs border border-slate-700 flex items-center space-x-2 cursor-pointer transition-all"
-                  title="Eğer Nesine'de video yayın hakkı varsa izleyin"
-                >
-                  <Play className="w-4 h-4 text-[#c6f052]" />
-                  <span>Nesine Video Pop-up Dene</span>
-                  <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-                </button>
-              </div>
-
-              {/* Bilgilendirme Kutusu: Nesine Erişim Hatası Uyarısı */}
-              <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-3 max-w-lg text-[11px] text-amber-200/90 text-left space-y-1">
-                <div className="font-bold flex items-center space-x-1.5 text-amber-300">
-                  <span>⚠️ Nesine "Canlı yayın bilgilerine erişilememiştir" Uyarısı Hakkında:</span>
-                </div>
-                <p>
-                  Nesine.com sadece yayın hakkını satın aldığı belirli maçları (Serie A, La Liga vb.) video ile yayınlar. 
-                  Bu maç için video yayını yoksa lütfen <b>2D Canlı Saha Radarı</b> sekmesini kullanın; topun pozisyonu, 
-                  ataklar ve canlı skorlar anlık olarak kesintisiz akmaktadır.
-                </p>
-              </div>
-
-              {/* Hızlı Açık TV Kanalları */}
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs">
-                <span className="text-slate-400 text-[11px]">Şifresiz Canlı Kanallar:</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveChannelId('trtspor');
-                    setActiveViewMode('video');
-                  }}
-                  className="px-2.5 py-1 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900 font-bold text-[10px] cursor-pointer"
-                >
-                  TRT Spor HD
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveChannelId('aspor');
-                    setActiveViewMode('video');
-                  }}
-                  className="px-2.5 py-1 rounded-md bg-cyan-950 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-900 font-bold text-[10px] cursor-pointer"
-                >
-                  A Spor HD
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveChannelId('htspor');
-                    setActiveViewMode('video');
-                  }}
-                  className="px-2.5 py-1 rounded-md bg-purple-950 text-purple-300 border border-purple-500/40 hover:bg-purple-900 font-bold text-[10px] cursor-pointer"
-                >
-                  HT Spor HD
-                </button>
-              </div>
-            </div>
           )}
         </div>
 
-        {/* 🎛️ 4. Nesine Video Kontrol Cubugu: Oynat/Durdur, Sure, NESINE Logosu, Ses Slider */}
-        <div className="px-4 py-2.5 bg-black border-t border-slate-900 flex items-center justify-between shrink-0 select-none">
-          {/* Sol: Oynat/Durdur Butonu ve Zaman Göstergesi */}
-          <div className="flex items-center space-x-3">
-            <button
-              type="button"
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="text-white hover:text-[#c6f052] transition-colors p-1"
-              title={isPlaying ? 'Durdur' : 'Oynat'}
-            >
-              {isPlaying ? (
-                <Pause className="w-5 h-5 fill-white text-white" />
-              ) : (
-                <Play className="w-5 h-5 fill-white text-white" />
-              )}
-            </button>
+        {/* Canlı TV Modu İçin Video Kontrolleri */}
+        {activeViewMode === 'tv' && (
+          <div className="px-4 py-2 bg-black border-t border-slate-900 flex items-center justify-between shrink-0 select-none">
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="text-white hover:text-[#c6f052] transition-colors p-1 cursor-pointer"
+                title={isPlaying ? 'Durdur' : 'Oynat'}
+              >
+                {isPlaying ? (
+                  <Pause className="w-5 h-5 fill-white text-white" />
+                ) : (
+                  <Play className="w-5 h-5 fill-white text-white" />
+                )}
+              </button>
 
-            <span className="font-mono text-xs font-semibold text-slate-300">
-              {'-0:01'}
-            </span>
-
-            <span className="flex items-center space-x-1 px-1.5 py-0.5 rounded bg-rose-600/20 text-rose-400 text-[10px] font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-              <span>CANLI</span>
-            </span>
-          </div>
-
-          {/* Orta: Parlayan NESİNE Logosu (Görseldeki Tam Tasarım) */}
-          <div className="flex items-center justify-center">
-            <div className="flex items-center space-x-1 tracking-widest font-black text-white text-sm sm:text-base opacity-90 select-none">
-              <span>NES</span>
-              <span className="relative inline-flex items-center justify-center text-[#c6f052]">
-                İ
-                <span className="absolute -top-1 w-1.5 h-1.5 rounded-full bg-[#c6f052] shadow-[0_0_6px_#c6f052]" />
+              <span className="flex items-center space-x-1 px-2 py-0.5 rounded bg-rose-600/20 text-rose-400 text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                <span>CANLI YAYIN</span>
               </span>
-              <span>NE</span>
-            </div>
-          </div>
-
-          {/* Sağ: Ses Slider'ı (Beyaz Çizgi ve Tutamaç) & Tam Ekran */}
-          <div className="flex items-center space-x-3">
-            <button
-              type="button"
-              onClick={() => setIsMuted(!isMuted)}
-              className="text-white hover:text-[#c6f052] transition-colors p-1"
-              title={isMuted ? 'Sesi Aç' : 'Sesi Kapat'}
-            >
-              {isMuted ? (
-                <VolumeX className="w-4 h-4 text-slate-400" />
-              ) : (
-                <Volume2 className="w-4 h-4 text-white" />
-              )}
-            </button>
-
-            {/* Beyaz Nesine Ses Çubuğu (Görseldeki ----⚪) */}
-            <div className="w-20 sm:w-28 flex items-center">
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={isMuted ? 0 : volume}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  setVolume(val);
-                  if (val > 0) setIsMuted(false);
-                }}
-                className="w-full h-1 bg-white/40 rounded-lg appearance-none cursor-pointer accent-white"
-              />
             </div>
 
-            <button
-              type="button"
-              onClick={handleOpenNativePopup}
-              className="text-slate-400 hover:text-white transition-colors p-1"
-              title="Ayrı Pencerede Büyüt"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={() => setIsMuted(!isMuted)}
+                className="text-white hover:text-[#c6f052] transition-colors p-1 cursor-pointer"
+                title={isMuted ? 'Sesi Aç' : 'Sesi Kapat'}
+              >
+                {isMuted ? (
+                  <VolumeX className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <Volume2 className="w-4 h-4 text-white" />
+                )}
+              </button>
 
-        {/* ⚡ 5. Nesine Anlık Canlı Oranlar Çubuğu (Kupona Ekleme) */}
+              <div className="w-20 sm:w-28 flex items-center">
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={isMuted ? 0 : volume}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setVolume(val);
+                    if (val > 0) setIsMuted(false);
+                  }}
+                  className="w-full h-1 bg-white/40 rounded-lg appearance-none cursor-pointer accent-[#c6f052]"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Canlı İddaa Oranları Barı (Kupona Ekle) */}
         {currentMatch && currentMatch.odds && (
           <div className="px-4 py-2 bg-[#090d16] border-t border-slate-800 flex items-center justify-between gap-2 overflow-x-auto shrink-0">
             <div className="flex items-center space-x-1.5 text-xs font-black text-slate-400 shrink-0">
@@ -934,20 +700,20 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           </div>
         )}
 
-        {/* 🔄 6. Devam Eden Diğer Canlı Maçlar Listesi */}
+        {/* Diğer Canlı Devam Eden Maçlar Listesi */}
         <div className="p-2.5 bg-black border-t border-slate-900 space-y-1.5 overflow-y-auto max-h-[24vh]">
           <div className="flex items-center justify-between px-1">
             <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
               <span>Diğer Canlı Devam Eden Maçlar ({allLiveMatches.length})</span>
             </span>
-            <span className="text-[10px] text-slate-500">Tıklayıp Anında Yayını Değiştirin</span>
+            <span className="text-[10px] text-slate-500">Tıklayıp Anında 2D Radarını Açın</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
             {allLiveMatches.map((m) => {
               const mLive = getMatchLiveState(m);
-              const isSelected = activeMatch?.id === m.id;
+              const isSelected = activeMatch?.id === m.id && activeViewMode === 'radar';
 
               return (
                 <div
@@ -971,8 +737,8 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
                   <div className="flex flex-col items-end shrink-0 space-y-0.5">
                     <span className="px-1.5 py-0.5 rounded bg-[#c6f052] text-slate-950 font-black text-[9px] flex items-center space-x-0.5">
-                      <Play className="w-2 h-2 fill-slate-950" />
-                      <span>İZLE</span>
+                      <Activity className="w-2 h-2 text-slate-950" />
+                      <span>RADAR</span>
                     </span>
                     <span className="text-[9px] font-mono font-bold text-rose-400">
                       {mLive.displayScore.home}-{mLive.displayScore.away}
