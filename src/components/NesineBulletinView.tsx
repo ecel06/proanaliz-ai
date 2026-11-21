@@ -5,7 +5,7 @@ import { getMatchParsedDate, TURKISH_MONTHS } from '../utils/dateHelper';
 import { getMatchLiveState, parseMatchKickoffEpoch } from '../utils/liveMatchHelper';
 import { detectMatchValueBets } from '../utils/valueBetHelper';
 import { CategoryFilter } from '../utils/categoryFilterHelper';
-import { Clock, Star, ChevronRight, Trophy, Bot, Radio, Target, Zap, Sparkles, Flame, ShieldAlert } from 'lucide-react';
+import { Clock, Star, ChevronRight, Trophy, Bot, Radio, Target, Zap, Sparkles, Flame, ShieldAlert, Play } from 'lucide-react';
 
 interface NesineBulletinViewProps {
   matches: Match[];
@@ -17,6 +17,7 @@ interface NesineBulletinViewProps {
   onToggleBetslip: (match: Match, option: BettingPickOption) => void;
   sortOption?: string;
   selectedCategory?: CategoryFilter;
+  onOpenLiveTV?: (match: Match) => void;
 }
 
 interface QuickOddDef {
@@ -165,7 +166,8 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
   betslipItems,
   onToggleBetslip,
   sortOption = 'time',
-  selectedCategory = 'all'
+  selectedCategory = 'all',
+  onOpenLiveTV
 }) => {
   // If user selected a Rank-based sort (confidence, goals, ms1), show a single unified ranked leaderboard!
   // If user selected 'time', group chronologically by league (traditional Nesine style).
@@ -459,13 +461,29 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                             {match.awayTeam.name}
                           </span>
                           {liveState.isLive && (
-                            <span className="font-mono font-black text-rose-400 text-xs ml-auto shrink-0 bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.2 rounded">
-                              {liveState.displayScore.home} - {liveState.displayScore.away}
-                            </span>
+                            <div className="flex items-center space-x-1.5 ml-auto shrink-0">
+                              <span className="font-mono font-black text-rose-400 text-xs bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.5 rounded">
+                                {liveState.displayScore.home} - {liveState.displayScore.away}
+                              </span>
+                              {onOpenLiveTV && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onOpenLiveTV(match);
+                                  }}
+                                  className="px-2 py-0.5 rounded bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 font-black text-[10px] flex items-center gap-1 shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer"
+                                  title="Canlı Maç Yayınını Aç"
+                                >
+                                  <Play className="w-2.5 h-2.5 fill-slate-950" />
+                                  <span>İZLE</span>
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                         <div className="flex items-center space-x-2 text-[10px] text-slate-400 font-medium pt-0.5">
-                          <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                          <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
                             xG {analysis.expectedTotalGoals.toFixed(1)}
                           </span>
                           <span className="text-slate-600">•</span>
@@ -717,7 +735,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
                       </div>
 
                       {liveState.isLive && (
-                        <div className="shrink-0 flex items-center space-x-1 font-mono font-black text-rose-400 text-xs bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.2 rounded">
+                        <div className="shrink-0 flex items-center space-x-1 font-mono font-black text-rose-400 text-xs bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.5 rounded">
                           <span>{liveState.displayScore.home}</span>
                           <span>-</span>
                           <span>{liveState.displayScore.away}</span>
@@ -727,7 +745,7 @@ export const NesineBulletinView: React.FC<NesineBulletinViewProps> = ({
 
                     {/* Row 2.5: Micro Analytics Strip (xG, KG %, 2.5Ü %) */}
                     <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 font-medium px-0.5 overflow-hidden">
-                      <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 shrink-0 truncate max-w-[150px]">
+                      <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0 truncate max-w-[150px]">
                         AI: {primaryPrediction.label} (%{primaryPrediction.confidence})
                       </span>
                       <span className="text-slate-600 shrink-0">•</span>

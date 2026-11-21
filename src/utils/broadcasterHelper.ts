@@ -529,3 +529,37 @@ export function getBroadcasterShortLabel(match?: Match | null): string {
   const info = getMatchBroadcaster(match);
   return info.shortLabel;
 }
+
+/**
+ * Nesine.com'un resmi canlı maç izleme URL'sini oluşturur.
+ * Örnek: https://www.nesine.com/canli-mac-izle/Player?bcid=698990&p=14&et=Parma%20-%20AS%20Roma
+ */
+export function getNesinePlayerUrl(match?: Match | null): string {
+  if (!match) return 'https://www.nesine.com/canli-iddaa';
+  const rawId = match.iddaaCode || match.id?.replace(/\D/g, '') || '698990';
+  const bcid = rawId.length >= 4 ? rawId : '698990';
+  const matchTitle = `${match.homeTeam.name} - ${match.awayTeam.name}`;
+  return `https://www.nesine.com/canli-mac-izle/Player?bcid=${bcid}&p=14&et=${encodeURIComponent(matchTitle)}`;
+}
+
+/**
+ * Nesine.com'un resmi canlı yayın penceresini (pop-up) açar.
+ * Tarayıcının X-Frame-Options engelini aşarak doğrudan Nesine'nin kendi player'ında maçı açar.
+ */
+export function openNesinePlayerPopup(match?: Match | null): Window | null {
+  const url = getNesinePlayerUrl(match);
+  const windowName = match
+    ? `NesinePlayer_${match.id || 'live'}`.replace(/[^a-zA-Z0-9_]/g, '_')
+    : 'NesinePlayer';
+  
+  const popup = window.open(
+    url,
+    windowName,
+    'width=860,height=580,top=100,left=120,toolbar=no,menubar=no,location=no,status=no,resizable=yes,scrollbars=no'
+  );
+  if (popup) {
+    popup.focus();
+  }
+  return popup;
+}
+

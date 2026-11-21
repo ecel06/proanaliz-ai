@@ -417,7 +417,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.18';
+  const CLIENT_BUILD_VERSION = '2026.11.20.19';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1850,6 +1850,10 @@ export const App: React.FC = () => {
                           onToggleBetslip={handleToggleBetslip}
                           sortOption={sortOption}
                           selectedCategory={selectedCategory}
+                          onOpenLiveTV={(m) => {
+                            setLiveTVTargetMatch(m);
+                            setIsLiveTVModalOpen(true);
+                          }}
                         />
                       </React.Suspense>
                     ) : (
@@ -2039,6 +2043,10 @@ export const App: React.FC = () => {
                             onToggleBetslip={handleToggleBetslip}
                             sortOption={sortOption}
                             selectedCategory={selectedCategory}
+                            onOpenLiveTV={(m) => {
+                              setLiveTVTargetMatch(m);
+                              setIsLiveTVModalOpen(true);
+                            }}
                           />
                         </React.Suspense>
                       ) : (
