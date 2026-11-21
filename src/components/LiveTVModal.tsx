@@ -427,7 +427,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
   const [activeMatch, setActiveMatch] = useState<Match | null>(targetMatch);
   const [channels, setChannels] = useState<TVChannel[]>(TV_CHANNELS);
   const [activeChannelId, setActiveChannelId] = useState<string>(initialChannelId);
-  const [activeViewMode, setActiveViewMode] = useState<'video' | 'radar'>('video');
+  const [activeViewMode, setActiveViewMode] = useState<'video' | 'radar'>('radar');
   const [isMiniMode, setIsMiniMode] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
@@ -441,8 +441,8 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
       if (detected.isLivePlayable) {
         setActiveViewMode('video');
       } else {
-        // Yabancı maçlarda varsayılan olarak Nesine TV ekranını video modunda aç
-        setActiveViewMode('video');
+        // Doğrudan açık video akışı yoksa kesintisiz 2D Canlı Futbol Sahası Radarını aç
+        setActiveViewMode('radar');
       }
     }
   }, [targetMatch, isOpen]);
@@ -469,7 +469,11 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
     onSelectMatch?.(m);
     const detected = getMatchBroadcaster(m);
     setActiveChannelId(detected.channelId);
-    setActiveViewMode('video');
+    if (detected.isLivePlayable) {
+      setActiveViewMode('video');
+    } else {
+      setActiveViewMode('radar');
+    }
   };
 
   // 📺 1. Küçük Ekran (Floating PiP Modu)
@@ -683,30 +687,74 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                 </div>
               )}
 
-              {/* Büyük Nesine Pop-up Başlatıcı Butonu (Kullanıcının Açılmasını İstediği Yayın) */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={handleOpenNativePopup}
-                  className="px-6 py-3 rounded-xl bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 font-black text-sm shadow-[0_0_30px_rgba(198,240,82,0.4)] flex items-center space-x-2.5 active:scale-95 transition-all cursor-pointer animate-pulse"
-                >
-                  <Play className="w-5 h-5 fill-slate-950" />
-                  <span>NESİNE CANLI YAYININI BAŞLAT (POP-UP)</span>
-                  <ExternalLink className="w-4 h-4" />
-                </button>
-
+              {/* Aksiyon Butonları: 2D Radar & Nesine Pop-up */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
                 <button
                   type="button"
                   onClick={() => setActiveViewMode('radar')}
-                  className="px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs border border-slate-700 flex items-center space-x-2 cursor-pointer transition-all"
+                  className="px-6 py-3 rounded-xl bg-[#c6f052] hover:bg-[#b5e040] text-slate-950 font-black text-sm shadow-[0_0_30px_rgba(198,240,82,0.4)] flex items-center space-x-2.5 active:scale-95 transition-all cursor-pointer animate-pulse"
                 >
-                  <Activity className="w-4 h-4 text-[#c6f052]" />
-                  <span>2D Saha Radarını Aç</span>
+                  <Activity className="w-5 h-5 text-slate-950" />
+                  <span>2D CANLI SAHA RADARINI AÇ (KESİNTİSİZ)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleOpenNativePopup}
+                  className="px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs border border-slate-700 flex items-center space-x-2 cursor-pointer transition-all"
+                  title="Eğer Nesine'de video yayın hakkı varsa izleyin"
+                >
+                  <Play className="w-4 h-4 text-[#c6f052]" />
+                  <span>Nesine Video Pop-up Dene</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                 </button>
               </div>
 
-              <div className="text-[11px] text-slate-400 max-w-md pt-1">
-                ℹ️ Telif hakları gereği yabancı lig karşılaşmaları (İngiltere, İskoçya, İspanya, İtalya) Nesine.com tarafından resmi pop-up pencerede şifresiz ve kesintisiz canlı yayınlanmaktadır.
+              {/* Bilgilendirme Kutusu: Nesine Erişim Hatası Uyarısı */}
+              <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-3 max-w-lg text-[11px] text-amber-200/90 text-left space-y-1">
+                <div className="font-bold flex items-center space-x-1.5 text-amber-300">
+                  <span>⚠️ Nesine "Canlı yayın bilgilerine erişilememiştir" Uyarısı Hakkında:</span>
+                </div>
+                <p>
+                  Nesine.com sadece yayın hakkını satın aldığı belirli maçları (Serie A, La Liga vb.) video ile yayınlar. 
+                  Bu maç için video yayını yoksa lütfen <b>2D Canlı Saha Radarı</b> sekmesini kullanın; topun pozisyonu, 
+                  ataklar ve canlı skorlar anlık olarak kesintisiz akmaktadır.
+                </p>
+              </div>
+
+              {/* Hızlı Açık TV Kanalları */}
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs">
+                <span className="text-slate-400 text-[11px]">Şifresiz Canlı Kanallar:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveChannelId('trtspor');
+                    setActiveViewMode('video');
+                  }}
+                  className="px-2.5 py-1 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900 font-bold text-[10px] cursor-pointer"
+                >
+                  TRT Spor HD
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveChannelId('aspor');
+                    setActiveViewMode('video');
+                  }}
+                  className="px-2.5 py-1 rounded-md bg-cyan-950 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-900 font-bold text-[10px] cursor-pointer"
+                >
+                  A Spor HD
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveChannelId('htspor');
+                    setActiveViewMode('video');
+                  }}
+                  className="px-2.5 py-1 rounded-md bg-purple-950 text-purple-300 border border-purple-500/40 hover:bg-purple-900 font-bold text-[10px] cursor-pointer"
+                >
+                  HT Spor HD
+                </button>
               </div>
             </div>
           )}
@@ -807,63 +855,59 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                 type="button"
                 onClick={() => onToggleBetslip?.(currentMatch, {
                   key: 'ms1',
-                  label: 'MS 1',
+                  label: `MS 1 (${currentMatch.homeTeam.shortName || currentMatch.homeTeam.name})`,
                   marketKey: 'match_result',
                   marketName: 'Maç Sonucu',
                   odd: currentMatch.odds?.ms1 || 1.80,
-                  probability: 52,
-                  isOfficial: true
+                  probability: 52
                 })}
                 className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-[#c6f052] text-xs font-black text-white flex items-center space-x-1.5 cursor-pointer transition-all"
               >
                 <span className="text-slate-400 font-normal text-[10px]">MS 1</span>
-                <span className="text-[#c6f052] font-mono">{currentMatch.odds.ms1?.toFixed(2) || '1.80'}</span>
+                <span className="text-[#c6f052] font-mono">{currentMatch.odds?.ms1?.toFixed(2) || '1.80'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => onToggleBetslip?.(currentMatch, {
                   key: 'msX',
-                  label: 'MS X',
+                  label: 'MS X (Beraberlik)',
                   marketKey: 'match_result',
                   marketName: 'Maç Sonucu',
                   odd: currentMatch.odds?.msX || 3.20,
-                  probability: 28,
-                  isOfficial: true
+                  probability: 28
                 })}
                 className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-[#c6f052] text-xs font-black text-white flex items-center space-x-1.5 cursor-pointer transition-all"
               >
                 <span className="text-slate-400 font-normal text-[10px]">MS X</span>
-                <span className="text-[#c6f052] font-mono">{currentMatch.odds.msX?.toFixed(2) || '3.20'}</span>
+                <span className="text-[#c6f052] font-mono">{currentMatch.odds?.msX?.toFixed(2) || '3.20'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => onToggleBetslip?.(currentMatch, {
                   key: 'ms2',
-                  label: 'MS 2',
+                  label: `MS 2 (${currentMatch.awayTeam.shortName || currentMatch.awayTeam.name})`,
                   marketKey: 'match_result',
                   marketName: 'Maç Sonucu',
                   odd: currentMatch.odds?.ms2 || 3.40,
-                  probability: 20,
-                  isOfficial: true
+                  probability: 20
                 })}
                 className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-[#c6f052] text-xs font-black text-white flex items-center space-x-1.5 cursor-pointer transition-all"
               >
                 <span className="text-slate-400 font-normal text-[10px]">MS 2</span>
-                <span className="text-[#c6f052] font-mono">{currentMatch.odds.ms2?.toFixed(2) || '3.40'}</span>
+                <span className="text-[#c6f052] font-mono">{currentMatch.odds?.ms2?.toFixed(2) || '3.40'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => onToggleBetslip?.(currentMatch, {
                   key: 'over25',
-                  label: '2.5 Üst',
+                  label: '2.5 Gol Üst',
                   marketKey: 'goals_25',
                   marketName: '2.5 Gol Alt/Üst',
                   odd: 1.75,
-                  probability: 55,
-                  isOfficial: true
+                  probability: 55
                 })}
                 className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-[#c6f052] text-xs font-black text-white flex items-center space-x-1.5 cursor-pointer transition-all"
               >
@@ -875,12 +919,11 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                 type="button"
                 onClick={() => onToggleBetslip?.(currentMatch, {
                   key: 'bttsYes',
-                  label: 'KG Var',
+                  label: 'Karşılıklı Gol Var',
                   marketKey: 'btts',
                   marketName: 'Karşılıklı Gol',
                   odd: 1.85,
-                  probability: 52,
-                  isOfficial: true
+                  probability: 52
                 })}
                 className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-[#c6f052] text-xs font-black text-white flex items-center space-x-1.5 cursor-pointer transition-all"
               >
