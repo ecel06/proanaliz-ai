@@ -1,6 +1,6 @@
 // src/components/LiveTVModal.tsx
 // 2D Canlı Futbol Sahası Radarı & Kesintisiz Canlı TV Spor Kanalları Merkezi
-// Kullanıcı maç detayından veya bültenden tıkladığında 2D saha simülasyonu (top takibi, atak durumu, istatistikler)
+// Kullanıcı maç detayından veya bültenden tıkladığında 2D saha simülasyonunu (top takibi, atak durumu, istatistikler)
 // veya doğrudan çalışan şifresiz HD canlı spor kanallarını (TRT Spor, A Spor, HT Spor, TJK TV) kesintisiz açar.
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -12,19 +12,11 @@ import {
   Minimize2,
   Volume2,
   VolumeX,
-  ExternalLink,
-  Radio,
   RefreshCw,
   Play,
   Pause,
   Activity,
-  Ticket,
-  ChevronRight,
-  TrendingUp,
-  Clock,
-  Check,
-  Flame,
-  ShieldCheck
+  Ticket
 } from 'lucide-react';
 import { Match, UserBetslipItem } from '../types';
 import { BettingPickOption } from '../utils/oddsHelper';
@@ -37,10 +29,7 @@ export interface TVChannel {
   countryFlag: string;
   category: string;
   badge: string;
-  youtubeId: string;
   streamUrl: string;
-  fallbackWebUrl: string;
-  officialStreamUrl?: string;
   logoText: string;
   accentColor: string;
   description: string;
@@ -54,10 +43,7 @@ export const TV_CHANNELS: TVChannel[] = [
     countryFlag: '🇹🇷',
     category: 'Trendyol 1. Lig & Uluslar Ligi',
     badge: 'ŞİFRESİZ HD',
-    youtubeId: '',
     streamUrl: 'https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor',
-    fallbackWebUrl: 'https://www.trtspor.com.tr/canli-yayin-izle/trt-spor',
-    officialStreamUrl: 'https://www.trtspor.com.tr/canli-yayin-izle/trt-spor',
     logoText: 'TRT SPOR',
     accentColor: '#10B981',
     description: '🔴 Canlı Yayın • Trendyol 1. Lig & Milli Maçlar'
@@ -69,10 +55,7 @@ export const TV_CHANNELS: TVChannel[] = [
     countryFlag: '🇹🇷',
     category: 'Ziraat Türkiye Kupası',
     badge: 'ŞİFRESİZ HD',
-    youtubeId: 'DwFLd1Mg0eE',
     streamUrl: 'https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8',
-    fallbackWebUrl: 'https://www.aspor.com.tr/canli-yayin',
-    officialStreamUrl: 'https://www.aspor.com.tr/canli-yayin',
     logoText: 'A SPOR',
     accentColor: '#06B6D4',
     description: '🔴 Canlı Yayın • Ziraat Türkiye Kupası & Canlı Yorumlar'
@@ -84,10 +67,7 @@ export const TV_CHANNELS: TVChannel[] = [
     countryFlag: '🇹🇷',
     category: 'Süper Lig & Maç Yorumları',
     badge: 'CANLI HD',
-    youtubeId: 'gcWaPe_LBMc',
     streamUrl: 'https://ciner.daioncdn.net/ht-spor/ht-spor.m3u8?app=web',
-    fallbackWebUrl: 'https://www.htspor.com/canli-yayin',
-    officialStreamUrl: 'https://www.htspor.com/canli-yayin',
     logoText: 'HT SPOR',
     accentColor: '#8B5CF6',
     description: '🔴 Canlı Yayın • Süper Lig & Taktik Analizleri'
@@ -99,10 +79,7 @@ export const TV_CHANNELS: TVChannel[] = [
     countryFlag: '🇹🇷',
     category: 'Canlı At Yarışları & Yurt İçi/Dışı',
     badge: 'AT YARIŞI HD',
-    youtubeId: '',
     streamUrl: 'https://tjktv.ercdn.net/tjktv/tjktv.m3u8',
-    fallbackWebUrl: 'https://www.tjk.org/TR/YarisSever/Static/CanliYayin/TjkTv',
-    officialStreamUrl: 'https://www.tjk.org/TR/YarisSever/Static/CanliYayin/TjkTv',
     logoText: 'TJK TV',
     accentColor: '#F59E0B',
     description: '🔴 Canlı Yayın • Türkiye Jokey Kulübü Resmi Canlı Yayını'
@@ -280,18 +257,18 @@ const LivePitchRadar: React.FC<{
       <div className="relative z-10 flex items-center justify-between bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/60 shadow-lg">
         <div className="flex items-center space-x-2">
           <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-          <span className="text-xs font-black text-white">{match.homeTeam.name}</span>
-          <span className="px-2 py-0.5 rounded bg-black/70 font-mono text-sm font-black text-[#c6f052] border border-white/10">
+          <span className="text-xs sm:text-sm font-black text-white">{match.homeTeam.name}</span>
+          <span className="px-2.5 py-0.5 rounded bg-black/80 font-mono text-sm sm:text-base font-black text-[#c6f052] border border-white/10">
             {liveState.displayScore.home} - {liveState.displayScore.away}
           </span>
-          <span className="text-xs font-black text-white">{match.awayTeam.name}</span>
+          <span className="text-xs sm:text-sm font-black text-white">{match.awayTeam.name}</span>
         </div>
 
         <div className="flex items-center space-x-2">
-          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${badge.color}`}>
+          <span className={`px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm ${badge.color}`}>
             {badge.text}
           </span>
-          <span className="px-2 py-0.5 rounded bg-rose-600 text-white font-mono text-xs font-bold animate-pulse">
+          <span className="px-2.5 py-0.5 rounded bg-rose-600 text-white font-mono text-xs font-bold animate-pulse">
             {liveState.liveMinute || 'Canlı'}
           </span>
         </div>
@@ -303,7 +280,7 @@ const LivePitchRadar: React.FC<{
         style={{ left: `${ballPosition.x}%`, top: `${ballPosition.y}%` }}
       >
         <div className="relative">
-          <div className="w-5 h-5 rounded-full bg-white border border-slate-900 shadow-[0_0_15px_#c6f052] flex items-center justify-center text-[10px] font-bold">
+          <div className="w-6 h-6 rounded-full bg-white border border-slate-900 shadow-[0_0_15px_#c6f052] flex items-center justify-center text-xs font-bold">
             ⚽
           </div>
           <div className="absolute -inset-1 rounded-full bg-[#c6f052]/50 animate-ping -z-10" />
@@ -311,7 +288,7 @@ const LivePitchRadar: React.FC<{
       </div>
 
       {/* Alt Saha İstatistik Göstergesi */}
-      <div className="relative z-10 flex items-center justify-between bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/60 text-[11px] text-slate-300">
+      <div className="relative z-10 flex items-center justify-between bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/60 text-xs text-slate-300">
         <div className="flex items-center space-x-3 font-semibold">
           <span>Topla Oynama: <b className="text-emerald-400 font-mono">%54</b> - <b className="text-indigo-400 font-mono">%46</b></span>
           <span>•</span>
@@ -319,7 +296,7 @@ const LivePitchRadar: React.FC<{
           <span>•</span>
           <span>Korner: <b className="text-amber-400 font-mono">4</b> - <b className="text-amber-400 font-mono">2</b></span>
         </div>
-        <div className="flex items-center space-x-1.5 text-[#c6f052] font-black text-[10px] tracking-wider uppercase">
+        <div className="flex items-center space-x-1.5 text-[#c6f052] font-black text-[11px] tracking-wider uppercase">
           <Activity className="w-3.5 h-3.5 animate-bounce" />
           <span>2D Saha Radarı</span>
         </div>
@@ -352,7 +329,6 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
   const [activeMatch, setActiveMatch] = useState<Match | null>(targetMatch);
   const [channels] = useState<TVChannel[]>(TV_CHANNELS);
   const [activeChannelId, setActiveChannelId] = useState<string>(initialChannelId);
-  // Varsayılan: Eğer bir maça tıklandıysa 2D Saha Radarı, maç yoksa Canlı TV
   const [activeViewMode, setActiveViewMode] = useState<'radar' | 'tv'>('radar');
   const [isMiniMode, setIsMiniMode] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
@@ -435,11 +411,11 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
       <div className="relative w-full max-w-4xl rounded-2xl bg-[#090d16] border border-slate-800 shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[96vh]">
         
         {/* Üst Başlık & Sekme Seçici Barı */}
-        <div className="px-3 py-2.5 bg-[#12161f] border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div className="px-4 py-3 bg-[#12161f] border-b border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2 min-w-0 flex-1 pr-2">
             {activeViewMode === 'radar' && currentMatch && liveState ? (
               <div className="flex items-center space-x-2 truncate">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
                 <span className="text-xs sm:text-sm font-black text-white truncate">
                   ⚽ {currentMatch.homeTeam.name}{' '}
                   <span className="text-[#c6f052] font-mono mx-1">
@@ -447,7 +423,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                   </span>{' '}
                   {currentMatch.awayTeam.name}
                 </span>
-                <span className="px-2 py-0.5 rounded bg-rose-600/30 text-rose-400 font-mono text-[10px] font-bold border border-rose-500/40">
+                <span className="px-2 py-0.5 rounded bg-rose-600/30 text-rose-400 font-mono text-[10px] font-bold border border-rose-500/40 shrink-0">
                   {liveState.liveMinute || 'Canlı'}
                 </span>
               </div>
@@ -457,7 +433,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                 <span className="text-xs sm:text-sm font-black text-white truncate">
                   {currentChannel.name}
                 </span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold border border-emerald-500/40">
+                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold border border-emerald-500/40 shrink-0">
                   {currentChannel.badge}
                 </span>
               </div>
@@ -466,11 +442,11 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
           <div className="flex items-center space-x-2 shrink-0">
             {/* Sekme Değiştirici: 2D Saha Radarı vs Canlı TV */}
-            <div className="flex items-center bg-slate-900 rounded-lg p-0.5 border border-slate-800">
+            <div className="flex items-center bg-slate-900 rounded-xl p-0.5 border border-slate-800">
               <button
                 type="button"
                 onClick={() => setActiveViewMode('radar')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                   activeViewMode === 'radar'
                     ? 'bg-[#c6f052] text-slate-950 shadow-xs font-black'
                     : 'text-slate-400 hover:text-white'
@@ -483,7 +459,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveViewMode('tv')}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                   activeViewMode === 'tv'
                     ? 'bg-[#c6f052] text-slate-950 shadow-xs font-black'
                     : 'text-slate-400 hover:text-white'
@@ -496,7 +472,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
             <button
               onClick={() => setIsMiniMode(true)}
-              className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer"
+              className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer"
               title="Küçük Ekrana Al (PiP)"
             >
               <Minimize2 className="w-3.5 h-3.5" />
@@ -504,7 +480,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-rose-600 text-slate-300 hover:text-white transition-all cursor-pointer"
+              className="p-2 rounded-xl bg-slate-800/80 hover:bg-rose-600 text-slate-300 hover:text-white transition-all cursor-pointer"
               title="Kapat"
             >
               <X className="w-4 h-4" />
@@ -514,8 +490,8 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
         {/* Canlı TV Modundaysa Kanal Değiştirici Haplar */}
         {activeViewMode === 'tv' && (
-          <div className="px-3 py-2 bg-[#0d121c] border-b border-slate-800 flex items-center space-x-2 overflow-x-auto shrink-0 select-none">
-            <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">Kanal:</span>
+          <div className="px-4 py-2 bg-[#0d121c] border-b border-slate-800 flex items-center space-x-2 overflow-x-auto shrink-0 select-none">
+            <span className="text-[11px] text-slate-400 font-bold uppercase shrink-0">Yayın Kanalı:</span>
             {channels.map((ch) => {
               const isSelected = ch.id === activeChannelId;
               return (
@@ -523,9 +499,9 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                   key={ch.id}
                   type="button"
                   onClick={() => setActiveChannelId(ch.id)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 shrink-0 cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 shrink-0 cursor-pointer ${
                     isSelected
-                      ? 'bg-slate-800 text-[#c6f052] border border-[#c6f052]/80 shadow-sm'
+                      ? 'bg-slate-800 text-[#c6f052] border border-[#c6f052]/80 shadow-sm font-black'
                       : 'bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800'
                   }`}
                 >
@@ -537,8 +513,8 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           </div>
         )}
 
-        {/* Ana Ekran (2D Radar veya Canlı TV Player) */}
-        <div className="relative aspect-video w-full bg-black flex items-center justify-center shrink-0 overflow-hidden">
+        {/* Ana Ekran (2D Radar veya Canlı TV Player) - Ferah Yükseklik */}
+        <div className="relative w-full h-[220px] sm:h-[280px] md:h-[330px] bg-black flex items-center justify-center shrink-0 overflow-hidden">
           {activeViewMode === 'radar' && currentMatch && liveState ? (
             <LivePitchRadar match={currentMatch} liveState={liveState} />
           ) : (
@@ -554,7 +530,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
         {/* Canlı TV Modu İçin Video Kontrolleri */}
         {activeViewMode === 'tv' && (
-          <div className="px-4 py-2 bg-black border-t border-slate-900 flex items-center justify-between shrink-0 select-none">
+          <div className="px-4 py-2.5 bg-black border-t border-slate-900 flex items-center justify-between shrink-0 select-none">
             <div className="flex items-center space-x-3">
               <button
                 type="button"
@@ -569,8 +545,8 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                 )}
               </button>
 
-              <span className="flex items-center space-x-1 px-2 py-0.5 rounded bg-rose-600/20 text-rose-400 text-[10px] font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+              <span className="flex items-center space-x-1 px-2.5 py-0.5 rounded bg-rose-600/20 text-rose-400 text-xs font-bold">
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
                 <span>CANLI YAYIN</span>
               </span>
             </div>
@@ -589,7 +565,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                 )}
               </button>
 
-              <div className="w-20 sm:w-28 flex items-center">
+              <div className="w-24 sm:w-32 flex items-center">
                 <input
                   type="range"
                   min="0"
@@ -608,109 +584,175 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           </div>
         )}
 
-        {/* Canlı İddaa Oranları Barı (Kupona Ekle) */}
+        {/* ⚡ 5. Canlı İddaa Oranları Barı (Geniş, Ferah & Büyük Butonlar) */}
         {currentMatch && currentMatch.odds && (
-          <div className="px-4 py-2 bg-[#090d16] border-t border-slate-800 flex items-center justify-between gap-2 overflow-x-auto shrink-0">
-            <div className="flex items-center space-x-1.5 text-xs font-black text-slate-400 shrink-0">
-              <Ticket className="w-3.5 h-3.5 text-[#c6f052]" />
-              <span className="text-white text-[11px]">CANLI İDDAA:</span>
+          <div className="px-4 py-2.5 bg-[#0a0f1d] border-t border-slate-800 flex items-center justify-between gap-3 overflow-x-auto shrink-0 select-none">
+            <div className="flex items-center space-x-2 text-xs font-black text-slate-300 shrink-0">
+              <Ticket className="w-4 h-4 text-[#c6f052]" />
+              <span className="text-white text-xs font-black uppercase tracking-wider">CANLI İDDAA:</span>
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => onToggleBetslip?.(currentMatch, {
-                  key: 'ms1',
-                  label: `MS 1 (${currentMatch.homeTeam.shortName || currentMatch.homeTeam.name})`,
-                  marketKey: 'match_result',
-                  marketName: 'Maç Sonucu',
-                  odd: currentMatch.odds?.ms1 || 1.80,
-                  probability: 52
-                })}
-                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-[#c6f052] text-xs font-black text-white flex items-center space-x-1.5 cursor-pointer transition-all"
-              >
-                <span className="text-slate-400 font-normal text-[10px]">MS 1</span>
-                <span className="text-[#c6f052] font-mono">{currentMatch.odds?.ms1?.toFixed(2) || '1.80'}</span>
-              </button>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* MS 1 */}
+              {(() => {
+                const isSelected = betslipItems.some((i) => i.matchId === currentMatch.id && i.pickKey === 'ms1');
+                return (
+                  <button
+                    type="button"
+                    onClick={() => onToggleBetslip?.(currentMatch, {
+                      key: 'ms1',
+                      label: `MS 1 (${currentMatch.homeTeam.shortName || currentMatch.homeTeam.name})`,
+                      marketKey: 'match_result',
+                      marketName: 'Maç Sonucu',
+                      odd: currentMatch.odds?.ms1 || 1.80,
+                      probability: 52
+                    })}
+                    className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-black flex items-center space-x-2 cursor-pointer transition-all active:scale-95 ${
+                      isSelected
+                        ? 'bg-[#c6f052] text-slate-950 border-[#c6f052] shadow-md shadow-[#c6f052]/30 ring-2 ring-[#c6f052]'
+                        : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-700 hover:border-[#c6f052]'
+                    }`}
+                  >
+                    <span className={isSelected ? 'text-slate-950 font-black' : 'text-slate-400 font-bold'}>MS 1</span>
+                    <span className={`font-mono text-sm sm:text-base font-black ${isSelected ? 'text-slate-950' : 'text-[#c6f052]'}`}>
+                      {currentMatch.odds?.ms1?.toFixed(2) || '1.80'}
+                    </span>
+                  </button>
+                );
+              })()}
 
-              <button
-                type="button"
-                onClick={() => onToggleBetslip?.(currentMatch, {
-                  key: 'msX',
-                  label: 'MS X (Beraberlik)',
-                  marketKey: 'match_result',
-                  marketName: 'Maç Sonucu',
-                  odd: currentMatch.odds?.msX || 3.20,
-                  probability: 28
-                })}
-                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-[#c6f052] text-xs font-black text-white flex items-center space-x-1.5 cursor-pointer transition-all"
-              >
-                <span className="text-slate-400 font-normal text-[10px]">MS X</span>
-                <span className="text-[#c6f052] font-mono">{currentMatch.odds?.msX?.toFixed(2) || '3.20'}</span>
-              </button>
+              {/* MS X */}
+              {(() => {
+                const isSelected = betslipItems.some((i) => i.matchId === currentMatch.id && i.pickKey === 'msX');
+                return (
+                  <button
+                    type="button"
+                    onClick={() => onToggleBetslip?.(currentMatch, {
+                      key: 'msX',
+                      label: 'MS X (Beraberlik)',
+                      marketKey: 'match_result',
+                      marketName: 'Maç Sonucu',
+                      odd: currentMatch.odds?.msX || 3.20,
+                      probability: 28
+                    })}
+                    className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-black flex items-center space-x-2 cursor-pointer transition-all active:scale-95 ${
+                      isSelected
+                        ? 'bg-[#c6f052] text-slate-950 border-[#c6f052] shadow-md shadow-[#c6f052]/30 ring-2 ring-[#c6f052]'
+                        : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-700 hover:border-[#c6f052]'
+                    }`}
+                  >
+                    <span className={isSelected ? 'text-slate-950 font-black' : 'text-slate-400 font-bold'}>MS X</span>
+                    <span className={`font-mono text-sm sm:text-base font-black ${isSelected ? 'text-slate-950' : 'text-[#c6f052]'}`}>
+                      {currentMatch.odds?.msX?.toFixed(2) || '3.20'}
+                    </span>
+                  </button>
+                );
+              })()}
 
-              <button
-                type="button"
-                onClick={() => onToggleBetslip?.(currentMatch, {
-                  key: 'ms2',
-                  label: `MS 2 (${currentMatch.awayTeam.shortName || currentMatch.awayTeam.name})`,
-                  marketKey: 'match_result',
-                  marketName: 'Maç Sonucu',
-                  odd: currentMatch.odds?.ms2 || 3.40,
-                  probability: 20
-                })}
-                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-[#c6f052] text-xs font-black text-white flex items-center space-x-1.5 cursor-pointer transition-all"
-              >
-                <span className="text-slate-400 font-normal text-[10px]">MS 2</span>
-                <span className="text-[#c6f052] font-mono">{currentMatch.odds?.ms2?.toFixed(2) || '3.40'}</span>
-              </button>
+              {/* MS 2 */}
+              {(() => {
+                const isSelected = betslipItems.some((i) => i.matchId === currentMatch.id && i.pickKey === 'ms2');
+                return (
+                  <button
+                    type="button"
+                    onClick={() => onToggleBetslip?.(currentMatch, {
+                      key: 'ms2',
+                      label: `MS 2 (${currentMatch.awayTeam.shortName || currentMatch.awayTeam.name})`,
+                      marketKey: 'match_result',
+                      marketName: 'Maç Sonucu',
+                      odd: currentMatch.odds?.ms2 || 3.40,
+                      probability: 20
+                    })}
+                    className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-black flex items-center space-x-2 cursor-pointer transition-all active:scale-95 ${
+                      isSelected
+                        ? 'bg-[#c6f052] text-slate-950 border-[#c6f052] shadow-md shadow-[#c6f052]/30 ring-2 ring-[#c6f052]'
+                        : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-700 hover:border-[#c6f052]'
+                    }`}
+                  >
+                    <span className={isSelected ? 'text-slate-950 font-black' : 'text-slate-400 font-bold'}>MS 2</span>
+                    <span className={`font-mono text-sm sm:text-base font-black ${isSelected ? 'text-slate-950' : 'text-[#c6f052]'}`}>
+                      {currentMatch.odds?.ms2?.toFixed(2) || '3.40'}
+                    </span>
+                  </button>
+                );
+              })()}
 
-              <button
-                type="button"
-                onClick={() => onToggleBetslip?.(currentMatch, {
-                  key: 'over25',
-                  label: '2.5 Gol Üst',
-                  marketKey: 'goals_25',
-                  marketName: '2.5 Gol Alt/Üst',
-                  odd: 1.75,
-                  probability: 55
-                })}
-                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-[#c6f052] text-xs font-black text-white flex items-center space-x-1.5 cursor-pointer transition-all"
-              >
-                <span className="text-slate-400 font-normal text-[10px]">2.5 ÜST</span>
-                <span className="text-amber-400 font-mono">1.75</span>
-              </button>
+              {/* 2.5 ÜST */}
+              {(() => {
+                const isSelected = betslipItems.some((i) => i.matchId === currentMatch.id && i.pickKey === 'over25');
+                return (
+                  <button
+                    type="button"
+                    onClick={() => onToggleBetslip?.(currentMatch, {
+                      key: 'over25',
+                      label: '2.5 Gol Üst',
+                      marketKey: 'goals_25',
+                      marketName: '2.5 Gol Alt/Üst',
+                      odd: 1.75,
+                      probability: 55
+                    })}
+                    className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-black flex items-center space-x-2 cursor-pointer transition-all active:scale-95 ${
+                      isSelected
+                        ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-md shadow-amber-400/30 ring-2 ring-amber-400'
+                        : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-700 hover:border-amber-400'
+                    }`}
+                  >
+                    <span className={isSelected ? 'text-slate-950 font-black' : 'text-slate-400 font-bold'}>2.5 ÜST</span>
+                    <span className={`font-mono text-sm sm:text-base font-black ${isSelected ? 'text-slate-950' : 'text-amber-400'}`}>
+                      1.75
+                    </span>
+                  </button>
+                );
+              })()}
 
-              <button
-                type="button"
-                onClick={() => onToggleBetslip?.(currentMatch, {
-                  key: 'bttsYes',
-                  label: 'Karşılıklı Gol Var',
-                  marketKey: 'btts',
-                  marketName: 'Karşılıklı Gol',
-                  odd: 1.85,
-                  probability: 52
-                })}
-                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-[#c6f052] text-xs font-black text-white flex items-center space-x-1.5 cursor-pointer transition-all"
-              >
-                <span className="text-slate-400 font-normal text-[10px]">KG VAR</span>
-                <span className="text-emerald-400 font-mono">1.85</span>
-              </button>
+              {/* KG VAR */}
+              {(() => {
+                const isSelected = betslipItems.some((i) => i.matchId === currentMatch.id && i.pickKey === 'bttsYes');
+                return (
+                  <button
+                    type="button"
+                    onClick={() => onToggleBetslip?.(currentMatch, {
+                      key: 'bttsYes',
+                      label: 'Karşılıklı Gol Var',
+                      marketKey: 'btts',
+                      marketName: 'Karşılıklı Gol',
+                      odd: 1.85,
+                      probability: 52
+                    })}
+                    className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-black flex items-center space-x-2 cursor-pointer transition-all active:scale-95 ${
+                      isSelected
+                        ? 'bg-emerald-400 text-slate-950 border-emerald-400 shadow-md shadow-emerald-400/30 ring-2 ring-emerald-400'
+                        : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-700 hover:border-emerald-400'
+                    }`}
+                  >
+                    <span className={isSelected ? 'text-slate-950 font-black' : 'text-slate-400 font-bold'}>KG VAR</span>
+                    <span className={`font-mono text-sm sm:text-base font-black ${isSelected ? 'text-slate-950' : 'text-emerald-400'}`}>
+                      1.85
+                    </span>
+                  </button>
+                );
+              })()}
             </div>
           </div>
         )}
 
-        {/* Diğer Canlı Devam Eden Maçlar Listesi */}
-        <div className="p-2.5 bg-black border-t border-slate-900 space-y-1.5 overflow-y-auto max-h-[24vh]">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-              <span>Diğer Canlı Devam Eden Maçlar ({allLiveMatches.length})</span>
+        {/* 🔄 6. Devam Eden Diğer Canlı Maçlar Listesi (Geniş, Ferah & Büyük Yazılı Tasarım) */}
+        <div className="bg-[#070b14] border-t border-slate-800 flex flex-col flex-1 min-h-[200px] overflow-hidden">
+          {/* Bölüm Başlığı */}
+          <div className="px-4 py-2.5 bg-[#0d1322] border-b border-slate-800 flex items-center justify-between shrink-0">
+            <div className="flex items-center space-x-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+              <span className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">
+                CANLI DEVAM EDEN MAÇLAR ({allLiveMatches.length})
+              </span>
+            </div>
+            <span className="text-xs font-bold text-[#c6f052] flex items-center space-x-1">
+              <span>👉 Radarda izlemek için maça tıklayın</span>
             </span>
-            <span className="text-[10px] text-slate-500">Tıklayıp Anında 2D Radarını Açın</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+          {/* Maç Kartları Izgarası (Ferah 2 Kolon, Büyük Yazılar, Net Canlı Skorlar) */}
+          <div className="p-3 sm:p-4 overflow-y-auto flex-1 space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-3.5">
             {allLiveMatches.map((m) => {
               const mLive = getMatchLiveState(m);
               const isSelected = activeMatch?.id === m.id && activeViewMode === 'radar';
@@ -719,31 +761,67 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                 <div
                   key={m.id}
                   onClick={() => handleMatchChange(m)}
-                  className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                  className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
                     isSelected
-                      ? 'bg-slate-900 border-[#c6f052] shadow-sm shadow-[#c6f052]/20 ring-1 ring-[#c6f052]'
-                      : 'bg-slate-950 hover:bg-slate-900 border-slate-800'
+                      ? 'bg-slate-900 border-[#c6f052] shadow-lg shadow-[#c6f052]/20 ring-2 ring-[#c6f052]'
+                      : 'bg-slate-900/90 hover:bg-slate-850 border-slate-700/80 hover:border-[#c6f052]/70 shadow-md'
                   }`}
                 >
-                  <div className="min-w-0 flex-1 pr-2">
-                    <div className="flex items-center space-x-1 mb-0.5">
-                      <span className="text-xs">{m.countryFlag || '🌐'}</span>
-                      <span className="text-[9px] text-slate-400 truncate font-semibold">{m.league}</span>
+                  {/* Kart Üst Bilgisi: Bayrak, Lig & Canlı Dakika */}
+                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+                    <div className="flex items-center space-x-1.5 truncate">
+                      <span className="text-base shrink-0">{m.countryFlag || '⚽'}</span>
+                      <span className="text-xs font-bold text-slate-300 truncate">{m.league}</span>
                     </div>
-                    <div className="text-[11px] font-black text-white truncate">
-                      {m.homeTeam.name} - {m.awayTeam.name}
+
+                    <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-mono text-xs font-black border border-rose-500/40 shrink-0 animate-pulse">
+                      ● {mLive.liveMinute || 'Canlı'}
+                    </span>
+                  </div>
+
+                  {/* Takımlar ve Büyük Net Skor Alanı */}
+                  <div className="flex items-center justify-between gap-3 my-1">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex items-center space-x-2.5">
+                        <span
+                          className="w-3 h-3 rounded-full shrink-0 shadow-sm"
+                          style={{ backgroundColor: m.homeTeam.primaryColor || '#10b981' }}
+                        />
+                        <span className="text-sm sm:text-base font-black text-white truncate">
+                          {m.homeTeam.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2.5">
+                        <span
+                          className="w-3 h-3 rounded-full shrink-0 shadow-sm"
+                          style={{ backgroundColor: m.awayTeam.primaryColor || '#6366f1' }}
+                        />
+                        <span className="text-sm sm:text-base font-black text-slate-200 truncate">
+                          {m.awayTeam.name}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Büyük Yüksek Kontrastlı Canlı Skor Kutusu */}
+                    <div className="flex flex-col items-center justify-center px-4 py-2.5 rounded-xl bg-black border border-slate-700 shadow-inner shrink-0 min-w-[70px]">
+                      <span className="font-mono text-xl sm:text-2xl font-black text-[#c6f052] tracking-wider">
+                        {mLive.displayScore.home} - {mLive.displayScore.away}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end shrink-0 space-y-0.5">
-                    <span className="px-1.5 py-0.5 rounded bg-[#c6f052] text-slate-950 font-black text-[9px] flex items-center space-x-0.5">
-                      <Activity className="w-2 h-2 text-slate-950" />
-                      <span>RADAR</span>
-                    </span>
-                    <span className="text-[9px] font-mono font-bold text-rose-400">
-                      {mLive.displayScore.home}-{mLive.displayScore.away}
-                    </span>
-                  </div>
+                  {/* Radarda İzle Butonu */}
+                  <button
+                    type="button"
+                    className={`w-full py-2.5 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center space-x-2 transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#c6f052] text-slate-950 font-black shadow-md shadow-[#c6f052]/30'
+                        : 'bg-slate-800 hover:bg-[#c6f052] text-slate-200 hover:text-slate-950 border border-slate-700'
+                    }`}
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>{isSelected ? '🟢 ŞU ANDA RADARDA İZLENİYOR' : '⚡ CANLI RADARDA İZLE'}</span>
+                  </button>
                 </div>
               );
             })}
