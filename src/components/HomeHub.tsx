@@ -87,6 +87,10 @@ export const HomeHub: React.FC<HomeHubProps> = ({
     jockey?: string;
     badge: string;
     recommendation: string;
+    isFinished?: boolean;
+    isWinner?: boolean;
+    finishOrder?: number;
+    statusText?: string;
   } | null>(() => cachedBestHorse);
 
   const [bestStock, setBestStock] = useState<{
@@ -143,8 +147,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             let topHorse: any = null;
             let topRaceNum = 1;
             let highestAgf = 0;
+            let topRace: any = null;
 
-            for (const race of detail.races) {
+            // Öncelikli olarak HENÜZ KOŞULMAMIŞ (aktif/gelecek) koşuları öne al!
+            const upcomingRaces = detail.races.filter((r: any) => !r.isFinished);
+            const candidateRaces = upcomingRaces.length > 0 ? upcomingRaces : detail.races;
+
+            for (const race of candidateRaces) {
               if (!race.horses) continue;
               const rNum = race.number || race.raceNumber || 1;
               for (const h of race.horses) {
@@ -153,11 +162,21 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                   highestAgf = agf;
                   topHorse = h;
                   topRaceNum = rNum;
+                  topRace = race;
                 }
               }
             }
 
             if (topHorse) {
+              const isFinished = Boolean(topRace?.isFinished);
+              const finishOrder = Number(topHorse.order || 0);
+              const isWinner = isFinished && finishOrder === 1;
+
+              let statusText = '⏳ KOŞACAK';
+              if (isFinished) {
+                statusText = isWinner ? '🏆 KAZANDI' : `${finishOrder > 0 ? `${finishOrder}. Oldu` : 'Koştu'}`;
+              }
+
               const horseObj = {
                 programId: progId,
                 raceNo: topRaceNum,
@@ -167,16 +186,29 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 jockey: topHorse.jockey?.name ? `Jokey: ${topHorse.jockey.name}` : undefined,
                 badge: highestAgf > 0 ? `%${highestAgf} AGF Lideri` : 'Günün Bankosu',
                 recommendation: `AI Robotu: #${topHorse.number} Tek / Banko Tavsiyesi`,
+                isFinished,
+                isWinner,
+                finishOrder,
+                statusText,
               };
               cachedBestHorse = horseObj;
               setBestHorse(horseObj);
               return;
             }
 
-            const r1 = detail.races[0];
+            const r1 = candidateRaces[0];
             const h1 = r1?.horses?.[0];
             const r1Num = r1?.number || r1?.raceNumber || 1;
             if (h1) {
+              const isFinished = Boolean(r1?.isFinished);
+              const finishOrder = Number(h1.order || 0);
+              const isWinner = isFinished && finishOrder === 1;
+              const statusText = isFinished
+                ? isWinner
+                  ? '🏆 KAZANDI'
+                  : `${finishOrder > 0 ? `${finishOrder}. Oldu` : 'Koştu'}`
+                : '⏳ KOŞACAK';
+
               const horseObj = {
                 programId: progId,
                 raceNo: r1Num,
@@ -186,6 +218,10 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 jockey: h1.jockey?.name ? `Jokey: ${h1.jockey.name}` : undefined,
                 badge: 'Günün Favorisi',
                 recommendation: `Öne Çıkan Form: #${h1.number} ${h1.name}`,
+                isFinished,
+                isWinner,
+                finishOrder,
+                statusText,
               };
               cachedBestHorse = horseObj;
               setBestHorse(horseObj);
@@ -388,7 +424,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
       stockRate,
       totalVerifiedCount,
       totalWonCount,
-      horseHitsText: bestHorse ? `${bestHorse.title} (1. Oldu 🏆)` : 'Günün Bankosu (#3 KIRDOĞAN 🏆)',
+      horseHitsText: bestHorse
+        ? bestHorse.isWinner
+          ? `${bestHorse.title} (1. Oldu 🏆)`
+          : bestHorse.isFinished
+          ? `${bestHorse.title} (${bestHorse.finishOrder}. Oldu)`
+          : `${bestHorse.title} (Günün Favorisi ⭐)`
+        : 'Günün Bankosu (#3 KIRDOĞAN 🏆)',
       stockHitsText: bestStock ? `${bestStock.symbol} (+%0.47) • KONTR (+%5.77)` : 'THYAO (+%0.47) • KONTR (+%5.77)',
     };
   }, [aiPerformanceReport, bestHorse, bestStock]);
@@ -759,9 +801,17 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                       <span>🏇 Günün Atı &amp; AGF</span>
                     </span>
                     <div className="flex items-center gap-1">
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/25 text-emerald-300 font-bold border border-emerald-400/30">
-                        🏆 KAZANDI
-                      </span>
+                      {bestHorse?.statusText && (
+                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold border ${
+                          bestHorse.isWinner
+                            ? 'bg-emerald-500/25 text-emerald-300 border-emerald-400/30'
+                            : bestHorse.isFinished
+                            ? 'bg-slate-800 text-slate-300 border-slate-700'
+                            : 'bg-amber-500/20 text-amber-300 border-amber-400/30'
+                        }`}>
+                          {bestHorse.statusText}
+                        </span>
+                      )}
                       <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-bold">
                         {bestHorse ? bestHorse.badge : 'Günün Bankosu'}
                       </span>
