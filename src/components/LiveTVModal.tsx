@@ -244,59 +244,70 @@ const LivePitchRadar: React.FC<{
   const badge = getPhaseBadge();
 
   return (
-    <div className="relative w-full h-full bg-[#1b3d22] overflow-hidden flex flex-col justify-between p-3 select-none">
-      {/* Çim Çizgileri & Doku */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none bg-[repeating-linear-gradient(90deg,#000_0,#000_30px,transparent_30px,transparent_60px)]" />
-      <div className="absolute inset-2 border-2 border-white/40 rounded pointer-events-none" />
-      <div className="absolute top-2 bottom-2 left-1/2 w-0.5 bg-white/40 pointer-events-none -translate-x-1/2" />
-      <div className="absolute top-1/2 left-1/2 w-20 h-20 border-2 border-white/40 rounded-full pointer-events-none -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute top-1/2 left-2 w-12 h-24 border-2 border-white/40 border-l-0 pointer-events-none -translate-y-1/2" />
-      <div className="absolute top-1/2 right-2 w-12 h-24 border-2 border-white/40 border-r-0 pointer-events-none -translate-y-1/2" />
-
-      {/* Üst Canlı Skor & Atak Durumu */}
-      <div className="relative z-10 flex items-center justify-between bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/60 shadow-lg">
-        <div className="flex items-center space-x-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-          <span className="text-xs sm:text-sm font-black text-white">{match.homeTeam.name}</span>
-          <span className="px-2.5 py-0.5 rounded bg-black/80 font-mono text-sm sm:text-base font-black text-[#c6f052] border border-white/10">
+    <div className="flex flex-col w-full h-full bg-slate-950 select-none overflow-hidden">
+      {/* 1. Üst Durum & Atak Bilgisi Barı (Sahanın ÜSTÜNDE - Sahayı ASLA kapatmaz) */}
+      <div className="px-3 sm:px-4 py-2 bg-[#0c1220] border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div className="flex items-center space-x-2 truncate">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping shrink-0" />
+          <span className="text-xs sm:text-sm font-black text-white truncate">{match.homeTeam.name}</span>
+          <span className="px-2 py-0.5 rounded bg-black font-mono text-xs sm:text-sm font-black text-[#c6f052] border border-white/10 shrink-0">
             {liveState.displayScore.home} - {liveState.displayScore.away}
           </span>
-          <span className="text-xs sm:text-sm font-black text-white">{match.awayTeam.name}</span>
+          <span className="text-xs sm:text-sm font-black text-white truncate">{match.awayTeam.name}</span>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 shrink-0">
           <span className={`px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm ${badge.color}`}>
             {badge.text}
           </span>
-          <span className="px-2.5 py-0.5 rounded bg-rose-600 text-white font-mono text-xs font-bold animate-pulse">
+          <span className="px-2 py-0.5 rounded bg-rose-600 text-white font-mono text-xs font-bold animate-pulse">
             {liveState.liveMinute || 'Canlı'}
           </span>
         </div>
       </div>
 
-      {/* Hareketli Canlı Top */}
-      <div
-        className="absolute z-20 transition-all duration-1000 ease-out -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-        style={{ left: `${ballPosition.x}%`, top: `${ballPosition.y}%` }}
-      >
-        <div className="relative">
-          <div className="w-6 h-6 rounded-full bg-white border border-slate-900 shadow-[0_0_15px_#c6f052] flex items-center justify-center text-xs font-bold">
-            ⚽
+      {/* 2. 2D Futbol Sahası (Tamamen Temiz, Engellenmemiş ve Net Görüş) */}
+      <div className="relative flex-1 w-full bg-[#1b3d22] overflow-hidden min-h-[140px]">
+        {/* Çim Çizgileri & Doku */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none bg-[repeating-linear-gradient(90deg,#000_0,#000_30px,transparent_30px,transparent_60px)]" />
+        <div className="absolute inset-2 border-2 border-white/40 rounded pointer-events-none" />
+        <div className="absolute top-2 bottom-2 left-1/2 w-0.5 bg-white/40 pointer-events-none -translate-x-1/2" />
+        <div className="absolute top-1/2 left-1/2 w-20 h-20 border-2 border-white/40 rounded-full pointer-events-none -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute top-1/2 left-2 w-12 h-24 border-2 border-white/40 border-l-0 pointer-events-none -translate-y-1/2" />
+        <div className="absolute top-1/2 right-2 w-12 h-24 border-2 border-white/40 border-r-0 pointer-events-none -translate-y-1/2" />
+
+        {/* Takım İsimleri (Sahanın köşe zemininde yarı saydam, sahayı ASLA kapatmaz) */}
+        <div className="absolute top-3 left-4 text-[11px] font-black text-white/40 tracking-wider uppercase pointer-events-none">
+          {match.homeTeam.shortName || match.homeTeam.name}
+        </div>
+        <div className="absolute top-3 right-4 text-[11px] font-black text-white/40 tracking-wider uppercase pointer-events-none">
+          {match.awayTeam.shortName || match.awayTeam.name}
+        </div>
+
+        {/* Hareketli Canlı Top */}
+        <div
+          className="absolute z-20 transition-all duration-1000 ease-out -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{ left: `${ballPosition.x}%`, top: `${ballPosition.y}%` }}
+        >
+          <div className="relative">
+            <div className="w-6 h-6 rounded-full bg-white border border-slate-900 shadow-[0_0_15px_#c6f052] flex items-center justify-center text-xs font-bold">
+              ⚽
+            </div>
+            <div className="absolute -inset-1 rounded-full bg-[#c6f052]/50 animate-ping -z-10" />
           </div>
-          <div className="absolute -inset-1 rounded-full bg-[#c6f052]/50 animate-ping -z-10" />
         </div>
       </div>
 
-      {/* Alt Saha İstatistik Göstergesi */}
-      <div className="relative z-10 flex items-center justify-between bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/60 text-xs text-slate-300">
-        <div className="flex items-center space-x-3 font-semibold">
+      {/* 3. Alt Saha İstatistik Çubuğu (Sahanın ALTINDA - Sahayı ASLA kapatmaz) */}
+      <div className="px-3 sm:px-4 py-1.5 bg-[#0a0e1a] border-t border-slate-800 flex items-center justify-between text-[11px] sm:text-xs text-slate-300 shrink-0">
+        <div className="flex items-center space-x-2 sm:space-x-3 font-semibold truncate">
           <span>Topla Oynama: <b className="text-emerald-400 font-mono">%54</b> - <b className="text-indigo-400 font-mono">%46</b></span>
           <span>•</span>
           <span>Şut: <b className="text-white font-mono">7(3)</b> - <b className="text-white font-mono">4(2)</b></span>
           <span>•</span>
           <span>Korner: <b className="text-amber-400 font-mono">4</b> - <b className="text-amber-400 font-mono">2</b></span>
         </div>
-        <div className="flex items-center space-x-1.5 text-[#c6f052] font-black text-[11px] tracking-wider uppercase">
+        <div className="flex items-center space-x-1 text-[#c6f052] font-black text-[10px] sm:text-[11px] tracking-wider uppercase shrink-0">
           <Activity className="w-3.5 h-3.5 animate-bounce" />
           <span>2D Saha Radarı</span>
         </div>
@@ -514,7 +525,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
         )}
 
         {/* Ana Ekran (2D Radar veya Canlı TV Player) - Ferah Yükseklik */}
-        <div className="relative w-full h-[220px] sm:h-[280px] md:h-[330px] bg-black flex items-center justify-center shrink-0 overflow-hidden">
+        <div className="relative w-full h-[250px] sm:h-[300px] md:h-[350px] bg-black flex items-center justify-center shrink-0 overflow-hidden">
           {activeViewMode === 'radar' && currentMatch && liveState ? (
             <LivePitchRadar match={currentMatch} liveState={liveState} />
           ) : (
