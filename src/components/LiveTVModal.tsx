@@ -501,7 +501,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
         {/* Canlı TV Modundaysa Kanal Değiştirici Haplar */}
         {activeViewMode === 'tv' && (
-          <div className="px-4 py-2 bg-[#0d121c] border-b border-slate-800 flex items-center space-x-2 overflow-x-auto shrink-0 select-none">
+          <div className="px-4 py-2 bg-[#0d121c] border-b border-slate-800 flex items-center space-x-2 overflow-x-auto no-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shrink-0 select-none">
             <span className="text-[11px] text-slate-400 font-bold uppercase shrink-0">Yayın Kanalı:</span>
             {channels.map((ch) => {
               const isSelected = ch.id === activeChannelId;
@@ -597,7 +597,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
         {/* ⚡ 5. Canlı İddaa Oranları Barı (Geniş, Ferah & Büyük Butonlar) */}
         {currentMatch && currentMatch.odds && (
-          <div className="px-4 py-2.5 bg-[#0a0f1d] border-t border-slate-800 flex items-center justify-between gap-3 overflow-x-auto shrink-0 select-none">
+          <div className="px-4 py-2 bg-[#0a0f1d] border-t border-slate-800 flex items-center justify-between gap-3 overflow-x-auto no-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shrink-0 select-none">
             <div className="flex items-center space-x-2 text-xs font-black text-slate-300 shrink-0">
               <Ticket className="w-4 h-4 text-[#c6f052]" />
               <span className="text-white text-xs font-black uppercase tracking-wider">CANLI İDDAA:</span>
