@@ -16,13 +16,20 @@ import {
   Play,
   Pause,
   Activity,
-  Ticket
+  Ticket,
+  Mic,
+  MicOff,
+  Clock,
+  BarChart3,
+  Flame
 } from 'lucide-react';
 import { Match, UserBetslipItem } from '../types';
 import { BettingPickOption } from '../utils/oddsHelper';
 import { getMatchLiveState } from '../utils/liveMatchHelper';
 import { soundManager } from '../utils/audioHelper';
 import { getTeamKit } from '../utils/teamKitHelper';
+import { aiSpiker } from '../utils/aiSpikerHelper';
+import { generateMatchTimeline } from '../utils/matchTimelineHelper';
 
 export interface TVChannel {
   id: string;
@@ -214,6 +221,8 @@ const LivePitchRadar: React.FC<{
   const [attackPhase, setAttackPhase] = useState<'home_attack' | 'away_attack' | 'midfield' | 'corner' | 'danger'>('home_attack');
   const [activeCarrierId, setActiveCarrierId] = useState<string>('h10');
   const [isSoundActive, setIsSoundActive] = useState<boolean>(() => soundManager.isEnabled());
+  const [isSpikerActive, setIsSpikerActive] = useState<boolean>(() => aiSpiker.getStatus());
+  const [bottomTab, setBottomTab] = useState<'stats' | 'timeline'>('stats');
 
   // 👕 Gerçek Takım Forma Renkleri ve Deplasman Çakışma Önleyici Motoru
   const homeKit = useMemo(
@@ -225,11 +234,26 @@ const LivePitchRadar: React.FC<{
     [match.awayTeam.name, homeKit]
   );
 
+  const timelineEvents = useMemo(
+    () => generateMatchTimeline(
+      match.homeTeam.name,
+      match.awayTeam.name,
+      liveState.displayScore.home,
+      liveState.displayScore.away,
+      liveState.isFinished,
+      match.id
+    ),
+    [match.id, match.homeTeam.name, match.awayTeam.name, liveState.displayScore.home, liveState.displayScore.away, liveState.isFinished]
+  );
+
   useEffect(() => {
     if (liveState.isFinished) {
       setAttackPhase('midfield');
       setBallPosition({ x: 50, y: 50 });
       setActiveCarrierId('');
+      if (isSpikerActive) {
+        aiSpiker.announcePhase('finished', match.homeTeam.name, match.awayTeam.name, true, liveState.displayScore);
+      }
       return;
     }
 
@@ -260,10 +284,19 @@ const LivePitchRadar: React.FC<{
         setActiveCarrierId(carrier);
         setBallPosition({ x: 48 + Math.random() * 6, y: 42 + Math.random() * 16 });
       }
+
+      if (isSpikerActive && Math.random() > 0.45) {
+        aiSpiker.announcePhase(randomPhase, match.homeTeam.name, match.awayTeam.name, false, liveState.displayScore);
+      }
     }, 2800);
 
     return () => clearInterval(timer);
-  }, [liveState.isFinished]);
+  }, [liveState.isFinished, isSpikerActive, match.homeTeam.name, match.awayTeam.name]);
+
+  const toggleSpiker = () => {
+    const next = aiSpiker.toggle();
+    setIsSpikerActive(next);
+  };
 
   const getPhaseBadge = () => {
     if (liveState.isFinished) {
@@ -368,6 +401,20 @@ const LivePitchRadar: React.FC<{
         <div className="flex items-center space-x-1.5 shrink-0">
           <button
             type="button"
+            onClick={toggleSpiker}
+            className={`p-1 sm:p-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 ${
+              isSpikerActive
+                ? 'bg-[#c6f052] text-slate-950 font-black shadow-sm ring-1 ring-[#c6f052]'
+                : 'bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white'
+            }`}
+            title={isSpikerActive ? '🎙️ AI Türkçe Canlı Spiker Açık (Tıkla Kapat)' : '🎙️ AI Türkçe Canlı Spiker Kapalı (Tıkla Aç)'}
+          >
+            {isSpikerActive ? <Mic className="w-3.5 h-3.5 text-slate-950 animate-pulse" /> : <MicOff className="w-3.5 h-3.5" />}
+            <span className="text-[10px] hidden sm:inline font-bold">AI Spiker</span>
+          </button>
+
+          <button
+            type="button"
             onClick={toggleWhistleSound}
             className="p-1 sm:p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center space-x-1"
             title={isSoundActive ? 'Düdük Sesi Açık (Tıkla Kapat)' : 'Düdük Sesi Kapalı (Tıkla Aç)'}
@@ -400,8 +447,8 @@ const LivePitchRadar: React.FC<{
         <div className="absolute inset-2 border-2 border-white/40 rounded pointer-events-none" />
         <div className="absolute top-2 bottom-2 left-1/2 w-0.5 bg-white/40 pointer-events-none -translate-x-1/2" />
         <div className="absolute top-1/2 left-1/2 w-20 h-20 border-2 border-white/40 rounded-full pointer-events-none -translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute top-1/2 left-2 w-12 h-24 border-2 border-white/40 border-l-0 pointer-events-none -translate-y-1/2" />
-        <div className="absolute top-1/2 right-2 w-12 h-24 border-2 border-white/40 border-r-0 pointer-events-none -translate-y-1/2" />
+        <div className={`absolute top-1/2 left-2 w-12 h-24 border-2 ${attackPhase === 'away_attack' ? 'border-rose-500 bg-rose-500/20 shadow-[0_0_20px_rgba(244,63,94,0.6)] animate-pulse' : 'border-white/40'} border-l-0 pointer-events-none -translate-y-1/2 transition-colors duration-500`} />
+        <div className={`absolute top-1/2 right-2 w-12 h-24 border-2 ${attackPhase === 'danger' ? 'border-rose-500 bg-rose-500/25 shadow-[0_0_25px_rgba(244,63,94,0.8)] animate-pulse' : attackPhase === 'home_attack' ? 'border-emerald-500/60 bg-emerald-500/10' : 'border-white/40'} border-r-0 pointer-events-none -translate-y-1/2 transition-colors duration-500`} />
 
         {/* Takım İsimleri ve Forma Rozeti (Köşelerde yarı saydam) */}
         <div className="absolute top-2.5 left-4 flex items-center space-x-1.5 text-[10px] sm:text-[11px] font-black tracking-wider uppercase pointer-events-none">
@@ -493,18 +540,69 @@ const LivePitchRadar: React.FC<{
         )}
       </div>
 
-      {/* 3. Alt Saha İstatistik Çubuğu (Sahanın ALTINDA - Sahayı ASLA kapatmaz) */}
-      <div className="px-3 sm:px-4 py-1.5 bg-[#0a0e1a] border-t border-slate-800 flex items-center justify-between text-[11px] sm:text-xs text-slate-300 shrink-0">
-        <div className="flex items-center space-x-2 sm:space-x-3 font-semibold truncate">
-          <span>Topla Oynama: <b className="text-emerald-400 font-mono">%54</b> - <b className="text-indigo-400 font-mono">%46</b></span>
-          <span>•</span>
-          <span>Şut: <b className="text-white font-mono">7(3)</b> - <b className="text-white font-mono">4(2)</b></span>
-          <span>•</span>
-          <span>Korner: <b className="text-amber-400 font-mono">4</b> - <b className="text-amber-400 font-mono">2</b></span>
+      {/* 3. Alt Saha İstatistik & Zaman Tüneli Çubuğu */}
+      <div className="px-3 sm:px-4 py-1.5 bg-[#0a0e1a] border-t border-slate-800 flex items-center justify-between text-[11px] sm:text-xs text-slate-300 shrink-0 gap-2">
+        <div className="flex items-center space-x-1.5 shrink-0 bg-slate-900 rounded-lg p-0.5 border border-slate-800">
+          <button
+            type="button"
+            onClick={() => setBottomTab('stats')}
+            className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+              bottomTab === 'stats'
+                ? 'bg-[#c6f052] text-slate-950 font-black shadow-xs'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <BarChart3 className="w-3 h-3" />
+            <span>İstatistik</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setBottomTab('timeline')}
+            className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+              bottomTab === 'timeline'
+                ? 'bg-[#c6f052] text-slate-950 font-black shadow-xs'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Clock className="w-3 h-3" />
+            <span>Olaylar</span>
+          </button>
         </div>
+
+        {bottomTab === 'stats' ? (
+          <div className="flex items-center space-x-2 sm:space-x-3 font-semibold truncate flex-1 min-w-0 justify-center">
+            <span className="truncate">Topla Oynama: <b className="text-emerald-400 font-mono">%54</b> - <b className="text-indigo-400 font-mono">%46</b></span>
+            <span>•</span>
+            <span className="truncate">Şut: <b className="text-white font-mono">7(3)</b> - <b className="text-white font-mono">4(2)</b></span>
+            <span>•</span>
+            <span className="truncate">Korner: <b className="text-amber-400 font-mono">4</b> - <b className="text-amber-400 font-mono">2</b></span>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar py-0.5 flex-1 min-w-0">
+            {timelineEvents.map((evt, idx) => (
+              <span
+                key={idx}
+                className={`px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 flex items-center space-x-1 border ${
+                  evt.type === 'goal'
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 animate-pulse'
+                    : evt.type === 'card_yellow'
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                    : evt.type === 'whistle'
+                    ? 'bg-slate-800 text-slate-200 border-slate-700'
+                    : 'bg-slate-900/80 text-slate-300 border-slate-800'
+                }`}
+                title={evt.detail}
+              >
+                <span className="font-mono text-slate-400">{evt.minute}</span>
+                <span>{evt.title}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center space-x-1 text-[#c6f052] font-black text-[10px] sm:text-[11px] tracking-wider uppercase shrink-0">
           <Activity className="w-3.5 h-3.5 animate-bounce" />
-          <span>2D Saha Radarı</span>
+          <span className="hidden sm:inline">2D Radar</span>
         </div>
       </div>
     </div>
