@@ -19,7 +19,8 @@ import {
   Ticket,
   Clock,
   BarChart3,
-  Flame
+  Flame,
+  Mic
 } from 'lucide-react';
 import { Match, UserBetslipItem } from '../types';
 import { BettingPickOption } from '../utils/oddsHelper';
@@ -27,6 +28,7 @@ import { getMatchLiveState } from '../utils/liveMatchHelper';
 import { soundManager } from '../utils/audioHelper';
 import { getTeamKit } from '../utils/teamKitHelper';
 import { generateMatchTimeline } from '../utils/matchTimelineHelper';
+import { commentaryEngine, SpikerMode } from '../utils/commentaryEngine';
 
 export interface TVChannel {
   id: string;
@@ -217,8 +219,13 @@ const LivePitchRadar: React.FC<{
   const [ballPosition, setBallPosition] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
   const [attackPhase, setAttackPhase] = useState<'home_attack' | 'away_attack' | 'midfield' | 'corner' | 'danger'>('home_attack');
   const [activeCarrierId, setActiveCarrierId] = useState<string>('h10');
-  const [isSoundActive, setIsSoundActive] = useState<boolean>(() => soundManager.isEnabled());
+  const [spikerMode, setSpikerMode] = useState<SpikerMode>(() => commentaryEngine.getMode());
   const [bottomTab, setBottomTab] = useState<'stats' | 'timeline'>('stats');
+
+  const handleCycleSpikerMode = () => {
+    const next = commentaryEngine.cycleNextMode();
+    setSpikerMode(next);
+  };
 
   // 👕 Gerçek Takım Forma Renkleri ve Deplasman Çakışma Önleyici Motoru
   const homeKit = useMemo(
@@ -247,6 +254,7 @@ const LivePitchRadar: React.FC<{
       setAttackPhase('midfield');
       setBallPosition({ x: 50, y: 50 });
       setActiveCarrierId('');
+      commentaryEngine.handleMatchEvent('midfield', match.homeTeam.name, match.awayTeam.name, true, liveState.displayScore);
       return;
     }
 
@@ -277,10 +285,14 @@ const LivePitchRadar: React.FC<{
         setActiveCarrierId(carrier);
         setBallPosition({ x: 48 + Math.random() * 6, y: 42 + Math.random() * 16 });
       }
+
+      if (Math.random() > 0.35) {
+        commentaryEngine.handleMatchEvent(randomPhase, match.homeTeam.name, match.awayTeam.name, false, liveState.displayScore);
+      }
     }, 2800);
 
     return () => clearInterval(timer);
-  }, [liveState.isFinished]);
+  }, [liveState.isFinished, match.homeTeam.name, match.awayTeam.name]);
 
   const getPhaseBadge = () => {
     if (liveState.isFinished) {
@@ -352,14 +364,6 @@ const LivePitchRadar: React.FC<{
     return [...home, ...away];
   }, [attackPhase]);
 
-  const toggleWhistleSound = () => {
-    const nextState = soundManager.toggle();
-    setIsSoundActive(nextState);
-    if (nextState) {
-      soundManager.playRefereeWhistle();
-    }
-  };
-
   return (
     <div className="flex flex-col w-full h-full bg-slate-950 select-none overflow-hidden">
       {/* 1. Üst Durum & Atak Bilgisi Barı (Sahanın ÜSTÜNDE - Sahayı ASLA kapatmaz) */}
@@ -385,14 +389,37 @@ const LivePitchRadar: React.FC<{
         <div className="flex items-center space-x-1.5 shrink-0">
           <button
             type="button"
-            onClick={toggleWhistleSound}
-            className="p-1 sm:p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center space-x-1"
-            title={isSoundActive ? 'Düdük Sesi Açık (Tıkla Kapat)' : 'Düdük Sesi Kapalı (Tıkla Aç)'}
+            onClick={handleCycleSpikerMode}
+            className={`px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+              spikerMode === 'excited'
+                ? 'bg-[#c6f052] text-slate-950 font-black shadow-sm ring-1 ring-[#c6f052]'
+                : spikerMode === 'stadium_only'
+                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
+                : 'bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white'
+            }`}
+            title={
+              spikerMode === 'excited'
+                ? 'Coşkulu Canlı Spiker Açık (Tıkla: Sadece Efekt / Kapat)'
+                : spikerMode === 'stadium_only'
+                ? 'Sadece Düdük & Saha Sesi Açık (Tıkla: Kapat)'
+                : 'Sesler Kapalı (Tıkla: Coşkulu Spikeri Aç)'
+            }
           >
-            {isSoundActive ? (
-              <Volume2 className="w-3.5 h-3.5 text-[#c6f052]" />
+            {spikerMode === 'excited' ? (
+              <>
+                <Mic className="w-3.5 h-3.5 text-slate-950 animate-pulse" />
+                <span className="text-[10px] hidden sm:inline font-black">Coşkulu Spiker</span>
+              </>
+            ) : spikerMode === 'stadium_only' ? (
+              <>
+                <Volume2 className="w-3.5 h-3.5 text-sky-400" />
+                <span className="text-[10px] hidden sm:inline font-bold">Sadece Efekt</span>
+              </>
             ) : (
-              <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-[10px] hidden sm:inline font-bold">Sessiz</span>
+              </>
             )}
           </button>
           <span className={`px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm ${badge.color}`}>
