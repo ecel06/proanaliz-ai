@@ -250,6 +250,56 @@ const LivePitchRadar: React.FC<{
   } | null>(null);
 
   const shoutTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const prevScoreRef = useRef<{ home: number; away: number }>({
+    home: liveState.displayScore.home,
+    away: liveState.displayScore.away
+  });
+
+  // 🗣️ Canlı Maç Spikeri Anlatım Motoru (Oyunu Gerçekten Anlatan Doğal Spiker)
+  const speakMatchCommentary = (phrase: string, isGoalExplosion: boolean = false) => {
+    if (commentatorMode === 'mute' || commentatorMode === 'whistle') return;
+
+    unlockAudio();
+    const announcerName = commentatorMode === 'spiker' ? 'Canlı TV Spikeri' : 'Ercan Taner';
+    const badge = commentatorMode === 'spiker' ? '🎙️ CANLI TV' : '🎙️ ERCAN TANER';
+    const activeVar: GoalSoundVariant = commentatorMode === 'spiker' ? 'spiker' : 'ercan';
+
+    setCommentatorShout({
+      announcer: announcerName,
+      phrase,
+      badge,
+      variant: activeVar
+    });
+
+    if (isGoalExplosion) {
+      playGoalChime(activeVar);
+    } else if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(phrase);
+        utter.lang = 'tr-TR';
+        if (commentatorMode === 'ercan') {
+          utter.rate = 1.18;
+          utter.pitch = 1.10;
+        } else {
+          utter.rate = 1.10;
+          utter.pitch = 1.02;
+        }
+        const voices = window.speechSynthesis.getVoices();
+        const trVoice = voices.find(v => v.lang.startsWith('tr') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Tolga') || v.name.includes('Emel')))
+          || voices.find(v => v.lang.startsWith('tr'));
+        if (trVoice) utter.voice = trVoice;
+        window.speechSynthesis.speak(utter);
+      } catch (err) {
+        console.warn('Speech error:', err);
+      }
+    }
+
+    if (shoutTimerRef.current) clearTimeout(shoutTimerRef.current);
+    shoutTimerRef.current = setTimeout(() => {
+      setCommentatorShout(null);
+    }, 4500);
+  };
 
   const triggerCommentatorVoice = (targetVariant?: GoalSoundVariant) => {
     unlockAudio();
@@ -288,19 +338,45 @@ const LivePitchRadar: React.FC<{
       localStorage.setItem('proanaliz_radar_commentator_mode', mode);
     } catch {}
 
-    if (mode === 'ercan' || mode === 'spiker' || mode === 'kafa') {
-      setGoalSoundVariant(mode);
+    if (mode === 'ercan') {
+      setGoalSoundVariant('ercan');
       soundManager.setEnabled(true);
-      triggerCommentatorVoice(mode);
+      speakMatchCommentary("Ercan Taner mikrofon başında! Karşılaşmayı tüm heyecanıyla aktarıyorum.");
+    } else if (mode === 'spiker') {
+      setGoalSoundVariant('spiker');
+      soundManager.setEnabled(true);
+      speakMatchCommentary("Canlı TV spikeri mikrofon başında, keyifli bir maç diliyorum.");
+    } else if (mode === 'kafa') {
+      setGoalSoundVariant('kafa');
+      soundManager.setEnabled(true);
+      triggerCommentatorVoice('kafa');
     } else if (mode === 'whistle') {
       soundManager.setEnabled(true);
       soundManager.playRefereeWhistle();
       setCommentatorShout(null);
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
     } else if (mode === 'mute') {
       soundManager.setEnabled(false);
       setCommentatorShout(null);
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
     }
   };
+
+  // Gerçek Skor Değişiminde (GOL OLDUĞUNDA) Efsane Spiker Klip Patlaması
+  useEffect(() => {
+    if (
+      liveState.displayScore.home > prevScoreRef.current.home ||
+      liveState.displayScore.away > prevScoreRef.current.away
+    ) {
+      prevScoreRef.current = {
+        home: liveState.displayScore.home,
+        away: liveState.displayScore.away
+      };
+      if (commentatorMode === 'ercan' || commentatorMode === 'spiker' || commentatorMode === 'kafa') {
+        triggerCommentatorVoice(commentatorMode as GoalSoundVariant);
+      }
+    }
+  }, [liveState.displayScore.home, liveState.displayScore.away, commentatorMode]);
 
   // 👕 Gerçek Takım Forma Renkleri ve Deplasman Çakışma Önleyici Motoru
   const homeKit = useMemo(
@@ -343,27 +419,47 @@ const LivePitchRadar: React.FC<{
         const carrier = Math.random() > 0.5 ? 'h9' : 'h10';
         setActiveCarrierId(carrier);
         setBallPosition({ x: 68 + Math.random() * 10, y: 38 + Math.random() * 24 });
+        const homePhrases = [
+          `${match.homeTeam.name} hücuma çıkıyor, kanatta pas arayışı...`,
+          `${match.homeTeam.name} ceza sahasına doğru sokuluyor, bindirme var!`,
+          `${match.homeTeam.name} pas trafiğini hızlandırdı, savunma arasına tehlikeli bir koşu!`
+        ];
+        speakMatchCommentary(homePhrases[Math.floor(Math.random() * homePhrases.length)], false);
       } else if (randomPhase === 'danger') {
         setActiveCarrierId('h9');
         setBallPosition({ x: 86 + Math.random() * 5, y: 46 + Math.random() * 8 });
-        if (commentatorMode === 'ercan' || commentatorMode === 'spiker' || commentatorMode === 'kafa') {
-          triggerCommentatorVoice(commentatorMode);
-        } else if (commentatorMode === 'whistle') {
-          soundManager.playRefereeWhistle();
-        }
+        soundManager.playRefereeWhistle();
+        const dangerPhrases = [
+          `Çok tehlikeli pozisyon! Kaleciyle karşı karşıya... Vuruş geldi, kaleci son anda çeldi!`,
+          `Ceza sahasında büyük tehlike! Sert bir şut kaleyi yokladı, az farkla auta gidiyor!`,
+          `Gole çok yaklaştılar! Kaleci müthiş uzandı, top kornere çıkıyor!`
+        ];
+        speakMatchCommentary(dangerPhrases[Math.floor(Math.random() * dangerPhrases.length)], false);
       } else if (randomPhase === 'away_attack') {
         const carrier = Math.random() > 0.5 ? 'a9' : 'a7';
         setActiveCarrierId(carrier);
         setBallPosition({ x: 26 + Math.random() * 12, y: 38 + Math.random() * 24 });
+        const awayPhrases = [
+          `${match.awayTeam.name} hızlı kontra atağa kalktı, savunma dikkatli!`,
+          `${match.awayTeam.name} kanatları kullanarak etkili gelmeye çalışıyor...`,
+          `${match.awayTeam.name} hücumda, savunma tehlikeyi uzaklaştırdı.`
+        ];
+        speakMatchCommentary(awayPhrases[Math.floor(Math.random() * awayPhrases.length)], false);
       } else if (randomPhase === 'corner') {
         setActiveCarrierId('h11');
         setBallPosition({ x: 94, y: Math.random() > 0.5 ? 8 : 92 });
+        speakMatchCommentary(`Köşe vuruşu kazanıldı! Ceza sahası kalabalık, kavisli bir orta bekleniyor...`, false);
       } else {
         const carrier = Math.random() > 0.5 ? 'h8' : 'a10';
         setActiveCarrierId(carrier);
         setBallPosition({ x: 48 + Math.random() * 6, y: 42 + Math.random() * 16 });
+        const midPhrases = [
+          `Orta sahada kıyasıya ikili mücadele, iki takım da pres yapıyor!`,
+          `Orta alanda paslaşmalar sürüyor, oyunun kontrolü el değiştiriyor.`
+        ];
+        speakMatchCommentary(midPhrases[Math.floor(Math.random() * midPhrases.length)], false);
       }
-    }, 2800);
+    }, 4200);
 
     return () => clearInterval(timer);
   }, [liveState.isFinished]);
@@ -515,6 +611,15 @@ const LivePitchRadar: React.FC<{
               title="Sesi Kapat"
             >
               <VolumeX className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => triggerCommentatorVoice(commentatorMode as GoalSoundVariant)}
+              className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] font-black bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all cursor-pointer flex items-center space-x-1"
+              title="Efsane Gol Sesini Dinle (Test)"
+            >
+              <span>⚽</span>
+              <span className="hidden sm:inline">Gol Sesi</span>
             </button>
           </div>
 
