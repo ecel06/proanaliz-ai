@@ -32,12 +32,25 @@ export function parseMatchKickoffEpoch(match: Match): number {
     }
   }
 
-  // 2. Fallback: Parse Turkish dates (e.g. "8 Kasım Pazar")
+  // 2. Fallback: Parse Turkish dates (e.g. "Bugün", "Dün", "8 Kasım Pazar")
   let day = 8;
   let month = 11;
   let year = 2026;
 
-  if (match.date) {
+  const rawDateStr = String(match.date || (match as any).matchDate || match.utcDate || '').trim();
+  const lowerDateStr = rawDateStr.toLowerCase();
+
+  if (lowerDateStr.includes('bugün')) {
+    const today = new Date();
+    day = today.getDate();
+    month = today.getMonth() + 1;
+    year = today.getFullYear();
+  } else if (lowerDateStr.includes('dün')) {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    day = yesterday.getDate();
+    month = yesterday.getMonth() + 1;
+    year = yesterday.getFullYear();
+  } else if (match.date) {
     const m = match.date.match(/(\d{1,2})\s*(Kasım|Kas|Aralık|Ara|Ekim|Eki|Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül)/i);
     if (m) {
       day = parseInt(m[1], 10);
@@ -174,10 +187,10 @@ export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLi
 
   // 3. Explicit live status
   if (match.status === 'live') {
-    // If more than 115 minutes have elapsed since kickoff, match is finished
+    // If more than 110 minutes have elapsed since kickoff, match is finished
     if (kickoffMs !== null) {
       const diffMs = nowMs - kickoffMs;
-      if (diffMs >= 115 * 60 * 1000) {
+      if (diffMs >= 110 * 60 * 1000) {
         const finalScore = match.finalScore || match.currentScore || {
           home: (match as any).homeScore ?? 0,
           away: (match as any).awayScore ?? 0
@@ -208,7 +221,7 @@ export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLi
     if (kickoffMs !== null) {
       const diffMs = nowMs - kickoffMs;
       const elapsedMins = Math.floor(diffMs / (60 * 1000));
-      if (elapsedMins >= 105 && elapsedMins < 115) {
+      if (elapsedMins >= 105 && elapsedMins < 110) {
         const extraMins = Math.max(1, elapsedMins - 105);
         normMin = `90'+${extraMins}'`;
       }
@@ -237,8 +250,8 @@ export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLi
     if (diffMs >= 0) {
       const elapsedMins = Math.floor(diffMs / (60 * 1000));
 
-      // Match is currently LIVE (within standard 115 min duration)
-      if (elapsedMins < 115) {
+      // Match is currently LIVE (within standard 110 min duration)
+      if (elapsedMins < 110) {
         let liveMinute = '';
         if (elapsedMins <= 45) {
           liveMinute = `${Math.max(1, elapsedMins)}'`;
