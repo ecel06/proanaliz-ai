@@ -4,6 +4,7 @@
 import { Match } from "../types";
 import { enrichMatchCountry } from "../utils/leagueHelper";
 import { getMatchIddaaCode } from "../utils/iddaaHelper";
+import { getTeamKit } from "../utils/teamKitHelper";
 import bundledBulletin from "../data/liveBulletin.json";
 
 export interface LeagueTreeItem {
@@ -34,8 +35,23 @@ export function getInitialWeeklyMatches(): Match[] {
       const homeScore = currentScore?.home ?? finalScore?.home ?? (m as any).homeScore ?? 0;
       const awayScore = currentScore?.away ?? finalScore?.away ?? (m as any).awayScore ?? 0;
 
+      const homeName = enriched.homeTeam?.name || (m as any).homeTeam?.name || '';
+      const awayName = enriched.awayTeam?.name || (m as any).awayTeam?.name || '';
+      const homeKit = getTeamKit(homeName, false);
+      const awayKit = getTeamKit(awayName, true, homeKit);
+
       return {
         ...(enriched as any),
+        homeTeam: {
+          ...(enriched.homeTeam || (m as any).homeTeam || {}),
+          name: homeName,
+          primaryColor: homeKit.primaryColor,
+        },
+        awayTeam: {
+          ...(enriched.awayTeam || (m as any).awayTeam || {}),
+          name: awayName,
+          primaryColor: awayKit.primaryColor,
+        },
         iddaaCode: (enriched as any).iddaaCode || getMatchIddaaCode(enriched),
         status: (enriched as any).status,
         liveMinute: (enriched as any).liveMinute,
@@ -183,8 +199,23 @@ export async function getWeeklyMatches(): Promise<Record<string, Match[]>> {
     const homeScore = currentScore?.home ?? finalScore?.home ?? (m as any).homeScore ?? 0;
     const awayScore = currentScore?.away ?? finalScore?.away ?? (m as any).awayScore ?? 0;
 
+    const homeName = enriched.homeTeam?.name || (m as any).homeTeam?.name || '';
+    const awayName = enriched.awayTeam?.name || (m as any).awayTeam?.name || '';
+    const homeKit = getTeamKit(homeName, false);
+    const awayKit = getTeamKit(awayName, true, homeKit);
+
     return {
       ...(enriched as any),
+      homeTeam: {
+        ...(enriched.homeTeam || (m as any).homeTeam || {}),
+        name: homeName,
+        primaryColor: homeKit.primaryColor,
+      },
+      awayTeam: {
+        ...(enriched.awayTeam || (m as any).awayTeam || {}),
+        name: awayName,
+        primaryColor: awayKit.primaryColor,
+      },
       iddaaCode: (enriched as any).iddaaCode || getMatchIddaaCode(enriched),
       status: (enriched as any).status,
       liveMinute: (enriched as any).liveMinute,

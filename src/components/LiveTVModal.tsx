@@ -217,12 +217,12 @@ const LivePitchRadar: React.FC<{
 
   // 👕 Gerçek Takım Forma Renkleri ve Deplasman Çakışma Önleyici Motoru
   const homeKit = useMemo(
-    () => getTeamKit(match.homeTeam.name, false, undefined, (match.homeTeam as any).primaryColor),
-    [match.homeTeam.name, (match.homeTeam as any).primaryColor]
+    () => getTeamKit(match.homeTeam.name, false),
+    [match.homeTeam.name]
   );
   const awayKit = useMemo(
-    () => getTeamKit(match.awayTeam.name, true, homeKit, (match.awayTeam as any).primaryColor),
-    [match.awayTeam.name, homeKit, (match.awayTeam as any).primaryColor]
+    () => getTeamKit(match.awayTeam.name, true, homeKit),
+    [match.awayTeam.name, homeKit]
   );
 
   useEffect(() => {
@@ -959,8 +959,8 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                     <div className="flex-1 min-w-0 space-y-2">
                       <div className="flex items-center space-x-2.5">
                         <span
-                          className="w-3 h-3 rounded-full shrink-0 shadow-sm"
-                          style={{ backgroundColor: m.homeTeam.primaryColor || '#10b981' }}
+                          className="w-3 h-3 rounded-full shrink-0 shadow-sm border border-white/20"
+                          style={{ background: getTeamKit(m.homeTeam.name, false).gradient || getTeamKit(m.homeTeam.name, false).primaryColor }}
                         />
                         <span className="text-sm sm:text-base font-black text-white truncate">
                           {m.homeTeam.name}
@@ -968,8 +968,8 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                       </div>
                       <div className="flex items-center space-x-2.5">
                         <span
-                          className="w-3 h-3 rounded-full shrink-0 shadow-sm"
-                          style={{ backgroundColor: m.awayTeam.primaryColor || '#6366f1' }}
+                          className="w-3 h-3 rounded-full shrink-0 shadow-sm border border-white/20"
+                          style={{ background: getTeamKit(m.awayTeam.name, true, getTeamKit(m.homeTeam.name, false)).gradient || getTeamKit(m.awayTeam.name, true, getTeamKit(m.homeTeam.name, false)).primaryColor }}
                         />
                         <span className="text-sm sm:text-base font-black text-slate-200 truncate">
                           {m.awayTeam.name}

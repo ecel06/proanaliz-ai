@@ -385,18 +385,6 @@ export function getTeamKit(
     }
   }
 
-  // 2. Özel renk parametresi varsa önceliklendir
-  if (customPrimaryColor && customPrimaryColor.startsWith('#')) {
-    def = {
-      keywords: [],
-      primary: customPrimaryColor,
-      secondary: isLightColor(customPrimaryColor) ? '#0f172a' : '#ffffff',
-      awayPrimary: isLightColor(customPrimaryColor) ? '#1e3a8a' : '#ffffff',
-      awaySecondary: customPrimaryColor,
-      style: 'solid'
-    };
-  }
-
   // 3. Hiçbiri tutmadıysa isimden deterministik dengeli bir palet seç
   if (!def) {
     let hash = 0;
