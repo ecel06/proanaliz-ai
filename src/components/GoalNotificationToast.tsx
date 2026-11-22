@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { Radio, X, Volume2, VolumeX } from 'lucide-react';
+import { soundManager } from '../utils/audioHelper';
 
 export interface LiveGoalEvent {
   id: string;
@@ -32,11 +33,14 @@ export const GoalNotificationToast: React.FC<GoalNotificationToastProps> = ({
 }) => {
   React.useEffect(() => {
     if (!goal) return;
+    if (!isMuted) {
+      soundManager.playGoalCelebration();
+    }
     const timer = setTimeout(() => {
       onClose();
     }, 7000);
     return () => clearTimeout(timer);
-  }, [goal, onClose]);
+  }, [goal, isMuted, onClose]);
 
   if (!goal) return null;
 

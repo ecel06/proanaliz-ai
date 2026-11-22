@@ -21,6 +21,7 @@ import {
 import { Match, UserBetslipItem } from '../types';
 import { BettingPickOption } from '../utils/oddsHelper';
 import { getMatchLiveState } from '../utils/liveMatchHelper';
+import { soundManager } from '../utils/audioHelper';
 
 export interface TVChannel {
   id: string;
@@ -195,12 +196,23 @@ const HlsVideoPlayer: React.FC<{
 };
 
 // 🏟️ 2D Canlı Futbol Sahası Simülatörü (Top Takibi, Ataklar, Canlı Skor)
+interface PitchPlayer {
+  id: string;
+  num: number;
+  role: 'GK' | 'DEF' | 'MID' | 'FWD';
+  team: 'home' | 'away';
+  x: number;
+  y: number;
+}
+
 const LivePitchRadar: React.FC<{
   match: Match;
   liveState: ReturnType<typeof getMatchLiveState>;
 }> = ({ match, liveState }) => {
   const [ballPosition, setBallPosition] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
   const [attackPhase, setAttackPhase] = useState<'home_attack' | 'away_attack' | 'midfield' | 'corner' | 'danger'>('home_attack');
+  const [activeCarrierId, setActiveCarrierId] = useState<string>('h10');
+  const [isSoundActive, setIsSoundActive] = useState<boolean>(() => soundManager.isEnabled());
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -211,15 +223,24 @@ const LivePitchRadar: React.FC<{
       setAttackPhase(randomPhase);
 
       if (randomPhase === 'home_attack') {
-        setBallPosition({ x: 65 + Math.random() * 20, y: 30 + Math.random() * 40 });
+        const carrier = Math.random() > 0.5 ? 'h9' : 'h10';
+        setActiveCarrierId(carrier);
+        setBallPosition({ x: 68 + Math.random() * 10, y: 38 + Math.random() * 24 });
       } else if (randomPhase === 'danger') {
-        setBallPosition({ x: 85 + Math.random() * 8, y: 40 + Math.random() * 20 });
+        setActiveCarrierId('h9');
+        setBallPosition({ x: 86 + Math.random() * 5, y: 46 + Math.random() * 8 });
+        soundManager.playRefereeWhistle();
       } else if (randomPhase === 'away_attack') {
-        setBallPosition({ x: 15 + Math.random() * 20, y: 30 + Math.random() * 40 });
+        const carrier = Math.random() > 0.5 ? 'a9' : 'a7';
+        setActiveCarrierId(carrier);
+        setBallPosition({ x: 26 + Math.random() * 12, y: 38 + Math.random() * 24 });
       } else if (randomPhase === 'corner') {
-        setBallPosition({ x: 94, y: Math.random() > 0.5 ? 6 : 94 });
+        setActiveCarrierId('h11');
+        setBallPosition({ x: 94, y: Math.random() > 0.5 ? 8 : 92 });
       } else {
-        setBallPosition({ x: 45 + Math.random() * 10, y: 35 + Math.random() * 30 });
+        const carrier = Math.random() > 0.5 ? 'h8' : 'a10';
+        setActiveCarrierId(carrier);
+        setBallPosition({ x: 48 + Math.random() * 6, y: 42 + Math.random() * 16 });
       }
     }, 2800);
 
@@ -243,6 +264,64 @@ const LivePitchRadar: React.FC<{
 
   const badge = getPhaseBadge();
 
+  // 11 Ev Sahibi & 11 Deplasman Oyuncusunun Taktiksel Dinamik Konumları
+  const players: PitchPlayer[] = useMemo(() => {
+    let homeShift = 0;
+    let awayShift = 0;
+
+    if (attackPhase === 'home_attack') {
+      homeShift = 14;
+      awayShift = 10;
+    } else if (attackPhase === 'danger') {
+      homeShift = 22;
+      awayShift = 14;
+    } else if (attackPhase === 'away_attack') {
+      homeShift = -10;
+      awayShift = -16;
+    } else if (attackPhase === 'corner') {
+      homeShift = 20;
+      awayShift = 12;
+    }
+
+    const home: PitchPlayer[] = [
+      { id: 'h1', num: 1, role: 'GK', team: 'home', x: 5 + Math.min(homeShift * 0.2, 4), y: 50 },
+      { id: 'h2', num: 2, role: 'DEF', team: 'home', x: 19 + homeShift * 0.65, y: 82 },
+      { id: 'h4', num: 4, role: 'DEF', team: 'home', x: 17 + homeShift * 0.65, y: 62 },
+      { id: 'h5', num: 5, role: 'DEF', team: 'home', x: 17 + homeShift * 0.65, y: 38 },
+      { id: 'h3', num: 3, role: 'DEF', team: 'home', x: 19 + homeShift * 0.65, y: 18 },
+      { id: 'h6', num: 6, role: 'MID', team: 'home', x: 28 + homeShift * 0.8, y: 50 },
+      { id: 'h8', num: 8, role: 'MID', team: 'home', x: 37 + homeShift * 0.9, y: 32 },
+      { id: 'h10', num: 10, role: 'MID', team: 'home', x: 41 + homeShift * 0.95, y: 68 },
+      { id: 'h11', num: 11, role: 'FWD', team: 'home', x: attackPhase === 'corner' ? 94 : 52 + homeShift * 1.05, y: attackPhase === 'corner' ? 8 : 22 },
+      { id: 'h7', num: 7, role: 'FWD', team: 'home', x: 52 + homeShift * 1.05, y: 78 },
+      { id: 'h9', num: 9, role: 'FWD', team: 'home', x: 56 + homeShift * 1.1, y: 50 },
+    ];
+
+    const away: PitchPlayer[] = [
+      { id: 'a1', num: 1, role: 'GK', team: 'away', x: 95 + Math.max(awayShift * 0.2, -4), y: 50 },
+      { id: 'a2', num: 2, role: 'DEF', team: 'away', x: 81 + awayShift * 0.65, y: 82 },
+      { id: 'a4', num: 4, role: 'DEF', team: 'away', x: 83 + awayShift * 0.65, y: 62 },
+      { id: 'a5', num: 5, role: 'DEF', team: 'away', x: 83 + awayShift * 0.65, y: 38 },
+      { id: 'a3', num: 3, role: 'DEF', team: 'away', x: 81 + awayShift * 0.65, y: 18 },
+      { id: 'a6', num: 6, role: 'MID', team: 'away', x: 72 + awayShift * 0.8, y: 50 },
+      { id: 'a8', num: 8, role: 'MID', team: 'away', x: 63 + awayShift * 0.9, y: 68 },
+      { id: 'a10', num: 10, role: 'MID', team: 'away', x: 59 + awayShift * 0.95, y: 32 },
+      { id: 'a7', num: 7, role: 'FWD', team: 'away', x: 48 + awayShift * 1.05, y: 78 },
+      { id: 'a11', num: 11, role: 'FWD', team: 'away', x: 48 + awayShift * 1.05, y: 22 },
+      { id: 'a9', num: 9, role: 'FWD', team: 'away', x: 44 + awayShift * 1.1, y: 50 },
+    ];
+
+    return [...home, ...away];
+  }, [attackPhase]);
+
+  const toggleWhistleSound = () => {
+    const nextState = soundManager.toggle();
+    setIsSoundActive(nextState);
+    if (nextState) {
+      soundManager.playRefereeWhistle();
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full bg-slate-950 select-none overflow-hidden">
       {/* 1. Üst Durum & Atak Bilgisi Barı (Sahanın ÜSTÜNDE - Sahayı ASLA kapatmaz) */}
@@ -256,7 +335,19 @@ const LivePitchRadar: React.FC<{
           <span className="text-xs sm:text-sm font-black text-white truncate">{match.awayTeam.name}</span>
         </div>
 
-        <div className="flex items-center space-x-2 shrink-0">
+        <div className="flex items-center space-x-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={toggleWhistleSound}
+            className="p-1 sm:p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center space-x-1"
+            title={isSoundActive ? 'Düdük Sesi Açık (Tıkla Kapat)' : 'Düdük Sesi Kapalı (Tıkla Aç)'}
+          >
+            {isSoundActive ? (
+              <Volume2 className="w-3.5 h-3.5 text-[#c6f052]" />
+            ) : (
+              <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+            )}
+          </button>
           <span className={`px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm ${badge.color}`}>
             {badge.text}
           </span>
@@ -266,8 +357,8 @@ const LivePitchRadar: React.FC<{
         </div>
       </div>
 
-      {/* 2. 2D Futbol Sahası (Tamamen Temiz, Engellenmemiş ve Net Görüş) */}
-      <div className="relative flex-1 w-full bg-[#1b3d22] overflow-hidden min-h-[140px]">
+      {/* 2. 2D Futbol Sahası (Oyunculu, Canlı Taktiksel Radarlı ve Net Görüş) */}
+      <div className="relative flex-1 w-full bg-[#1b3d22] overflow-hidden min-h-[150px]">
         {/* Çim Çizgileri & Doku */}
         <div className="absolute inset-0 opacity-20 pointer-events-none bg-[repeating-linear-gradient(90deg,#000_0,#000_30px,transparent_30px,transparent_60px)]" />
         <div className="absolute inset-2 border-2 border-white/40 rounded pointer-events-none" />
@@ -276,21 +367,51 @@ const LivePitchRadar: React.FC<{
         <div className="absolute top-1/2 left-2 w-12 h-24 border-2 border-white/40 border-l-0 pointer-events-none -translate-y-1/2" />
         <div className="absolute top-1/2 right-2 w-12 h-24 border-2 border-white/40 border-r-0 pointer-events-none -translate-y-1/2" />
 
-        {/* Takım İsimleri (Sahanın köşe zemininde yarı saydam, sahayı ASLA kapatmaz) */}
-        <div className="absolute top-3 left-4 text-[11px] font-black text-white/40 tracking-wider uppercase pointer-events-none">
+        {/* Takım İsimleri (Köşelerde yarı saydam) */}
+        <div className="absolute top-2.5 left-4 text-[10px] sm:text-[11px] font-black text-white/40 tracking-wider uppercase pointer-events-none">
           {match.homeTeam.shortName || match.homeTeam.name}
         </div>
-        <div className="absolute top-3 right-4 text-[11px] font-black text-white/40 tracking-wider uppercase pointer-events-none">
+        <div className="absolute top-2.5 right-4 text-[10px] sm:text-[11px] font-black text-white/40 tracking-wider uppercase pointer-events-none">
           {match.awayTeam.shortName || match.awayTeam.name}
         </div>
 
-        {/* Hareketli Canlı Top */}
+        {/* 🏃‍♂️ Canlı Sahadaki Oyuncular (Ev Sahibi & Deplasman 11'leri) */}
+        {players.map((p) => {
+          const isCarrier = p.id === activeCarrierId;
+          const isHome = p.team === 'home';
+          const teamColor = isHome
+            ? (match.homeTeam.primaryColor || '#10b981')
+            : (match.awayTeam.primaryColor || '#3b82f6');
+          const bgColor = p.role === 'GK' ? (isHome ? '#f59e0b' : '#ec4899') : teamColor;
+
+          return (
+            <div
+              key={p.id}
+              className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-out z-10 pointer-events-none"
+              style={{ left: `${p.x}%`, top: `${p.y}%` }}
+            >
+              <div
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center font-black text-[7px] sm:text-[9px] md:text-[10px] text-white shadow-md transition-all ${
+                  isCarrier
+                    ? 'ring-2 ring-[#c6f052] scale-125 shadow-[0_0_12px_#c6f052] font-black'
+                    : 'border border-white/80'
+                }`}
+                style={{ backgroundColor: bgColor }}
+                title={`${isHome ? match.homeTeam.name : match.awayTeam.name} #${p.num}`}
+              >
+                {p.num}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* ⚽ Hareketli Canlı Top */}
         <div
           className="absolute z-20 transition-all duration-1000 ease-out -translate-x-1/2 -translate-y-1/2 pointer-events-none"
           style={{ left: `${ballPosition.x}%`, top: `${ballPosition.y}%` }}
         >
           <div className="relative">
-            <div className="w-6 h-6 rounded-full bg-white border border-slate-900 shadow-[0_0_15px_#c6f052] flex items-center justify-center text-xs font-bold">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white border border-slate-900 shadow-[0_0_15px_#c6f052] flex items-center justify-center text-xs font-bold">
               ⚽
             </div>
             <div className="absolute -inset-1 rounded-full bg-[#c6f052]/50 animate-ping -z-10" />
