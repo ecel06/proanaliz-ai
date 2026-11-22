@@ -499,6 +499,9 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           </div>
         </div>
 
+        {/* Kaydırılabilir İçerik Alanı (Altta hiçbir şeyin kesilmesini veya kaybolmasını engeller) */}
+        <div className="flex-1 overflow-y-auto overscroll-contain flex flex-col min-h-0">
+
         {/* Canlı TV Modundaysa Kanal Değiştirici Haplar */}
         {activeViewMode === 'tv' && (
           <div className="px-4 py-2 bg-[#0d121c] border-b border-slate-800 flex items-center space-x-2 overflow-x-auto no-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shrink-0 select-none">
@@ -524,8 +527,8 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           </div>
         )}
 
-        {/* Ana Ekran (2D Radar veya Canlı TV Player) - Ferah Yükseklik */}
-        <div className="relative w-full h-[250px] sm:h-[300px] md:h-[350px] bg-black flex items-center justify-center shrink-0 overflow-hidden">
+        {/* Ana Ekran (2D Radar veya Canlı TV Player) - Kompakt & Ekranı Boğmayan Yükseklik */}
+        <div className="relative w-full h-[190px] sm:h-[230px] md:h-[270px] bg-black flex items-center justify-center shrink-0 overflow-hidden">
           {activeViewMode === 'radar' && currentMatch && liveState ? (
             <LivePitchRadar match={currentMatch} liveState={liveState} />
           ) : (
@@ -595,15 +598,15 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
           </div>
         )}
 
-        {/* ⚡ 5. Canlı İddaa Oranları Barı (Geniş, Ferah & Büyük Butonlar) */}
+        {/* ⚡ 5. Canlı İddaa Oranları Barı (Geniş, Ferah, Asla Taşmayan 5 Kolonlu Izgara) */}
         {currentMatch && currentMatch.odds && (
-          <div className="px-4 py-2 bg-[#0a0f1d] border-t border-slate-800 flex items-center justify-between gap-3 overflow-x-auto no-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shrink-0 select-none">
-            <div className="flex items-center space-x-2 text-xs font-black text-slate-300 shrink-0">
+          <div className="px-3 sm:px-4 py-2 bg-[#0a0f1d] border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0 select-none">
+            <div className="flex items-center space-x-1.5 text-xs font-black text-slate-300 shrink-0">
               <Ticket className="w-4 h-4 text-[#c6f052]" />
-              <span className="text-white text-xs font-black uppercase tracking-wider">CANLI İDDAA:</span>
+              <span className="text-white text-[11px] sm:text-xs font-black uppercase tracking-wider">CANLI İDDAA:</span>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="w-full sm:flex-1 grid grid-cols-5 gap-1.5 sm:gap-2">
               {/* MS 1 */}
               {(() => {
                 const isSelected = betslipItems.some((i) => i.matchId === currentMatch.id && i.pickKey === 'ms1');
@@ -618,14 +621,14 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                       odd: currentMatch.odds?.ms1 || 1.80,
                       probability: 52
                     })}
-                    className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-black flex items-center space-x-2 cursor-pointer transition-all active:scale-95 ${
+                    className={`w-full py-1 sm:py-1.5 px-0.5 sm:px-1.5 rounded-xl border text-center flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer ${
                       isSelected
                         ? 'bg-[#c6f052] text-slate-950 border-[#c6f052] shadow-md shadow-[#c6f052]/30 ring-2 ring-[#c6f052]'
                         : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-700 hover:border-[#c6f052]'
                     }`}
                   >
-                    <span className={isSelected ? 'text-slate-950 font-black' : 'text-slate-400 font-bold'}>MS 1</span>
-                    <span className={`font-mono text-sm sm:text-base font-black ${isSelected ? 'text-slate-950' : 'text-[#c6f052]'}`}>
+                    <span className={isSelected ? 'text-slate-950 font-black text-[10px] sm:text-xs leading-tight' : 'text-slate-400 font-bold text-[10px] sm:text-xs leading-tight'}>MS 1</span>
+                    <span className={`font-mono text-xs sm:text-sm font-black ${isSelected ? 'text-slate-950' : 'text-[#c6f052]'}`}>
                       {currentMatch.odds?.ms1?.toFixed(2) || '1.80'}
                     </span>
                   </button>
@@ -646,14 +649,14 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                       odd: currentMatch.odds?.msX || 3.20,
                       probability: 28
                     })}
-                    className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-black flex items-center space-x-2 cursor-pointer transition-all active:scale-95 ${
+                    className={`w-full py-1 sm:py-1.5 px-0.5 sm:px-1.5 rounded-xl border text-center flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer ${
                       isSelected
                         ? 'bg-[#c6f052] text-slate-950 border-[#c6f052] shadow-md shadow-[#c6f052]/30 ring-2 ring-[#c6f052]'
                         : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-700 hover:border-[#c6f052]'
                     }`}
                   >
-                    <span className={isSelected ? 'text-slate-950 font-black' : 'text-slate-400 font-bold'}>MS X</span>
-                    <span className={`font-mono text-sm sm:text-base font-black ${isSelected ? 'text-slate-950' : 'text-[#c6f052]'}`}>
+                    <span className={isSelected ? 'text-slate-950 font-black text-[10px] sm:text-xs leading-tight' : 'text-slate-400 font-bold text-[10px] sm:text-xs leading-tight'}>MS X</span>
+                    <span className={`font-mono text-xs sm:text-sm font-black ${isSelected ? 'text-slate-950' : 'text-[#c6f052]'}`}>
                       {currentMatch.odds?.msX?.toFixed(2) || '3.20'}
                     </span>
                   </button>
@@ -674,14 +677,14 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                       odd: currentMatch.odds?.ms2 || 3.40,
                       probability: 20
                     })}
-                    className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-black flex items-center space-x-2 cursor-pointer transition-all active:scale-95 ${
+                    className={`w-full py-1 sm:py-1.5 px-0.5 sm:px-1.5 rounded-xl border text-center flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer ${
                       isSelected
                         ? 'bg-[#c6f052] text-slate-950 border-[#c6f052] shadow-md shadow-[#c6f052]/30 ring-2 ring-[#c6f052]'
                         : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-700 hover:border-[#c6f052]'
                     }`}
                   >
-                    <span className={isSelected ? 'text-slate-950 font-black' : 'text-slate-400 font-bold'}>MS 2</span>
-                    <span className={`font-mono text-sm sm:text-base font-black ${isSelected ? 'text-slate-950' : 'text-[#c6f052]'}`}>
+                    <span className={isSelected ? 'text-slate-950 font-black text-[10px] sm:text-xs leading-tight' : 'text-slate-400 font-bold text-[10px] sm:text-xs leading-tight'}>MS 2</span>
+                    <span className={`font-mono text-xs sm:text-sm font-black ${isSelected ? 'text-slate-950' : 'text-[#c6f052]'}`}>
                       {currentMatch.odds?.ms2?.toFixed(2) || '3.40'}
                     </span>
                   </button>
@@ -702,14 +705,14 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                       odd: 1.75,
                       probability: 55
                     })}
-                    className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-black flex items-center space-x-2 cursor-pointer transition-all active:scale-95 ${
+                    className={`w-full py-1 sm:py-1.5 px-0.5 sm:px-1.5 rounded-xl border text-center flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer ${
                       isSelected
                         ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-md shadow-amber-400/30 ring-2 ring-amber-400'
                         : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-700 hover:border-amber-400'
                     }`}
                   >
-                    <span className={isSelected ? 'text-slate-950 font-black' : 'text-slate-400 font-bold'}>2.5 ÜST</span>
-                    <span className={`font-mono text-sm sm:text-base font-black ${isSelected ? 'text-slate-950' : 'text-amber-400'}`}>
+                    <span className={isSelected ? 'text-slate-950 font-black text-[10px] sm:text-xs leading-tight' : 'text-slate-400 font-bold text-[10px] sm:text-xs leading-tight'}>2.5 ÜST</span>
+                    <span className={`font-mono text-xs sm:text-sm font-black ${isSelected ? 'text-slate-950' : 'text-amber-400'}`}>
                       1.75
                     </span>
                   </button>
@@ -730,14 +733,14 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
                       odd: 1.85,
                       probability: 52
                     })}
-                    className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-black flex items-center space-x-2 cursor-pointer transition-all active:scale-95 ${
+                    className={`w-full py-1 sm:py-1.5 px-0.5 sm:px-1.5 rounded-xl border text-center flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer ${
                       isSelected
                         ? 'bg-emerald-400 text-slate-950 border-emerald-400 shadow-md shadow-emerald-400/30 ring-2 ring-emerald-400'
                         : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-700 hover:border-emerald-400'
                     }`}
                   >
-                    <span className={isSelected ? 'text-slate-950 font-black' : 'text-slate-400 font-bold'}>KG VAR</span>
-                    <span className={`font-mono text-sm sm:text-base font-black ${isSelected ? 'text-slate-950' : 'text-emerald-400'}`}>
+                    <span className={isSelected ? 'text-slate-950 font-black text-[10px] sm:text-xs leading-tight' : 'text-slate-400 font-bold text-[10px] sm:text-xs leading-tight'}>KG VAR</span>
+                    <span className={`font-mono text-xs sm:text-sm font-black ${isSelected ? 'text-slate-950' : 'text-emerald-400'}`}>
                       1.85
                     </span>
                   </button>
@@ -838,6 +841,8 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
             })}
           </div>
         </div>
+
+        </div>{/* End scrollable modal body */}
 
       </div>
     </div>
