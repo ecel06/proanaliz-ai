@@ -22,6 +22,7 @@ import { Match, UserBetslipItem } from '../types';
 import { BettingPickOption } from '../utils/oddsHelper';
 import { getMatchLiveState } from '../utils/liveMatchHelper';
 import { soundManager } from '../utils/audioHelper';
+import { getTeamKit } from '../utils/teamKitHelper';
 
 export interface TVChannel {
   id: string;
@@ -214,6 +215,10 @@ const LivePitchRadar: React.FC<{
   const [activeCarrierId, setActiveCarrierId] = useState<string>('h10');
   const [isSoundActive, setIsSoundActive] = useState<boolean>(() => soundManager.isEnabled());
 
+  // 👕 Gerçek Takım Forma Renkleri ve Deplasman Çakışma Önleyici Motoru
+  const homeKit = useMemo(() => getTeamKit(match.homeTeam.name, false), [match.homeTeam.name]);
+  const awayKit = useMemo(() => getTeamKit(match.awayTeam.name, true, homeKit), [match.awayTeam.name, homeKit]);
+
   useEffect(() => {
     const timer = setInterval(() => {
       const phases: ('home_attack' | 'away_attack' | 'midfield' | 'corner' | 'danger')[] = [
@@ -327,12 +332,21 @@ const LivePitchRadar: React.FC<{
       {/* 1. Üst Durum & Atak Bilgisi Barı (Sahanın ÜSTÜNDE - Sahayı ASLA kapatmaz) */}
       <div className="px-3 sm:px-4 py-2 bg-[#0c1220] border-b border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-2 truncate">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping shrink-0" />
+          <span
+            className="w-3 h-3 rounded-full border border-white/40 shadow-sm shrink-0"
+            style={{ background: homeKit.gradient || homeKit.primaryColor }}
+            title={`${match.homeTeam.name} Forma Rengi`}
+          />
           <span className="text-xs sm:text-sm font-black text-white truncate">{match.homeTeam.name}</span>
           <span className="px-2 py-0.5 rounded bg-black font-mono text-xs sm:text-sm font-black text-[#c6f052] border border-white/10 shrink-0">
             {liveState.displayScore.home} - {liveState.displayScore.away}
           </span>
           <span className="text-xs sm:text-sm font-black text-white truncate">{match.awayTeam.name}</span>
+          <span
+            className="w-3 h-3 rounded-full border border-white/40 shadow-sm shrink-0"
+            style={{ background: awayKit.gradient || awayKit.primaryColor }}
+            title={`${match.awayTeam.name} Forma Rengi`}
+          />
         </div>
 
         <div className="flex items-center space-x-1.5 shrink-0">
@@ -357,7 +371,7 @@ const LivePitchRadar: React.FC<{
         </div>
       </div>
 
-      {/* 2. 2D Futbol Sahası (Oyunculu, Canlı Taktiksel Radarlı ve Net Görüş) */}
+      {/* 2. 2D Futbol Sahası (Gerçek Takım Formalı 22 Oyuncu, Radarlı ve Net Görüş) */}
       <div className="relative flex-1 w-full bg-[#1b3d22] overflow-hidden min-h-[150px]">
         {/* Çim Çizgileri & Doku */}
         <div className="absolute inset-0 opacity-20 pointer-events-none bg-[repeating-linear-gradient(90deg,#000_0,#000_30px,transparent_30px,transparent_60px)]" />
@@ -367,22 +381,36 @@ const LivePitchRadar: React.FC<{
         <div className="absolute top-1/2 left-2 w-12 h-24 border-2 border-white/40 border-l-0 pointer-events-none -translate-y-1/2" />
         <div className="absolute top-1/2 right-2 w-12 h-24 border-2 border-white/40 border-r-0 pointer-events-none -translate-y-1/2" />
 
-        {/* Takım İsimleri (Köşelerde yarı saydam) */}
-        <div className="absolute top-2.5 left-4 text-[10px] sm:text-[11px] font-black text-white/40 tracking-wider uppercase pointer-events-none">
-          {match.homeTeam.shortName || match.homeTeam.name}
+        {/* Takım İsimleri ve Forma Rozeti (Köşelerde yarı saydam) */}
+        <div className="absolute top-2.5 left-4 flex items-center space-x-1.5 text-[10px] sm:text-[11px] font-black tracking-wider uppercase pointer-events-none">
+          <span
+            className="w-2.5 h-2.5 rounded-full border border-white/60 shadow-sm"
+            style={{ background: homeKit.gradient || homeKit.primaryColor }}
+          />
+          <span className="text-white/60">{match.homeTeam.shortName || match.homeTeam.name}</span>
         </div>
-        <div className="absolute top-2.5 right-4 text-[10px] sm:text-[11px] font-black text-white/40 tracking-wider uppercase pointer-events-none">
-          {match.awayTeam.shortName || match.awayTeam.name}
+        <div className="absolute top-2.5 right-4 flex items-center space-x-1.5 text-[10px] sm:text-[11px] font-black tracking-wider uppercase pointer-events-none">
+          <span className="text-white/60">{match.awayTeam.shortName || match.awayTeam.name}</span>
+          <span
+            className="w-2.5 h-2.5 rounded-full border border-white/60 shadow-sm"
+            style={{ background: awayKit.gradient || awayKit.primaryColor }}
+          />
         </div>
 
-        {/* 🏃‍♂️ Canlı Sahadaki Oyuncular (Ev Sahibi & Deplasman 11'leri) */}
+        {/* 🏃‍♂️ Canlı Sahadaki Oyuncular (Gerçek Forma Renkleriyle 11 vs 11) */}
         {players.map((p) => {
           const isCarrier = p.id === activeCarrierId;
           const isHome = p.team === 'home';
-          const teamColor = isHome
-            ? (match.homeTeam.primaryColor || '#10b981')
-            : (match.awayTeam.primaryColor || '#3b82f6');
-          const bgColor = p.role === 'GK' ? (isHome ? '#f59e0b' : '#ec4899') : teamColor;
+          const kit = isHome ? homeKit : awayKit;
+          const isGK = p.role === 'GK';
+
+          const backgroundStyle = isGK
+            ? { backgroundColor: kit.gkColor }
+            : kit.gradient
+            ? { background: kit.gradient }
+            : { backgroundColor: kit.primaryColor };
+
+          const numColor = isGK ? kit.gkNumberColor : kit.numberColor;
 
           return (
             <div
@@ -391,13 +419,19 @@ const LivePitchRadar: React.FC<{
               style={{ left: `${p.x}%`, top: `${p.y}%` }}
             >
               <div
-                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center font-black text-[7px] sm:text-[9px] md:text-[10px] text-white shadow-md transition-all ${
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center font-black text-[7px] sm:text-[9px] md:text-[10px] shadow-md transition-all ${
                   isCarrier
-                    ? 'ring-2 ring-[#c6f052] scale-125 shadow-[0_0_12px_#c6f052] font-black'
-                    : 'border border-white/80'
+                    ? 'ring-2 ring-[#c6f052] scale-125 shadow-[0_0_12px_#c6f052] font-black z-20'
+                    : 'border border-black/40'
                 }`}
-                style={{ backgroundColor: bgColor }}
-                title={`${isHome ? match.homeTeam.name : match.awayTeam.name} #${p.num}`}
+                style={{
+                  ...backgroundStyle,
+                  color: numColor,
+                  boxShadow: isCarrier
+                    ? '0 0 12px #c6f052'
+                    : '0 1px 3px rgba(0,0,0,0.5)',
+                }}
+                title={`${isHome ? match.homeTeam.name : match.awayTeam.name} #${p.num} (${p.role})`}
               >
                 {p.num}
               </div>
