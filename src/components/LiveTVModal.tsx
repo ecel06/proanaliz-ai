@@ -17,8 +17,6 @@ import {
   Pause,
   Activity,
   Ticket,
-  Mic,
-  MicOff,
   Clock,
   BarChart3,
   Flame
@@ -28,7 +26,6 @@ import { BettingPickOption } from '../utils/oddsHelper';
 import { getMatchLiveState } from '../utils/liveMatchHelper';
 import { soundManager } from '../utils/audioHelper';
 import { getTeamKit } from '../utils/teamKitHelper';
-import { aiSpiker } from '../utils/aiSpikerHelper';
 import { generateMatchTimeline } from '../utils/matchTimelineHelper';
 
 export interface TVChannel {
@@ -221,7 +218,6 @@ const LivePitchRadar: React.FC<{
   const [attackPhase, setAttackPhase] = useState<'home_attack' | 'away_attack' | 'midfield' | 'corner' | 'danger'>('home_attack');
   const [activeCarrierId, setActiveCarrierId] = useState<string>('h10');
   const [isSoundActive, setIsSoundActive] = useState<boolean>(() => soundManager.isEnabled());
-  const [isSpikerActive, setIsSpikerActive] = useState<boolean>(() => aiSpiker.getStatus());
   const [bottomTab, setBottomTab] = useState<'stats' | 'timeline'>('stats');
 
   // 👕 Gerçek Takım Forma Renkleri ve Deplasman Çakışma Önleyici Motoru
@@ -251,9 +247,6 @@ const LivePitchRadar: React.FC<{
       setAttackPhase('midfield');
       setBallPosition({ x: 50, y: 50 });
       setActiveCarrierId('');
-      if (isSpikerActive) {
-        aiSpiker.announcePhase('finished', match.homeTeam.name, match.awayTeam.name, true, liveState.displayScore);
-      }
       return;
     }
 
@@ -284,19 +277,10 @@ const LivePitchRadar: React.FC<{
         setActiveCarrierId(carrier);
         setBallPosition({ x: 48 + Math.random() * 6, y: 42 + Math.random() * 16 });
       }
-
-      if (isSpikerActive && Math.random() > 0.45) {
-        aiSpiker.announcePhase(randomPhase, match.homeTeam.name, match.awayTeam.name, false, liveState.displayScore);
-      }
     }, 2800);
 
     return () => clearInterval(timer);
-  }, [liveState.isFinished, isSpikerActive, match.homeTeam.name, match.awayTeam.name]);
-
-  const toggleSpiker = () => {
-    const next = aiSpiker.toggle();
-    setIsSpikerActive(next);
-  };
+  }, [liveState.isFinished]);
 
   const getPhaseBadge = () => {
     if (liveState.isFinished) {
@@ -399,20 +383,6 @@ const LivePitchRadar: React.FC<{
         </div>
 
         <div className="flex items-center space-x-1.5 shrink-0">
-          <button
-            type="button"
-            onClick={toggleSpiker}
-            className={`p-1 sm:p-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 ${
-              isSpikerActive
-                ? 'bg-[#c6f052] text-slate-950 font-black shadow-sm ring-1 ring-[#c6f052]'
-                : 'bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white'
-            }`}
-            title={isSpikerActive ? '🎙️ AI Türkçe Canlı Spiker Açık (Tıkla Kapat)' : '🎙️ AI Türkçe Canlı Spiker Kapalı (Tıkla Aç)'}
-          >
-            {isSpikerActive ? <Mic className="w-3.5 h-3.5 text-slate-950 animate-pulse" /> : <MicOff className="w-3.5 h-3.5" />}
-            <span className="text-[10px] hidden sm:inline font-bold">AI Spiker</span>
-          </button>
-
           <button
             type="button"
             onClick={toggleWhistleSound}
