@@ -226,6 +226,13 @@ const LivePitchRadar: React.FC<{
   );
 
   useEffect(() => {
+    if (liveState.isFinished) {
+      setAttackPhase('midfield');
+      setBallPosition({ x: 50, y: 50 });
+      setActiveCarrierId('');
+      return;
+    }
+
     const timer = setInterval(() => {
       const phases: ('home_attack' | 'away_attack' | 'midfield' | 'corner' | 'danger')[] = [
         'home_attack', 'danger', 'away_attack', 'midfield', 'home_attack'
@@ -256,9 +263,12 @@ const LivePitchRadar: React.FC<{
     }, 2800);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [liveState.isFinished]);
 
   const getPhaseBadge = () => {
+    if (liveState.isFinished) {
+      return { text: '🏁 MAÇ SONUCU (BİTTİ)', color: 'bg-emerald-600 text-white font-black' };
+    }
     switch (attackPhase) {
       case 'danger':
         return { text: '🔥 TEHLİKELİ ATAK', color: 'bg-rose-500 text-white animate-pulse' };
@@ -371,9 +381,15 @@ const LivePitchRadar: React.FC<{
           <span className={`px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm ${badge.color}`}>
             {badge.text}
           </span>
-          <span className="px-2 py-0.5 rounded bg-rose-600 text-white font-mono text-xs font-bold animate-pulse">
-            {liveState.liveMinute || 'Canlı'}
-          </span>
+          {liveState.isFinished ? (
+            <span className="px-2.5 py-0.5 rounded bg-emerald-600 text-white font-mono text-xs font-black shadow-sm">
+              MS
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 rounded bg-rose-600 text-white font-mono text-xs font-bold animate-pulse">
+              {liveState.liveMinute || 'Canlı'}
+            </span>
+          )}
         </div>
       </div>
 
@@ -454,9 +470,27 @@ const LivePitchRadar: React.FC<{
             <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white border border-slate-900 shadow-[0_0_15px_#c6f052] flex items-center justify-center text-xs font-bold">
               ⚽
             </div>
-            <div className="absolute -inset-1 rounded-full bg-[#c6f052]/50 animate-ping -z-10" />
+            {!liveState.isFinished && (
+              <div className="absolute -inset-1 rounded-full bg-[#c6f052]/50 animate-ping -z-10" />
+            )}
           </div>
         </div>
+
+        {/* 🏁 Maç Bitti (MS) Bilgi Kartı */}
+        {liveState.isFinished && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 px-4 py-2.5 rounded-2xl bg-black/90 border border-[#c6f052]/60 shadow-[0_0_35px_rgba(0,0,0,0.9)] flex flex-col items-center pointer-events-none backdrop-blur-md">
+            <span className="text-[10px] sm:text-xs uppercase font-black tracking-widest text-[#c6f052] flex items-center gap-1.5 mb-0.5">
+              <span>🏁</span> MAÇ SONUCU (90' BİTTİ)
+            </span>
+            <div className="text-base sm:text-lg font-black text-white font-mono flex items-center space-x-2">
+              <span>{match.homeTeam.name}</span>
+              <span className="text-[#c6f052] px-2 py-0.5 rounded bg-slate-900 border border-white/10">
+                {liveState.displayScore.home} - {liveState.displayScore.away}
+              </span>
+              <span>{match.awayTeam.name}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 3. Alt Saha İstatistik Çubuğu (Sahanın ALTINDA - Sahayı ASLA kapatmaz) */}
@@ -507,6 +541,37 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [volume, setVolume] = useState<number>(1.0);
 
+  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Canlı modal açıkken her 10 saniyede bir bülteni arka planda yokla ve maç durumunu güncelle
+  useEffect(() => {
+    if (!isOpen || !activeMatch?.id) return;
+    const pollTimer = setInterval(async () => {
+      try {
+        const res = await fetch('/api/bulletin');
+        if (res.ok) {
+          const data = await res.json();
+          const matches: Match[] = Array.isArray(data) ? data : (data.matches || data.data || []);
+          const fresh = matches.find((m) => m.id === activeMatch.id);
+          if (fresh) {
+            setActiveMatch((prev) => prev ? { ...prev, ...fresh } : fresh);
+          }
+        }
+      } catch {
+        // Ağ dalgalanmalarını sessizce yut
+      }
+    }, 10000);
+
+    return () => clearInterval(pollTimer);
+  }, [isOpen, activeMatch?.id]);
+
   useEffect(() => {
     if (targetMatch) {
       setActiveMatch(targetMatch);
@@ -516,7 +581,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
 
   const currentMatch = activeMatch || targetMatch;
   const currentChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
-  const liveState = useMemo(() => currentMatch ? getMatchLiveState(currentMatch) : null, [currentMatch]);
+  const liveState = useMemo(() => currentMatch ? getMatchLiveState(currentMatch, currentTime) : null, [currentMatch, currentTime]);
 
   if (!isOpen) return null;
 
@@ -585,19 +650,17 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
         {/* Üst Başlık & Sekme Seçici Barı */}
         <div className="px-4 py-3 bg-[#12161f] border-b border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2 min-w-0 flex-1 pr-2">
-            {activeViewMode === 'radar' && currentMatch && liveState ? (
+            {activeViewMode === 'radar' && currentMatch ? (
               <div className="flex items-center space-x-2 truncate">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
-                <span className="text-xs sm:text-sm font-black text-white truncate">
-                  ⚽ {currentMatch.homeTeam.name}{' '}
-                  <span className="text-[#c6f052] font-mono mx-1">
-                    {liveState.displayScore.home} - {liveState.displayScore.away}
-                  </span>{' '}
-                  {currentMatch.awayTeam.name}
+                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${liveState?.isFinished ? 'bg-emerald-500' : 'bg-rose-500 animate-pulse'}`} />
+                <span className="text-xs sm:text-sm font-bold text-slate-200 truncate">
+                  2D Canlı Saha Radarı • <span className="text-[#c6f052] font-semibold">{currentMatch.league || 'Canlı Karşılaşma'}</span>
                 </span>
-                <span className="px-2 py-0.5 rounded bg-rose-600/30 text-rose-400 font-mono text-[10px] font-bold border border-rose-500/40 shrink-0">
-                  {liveState.liveMinute || 'Canlı'}
-                </span>
+                {liveState?.isFinished && (
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold border border-emerald-500/40 shrink-0">
+                    MS (Maç Bitti)
+                  </span>
+                )}
               </div>
             ) : (
               <div className="flex items-center space-x-2 truncate">

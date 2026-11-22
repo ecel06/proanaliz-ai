@@ -95,6 +95,15 @@ export function normalizeLiveMinute(rawMinute?: string): string {
   const trimmed = rawMinute.trim();
   const lower = trimmed.toLowerCase();
   if (
+    lower === 'ms' ||
+    lower === 'ft' ||
+    lower.includes('bitti') ||
+    lower.includes('sonuç') ||
+    lower.includes('finished')
+  ) {
+    return 'MS';
+  }
+  if (
     lower === 'ht' ||
     lower === 'iy' ||
     lower === 'd.a' ||
@@ -153,6 +162,7 @@ export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLi
       isLive: false,
       isFinished: true,
       isUpcoming: false,
+      liveMinute: 'MS',
       displayScore: {
         home: (finalScore as any).home ?? 0,
         away: (finalScore as any).away ?? 0,
@@ -164,11 +174,46 @@ export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLi
 
   // 3. Explicit live status
   if (match.status === 'live') {
+    // If more than 115 minutes have elapsed since kickoff, match is finished
+    if (kickoffMs !== null) {
+      const diffMs = nowMs - kickoffMs;
+      if (diffMs >= 115 * 60 * 1000) {
+        const finalScore = match.finalScore || match.currentScore || {
+          home: (match as any).homeScore ?? 0,
+          away: (match as any).awayScore ?? 0
+        };
+        return {
+          status: 'finished',
+          isLive: false,
+          isFinished: true,
+          isUpcoming: false,
+          liveMinute: 'MS',
+          displayScore: {
+            home: finalScore.home ?? 0,
+            away: finalScore.away ?? 0,
+            htHome: (finalScore as any).htHome,
+            htAway: (finalScore as any).htAway
+          }
+        };
+      }
+    }
+
     const score = match.currentScore || match.finalScore || {
       home: (match as any).homeScore ?? 0,
       away: (match as any).awayScore ?? 0
     };
-    const normMin = normalizeLiveMinute(match.liveMinute);
+    let normMin = normalizeLiveMinute(match.liveMinute);
+
+    // Dynamic minute calculation during extra/stoppage time
+    if (kickoffMs !== null) {
+      const diffMs = nowMs - kickoffMs;
+      const elapsedMins = Math.floor(diffMs / (60 * 1000));
+      if (elapsedMins >= 105 && elapsedMins < 115) {
+        const extraMins = Math.max(1, elapsedMins - 105);
+        normMin = `90'+${extraMins}'`;
+      }
+    }
+
     return {
       status: 'live',
       isLive: true,
@@ -202,7 +247,8 @@ export function getMatchLiveState(match: Match, now: Date = new Date()): MatchLi
         } else if (elapsedMins <= 105) {
           liveMinute = `${Math.min(90, elapsedMins - 15)}'`;
         } else {
-          liveMinute = "90+'";
+          const extraMins = Math.max(1, elapsedMins - 105);
+          liveMinute = `90'+${extraMins}'`;
         }
 
         // Live score determination

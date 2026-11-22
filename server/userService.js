@@ -167,70 +167,146 @@ function seedDefaultEditorCoupons() {
           m.homeTeam.includes('Inter'))
     );
 
-  if (editorCouponsMap.size === 0 || isOldCoupon) {
+  if (editorCouponsMap.size === 0 || isOldCoupon || !editorCouponsMap.has('ed_cp_yesterday')) {
+    const yesterdayCoupon = {
+      id: 'ed_cp_yesterday',
+      title: '👑 DÜNÜN YÖNETİCİ KAZANAN KUPONU (ARŞİV)',
+      subtitle: 'Yönetici Masası & AI Dünün %100 Kazanan Arşiv Kuponu',
+      category: 'football',
+      confidence: 96,
+      totalOdds: 4.85,
+      isVipOnly: true,
+      status: 'won',
+      author: 'Yönetici',
+      createdAt: Date.now() - 24 * 60 * 60 * 1000,
+      matches: [
+        {
+          id: '401888201',
+          homeTeam: 'Norwich City',
+          awayTeam: 'Cardiff City',
+          league: 'İngiltere Championship',
+          matchTime: '18:00',
+          matchDate: 'Dün',
+          prediction: 'MS 1',
+          odds: 1.75,
+          confidence: 94,
+          status: 'won',
+          homeScore: 2,
+          awayScore: 1,
+          reason: 'Norwich City iç sahada üstün oyunla Cardiff karşısında 2-1 kazanarak kuponu başlattı.'
+        },
+        {
+          id: '401888202',
+          homeTeam: 'Southampton',
+          awayTeam: 'Derby County',
+          league: 'İngiltere Championship',
+          matchTime: '18:00',
+          matchDate: 'Dün',
+          prediction: 'MS 1',
+          odds: 1.60,
+          confidence: 95,
+          status: 'won',
+          homeScore: 2,
+          awayScore: 0,
+          reason: 'Southampton net pozisyonlarla rakibine şans tanımadı ve 2-0 galip geldi.'
+        },
+        {
+          id: '401888203',
+          homeTeam: 'Middlesbrough',
+          awayTeam: 'Bristol City',
+          league: 'İngiltere Championship',
+          matchTime: '20:30',
+          matchDate: 'Dün',
+          prediction: '2.5 Alt',
+          odds: 1.68,
+          confidence: 93,
+          status: 'won',
+          homeScore: 2,
+          awayScore: 0,
+          reason: 'Kontrollü savunma anlayışı maçı 2.5 alt sınırında tutarak tercihi kazandırdı.'
+        },
+        {
+          id: '401888204',
+          homeTeam: 'Sheffield United',
+          awayTeam: 'Watford',
+          league: 'İngiltere Championship',
+          matchTime: '22:45',
+          matchDate: 'Dün',
+          prediction: '1.5 Üst',
+          odds: 1.25,
+          confidence: 98,
+          status: 'won',
+          homeScore: 4,
+          awayScore: 0,
+          reason: 'Sheffield hücum hattı maçı domine ederek bol gollü galibiyet elde etti.'
+        }
+      ]
+    };
+
     const todayCoupon = {
-      id: 'ed_cp_002',
+      id: 'ed_cp_today',
       title: '👑 GÜNÜN YÖNETİCİ ŞEREF KUPONU',
-      subtitle: 'Yönetici Masası & AI En Yüksek Güven Tercihleri',
+      subtitle: 'Yönetici Masası & AI Bugünün En Yüksek Güven Tercihleri',
       category: 'football',
       confidence: 93,
-      totalOdds: 4.32,
+      totalOdds: 4.45,
       isVipOnly: true,
       status: 'pending',
       author: 'Yönetici',
       createdAt: Date.now(),
       matches: [
         {
-          id: '401861185',
-          homeTeam: 'Almanya',
-          awayTeam: 'Hollanda',
-          league: 'UEFA Uluslar Ligi',
-          matchTime: '22:45',
+          id: '401888241',
+          homeTeam: 'Liverpool',
+          awayTeam: 'Manchester United',
+          league: 'İngiltere Premier Lig',
+          matchTime: '19:30',
           matchDate: 'Bugün',
           prediction: '2.5 ÜST & KG VAR',
-          odds: 1.78,
+          odds: 1.65,
           confidence: 94,
-          reason: 'İki dev ekibin hücum gücü ve turnuva temposu karşılıklı bol gollü bir maça işaret ediyor.'
+          reason: 'Premier Lig derbisinde iki ekibin ofansif gücü karşılıklı yüksek tempolu gollere işaret ediyor.'
         },
         {
-          id: '401861188',
-          homeTeam: 'Yunanistan',
-          awayTeam: 'Sırbistan',
-          league: 'UEFA Uluslar Ligi',
-          matchTime: '22:45',
+          id: '401888242',
+          homeTeam: 'Konyaspor',
+          awayTeam: 'Beşiktaş',
+          league: 'Süper Lig',
+          matchTime: '20:00',
           matchDate: 'Bugün',
-          prediction: 'MS 1X Çifte Şans',
-          odds: 1.34,
-          confidence: 92,
-          reason: 'Yunanistan iç saha savunma disiplini ve seyirci baskısıyla puan kaybına kapalı.'
+          prediction: 'MS 2',
+          odds: 1.82,
+          confidence: 91,
+          reason: 'Beşiktaş şampiyonluk yarışında deplasmanda kadro kalitesi ve form grafiğiyle galibiyete yakın.'
         },
         {
-          id: '401906326',
-          homeTeam: 'Luton Town',
-          awayTeam: 'Peterborough United',
-          league: 'İngiltere EFL Trophy',
+          id: '401888249',
+          homeTeam: 'Trabzonspor',
+          awayTeam: 'Eyupspor',
+          league: 'Süper Lig',
+          matchTime: '19:00',
+          matchDate: 'Bugün',
+          prediction: 'MS 1',
+          odds: 1.70,
+          confidence: 93,
+          reason: 'Trabzonspor sahasında baskılı başlayarak seyirci desteğiyle 3 puana ulaşıyor.'
+        },
+        {
+          id: '401888244',
+          homeTeam: 'Barcelona',
+          awayTeam: 'Villarreal',
+          league: 'İspanya La Liga',
           matchTime: '22:00',
           matchDate: 'Bugün',
-          prediction: '1.5 Gol Üst',
-          odds: 1.25,
+          prediction: '2.5 Gol Üst',
+          odds: 1.55,
           confidence: 95,
-          reason: 'EFL Trophy grup mücadelelerindeki açık futbol yapısı en az 2 golü destekliyor.'
-        },
-        {
-          id: '401841310',
-          homeTeam: 'Remo',
-          awayTeam: 'Chapecoense',
-          league: 'Brezilya Serie A',
-          matchTime: '02:00',
-          matchDate: 'Gece',
-          prediction: 'MS 1',
-          odds: 1.45,
-          confidence: 91,
-          reason: 'Remo iç sahada yakaladığı form ve ligdeki mutlak galibiyet ihtiyacıyla öne çıkıyor.'
+          reason: 'İki açık oynayan takımın mücadelesinde zengin pozisyon ve gol beklentisi yüksek.'
         }
       ]
     };
     editorCouponsMap.clear();
+    editorCouponsMap.set(yesterdayCoupon.id, yesterdayCoupon);
     editorCouponsMap.set(todayCoupon.id, todayCoupon);
     saveEditorCoupons();
   }

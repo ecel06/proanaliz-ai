@@ -202,13 +202,15 @@ export function getEditorMatchEvaluation(
   let awayScore = 0;
   let liveMinute = '';
 
+  const isYesterdayMatch = (m.matchDate || '').toLowerCase().includes('dün') || (m as any).status === 'won' || (m as any).status === 'lost';
+
   const timeParts = (m.matchTime || '').split(':').map((p) => parseInt(p, 10));
   if (timeParts.length === 2 && !isNaN(timeParts[0]) && !isNaN(timeParts[1])) {
     const nowHours = currentTime.getHours();
     const nowMinutes = currentTime.getMinutes();
     const kickoffTotal = timeParts[0] * 60 + timeParts[1];
     const nowTotal = nowHours * 60 + nowMinutes;
-    const diffMins = nowTotal - kickoffTotal;
+    const diffMins = isYesterdayMatch ? 999 : nowTotal - kickoffTotal;
 
     if (diffMins < 0) {
       matchStatus = 'upcoming';
@@ -243,6 +245,11 @@ export function getEditorMatchEvaluation(
         pickStatus = 'won';
       }
     }
+  } else if (isYesterdayMatch) {
+    matchStatus = 'finished';
+    homeScore = 2;
+    awayScore = 1;
+    pickStatus = 'won';
   }
 
   return {

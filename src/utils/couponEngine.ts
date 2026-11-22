@@ -457,19 +457,37 @@ export function generateCuratedCoupons(
   now: Date = new Date(),
   selectedDay: CouponDayFilter = 'today'
 ): CuratedCoupon[] {
-  let poolMatches = allMatches.filter(m => isMatchOnDateFilter(m, selectedDay, now));
-  if (poolMatches.length < 9) {
-    poolMatches = allMatches;
-  }
+  let candidatePool: Match[] = [];
 
-  // Prefer upcoming/live matches when viewing 'today' or 'all' so daily coupons are playable
-  const playablePool = selectedDay === 'yesterday'
-    ? poolMatches
-    : poolMatches.filter(m => {
+  if (selectedDay === 'yesterday') {
+    // Dünün kuponları KESİNLİKLE bitmiş ve sonuçlanmış maçlardan oluşmalıdır
+    const yesterdayFinished = allMatches.filter(
+      m => isMatchOnDateFilter(m, 'yesterday', now) && (m.status === 'finished' || getMatchLiveState(m, now).isFinished)
+    );
+    candidatePool = yesterdayFinished.length >= 9
+      ? yesterdayFinished
+      : allMatches.filter(m => m.status === 'finished' || getMatchLiveState(m, now).isFinished);
+  } else if (selectedDay === 'today') {
+    // Bugünün kuponları canlı ve oynanabilir maçları hedefler
+    const todayMatches = allMatches.filter(m => isMatchOnDateFilter(m, 'today', now));
+    const playable = todayMatches.filter(m => {
+      const st = getMatchLiveState(m, now);
+      return st.isUpcoming || st.isLive;
+    });
+    candidatePool = playable.length >= 9 ? playable : todayMatches;
+    if (candidatePool.length < 9) {
+      candidatePool = allMatches.filter(m => {
         const st = getMatchLiveState(m, now);
         return st.isUpcoming || st.isLive;
       });
-  const candidatePool = playablePool.length >= 9 ? playablePool : poolMatches;
+    }
+  } else {
+    candidatePool = allMatches;
+  }
+
+  if (candidatePool.length === 0) {
+    candidatePool = allMatches;
+  }
 
   const usedMatchIds = new Set<string>();
   const pickTierMatches = (tier: 'banko' | 'ideal' | 'surpriz', count: number): DynamicPickCandidate[] => {
