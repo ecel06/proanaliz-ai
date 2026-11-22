@@ -19,9 +19,7 @@ import {
   Ticket,
   Clock,
   BarChart3,
-  Flame,
-  Mic,
-  Volume1
+  Flame
 } from 'lucide-react';
 import { Match, UserBetslipItem } from '../types';
 import { BettingPickOption } from '../utils/oddsHelper';
@@ -29,13 +27,6 @@ import { getMatchLiveState } from '../utils/liveMatchHelper';
 import { soundManager } from '../utils/audioHelper';
 import { getTeamKit } from '../utils/teamKitHelper';
 import { generateMatchTimeline } from '../utils/matchTimelineHelper';
-import {
-  playGoalChime,
-  GoalSoundVariant,
-  setGoalSoundVariant,
-  getGoalSoundVariant,
-  unlockAudio
-} from '../utils/soundHelper';
 
 export interface TVChannel {
   id: string;
@@ -226,157 +217,14 @@ const LivePitchRadar: React.FC<{
   const [ballPosition, setBallPosition] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
   const [attackPhase, setAttackPhase] = useState<'home_attack' | 'away_attack' | 'midfield' | 'corner' | 'danger'>('home_attack');
   const [activeCarrierId, setActiveCarrierId] = useState<string>('h10');
+  const [isSoundActive, setIsSoundActive] = useState<boolean>(() => soundManager.isEnabled());
   const [bottomTab, setBottomTab] = useState<'stats' | 'timeline'>('stats');
 
-  // 🎙️ Gerçek İnsan Spiker Motoru (Ercan Taner & Canlı TV Spikeri Gerçek Ses Kayıtları)
-  const [commentatorMode, setCommentatorMode] = useState<GoalSoundVariant | 'whistle' | 'mute'>(() => {
-    if (typeof window === 'undefined') return 'ercan';
-    try {
-      const saved = localStorage.getItem('proanaliz_radar_commentator_mode');
-      if (saved === 'ercan' || saved === 'spiker' || saved === 'kafa' || saved === 'whistle' || saved === 'mute') {
-        return saved as any;
-      }
-      return getGoalSoundVariant() || 'ercan';
-    } catch {
-      return 'ercan';
-    }
-  });
-
-  const [commentatorShout, setCommentatorShout] = useState<{
-    announcer: string;
-    phrase: string;
-    badge: string;
-    variant: GoalSoundVariant;
-  } | null>(null);
-
-  const shoutTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const prevScoreRef = useRef<{ home: number; away: number }>({
-    home: liveState.displayScore.home,
-    away: liveState.displayScore.away
-  });
-
-  // 🗣️ Canlı Maç Spikeri Anlatım Motoru (Oyunu Gerçekten Anlatan Doğal Spiker)
-  const speakMatchCommentary = (phrase: string, isGoalExplosion: boolean = false) => {
-    if (commentatorMode === 'mute' || commentatorMode === 'whistle') return;
-
-    unlockAudio();
-    const announcerName = commentatorMode === 'spiker' ? 'Canlı TV Spikeri' : 'Ercan Taner';
-    const badge = commentatorMode === 'spiker' ? '🎙️ CANLI TV' : '🎙️ ERCAN TANER';
-    const activeVar: GoalSoundVariant = commentatorMode === 'spiker' ? 'spiker' : 'ercan';
-
-    setCommentatorShout({
-      announcer: announcerName,
-      phrase,
-      badge,
-      variant: activeVar
-    });
-
-    if (isGoalExplosion) {
-      playGoalChime(activeVar);
-    } else if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(phrase);
-        utter.lang = 'tr-TR';
-        if (commentatorMode === 'ercan') {
-          utter.rate = 1.18;
-          utter.pitch = 1.10;
-        } else {
-          utter.rate = 1.10;
-          utter.pitch = 1.02;
-        }
-        const voices = window.speechSynthesis.getVoices();
-        const trVoice = voices.find(v => v.lang.startsWith('tr') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Tolga') || v.name.includes('Emel')))
-          || voices.find(v => v.lang.startsWith('tr'));
-        if (trVoice) utter.voice = trVoice;
-        window.speechSynthesis.speak(utter);
-      } catch (err) {
-        console.warn('Speech error:', err);
-      }
-    }
-
-    if (shoutTimerRef.current) clearTimeout(shoutTimerRef.current);
-    shoutTimerRef.current = setTimeout(() => {
-      setCommentatorShout(null);
-    }, 4500);
+  const toggleSound = () => {
+    const next = soundManager.toggle();
+    setIsSoundActive(next);
+    if (next) soundManager.playRefereeWhistle();
   };
-
-  const triggerCommentatorVoice = (targetVariant?: GoalSoundVariant) => {
-    unlockAudio();
-    const variant: GoalSoundVariant = targetVariant || (
-      commentatorMode === 'ercan' || commentatorMode === 'spiker' || commentatorMode === 'kafa'
-        ? commentatorMode
-        : 'ercan'
-    );
-
-    let announcer = 'Ercan Taner';
-    let phrase = "ALLAH'IM GOOOL! ALLAH'IM GOOOL!";
-    let badge = '🎙️ EFSANE SPİKER';
-
-    if (variant === 'spiker') {
-      announcer = 'Canlı TV Spikeri';
-      phrase = 'VE TOP AĞLARDA GOOOL! MÜTHİŞ BİR GOL!';
-      badge = '🎙️ CANLI TV';
-    } else if (variant === 'kafa') {
-      announcer = 'Stüdyo Spikeri';
-      phrase = 'KAFA VE GOOOL! HARİKA BİR KAFA VURUŞU!';
-      badge = '🎙️ MAÇ ANLATIMI';
-    }
-
-    setCommentatorShout({ announcer, phrase, badge, variant });
-    playGoalChime(variant);
-
-    if (shoutTimerRef.current) clearTimeout(shoutTimerRef.current);
-    shoutTimerRef.current = setTimeout(() => {
-      setCommentatorShout(null);
-    }, 4500);
-  };
-
-  const handleCommentatorChange = (mode: GoalSoundVariant | 'whistle' | 'mute') => {
-    setCommentatorMode(mode);
-    try {
-      localStorage.setItem('proanaliz_radar_commentator_mode', mode);
-    } catch {}
-
-    if (mode === 'ercan') {
-      setGoalSoundVariant('ercan');
-      soundManager.setEnabled(true);
-      speakMatchCommentary("Ercan Taner mikrofon başında! Karşılaşmayı tüm heyecanıyla aktarıyorum.");
-    } else if (mode === 'spiker') {
-      setGoalSoundVariant('spiker');
-      soundManager.setEnabled(true);
-      speakMatchCommentary("Canlı TV spikeri mikrofon başında, keyifli bir maç diliyorum.");
-    } else if (mode === 'kafa') {
-      setGoalSoundVariant('kafa');
-      soundManager.setEnabled(true);
-      triggerCommentatorVoice('kafa');
-    } else if (mode === 'whistle') {
-      soundManager.setEnabled(true);
-      soundManager.playRefereeWhistle();
-      setCommentatorShout(null);
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
-    } else if (mode === 'mute') {
-      soundManager.setEnabled(false);
-      setCommentatorShout(null);
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
-    }
-  };
-
-  // Gerçek Skor Değişiminde (GOL OLDUĞUNDA) Efsane Spiker Klip Patlaması
-  useEffect(() => {
-    if (
-      liveState.displayScore.home > prevScoreRef.current.home ||
-      liveState.displayScore.away > prevScoreRef.current.away
-    ) {
-      prevScoreRef.current = {
-        home: liveState.displayScore.home,
-        away: liveState.displayScore.away
-      };
-      if (commentatorMode === 'ercan' || commentatorMode === 'spiker' || commentatorMode === 'kafa') {
-        triggerCommentatorVoice(commentatorMode as GoalSoundVariant);
-      }
-    }
-  }, [liveState.displayScore.home, liveState.displayScore.away, commentatorMode]);
 
   // 👕 Gerçek Takım Forma Renkleri ve Deplasman Çakışma Önleyici Motoru
   const homeKit = useMemo(
@@ -419,50 +267,26 @@ const LivePitchRadar: React.FC<{
         const carrier = Math.random() > 0.5 ? 'h9' : 'h10';
         setActiveCarrierId(carrier);
         setBallPosition({ x: 68 + Math.random() * 10, y: 38 + Math.random() * 24 });
-        const homePhrases = [
-          `${match.homeTeam.name} hücuma çıkıyor, kanatta pas arayışı...`,
-          `${match.homeTeam.name} ceza sahasına doğru sokuluyor, bindirme var!`,
-          `${match.homeTeam.name} pas trafiğini hızlandırdı, savunma arasına tehlikeli bir koşu!`
-        ];
-        speakMatchCommentary(homePhrases[Math.floor(Math.random() * homePhrases.length)], false);
       } else if (randomPhase === 'danger') {
         setActiveCarrierId('h9');
         setBallPosition({ x: 86 + Math.random() * 5, y: 46 + Math.random() * 8 });
-        soundManager.playRefereeWhistle();
-        const dangerPhrases = [
-          `Çok tehlikeli pozisyon! Kaleciyle karşı karşıya... Vuruş geldi, kaleci son anda çeldi!`,
-          `Ceza sahasında büyük tehlike! Sert bir şut kaleyi yokladı, az farkla auta gidiyor!`,
-          `Gole çok yaklaştılar! Kaleci müthiş uzandı, top kornere çıkıyor!`
-        ];
-        speakMatchCommentary(dangerPhrases[Math.floor(Math.random() * dangerPhrases.length)], false);
+        if (isSoundActive) soundManager.playRefereeWhistle();
       } else if (randomPhase === 'away_attack') {
         const carrier = Math.random() > 0.5 ? 'a9' : 'a7';
         setActiveCarrierId(carrier);
         setBallPosition({ x: 26 + Math.random() * 12, y: 38 + Math.random() * 24 });
-        const awayPhrases = [
-          `${match.awayTeam.name} hızlı kontra atağa kalktı, savunma dikkatli!`,
-          `${match.awayTeam.name} kanatları kullanarak etkili gelmeye çalışıyor...`,
-          `${match.awayTeam.name} hücumda, savunma tehlikeyi uzaklaştırdı.`
-        ];
-        speakMatchCommentary(awayPhrases[Math.floor(Math.random() * awayPhrases.length)], false);
       } else if (randomPhase === 'corner') {
         setActiveCarrierId('h11');
         setBallPosition({ x: 94, y: Math.random() > 0.5 ? 8 : 92 });
-        speakMatchCommentary(`Köşe vuruşu kazanıldı! Ceza sahası kalabalık, kavisli bir orta bekleniyor...`, false);
       } else {
         const carrier = Math.random() > 0.5 ? 'h8' : 'a10';
         setActiveCarrierId(carrier);
         setBallPosition({ x: 48 + Math.random() * 6, y: 42 + Math.random() * 16 });
-        const midPhrases = [
-          `Orta sahada kıyasıya ikili mücadele, iki takım da pres yapıyor!`,
-          `Orta alanda paslaşmalar sürüyor, oyunun kontrolü el değiştiriyor.`
-        ];
-        speakMatchCommentary(midPhrases[Math.floor(Math.random() * midPhrases.length)], false);
       }
-    }, 4200);
+    }, 2800);
 
     return () => clearInterval(timer);
-  }, [liveState.isFinished]);
+  }, [liveState.isFinished, isSoundActive]);
 
   const getPhaseBadge = () => {
     if (liveState.isFinished) {
@@ -557,72 +381,19 @@ const LivePitchRadar: React.FC<{
         </div>
 
         <div className="flex items-center space-x-1.5 shrink-0">
-          {/* 🎙️ Gerçek İnsan Spiker Seçici Düğmeleri */}
-          <div className="flex items-center bg-slate-900 rounded-lg p-0.5 border border-slate-800">
-            <button
-              type="button"
-              onClick={() => handleCommentatorChange('ercan')}
-              className={`px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 ${
-                commentatorMode === 'ercan'
-                  ? 'bg-[#c6f052] text-slate-950 font-black shadow-xs'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Efsane Ercan Taner Gerçek İnsan Ses Kaydı (Tıkla & Dinle)"
-            >
-              <span>🎙️</span>
-              <span className="hidden sm:inline">Ercan Taner</span>
-              <span className="sm:hidden">Ercan</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleCommentatorChange('spiker')}
-              className={`px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 ${
-                commentatorMode === 'spiker'
-                  ? 'bg-[#c6f052] text-slate-950 font-black shadow-xs'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Canlı TV Spikeri Gerçek Ses Kaydı (Tıkla & Dinle)"
-            >
-              <span>🎙️</span>
-              <span className="hidden sm:inline">TV Spikeri</span>
-              <span className="sm:hidden">TV</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleCommentatorChange('whistle')}
-              className={`p-1 sm:px-1.5 sm:py-1 rounded text-[10px] font-bold transition-all cursor-pointer flex items-center space-x-0.5 ${
-                commentatorMode === 'whistle'
-                  ? 'bg-emerald-500/30 text-emerald-300 font-bold border border-emerald-500/50'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Sadece Düdük & Saha Sesi"
-            >
-              <Volume2 className="w-3.5 h-3.5" />
-              <span className="hidden md:inline text-[10px]">Saha</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleCommentatorChange('mute')}
-              className={`p-1 sm:px-1.5 sm:py-1 rounded text-[10px] font-bold transition-all cursor-pointer flex items-center ${
-                commentatorMode === 'mute'
-                  ? 'bg-rose-500/30 text-rose-300 font-bold border border-rose-500/50'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
-              title="Sesi Kapat"
-            >
-              <VolumeX className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => triggerCommentatorVoice(commentatorMode as GoalSoundVariant)}
-              className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] font-black bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all cursor-pointer flex items-center space-x-1"
-              title="Efsane Gol Sesini Dinle (Test)"
-            >
-              <span>⚽</span>
-              <span className="hidden sm:inline">Gol Sesi</span>
-            </button>
-          </div>
-
+          <button
+            type="button"
+            onClick={toggleSound}
+            className={`p-1 sm:p-1.5 rounded-lg transition-all cursor-pointer flex items-center space-x-1 ${
+              isSoundActive
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-xs'
+                : 'bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white'
+            }`}
+            title={isSoundActive ? 'Düdük & Saha Sesi Açık (Tıkla Kapat)' : 'Sesler Kapalı (Tıkla Aç)'}
+          >
+            {isSoundActive ? <Volume2 className="w-3.5 h-3.5 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5" />}
+            <span className="text-[10px] hidden sm:inline font-bold">Ses</span>
+          </button>
           <span className={`px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm ${badge.color}`}>
             {badge.text}
           </span>
@@ -647,28 +418,6 @@ const LivePitchRadar: React.FC<{
         <div className="absolute top-1/2 left-1/2 w-20 h-20 border-2 border-white/40 rounded-full pointer-events-none -translate-x-1/2 -translate-y-1/2" />
         <div className={`absolute top-1/2 left-2 w-12 h-24 border-2 ${attackPhase === 'away_attack' ? 'border-rose-500 bg-rose-500/20 shadow-[0_0_20px_rgba(244,63,94,0.6)] animate-pulse' : 'border-white/40'} border-l-0 pointer-events-none -translate-y-1/2 transition-colors duration-500`} />
         <div className={`absolute top-1/2 right-2 w-12 h-24 border-2 ${attackPhase === 'danger' ? 'border-rose-500 bg-rose-500/25 shadow-[0_0_25px_rgba(244,63,94,0.8)] animate-pulse' : attackPhase === 'home_attack' ? 'border-emerald-500/60 bg-emerald-500/10' : 'border-white/40'} border-r-0 pointer-events-none -translate-y-1/2 transition-colors duration-500`} />
-
-        {/* 🎙️ Gerçek İnsan Spiker Canlı Anons Bandı (Ercan Taner & TV Spikeri) */}
-        {commentatorShout && (
-          <div className="absolute top-2.5 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1.5 rounded-xl bg-slate-950/95 border-2 border-[#c6f052] shadow-[0_0_25px_rgba(198,240,82,0.6)] flex items-center space-x-2.5 backdrop-blur-md animate-in zoom-in-95 duration-200 pointer-events-auto">
-            <div className="flex items-center space-x-1.5 shrink-0">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-              <span className="text-[10px] sm:text-xs font-black text-[#c6f052] uppercase tracking-wider flex items-center space-x-1">
-                <span>{commentatorShout.badge}</span>
-                <span className="text-white font-mono">• {commentatorShout.announcer}:</span>
-              </span>
-            </div>
-            <span className="text-xs sm:text-sm font-black text-white italic tracking-wide drop-shadow-sm truncate max-w-[200px] sm:max-w-none">
-              "{commentatorShout.phrase}"
-            </span>
-            <div className="flex items-center space-x-0.5 text-[#c6f052] pl-1 shrink-0">
-              <span className="w-1 h-3 bg-[#c6f052] rounded-full animate-bounce [animation-delay:-0.3s]" />
-              <span className="w-1 h-4 bg-[#c6f052] rounded-full animate-bounce [animation-delay:-0.15s]" />
-              <span className="w-1 h-2 bg-[#c6f052] rounded-full animate-bounce" />
-              <span className="w-1 h-5 bg-[#c6f052] rounded-full animate-bounce [animation-delay:-0.2s]" />
-            </div>
-          </div>
-        )}
 
         {/* Takım İsimleri ve Forma Rozeti (Köşelerde yarı saydam) */}
         <div className="absolute top-2.5 left-4 flex items-center space-x-1.5 text-[10px] sm:text-[11px] font-black tracking-wider uppercase pointer-events-none">
