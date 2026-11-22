@@ -1,5 +1,6 @@
 // src/services/standingsService.ts
 // Live Standings Service for ProAnaliz AI - Guaranteed Instant Real Standings & Multi-Source Live Sync
+import { getTeamKit } from '../utils/teamKitHelper';
 
 export interface StandingRow {
   rank: number;
@@ -56,33 +57,7 @@ export const STANDINGS_LEAGUES: SupportedStandingsLeague[] = [
 ];
 
 export function getTeamColor(teamName: string): string {
-  const t = teamName.toLowerCase();
-  if (t.includes('galatasaray')) return '#F59E0B';
-  if (t.includes('fenerbah')) return '#3B82F6';
-  if (t.includes('beşiktaş') || t.includes('besiktas')) return '#FFFFFF';
-  if (t.includes('trabzon')) return '#9333EA';
-  if (t.includes('başakşehir') || t.includes('basaksehir')) return '#F97316';
-  if (t.includes('göztepe') || t.includes('goztepe')) return '#EAB308';
-  if (t.includes('samsun')) return '#EF4444';
-  if (t.includes('kasımpaşa') || t.includes('kasimpasa')) return '#1E3A8A';
-  if (t.includes('kocaeli')) return '#10B981';
-  if (t.includes('eyüp') || t.includes('eyup')) return '#EAB308';
-  if (t.includes('çorum') || t.includes('corum')) return '#DC2626';
-  if (t.includes('alanya')) return '#F97316';
-  if (t.includes('konya')) return '#15803D';
-  if (t.includes('gençler') || t.includes('gencler')) return '#EF4444';
-  if (t.includes('rize')) return '#16A34A';
-  if (t.includes('gaziantep')) return '#DC2626';
-  if (t.includes('amed')) return '#16A34A';
-  if (t.includes('erzurum')) return '#3B82F6';
-  if (t.includes('bursa')) return '#10B981';
-  if (t.includes('arsenal') || t.includes('liverpool') || t.includes('bayern')) return '#EF4444';
-  if (t.includes('chelsea') || t.includes('manchester city') || t.includes('inter')) return '#38BDF8';
-  if (t.includes('real madrid')) return '#FFFFFF';
-  if (t.includes('barcelona')) return '#3B82F6';
-  if (t.includes('dortmund')) return '#FACC15';
-  if (t.includes('paris') || t.includes('psg')) return '#1E3A8A';
-  return '#10B981';
+  return getTeamKit(teamName).primaryColor;
 }
 
 // 100% Real, Authentic Official Standings Data for Every Supported League

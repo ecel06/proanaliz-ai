@@ -216,8 +216,14 @@ const LivePitchRadar: React.FC<{
   const [isSoundActive, setIsSoundActive] = useState<boolean>(() => soundManager.isEnabled());
 
   // 👕 Gerçek Takım Forma Renkleri ve Deplasman Çakışma Önleyici Motoru
-  const homeKit = useMemo(() => getTeamKit(match.homeTeam.name, false), [match.homeTeam.name]);
-  const awayKit = useMemo(() => getTeamKit(match.awayTeam.name, true, homeKit), [match.awayTeam.name, homeKit]);
+  const homeKit = useMemo(
+    () => getTeamKit(match.homeTeam.name, false, undefined, (match.homeTeam as any).primaryColor),
+    [match.homeTeam.name, (match.homeTeam as any).primaryColor]
+  );
+  const awayKit = useMemo(
+    () => getTeamKit(match.awayTeam.name, true, homeKit, (match.awayTeam as any).primaryColor),
+    [match.awayTeam.name, homeKit, (match.awayTeam as any).primaryColor]
+  );
 
   useEffect(() => {
     const timer = setInterval(() => {
