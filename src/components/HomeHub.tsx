@@ -587,6 +587,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                       let icon = '📊';
                       let cleanLabel = item.label;
                       if (item.symbol === 'GRAM_ALTIN') { icon = '🪙'; cleanLabel = 'Gram Altın'; }
+                      else if (item.symbol === 'KAPALICARSI_GRAM') { icon = '🏛️'; cleanLabel = 'Kapalıçarşı'; }
                       else if (item.symbol === 'CEYREK_ALTIN') { icon = '👑'; cleanLabel = 'Çeyrek'; }
                       else if (item.symbol === 'GC=F') { icon = '🟡'; cleanLabel = 'Ons Altın'; }
                       else if (isUsd) { icon = '💵'; cleanLabel = 'USD/TRY'; }

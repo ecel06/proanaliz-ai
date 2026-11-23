@@ -772,6 +772,30 @@ function mapTvRow(item, market) {
   };
 }
 
+function parseTurkishGoldNumber(str) {
+  if (!str) return 0;
+  const clean = String(str).replace(/\./g, '').replace(',', '.');
+  return parseFloat(clean) || 0;
+}
+
+let rawKapalicarsiCache = { data: null, expiresAt: 0 };
+async function fetchRawKapalicarsiData() {
+  const now = Date.now();
+  if (rawKapalicarsiCache.data && now < rawKapalicarsiCache.expiresAt) {
+    return rawKapalicarsiCache.data;
+  }
+  try {
+    const raw = await httpRequestJson('https://finans.truncgil.com/v3/today.json');
+    if (raw && typeof raw === 'object' && raw['gram-altin']) {
+      rawKapalicarsiCache = { data: raw, expiresAt: now + 30 * 1000 };
+      return raw;
+    }
+  } catch (err) {
+    console.warn('[Kapalicarsi] Fetch error:', err.message);
+  }
+  return rawKapalicarsiCache.data;
+}
+
 export async function fetchMacroOverview(force = false) {
   const now = Date.now();
   if (!force && macroCache.data && now < macroCache.expiresAt) {
@@ -816,7 +840,35 @@ export async function fetchMacroOverview(force = false) {
   if (usdObj && onsObj && usdObj.price > 0 && onsObj.price > 0) {
     const gramPrice = (onsObj.price / 31.1034768) * usdObj.price;
     const gramChange = Number((onsObj.changePct + usdObj.changePct).toFixed(2));
-    const ceyrekPrice = gramPrice * 1.635;
+    
+    let kapalicarsiGramPrice = Number((gramPrice * 1.012).toFixed(2));
+    let kapalicarsiChange = gramChange;
+    let ceyrekPrice = Number(Math.round(gramPrice * 1.635));
+    let ceyrekChange = gramChange;
+
+    try {
+      const raw = await fetchRawKapalicarsiData();
+      if (raw && raw['gram-altin']) {
+        const kSelling = parseTurkishGoldNumber(raw['gram-altin'].Selling);
+        if (kSelling > 1000) {
+          kapalicarsiGramPrice = kSelling;
+          const chgStr = String(raw['gram-altin'].Change || '').replace('%', '').trim();
+          const parsed = parseFloat(chgStr.replace(',', '.'));
+          if (!isNaN(parsed)) kapalicarsiChange = parsed;
+        }
+      }
+      if (raw && raw['ceyrek-altin']) {
+        const cSelling = parseTurkishGoldNumber(raw['ceyrek-altin'].Selling);
+        if (cSelling > 1000) {
+          ceyrekPrice = cSelling;
+          const chgStr = String(raw['ceyrek-altin'].Change || '').replace('%', '').trim();
+          const parsed = parseFloat(chgStr.replace(',', '.'));
+          if (!isNaN(parsed)) ceyrekChange = parsed;
+        }
+      }
+    } catch (e) {
+      // safe fallback
+    }
 
     // Insert Gram (Spot), Gram (Kapalıçarşı), and Çeyrek right after Euro
     filtered.splice(3, 0, 
@@ -831,15 +883,15 @@ export async function fetchMacroOverview(force = false) {
         symbol: 'KAPALICARSI_GRAM',
         label: 'Gram (Kapalıçarşı)',
         unit: '₺',
-        price: Number(Math.round(gramPrice * 1.012)),
-        changePct: gramChange,
+        price: kapalicarsiGramPrice,
+        changePct: kapalicarsiChange,
       },
       {
         symbol: 'CEYREK_ALTIN',
         label: 'Çeyrek Altın',
         unit: '₺',
-        price: Number(Math.round(ceyrekPrice)),
-        changePct: gramChange,
+        price: ceyrekPrice,
+        changePct: ceyrekChange,
       }
     );
   }
@@ -852,12 +904,6 @@ export async function fetchMacroOverview(force = false) {
 
 // 🪙 Canlı Altın Piyasası (Spot Gösterge vs. Kapalıçarşı Serbest Piyasa Alış-Satış)
 let goldMarketCache = { data: null, expiresAt: 0 };
-
-function parseTurkishGoldNumber(str) {
-  if (!str) return 0;
-  const clean = String(str).replace(/\./g, '').replace(',', '.');
-  return parseFloat(clean) || 0;
-}
 
 export async function fetchLiveGoldMarket(force = false) {
   const now = Date.now();
@@ -879,7 +925,7 @@ export async function fetchLiveGoldMarket(force = false) {
   let updateDate = new Date().toISOString();
 
   try {
-    const raw = await httpRequestJson('https://finans.truncgil.com/v3/today.json');
+    const raw = await fetchRawKapalicarsiData();
     if (raw && typeof raw === 'object') {
       updateDate = raw.Update_Date || updateDate;
 
