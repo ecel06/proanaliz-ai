@@ -120,6 +120,21 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   // Interactive Ticker Touch & Pause state
   const [isTickerPaused, setIsTickerPaused] = useState(false);
   const [activePressedSymbol, setActivePressedSymbol] = useState<string | null>(null);
+  const [tickerCategory, setTickerCategory] = useState<'all' | 'gold' | 'fx' | 'bist'>('all');
+
+  // Filtered ticker items based on selected category pill
+  const activeTickerRates = useMemo(() => {
+    if (tickerCategory === 'gold') {
+      return macroRates.filter((i) => i.symbol.includes('ALTIN') || i.symbol === 'GC=F' || i.symbol.includes('GRAM') || i.symbol.includes('CEYREK'));
+    }
+    if (tickerCategory === 'fx') {
+      return macroRates.filter((i) => i.symbol.includes('TRY=X') || i.symbol.includes('USD') || i.symbol.includes('EUR') || i.symbol.includes('GBP'));
+    }
+    if (tickerCategory === 'bist') {
+      return macroRates.filter((i) => i.symbol.includes('XU100') || i.symbol.includes('BTC') || (!i.symbol.includes('ALTIN') && !i.symbol.includes('TRY=X')));
+    }
+    return macroRates;
+  }, [macroRates, tickerCategory]);
 
   // PWA Install prompt listener
   useEffect(() => {
@@ -553,13 +568,39 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           className="relative z-20 w-full rounded-2xl bg-gradient-to-b from-slate-900 via-slate-900/98 to-slate-950 border-2 border-slate-700/80 hover:border-amber-400/80 p-2.5 sm:p-3.5 transition-all shadow-xl space-y-2.5 cursor-pointer group"
           title="Borsa, Altın ve Döviz Terminaline Git"
         >
-          {/* ÜST SATIR: SABİT BAŞLIK & BUTONLAR */}
-          <div className="flex items-center justify-between gap-2 px-1">
-            <div className="flex items-center gap-2">
+          {/* ÜST SATIR: SABİT BAŞLIK, HIZLI FİLTRELER & BUTONLAR */}
+          <div className="flex items-center justify-between gap-2 px-1 flex-wrap">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-md shadow-emerald-400/60 shrink-0" />
-              <span className="text-xs sm:text-sm font-black tracking-wider uppercase text-amber-300 flex items-center gap-1.5">
-                <span>🪙 Canlı Piyasa &amp; Döviz Radarı</span>
+              <span className="text-xs sm:text-sm font-black tracking-wider uppercase text-amber-300 flex items-center gap-1 shrink-0">
+                <span>🪙 Canlı Piyasa:</span>
               </span>
+
+              {/* Hızlı Kategori Filtre Hapları */}
+              <div className="flex items-center gap-1">
+                {[
+                  { id: 'all', label: 'Tümü' },
+                  { id: 'gold', label: '🪙 Altın' },
+                  { id: 'fx', label: '💵 Döviz' },
+                  { id: 'bist', label: '📈 BIST' },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTickerCategory(f.id as any);
+                    }}
+                    className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer ${
+                      tickerCategory === f.id
+                        ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
+                        : 'bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/60'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
@@ -588,7 +629,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-r from-slate-900 to-transparent z-10" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-l from-slate-900 to-transparent z-10" />
 
-            {macroRates.length > 0 ? (
+            {activeTickerRates.length > 0 ? (
               <div
                 className="flex items-center gap-2.5 sm:gap-3.5 animate-marquee py-2"
                 style={{
@@ -603,7 +644,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                     className="flex items-center gap-2.5 sm:gap-3.5 shrink-0"
                     style={{ zIndex: activePressedSymbol ? 30 : 1 }}
                   >
-                    {macroRates.map((item) => {
+                    {activeTickerRates.map((item) => {
                       const isGold = item.symbol.includes('ALTIN') || item.symbol === 'GC=F';
                       const isUsd = item.symbol === 'USDTRY=X';
                       const isEur = item.symbol === 'EURTRY=X';
