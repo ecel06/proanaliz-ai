@@ -593,13 +593,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             </div>
           </div>
 
-          {/* 2. SATIR: HIZLI KATEGORİ FİLTRELERİ (Tümü, Altın, Döviz, BIST) */}
-          <div className="flex items-center gap-1.5 px-1 overflow-x-auto no-scrollbar pt-0.5">
+          {/* 2. SATIR: HIZLI KATEGORİ FİLTRELERİ (Tümü, Altın, Döviz, BIST - 4 Eşit Kolon) */}
+          <div className="grid grid-cols-4 gap-1 sm:gap-2 px-1 pt-0.5 w-full">
             {[
-              { id: 'all', label: '🌐 Tümü (Karışık Akış)' },
-              { id: 'gold', label: '🪙 Altınlar' },
-              { id: 'fx', label: '💵 Döviz Kurları' },
-              { id: 'bist', label: '📈 BIST & Kripto' },
+              { id: 'all', label: '🌐 Tümü' },
+              { id: 'gold', label: '🪙 Altın' },
+              { id: 'fx', label: '💵 Döviz' },
+              { id: 'bist', label: '📈 BIST' },
             ].map((f) => (
               <button
                 key={f.id}
@@ -608,13 +608,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                   e.stopPropagation();
                   setTickerCategory(f.id as any);
                 }}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                className={`w-full py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer text-center flex items-center justify-center gap-1 ${
                   tickerCategory === f.id
                     ? 'bg-amber-400 text-slate-950 font-black shadow-sm ring-1 ring-amber-300'
                     : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60'
                 }`}
               >
-                {f.label}
+                <span>{f.label}</span>
               </button>
             ))}
           </div>
