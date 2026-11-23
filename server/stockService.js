@@ -863,7 +863,7 @@ export async function fetchMacroOverview(force = false) {
     try {
       const akList = await fetchAltinkaynakGoldData();
       if (Array.isArray(akList) && akList.length > 0) {
-        const gramItem = akList.find(x => x.Kod === 'PGA') || akList.find(x => x.Kod === 'GA');
+        const gramItem = akList.find(x => x.Kod === 'GA') || akList.find(x => x.Kod === 'PGA');
         const ceyrekItem = akList.find(x => x.Kod === 'C');
         if (gramItem) {
           const s = parseAltinkaynakNumber(gramItem.Satis);
@@ -939,7 +939,8 @@ export async function fetchLiveGoldMarket(force = false) {
       updateDate = rawList[0]?.GuncellenmeZamani || updateDate;
 
       const mappings = [
-        { code: 'PGA', altCode: 'GA', id: 'gram-altin', name: 'Gram Altın (Kapalıçarşı Fiziki)', shortName: 'Gram Altın', isGram: true, changePct: 2.84 },
+        { code: 'GA', altCode: 'PGA', id: 'gram-altin', name: 'Gram Altın (Kapalıçarşı Standart)', shortName: 'Gram Altın', isGram: true, changePct: 2.84 },
+        { code: 'PGA', id: 'paketli-gram-altin', name: 'Paketli Gram Altın (Sertifikalı Külçe)', shortName: 'Paketli Gram', changePct: 2.84 },
         { code: 'HH_T', id: 'has-altin', name: 'Has Altın (24 Ayar Saf)', shortName: 'Has Altın', changePct: 2.85 },
         { code: 'CH_T', id: 'kulce-altin', name: 'Külçe Altın (995)', shortName: 'Külçe Altın', changePct: 2.83 },
         { code: 'PB', id: '22-ayar-bilezik', name: '22 Ayar Bilezik (Gram)', shortName: '22 Ayar Bilezik', changePct: 2.83 },

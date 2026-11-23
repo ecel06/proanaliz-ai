@@ -97,7 +97,7 @@ export const LiveGoldModal: React.FC<LiveGoldModalProps> = ({ isOpen, onClose })
       );
     }
     if (activeCategory === 'gram') {
-      return items.filter((i) => ['gram-altin', 'has-altin', 'kulce-altin', 'gram-has-altin', 'gumus'].includes(i.id));
+      return items.filter((i) => ['gram-altin', 'paketli-gram-altin', 'has-altin', 'kulce-altin', 'gram-has-altin', 'gumus'].includes(i.id));
     }
     if (activeCategory === 'bilezik') {
       return items.filter((i) => ['22-ayar-bilezik', '22-ayar-hurda', '18-ayar-altin', '14-ayar-altin'].includes(i.id));
