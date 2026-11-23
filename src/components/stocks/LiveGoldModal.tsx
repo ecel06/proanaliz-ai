@@ -93,14 +93,14 @@ export const LiveGoldModal: React.FC<LiveGoldModalProps> = ({ isOpen, onClose })
     if (activeCategory === 'all') return items;
     if (activeCategory === 'ziynet') {
       return items.filter((i) =>
-        ['ceyrek-altin', 'yarim-altin', 'tam-altin', 'cumhuriyet-altini', 'ata-altin', 'resat-altin', 'gremse-altin'].includes(i.id)
+        ['ceyrek-altin', 'eski-ceyrek-altin', 'yarim-altin', 'tam-altin', 'cumhuriyet-altini', 'ata-altin', 'resat-altin', 'gremse-altin'].includes(i.id)
       );
     }
     if (activeCategory === 'gram') {
-      return items.filter((i) => ['gram-altin', 'gram-has-altin', 'gumus'].includes(i.id));
+      return items.filter((i) => ['gram-altin', 'has-altin', 'kulce-altin', 'gram-has-altin', 'gumus'].includes(i.id));
     }
     if (activeCategory === 'bilezik') {
-      return items.filter((i) => ['22-ayar-bilezik', '18-ayar-altin', '14-ayar-altin'].includes(i.id));
+      return items.filter((i) => ['22-ayar-bilezik', '22-ayar-hurda', '18-ayar-altin', '14-ayar-altin'].includes(i.id));
     }
     return items;
   }, [items, activeCategory]);
