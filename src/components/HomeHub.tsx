@@ -547,27 +547,50 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </p>
         </div>
 
-        {/* 🪙 CANLI ALTIN & DÖVİZ PİYASALARI TİCKER (Enlarged, Prominent & Touch-Interactive) */}
+        {/* 🪙 2-KATLI CANLI ALTIN & DÖVİZ PİYASALARI RADAR BANNER (Full Width Ticker) */}
         <div
           onClick={() => onSelectStocks()}
-          className="relative z-20 w-full min-h-[66px] sm:min-h-[76px] rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/98 to-slate-900 border-2 border-slate-700/80 hover:border-amber-400/80 px-3 sm:px-4 py-3 sm:py-3.5 transition-all shadow-xl flex items-center justify-between gap-3 sm:gap-4 overflow-hidden cursor-pointer group"
+          className="relative z-20 w-full rounded-2xl bg-gradient-to-b from-slate-900 via-slate-900/98 to-slate-950 border-2 border-slate-700/80 hover:border-amber-400/80 p-2.5 sm:p-3.5 transition-all shadow-xl space-y-2.5 cursor-pointer group"
           title="Borsa, Altın ve Döviz Terminaline Git"
         >
-          <div className="relative z-10 flex items-center gap-2 sm:gap-2.5 shrink-0 pr-3 sm:pr-4 border-r border-slate-700/80 bg-slate-900/90">
-            <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-400 animate-pulse shadow-md shadow-amber-400/50 shrink-0" />
-            <span className="text-xs sm:text-sm font-black tracking-wider uppercase text-amber-300 whitespace-nowrap flex items-center gap-1.5">
-              <span>🪙 Canlı Piyasa:</span>
-            </span>
+          {/* ÜST SATIR: SABİT BAŞLIK & BUTONLAR */}
+          <div className="flex items-center justify-between gap-2 px-1">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-md shadow-emerald-400/60 shrink-0" />
+              <span className="text-xs sm:text-sm font-black tracking-wider uppercase text-amber-300 flex items-center gap-1.5">
+                <span>🪙 Canlı Piyasa &amp; Döviz Radarı</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectStocks('gold');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/25 via-yellow-500/20 to-amber-500/25 hover:from-amber-500/40 hover:to-yellow-500/35 border border-amber-400/60 text-xs sm:text-sm font-black text-amber-300 hover:text-amber-200 transition-all cursor-pointer shadow-md shadow-amber-950/40 active:scale-95"
+                title="Kapalıçarşı Fiziki Altın, Çeyrek, Has, Külçe Fiyatları & Borsa Terminali"
+              >
+                <span>🏛️ Kapalıçarşı Altın</span>
+              </button>
+
+              <div className="hidden sm:flex items-center gap-1 text-xs font-bold text-slate-400 group-hover:text-cyan-300 transition-colors pl-1">
+                <span>Terminal</span>
+                <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </div>
+            </div>
           </div>
 
-          {/* Infinite Smooth Scrolling Ticker Loop - Hardware Accelerated */}
-          <div className="relative overflow-hidden flex-1 min-w-0">
+          {/* ALT SATIR: TAM GENİŞLİK KESİNTİSİZ KAYAN FİYAT BANDI */}
+          <div className="relative overflow-hidden w-full py-1">
             {/* Smooth Edge Fades */}
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 sm:w-8 bg-gradient-to-r from-slate-900 to-transparent z-10" />
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 sm:w-8 bg-gradient-to-l from-slate-900 to-transparent z-10" />
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-r from-slate-900 to-transparent z-10" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-l from-slate-900 to-transparent z-10" />
+
             {macroRates.length > 0 ? (
               <div
-                className="flex items-center gap-2.5 sm:gap-3.5 animate-marquee py-3"
+                className="flex items-center gap-2.5 sm:gap-3.5 animate-marquee py-2"
                 style={{
                   animationPlayState: isTickerPaused ? 'paused' : 'running',
                   WebkitAnimationPlayState: isTickerPaused ? 'paused' : 'running',
@@ -591,13 +614,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                       let icon = '📊';
                       let cleanLabel = item.label;
                       if (item.symbol === 'GRAM_ALTIN') { icon = '🪙'; cleanLabel = 'Gram Altın'; }
-                      else if (item.symbol === 'KAPALICARSI_GRAM') { icon = '🏛️'; cleanLabel = 'Kapalıçarşı'; }
-                      else if (item.symbol === 'CEYREK_ALTIN') { icon = '👑'; cleanLabel = 'Çeyrek'; }
+                      else if (item.symbol === 'KAPALICARSI_GRAM') { icon = '🏛️'; cleanLabel = 'Kapalıçarşı Gram'; }
+                      else if (item.symbol === 'CEYREK_ALTIN') { icon = '👑'; cleanLabel = 'Çeyrek Altın'; }
                       else if (item.symbol === 'GC=F') { icon = '🟡'; cleanLabel = 'Ons Altın'; }
-                      else if (isUsd) { icon = '💵'; cleanLabel = 'USD/TRY'; }
-                      else if (isEur) { icon = '💶'; cleanLabel = 'EUR/TRY'; }
-                      else if (isGbp) { icon = '💷'; cleanLabel = 'GBP/TRY'; }
-                      else if (isBtc) { icon = '₿'; cleanLabel = 'BTC'; }
+                      else if (isUsd) { icon = '💵'; cleanLabel = 'Dolar (USD)'; }
+                      else if (isEur) { icon = '💶'; cleanLabel = 'Euro (EUR)'; }
+                      else if (isGbp) { icon = '💷'; cleanLabel = 'Sterlin (GBP)'; }
+                      else if (isBtc) { icon = '₿'; cleanLabel = 'Bitcoin'; }
                       else if (isBist) { icon = '📈'; cleanLabel = 'BIST 100'; }
 
                       const isPos = item.changePct >= 0;
@@ -652,9 +675,9 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                               onSelectStocks(item.symbol);
                             }
                           }}
-                          className={`relative select-none flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm whitespace-nowrap shrink-0 transition-all duration-150 cursor-pointer ${
+                          className={`relative select-none flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm whitespace-nowrap shrink-0 transition-all duration-150 cursor-pointer ${
                             isPressed
-                              ? 'scale-125 z-50 ring-4 ring-amber-400 bg-slate-900 border-2 border-amber-300 shadow-[0_0_35px_rgba(245,158,11,0.8)] -translate-y-0.5'
+                              ? 'scale-120 z-50 ring-4 ring-amber-400 bg-slate-900 border-2 border-amber-300 shadow-[0_0_35px_rgba(245,158,11,0.85)] -translate-y-0.5'
                               : isGold
                                 ? 'bg-amber-500/15 border-amber-500/40 text-amber-200 hover:bg-amber-500/30 hover:border-amber-400 shadow-md'
                                 : isUsd || isEur || isGbp
@@ -695,28 +718,10 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-400 animate-pulse">
+              <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-400 animate-pulse py-2">
                 <span>Canlı altın ve döviz kurları yükleniyor...</span>
               </div>
             )}
-          </div>
-
-          <div className="relative z-10 flex items-center gap-2 sm:gap-2.5 shrink-0 pl-2.5 sm:pl-3.5 border-l border-slate-700/80 bg-slate-900/90">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelectStocks('gold');
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500/25 to-yellow-500/20 hover:from-amber-500/40 hover:to-yellow-500/35 border border-amber-400/50 text-xs sm:text-sm font-black text-amber-300 hover:text-amber-200 transition-all cursor-pointer shadow-md shadow-amber-950/30 active:scale-95"
-              title="Kapalıçarşı Fiziki Altın, Çeyrek, Has, Külçe Fiyatları & Borsa Terminali"
-            >
-              <span>🏛️ Kapalıçarşı</span>
-            </button>
-            <div className="hidden sm:flex items-center gap-1 text-xs sm:text-sm font-bold text-slate-400 group-hover:text-cyan-300 transition-colors">
-              <span>Terminal</span>
-              <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-            </div>
           </div>
         </div>
 
