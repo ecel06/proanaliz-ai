@@ -122,9 +122,11 @@ body.no-scrollbar *::-webkit-scrollbar-thumb {
   will-change: transform;
 }
 
-.animate-marquee:hover,
-.animate-marquee:active {
-  animation-play-state: paused;
+/* Only pause on hover for desktop mouse pointers, NOT on touch screens */
+@media (hover: hover) and (pointer: fine) {
+  .animate-marquee:hover {
+    animation-play-state: paused;
+  }
 }
 
 .glow-amber {
