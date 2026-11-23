@@ -550,10 +550,10 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         {/* 🪙 CANLI ALTIN & DÖVİZ PİYASALARI TİCKER (Enlarged, Prominent & Touch-Interactive) */}
         <div
           onClick={() => onSelectStocks()}
-          className="w-full min-h-[66px] sm:min-h-[76px] rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/98 to-slate-900 border-2 border-slate-700/80 hover:border-amber-400/80 px-3 sm:px-4 py-3 sm:py-3.5 transition-all shadow-xl flex items-center justify-between gap-3 sm:gap-4 overflow-hidden cursor-pointer group"
+          className="relative z-20 w-full min-h-[66px] sm:min-h-[76px] rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/98 to-slate-900 border-2 border-slate-700/80 hover:border-amber-400/80 px-3 sm:px-4 py-3 sm:py-3.5 transition-all shadow-xl flex items-center justify-between gap-3 sm:gap-4 overflow-hidden cursor-pointer group"
           title="Borsa, Altın ve Döviz Terminaline Git"
         >
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 pr-3 sm:pr-4 border-r border-slate-700/80">
+          <div className="relative z-10 flex items-center gap-2 sm:gap-2.5 shrink-0 pr-3 sm:pr-4 border-r border-slate-700/80 bg-slate-900/90">
             <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-400 animate-pulse shadow-md shadow-amber-400/50 shrink-0" />
             <span className="text-xs sm:text-sm font-black tracking-wider uppercase text-amber-300 whitespace-nowrap flex items-center gap-1.5">
               <span>🪙 Canlı Piyasa:</span>
@@ -575,7 +575,11 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               >
                 {/* Render two duplicated sets for seamless continuous animation loop */}
                 {[0, 1].map((copyIndex) => (
-                  <div key={copyIndex} className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+                  <div
+                    key={copyIndex}
+                    className="flex items-center gap-2.5 sm:gap-3.5 shrink-0"
+                    style={{ zIndex: activePressedSymbol ? 30 : 1 }}
+                  >
                     {macroRates.map((item) => {
                       const isGold = item.symbol.includes('ALTIN') || item.symbol === 'GC=F';
                       const isUsd = item.symbol === 'USDTRY=X';
@@ -606,6 +610,20 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                       return (
                         <div
                           key={`${copyIndex}-${item.symbol}`}
+                          onPointerDown={(e) => {
+                            try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+                            setIsTickerPaused(true);
+                            setActivePressedSymbol(item.symbol);
+                          }}
+                          onPointerUp={(e) => {
+                            try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+                            setIsTickerPaused(false);
+                            setActivePressedSymbol(null);
+                          }}
+                          onPointerCancel={() => {
+                            setIsTickerPaused(false);
+                            setActivePressedSymbol(null);
+                          }}
                           onTouchStart={() => {
                             setIsTickerPaused(true);
                             setActivePressedSymbol(item.symbol);
@@ -634,9 +652,9 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                               onSelectStocks(item.symbol);
                             }
                           }}
-                          className={`relative select-none flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm whitespace-nowrap shrink-0 transition-all duration-150 cursor-pointer ${
+                          className={`relative select-none flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm whitespace-nowrap shrink-0 transition-all duration-150 cursor-pointer ${
                             isPressed
-                              ? 'scale-125 ring-4 ring-amber-400 bg-amber-500/40 border-amber-300 shadow-2xl shadow-amber-500/50 -translate-y-0.5'
+                              ? 'scale-125 z-50 ring-4 ring-amber-400 bg-slate-900 border-2 border-amber-300 shadow-[0_0_35px_rgba(245,158,11,0.8)] -translate-y-0.5'
                               : isGold
                                 ? 'bg-amber-500/15 border-amber-500/40 text-amber-200 hover:bg-amber-500/30 hover:border-amber-400 shadow-md'
                                 : isUsd || isEur || isGbp
@@ -683,7 +701,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 pl-2.5 sm:pl-3.5 border-l border-slate-700/80">
+          <div className="relative z-10 flex items-center gap-2 sm:gap-2.5 shrink-0 pl-2.5 sm:pl-3.5 border-l border-slate-700/80 bg-slate-900/90">
             <button
               type="button"
               onClick={(e) => {
