@@ -550,7 +550,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         {/* 🪙 CANLI ALTIN & DÖVİZ PİYASALARI TİCKER (Enlarged, Prominent & Touch-Interactive) */}
         <div
           onClick={() => onSelectStocks()}
-          className="w-full min-h-[60px] sm:min-h-[70px] rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/98 to-slate-900 border-2 border-slate-700/80 hover:border-amber-400/80 px-3 sm:px-4 py-2.5 sm:py-3.5 transition-all shadow-xl flex items-center justify-between gap-3 sm:gap-4 overflow-hidden cursor-pointer group"
+          className="w-full min-h-[66px] sm:min-h-[76px] rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/98 to-slate-900 border-2 border-slate-700/80 hover:border-amber-400/80 px-3 sm:px-4 py-3 sm:py-3.5 transition-all shadow-xl flex items-center justify-between gap-3 sm:gap-4 overflow-hidden cursor-pointer group"
           title="Borsa, Altın ve Döviz Terminaline Git"
         >
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 pr-3 sm:pr-4 border-r border-slate-700/80">
@@ -567,7 +567,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 sm:w-8 bg-gradient-to-l from-slate-900 to-transparent z-10" />
             {macroRates.length > 0 ? (
               <div
-                className="flex items-center gap-2.5 sm:gap-3.5 animate-marquee py-2"
+                className="flex items-center gap-2.5 sm:gap-3.5 animate-marquee py-3"
                 style={{
                   animationPlayState: isTickerPaused ? 'paused' : 'running',
                   WebkitAnimationPlayState: isTickerPaused ? 'paused' : 'running',
@@ -636,14 +636,17 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                           }}
                           className={`relative select-none flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm whitespace-nowrap shrink-0 transition-all duration-150 cursor-pointer ${
                             isPressed
-                              ? 'scale-125 z-40 ring-4 ring-amber-400 bg-amber-500/40 border-amber-300 shadow-2xl shadow-amber-500/40'
+                              ? 'scale-125 ring-4 ring-amber-400 bg-amber-500/40 border-amber-300 shadow-2xl shadow-amber-500/50 -translate-y-0.5'
                               : isGold
                                 ? 'bg-amber-500/15 border-amber-500/40 text-amber-200 hover:bg-amber-500/30 hover:border-amber-400 shadow-md'
                                 : isUsd || isEur || isGbp
                                   ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
                                   : 'bg-slate-800/90 border-slate-700/80 text-slate-200'
                           }`}
-                          style={{ touchAction: 'manipulation' }}
+                          style={{
+                            zIndex: isPressed ? 9999 : 1,
+                            touchAction: 'manipulation',
+                          }}
                           title="Tıkla: Detaylı Analiz & Piyasa Terminaline Git"
                         >
                           <span className="text-base sm:text-lg">{icon}</span>

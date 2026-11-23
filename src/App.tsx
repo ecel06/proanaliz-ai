@@ -419,7 +419,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.46';
+  const CLIENT_BUILD_VERSION = '2026.11.20.47';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1287,22 +1287,22 @@ export const App: React.FC = () => {
               setStockExternalAction({ action: 'select_symbol', symbol: target, timestamp: Date.now() });
             }
           }}
-          onOpenInstallModal={() => setIsInstallModalOpen(true)}
-          onOpenLiveGoldModal={() => setIsLiveGoldModalOpen(true)}
-          onOpenVIP={() => setIsVipModalOpen(true)}
-          onOpenAuth={() => setIsAuthModalOpen(true)}
-          onOpenProfile={() => setIsProfileModalOpen(true)}
-          onOpenAdmin={() => setIsAdminModalOpen(true)}
-          onOpenAIPerformance={() => {
-            setAiPerformanceInitialTab('overall');
-            setIsAIPerformanceOpen(true);
-          }}
-          onOpenShare={() => setIsShareModalOpen(true)}
-          onLogout={handleLogout}
-          user={currentUser}
-          allMatches={weeklyMatches}
-          analysesMap={matchAnalysesMap}
-          aiPerformanceReport={aiPerformanceReport}
+        onOpenInstallModal={() => setIsInstallModalOpen(true)}
+        onOpenLiveGoldModal={() => setIsLiveGoldModalOpen(true)}
+        onOpenVIP={() => setIsVipModalOpen(true)}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
+        onOpenAdmin={() => setIsAdminModalOpen(true)}
+        onOpenAIPerformance={() => {
+          setAiPerformanceInitialTab('overall');
+          setIsAIPerformanceOpen(true);
+        }}
+        onOpenShare={() => setIsShareModalOpen(true)}
+        onLogout={handleLogout}
+        user={currentUser}
+        allMatches={weeklyMatches}
+        analysesMap={matchAnalysesMap}
+        aiPerformanceReport={aiPerformanceReport}
         />
 
         {/* Modal: Kullanıcı Giriş & Kayıt Penceresi (Ana Sayfa İçin) */}
