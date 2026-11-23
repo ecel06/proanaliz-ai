@@ -112,6 +112,9 @@ export const HomeHub: React.FC<HomeHubProps> = ({
     unit: string;
     price: number;
     changePct: number;
+    buying?: number;
+    selling?: number;
+    spread?: number;
   }>>(() => cachedMacroRates);
 
   // PWA Install prompt listener
@@ -620,9 +623,18 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                         >
                           <span className="text-[11px] sm:text-xs">{icon}</span>
                           <span className="font-bold text-slate-300">{cleanLabel}:</span>
-                          <span className="font-mono font-black text-white">
-                            {formattedPrice} {item.unit}
-                          </span>
+                          {item.buying ? (
+                            <span className="font-mono text-white flex items-center gap-1">
+                              <span className="text-[9px] text-slate-400">A:</span>
+                              <b className="font-bold text-white">{item.buying.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</b>
+                              <span className="text-[9px] text-amber-400/80">S:</span>
+                              <b className="font-black text-amber-300">{(item.selling || item.price).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} {item.unit}</b>
+                            </span>
+                          ) : (
+                            <span className="font-mono font-black text-white">
+                              {formattedPrice} {item.unit}
+                            </span>
+                          )}
                           <span
                             className={`font-mono text-[9px] sm:text-[10px] font-extrabold ${isPos ? 'text-emerald-400' : 'text-rose-400'
                               }`}

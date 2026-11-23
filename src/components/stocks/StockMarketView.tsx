@@ -742,14 +742,31 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                 }`}
                 title={isGoldItem ? 'Kapalıçarşı & Spot Altın Fiyatlarını İncele' : undefined}
               >
-                <div>
+                <div className="min-w-0">
                   <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
                     <span>{m.label}</span>
                     {isGoldItem && <span className="text-[9px] text-amber-300">🏛️</span>}
                   </div>
-                  <div className="text-xs sm:text-sm font-mono font-black text-white">
-                    {m.price.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} {m.unit}
-                  </div>
+                  {m.buying ? (
+                    <div className="text-xs font-mono leading-tight mt-0.5">
+                      <div className="flex items-center gap-1.5 text-slate-300">
+                        <span className="text-[9px] sm:text-[10px] text-slate-400 font-sans">Alış:</span>
+                        <span className="font-bold text-white text-[11px] sm:text-xs">
+                          {m.buying.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-amber-300">
+                        <span className="text-[9px] sm:text-[10px] text-amber-400/80 font-sans">Satış:</span>
+                        <span className="font-black text-amber-300 text-[11px] sm:text-xs">
+                          {(m.selling || m.price).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs sm:text-sm font-mono font-black text-white">
+                      {m.price.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} {m.unit}
+                    </div>
+                  )}
                 </div>
                 <span
                   className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black ${

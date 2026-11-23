@@ -8,6 +8,9 @@ export interface MacroTicker {
   unit: string;
   price: number;
   changePct: number;
+  buying?: number;
+  selling?: number;
+  spread?: number;
 }
 
 export interface StockItem {

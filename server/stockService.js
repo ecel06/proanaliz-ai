@@ -856,7 +856,9 @@ export async function fetchMacroOverview(force = false) {
     const gramChange = Number((onsObj.changePct + usdObj.changePct).toFixed(2));
     
     let kapalicarsiGramPrice = Number((spotGramPrice * 1.059).toFixed(2));
+    let kapalicarsiGramBuying = Number((kapalicarsiGramPrice - 150).toFixed(2));
     let ceyrekPrice = Number(Math.round(spotGramPrice * 1.73));
+    let ceyrekBuying = Number(Math.round(ceyrekPrice - 300));
     let kapalicarsiChange = 2.84;
     let ceyrekChange = 2.84;
 
@@ -867,18 +869,22 @@ export async function fetchMacroOverview(force = false) {
         const ceyrekItem = akList.find(x => x.Kod === 'C');
         if (gramItem) {
           const s = parseAltinkaynakNumber(gramItem.Satis);
+          const b = parseAltinkaynakNumber(gramItem.Alis);
           if (s > 1000) kapalicarsiGramPrice = s;
+          if (b > 1000) kapalicarsiGramBuying = b;
         }
         if (ceyrekItem) {
           const s = parseAltinkaynakNumber(ceyrekItem.Satis);
+          const b = parseAltinkaynakNumber(ceyrekItem.Alis);
           if (s > 1000) ceyrekPrice = s;
+          if (b > 1000) ceyrekBuying = b;
         }
       }
     } catch (e) {
       // safe fallback
     }
 
-    // Insert Gram (Spot), Gram (Kapalıçarşı), and Çeyrek right after Euro
+    // Insert Gram (Spot Gösterge), Gram (Kapalıçarşı Fiziki), and Çeyrek right after Euro
     filtered.splice(3, 0, 
       {
         symbol: 'GRAM_ALTIN',
@@ -892,6 +898,9 @@ export async function fetchMacroOverview(force = false) {
         label: 'Kapalıçarşı Fiziki Gram',
         unit: '₺',
         price: kapalicarsiGramPrice,
+        buying: kapalicarsiGramBuying,
+        selling: kapalicarsiGramPrice,
+        spread: Number((kapalicarsiGramPrice - kapalicarsiGramBuying).toFixed(2)),
         changePct: kapalicarsiChange,
       },
       {
@@ -899,6 +908,9 @@ export async function fetchMacroOverview(force = false) {
         label: 'Çeyrek Altın',
         unit: '₺',
         price: ceyrekPrice,
+        buying: ceyrekBuying,
+        selling: ceyrekPrice,
+        spread: Number((ceyrekPrice - ceyrekBuying).toFixed(2)),
         changePct: ceyrekChange,
       }
     );
