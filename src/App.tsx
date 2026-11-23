@@ -130,7 +130,7 @@ export const App: React.FC = () => {
     try {
       const saved = localStorage.getItem('proanaliz_betslip_items');
       if (saved) return JSON.parse(saved);
-    } catch {}
+    } catch { }
     return [];
   });
   const [isBetslipOpen, setIsBetslipOpen] = useState(false);
@@ -139,7 +139,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     try {
       localStorage.setItem('proanaliz_betslip_items', JSON.stringify(betslipItems));
-    } catch {}
+    } catch { }
   }, [betslipItems]);
 
   // View Mode: 'bulletin' (Nesine Tarzı Sade Liste) vs 'cards' (Detaylı Geniş Kartlar)
@@ -296,7 +296,7 @@ export const App: React.FC = () => {
       if (saved && ['home', 'football', 'horseRacing', 'stocks'].includes(saved)) {
         return saved as 'home' | 'football' | 'horseRacing' | 'stocks';
       }
-    } catch {}
+    } catch { }
     return 'home';
   });
 
@@ -309,14 +309,14 @@ export const App: React.FC = () => {
       } else {
         window.history.pushState({ section: sec }, '', '');
       }
-    } catch {}
+    } catch { }
     setActiveSection(sec);
     if (sec === 'football') {
       setActiveTabMode('upcoming');
     }
     try {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    } catch {}
+    } catch { }
   };
 
   // Team & Custom Theme State (Active only inside Football; At Yarışı & Borsa stay clean eye-resting dark slate)
@@ -419,7 +419,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.45';
+  const CLIENT_BUILD_VERSION = '2026.11.20.46';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -466,7 +466,7 @@ export const App: React.FC = () => {
             setServerVersion(data.version);
             setNewVersionAvailable(true);
             if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => {});
+              navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => { });
             }
           }
         }
@@ -486,7 +486,7 @@ export const App: React.FC = () => {
       if (document.visibilityState === 'visible') {
         checkVersion();
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => {});
+          navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => { });
         }
       }
     };
@@ -781,13 +781,13 @@ export const App: React.FC = () => {
       if (!window.history.state) {
         window.history.replaceState({ section: activeSection }, '', '');
       }
-    } catch {}
+    } catch { }
 
     const handleGlobalPopState = (e: PopStateEvent) => {
       // 0. If on stocks and stock internal view or modal state is active, let stock view handle it without closing or changing section
       if (activeSection === 'stocks') {
-        const isStockModalOrDetail = 
-          e.state?.view === 'detail' || 
+        const isStockModalOrDetail =
+          e.state?.view === 'detail' ||
           document.querySelector('[id^="stock-modal-"]') !== null ||
           document.body.classList.contains('stock-modal-open');
         if (isStockModalOrDetail) {
@@ -826,14 +826,14 @@ export const App: React.FC = () => {
       const targetSection = e.state?.section;
       if (targetSection && ['home', 'football', 'horseRacing', 'stocks'].includes(targetSection)) {
         setActiveSection(targetSection);
-        try { localStorage.setItem('proanaliz_active_section', targetSection); } catch {}
+        try { localStorage.setItem('proanaliz_active_section', targetSection); } catch { }
         if (targetSection === 'football') {
           setActiveTabMode('upcoming');
         }
       } else {
         // Fallback to home instead of closing app or leaving blank
         setActiveSection('home');
-        try { localStorage.setItem('proanaliz_active_section', 'home'); } catch {}
+        try { localStorage.setItem('proanaliz_active_section', 'home'); } catch { }
       }
     };
 
@@ -1248,12 +1248,11 @@ export const App: React.FC = () => {
 
         {/* Site-Wide Announcement Bar (Home Hub - Compact) */}
         {siteAnnouncement?.enabled && siteAnnouncement.text && (
-          <div className={`w-full py-1.5 px-3 shrink-0 text-center text-xs font-black flex items-center justify-center gap-2 border-b z-40 transition-colors ${
-            siteAnnouncement.variant === 'emerald' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' :
+          <div className={`w-full py-1.5 px-3 shrink-0 text-center text-xs font-black flex items-center justify-center gap-2 border-b z-40 transition-colors ${siteAnnouncement.variant === 'emerald' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' :
             siteAnnouncement.variant === 'rose' ? 'bg-rose-500/20 text-rose-200 border-rose-500/40' :
-            siteAnnouncement.variant === 'blue' ? 'bg-blue-500/20 text-blue-200 border-blue-500/40' :
-            'bg-gradient-to-r from-amber-500/25 via-amber-400/20 to-amber-500/25 text-amber-200 border-amber-400/40'
-          }`}>
+              siteAnnouncement.variant === 'blue' ? 'bg-blue-500/20 text-blue-200 border-blue-500/40' :
+                'bg-gradient-to-r from-amber-500/25 via-amber-400/20 to-amber-500/25 text-amber-200 border-amber-400/40'
+            }`}>
             <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-white/20 text-white shrink-0">
               DUYURU
             </span>
@@ -1280,9 +1279,13 @@ export const App: React.FC = () => {
             handleNavigateSection('horseRacing');
             if (target) setHorseRacingTarget({ ...target, timestamp: Date.now() });
           }}
-          onSelectStocks={(symbol) => {
+          onSelectStocks={(target) => {
             handleNavigateSection('stocks');
-            if (symbol) setStockExternalAction({ action: 'select_symbol', symbol, timestamp: Date.now() });
+            if (target === 'gold') {
+              setStockExternalAction({ action: 'gold', timestamp: Date.now() });
+            } else if (target) {
+              setStockExternalAction({ action: 'select_symbol', symbol: target, timestamp: Date.now() });
+            }
           }}
           onOpenInstallModal={() => setIsInstallModalOpen(true)}
           onOpenLiveGoldModal={() => setIsLiveGoldModalOpen(true)}
@@ -1427,12 +1430,11 @@ export const App: React.FC = () => {
 
       {/* Site-Wide Announcement Bar */}
       {siteAnnouncement?.enabled && siteAnnouncement.text && (
-        <div className={`w-full py-2 px-3 text-center text-xs font-black flex items-center justify-center gap-2 border-b z-40 transition-colors ${
-          siteAnnouncement.variant === 'emerald' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' :
+        <div className={`w-full py-2 px-3 text-center text-xs font-black flex items-center justify-center gap-2 border-b z-40 transition-colors ${siteAnnouncement.variant === 'emerald' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' :
           siteAnnouncement.variant === 'rose' ? 'bg-rose-500/20 text-rose-200 border-rose-500/40' :
-          siteAnnouncement.variant === 'blue' ? 'bg-blue-500/20 text-blue-200 border-blue-500/40' :
-          'bg-gradient-to-r from-amber-500/25 via-amber-400/20 to-amber-500/25 text-amber-200 border-amber-400/40'
-        }`}>
+            siteAnnouncement.variant === 'blue' ? 'bg-blue-500/20 text-blue-200 border-blue-500/40' :
+              'bg-gradient-to-r from-amber-500/25 via-amber-400/20 to-amber-500/25 text-amber-200 border-amber-400/40'
+          }`}>
           <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-white/20 text-white shrink-0">
             DUYURU
           </span>
@@ -1571,467 +1573,268 @@ export const App: React.FC = () => {
             />
           </React.Suspense>
         ) : (
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-          {/* LEFT COLUMN: League Tree & Bulletin Sidebar */}
-          <LeagueTreeSelector
-            leagueGroups={leagueGroups}
-            selectedLeague={selectedLeague}
-            onSelectLeague={(lg) => setSelectedLeague(lg)}
-            totalMatches={totalMatches}
-            isOpenMobile={isMobileLeagueTreeOpen}
-            onCloseMobile={() => setIsMobileLeagueTreeOpen(false)}
-          />
-
-          {/* RIGHT COLUMN: Filters & Live Match Bülteni */}
-          <div className="flex-1 min-w-0 w-full space-y-3 sm:space-y-4">
-
-            {/* Filters, Search & Date Controls (Top-Level Clean Access) */}
-            <Filters
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={(cat) => {
-                setSelectedCategory(cat);
-                if (activeTabMode !== 'upcoming') {
-                  setActiveTabMode('upcoming');
-                }
-              }}
+            {/* LEFT COLUMN: League Tree & Bulletin Sidebar */}
+            <LeagueTreeSelector
+              leagueGroups={leagueGroups}
               selectedLeague={selectedLeague}
-              setSelectedLeague={setSelectedLeague}
-              selectedDate={selectedDate}
-              setSelectedDate={setSelectedDate}
-              sortOption={sortOption}
-              setSortOption={setSortOption}
-              onOpenMobileLeagueTree={() => setIsMobileLeagueTreeOpen(true)}
-              leagueMatchCounts={leagueMatchCounts}
-              dateOptions={dynamicDateOptions}
-              counts={counts}
+              onSelectLeague={(lg) => setSelectedLeague(lg)}
+              totalMatches={totalMatches}
+              isOpenMobile={isMobileLeagueTreeOpen}
+              onCloseMobile={() => setIsMobileLeagueTreeOpen(false)}
             />
 
-            {/* CANLI GOL RADARI & ANLIK MOMENTUM (Displayed when there is active critical pressure) */}
-            {(activeRadarAlerts.length > 0 || showRadarDemo) && (
-              <div className="my-2.5 rounded-2xl bg-gradient-to-r from-rose-950/40 via-slate-900 to-slate-950 border border-rose-500/40 p-3 sm:p-3.5 shadow-xl animate-fadeIn">
-                <div className="flex items-center justify-between pb-2 border-b border-rose-500/20">
-                  <div className="flex items-center space-x-2">
-                    <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500" />
-                    </span>
-                    <span className="text-xs sm:text-sm font-black uppercase text-white flex items-center gap-1.5">
-                      <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-                      <span>Canlı Gol Radarı &amp; Momentum Baskısı</span>
-                    </span>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                      {activeRadarAlerts.length} Maçta Kritik Baskı
-                    </span>
-                  </div>
-                  {showRadarDemo && (
-                    <button
-                      type="button"
-                      onClick={() => setShowRadarDemo(false)}
-                      className="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800 cursor-pointer"
-                    >
-                      Kapat
-                    </button>
-                  )}
-                </div>
+            {/* RIGHT COLUMN: Filters & Live Match Bülteni */}
+            <div className="flex-1 min-w-0 w-full space-y-3 sm:space-y-4">
 
-                {/* ACTIVE ALERTS GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2.5">
-                  {activeRadarAlerts.map((alert) => (
-                    <div
-                      key={alert.match.id}
-                      onClick={() => setSelectedMatch(alert.match)}
-                      className="p-3 rounded-xl border border-rose-500/50 hover:border-rose-400 bg-rose-950/30 transition-all cursor-pointer hover:scale-[1.01]"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1.5">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-rose-500 text-slate-950">
-                            {alert.title}
-                          </span>
-                          <span className="font-mono text-xs font-bold text-rose-300">
-                            {alert.minuteText}
-                          </span>
-                        </div>
-                        <span className="font-mono font-black text-amber-300 text-xs bg-slate-900 px-1.5 py-0.5 rounded border border-amber-500/30">
-                          Gol Beklentisi: %{alert.goalProbability}
-                        </span>
-                      </div>
+              {/* Filters, Search & Date Controls (Top-Level Clean Access) */}
+              <Filters
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={(cat) => {
+                  setSelectedCategory(cat);
+                  if (activeTabMode !== 'upcoming') {
+                    setActiveTabMode('upcoming');
+                  }
+                }}
+                selectedLeague={selectedLeague}
+                setSelectedLeague={setSelectedLeague}
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+                sortOption={sortOption}
+                setSortOption={setSortOption}
+                onOpenMobileLeagueTree={() => setIsMobileLeagueTreeOpen(true)}
+                leagueMatchCounts={leagueMatchCounts}
+                dateOptions={dynamicDateOptions}
+                counts={counts}
+              />
 
-                      <div className="flex items-center justify-between mt-2 font-bold text-xs sm:text-sm text-white">
-                        <div className="truncate pr-2">
-                          {alert.match.homeTeam.name} vs {alert.match.awayTeam.name}
-                        </div>
-                        <div className="font-mono font-black text-amber-400 shrink-0 bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800">
-                          {alert.currentScoreText}
-                        </div>
-                      </div>
-
-                      <div className="mt-1 text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
-                        {alert.reason}
-                      </div>
+              {/* CANLI GOL RADARI & ANLIK MOMENTUM (Displayed when there is active critical pressure) */}
+              {(activeRadarAlerts.length > 0 || showRadarDemo) && (
+                <div className="my-2.5 rounded-2xl bg-gradient-to-r from-rose-950/40 via-slate-900 to-slate-950 border border-rose-500/40 p-3 sm:p-3.5 shadow-xl animate-fadeIn">
+                  <div className="flex items-center justify-between pb-2 border-b border-rose-500/20">
+                    <div className="flex items-center space-x-2">
+                      <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500" />
+                      </span>
+                      <span className="text-xs sm:text-sm font-black uppercase text-white flex items-center gap-1.5">
+                        <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                        <span>Canlı Gol Radarı &amp; Momentum Baskısı</span>
+                      </span>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                        {activeRadarAlerts.length} Maçta Kritik Baskı
+                      </span>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                    {showRadarDemo && (
+                      <button
+                        type="button"
+                        onClick={() => setShowRadarDemo(false)}
+                        className="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800 cursor-pointer"
+                      >
+                        Kapat
+                      </button>
+                    )}
+                  </div>
 
-            {/* Mode Switcher when NOT searching: "Günün Maçları", "Günün Kuponları", "Biten Maçlar" */}
-            {!isSearching && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-2.5 gap-2">
-                <div className="grid grid-cols-3 gap-1 sm:flex sm:items-center sm:gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => {
-                      setActiveTabMode('upcoming');
-                      setSelectedDate('all');
-                      setSelectedCategory('all');
-                    }}
-                    className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 py-2 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-w-0 ${
-                      activeTabMode === 'upcoming'
+                  {/* ACTIVE ALERTS GRID */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2.5">
+                    {activeRadarAlerts.map((alert) => (
+                      <div
+                        key={alert.match.id}
+                        onClick={() => setSelectedMatch(alert.match)}
+                        className="p-3 rounded-xl border border-rose-500/50 hover:border-rose-400 bg-rose-950/30 transition-all cursor-pointer hover:scale-[1.01]"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-1.5">
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-rose-500 text-slate-950">
+                              {alert.title}
+                            </span>
+                            <span className="font-mono text-xs font-bold text-rose-300">
+                              {alert.minuteText}
+                            </span>
+                          </div>
+                          <span className="font-mono font-black text-amber-300 text-xs bg-slate-900 px-1.5 py-0.5 rounded border border-amber-500/30">
+                            Gol Beklentisi: %{alert.goalProbability}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-2 font-bold text-xs sm:text-sm text-white">
+                          <div className="truncate pr-2">
+                            {alert.match.homeTeam.name} vs {alert.match.awayTeam.name}
+                          </div>
+                          <div className="font-mono font-black text-amber-400 shrink-0 bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800">
+                            {alert.currentScoreText}
+                          </div>
+                        </div>
+
+                        <div className="mt-1 text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
+                          {alert.reason}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mode Switcher when NOT searching: "Günün Maçları", "Günün Kuponları", "Biten Maçlar" */}
+              {!isSearching && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-2.5 gap-2">
+                  <div className="grid grid-cols-3 gap-1 sm:flex sm:items-center sm:gap-2 w-full sm:w-auto">
+                    <button
+                      onClick={() => {
+                        setActiveTabMode('upcoming');
+                        setSelectedDate('all');
+                        setSelectedCategory('all');
+                      }}
+                      className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 py-2 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-w-0 ${activeTabMode === 'upcoming'
                         ? 'bg-emerald-600 text-slate-950 font-black border-2 border-emerald-300 shadow-md shadow-emerald-950/40'
                         : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
-                    }`}
-                  >
-                    <Clock className={`w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0 ${activeTabMode === 'upcoming' ? 'text-slate-950 stroke-[2.5]' : 'text-emerald-400'}`} />
-                    <span className="hidden sm:inline">Günün Maçları</span>
-                    <span className="sm:hidden truncate">Maçlar</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
-                      activeTabMode === 'upcoming'
+                        }`}
+                    >
+                      <Clock className={`w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0 ${activeTabMode === 'upcoming' ? 'text-slate-950 stroke-[2.5]' : 'text-emerald-400'}`} />
+                      <span className="hidden sm:inline">Günün Maçları</span>
+                      <span className="sm:hidden truncate">Maçlar</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${activeTabMode === 'upcoming'
                         ? 'bg-emerald-950 text-emerald-200 border border-emerald-400/40'
                         : 'bg-slate-800 text-slate-300'
-                    }`}>
-                      {liveFiltered.length + upcomingFiltered.length}
-                    </span>
-                  </button>
+                        }`}>
+                        {liveFiltered.length + upcomingFiltered.length}
+                      </span>
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      setActiveTabMode('coupons');
-                      setSelectedDate('all');
-                      setSelectedCategory('all');
-                    }}
-                    className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 py-2 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-w-0 ${
-                      activeTabMode === 'coupons'
+                    <button
+                      onClick={() => {
+                        setActiveTabMode('coupons');
+                        setSelectedDate('all');
+                        setSelectedCategory('all');
+                      }}
+                      className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 py-2 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-w-0 ${activeTabMode === 'coupons'
                         ? 'bg-amber-500 text-slate-950 font-black border-2 border-amber-300 shadow-md shadow-amber-950/40'
                         : 'bg-slate-900/60 text-slate-400 hover:text-amber-300 border border-slate-800'
-                    }`}
-                  >
-                    <Flame className={`w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0 ${activeTabMode === 'coupons' ? 'text-slate-950 stroke-[2.5] animate-pulse' : 'text-amber-400'}`} />
-                    <span className="hidden sm:inline">Günün Kuponları</span>
-                    <span className="sm:hidden truncate">Kuponlar</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
-                      activeTabMode === 'coupons'
+                        }`}
+                    >
+                      <Flame className={`w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0 ${activeTabMode === 'coupons' ? 'text-slate-950 stroke-[2.5] animate-pulse' : 'text-amber-400'}`} />
+                      <span className="hidden sm:inline">Günün Kuponları</span>
+                      <span className="sm:hidden truncate">Kuponlar</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${activeTabMode === 'coupons'
                         ? 'bg-amber-950 text-amber-200 border border-amber-400/40'
                         : 'bg-amber-400 text-slate-950 font-black'
-                    }`}>
-                      3
-                    </span>
-                  </button>
+                        }`}>
+                        3
+                      </span>
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      setActiveTabMode('finished');
-                      setSelectedDate('all');
-                      setSelectedCategory('all');
-                    }}
-                    className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 py-2 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-w-0 ${
-                      activeTabMode === 'finished'
+                    <button
+                      onClick={() => {
+                        setActiveTabMode('finished');
+                        setSelectedDate('all');
+                        setSelectedCategory('all');
+                      }}
+                      className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 py-2 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-w-0 ${activeTabMode === 'finished'
                         ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black border-2 border-blue-300 shadow-lg shadow-blue-900/40'
                         : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
-                    }`}
-                  >
-                    <CalendarCheck className={`w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0 ${activeTabMode === 'finished' ? 'text-white stroke-[2.5]' : 'text-slate-400'}`} />
-                    <span className="hidden sm:inline">Biten Maçlar</span>
-                    <span className="sm:hidden truncate">Bitenler</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
-                      activeTabMode === 'finished'
+                        }`}
+                    >
+                      <CalendarCheck className={`w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0 ${activeTabMode === 'finished' ? 'text-white stroke-[2.5]' : 'text-slate-400'}`} />
+                      <span className="hidden sm:inline">Biten Maçlar</span>
+                      <span className="sm:hidden truncate">Bitenler</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${activeTabMode === 'finished'
                         ? 'bg-blue-950 text-blue-200 border border-blue-400/50'
                         : 'bg-slate-800 text-slate-300'
-                    }`}>
-                      {finishedFiltered.length}
-                    </span>
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-                  {activeTabMode === 'upcoming' && (
-                    <div className="flex items-center space-x-1 bg-slate-900 border border-slate-800 p-0.5 rounded-xl shadow-inner">
-                      <button
-                        type="button"
-                        onClick={() => handleSetViewMode('bulletin')}
-                        className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'bulletin'
-                            ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
-                            : 'text-slate-400 hover:text-white'
-                          }`}
-                        title="Resmi İddaa Bülteni Liste Görünümü"
-                      >
-                        <LayoutList className="w-3.5 h-3.5" />
-                        <span>İddaa Bülteni</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSetViewMode('cards')}
-                        className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'cards'
-                            ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
-                            : 'text-slate-400 hover:text-white'
-                          }`}
-                        title="Detaylı Kart Görünümü"
-                      >
-                        <LayoutGrid className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Kartlar</span>
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="text-xs text-slate-500 hidden sm:block font-mono">
-                    {activeTabMode === 'upcoming'
-                      ? `${upcomingFiltered.length + liveFiltered.length} Analiz & Maç`
-                      : activeTabMode === 'coupons'
-                        ? '3 Özel Kupon'
-                        : `${finishedFiltered.length} Sonuç`}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* SEARCH MODE: Shows all categories clearly separated if searching */}
-            {isSearching ? (
-              <div className="space-y-8">
-                {/* Search Header */}
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                  <div className="flex items-center space-x-2 text-sm text-slate-300 font-bold">
-                    <Search className="w-4 h-4 text-emerald-400" />
-                    <span>Arama Sonuçları: "{searchQuery}"</span>
-                  </div>
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
-                  >
-                    Aramayı Temizle
-                  </button>
-                </div>
-
-                {/* Search Live Matches */}
-                {liveFiltered.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2 text-xs font-bold text-rose-400 uppercase tracking-wider">
-                      <Radio className="w-3.5 h-3.5 text-rose-500 animate-pulse" />
-                      <span>Canlı Devam Eden Karşılaşmalar ({liveFiltered.length})</span>
-                    </div>
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-                      {liveFiltered?.map((match) => (
-                        <FinishedMatchCard
-                          key={match.id}
-                          match={match}
-                          now={currentTime}
-                          analysis={matchAnalysesMap.get(match.id)}
-                          onOpenLiveTV={handleOpenLiveTV}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Search Upcoming Matches */}
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Oynanacak Maçlar ({upcomingFiltered.length})</span>
+                        }`}>
+                        {finishedFiltered.length}
+                      </span>
+                    </button>
                   </div>
 
-                  {upcomingFiltered.length > 0 ? (
-                    viewMode === 'bulletin' ? (
-                      <React.Suspense fallback={<SectionLoadingFallback label="Geniş Bülten Tablosu Hazırlanıyor..." />}>
-                        <NesineBulletinView
-                          matches={upcomingFiltered}
-                          matchAnalysesMap={matchAnalysesMap}
-                          onSelectMatch={(m) => setSelectedMatch(m)}
-                          favorites={favorites}
-                          onToggleFavorite={toggleFavorite}
-                          betslipItems={betslipItems}
-                          onToggleBetslip={handleToggleBetslip}
-                          sortOption={sortOption}
-                          selectedCategory={selectedCategory}
-                          onOpenLiveTV={(m) => {
-                            setLiveTVTargetMatch(m);
-                            setIsLiveTVModalOpen(true);
-                          }}
-                        />
-                      </React.Suspense>
-                    ) : (
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
-                        {upcomingFiltered?.map((match) => {
-                          const analysis = matchAnalysesMap.get(match.id);
-                          if (!analysis) return null;
-                          return (
-                            <MatchCard
-                              key={match.id}
-                              match={match}
-                              analysis={analysis}
-                              onSelect={(m) => setSelectedMatch(m)}
-                              isFavorite={favorites.includes(match.id)}
-                              onToggleFavorite={toggleFavorite}
-                              onOpenLiveTV={handleOpenLiveTV}
-                            />
-                          );
-                        })}
-                      </div>
-                    )
-                  ) : (
-                    <div className="p-6 text-center rounded-2xl bg-slate-900/40 border border-slate-800/80 text-xs text-slate-500">
-                      Oynanacak maç bulunamadı.
-                    </div>
-                  )}
-                </div>
-
-                {/* Search Finished Matches */}
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Haftanın Tamamlanan Maç Sonuçları ({finishedFiltered.length})</span>
-                  </div>
-
-                  {finishedFiltered.length > 0 ? (
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-                      {finishedFiltered?.map((match) => (
-                        <FinishedMatchCard
-                          key={match.id}
-                          match={match}
-                          now={currentTime}
-                          analysis={matchAnalysesMap.get(match.id)}
-                          onOpenLiveTV={handleOpenLiveTV}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-6 text-center rounded-2xl bg-slate-900/40 border border-slate-800/80 text-xs text-slate-500">
-                      Tamamlanan maç bulunamadı.
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              /* TABBED MODE (Standard non-search view) */
-              <div>
-                {/* TAB 1: OYNANACAK MAÇLAR */}
-                {activeTabMode === 'upcoming' && (
-                  <div>
-                    {/* EN ÜSTTE BAŞLAMIŞ / CANLI MAÇLAR BÖLÜMÜ (SAAT SIRASINA GÖRE) */}
-                    {liveFiltered.length > 0 && (
-                      <div className="space-y-3 mb-6 p-4 rounded-2xl bg-gradient-to-r from-rose-950/40 via-slate-900/80 to-slate-950 border border-rose-500/40 shadow-xl animate-fadeIn">
-                        <div className="flex items-center justify-between pb-2 border-b border-rose-500/20">
-                          <div className="flex items-center space-x-2.5">
-                            <span className="relative flex h-2.5 w-2.5">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
-                            </span>
-                            <span className="text-xs font-black uppercase tracking-wider text-rose-300 flex items-center space-x-1.5">
-                              <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-                              <span>Başlamış / Canlı Devam Eden Karşılaşmalar ({liveFiltered.length})</span>
-                            </span>
-                          </div>
-                          <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
-                            Canlı Skor & Dakika • Başlama Saatine Göre Sıralı
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
-                          {(isAllLiveExpanded ? liveFiltered : liveFiltered.slice(0, 4)).map((match) => (
-                            <div
-                              key={match.id}
-                              onClick={() => setSelectedMatch(match)}
-                              className="cursor-pointer transform hover:scale-[1.01] transition-all"
-                            >
-                              <FinishedMatchCard
-                                match={match}
-                                now={currentTime}
-                                analysis={matchAnalysesMap.get(match.id)}
-                                onOpenLiveTV={handleOpenLiveTV}
-                              />
-                            </div>
-                          ))}
-                        </div>
-
-                        {liveFiltered.length > 4 && (
-                          <div className="pt-2 text-center border-t border-rose-500/20">
-                            <button
-                              type="button"
-                              onClick={() => setIsAllLiveExpanded(!isAllLiveExpanded)}
-                              className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-rose-300 text-xs font-black border border-rose-500/30 transition-all cursor-pointer shadow-sm"
-                            >
-                              {isAllLiveExpanded ? '▲ Daha Az Göster (İlk 4 Maç)' : `▼ Tüm Canlı Maçları Göster (+${liveFiltered.length - 4} Maç)`}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* GÜNÜN VİTRİN KARŞILAŞMASI (HERO SHOWCASE BANNER - Yalnızca Tüm Maçlar Seçiliyken) */}
-                    {heroMatch && heroAnalysis && selectedCategory === 'all' && (
-                      <div className="mb-4">
-                        <MatchOfTheDayBanner
-                          match={heroMatch}
-                          analysis={heroAnalysis}
-                          onSelectMatch={(m) => setSelectedMatch(m)}
-                          onAddToBetslip={handleToggleBetslip}
-                          isAlreadyInBetslip={isHeroInBetslip}
-                        />
-                      </div>
-                    )}
-
-                    {/* 🏆 GÜNÜN PROANALİZ VIP SÜPER 3'LÜ AI KOMBİNİ */}
-                    {selectedCategory === 'all' && allMatches.length >= 3 && (
-                      <AITripleComboCard
-                        matches={allMatches}
-                        analyses={matchAnalysesMap}
-                        onSelectMatch={(m) => setSelectedMatch(m)}
-                        onAddComboToBetslip={handleAddComboToBetslip}
-                        betslipItems={betslipItems}
-                      />
-                    )}
-
-                    {/* AKTİF KATEGORİ FİLTRESİ BAŞLIK ŞERİDİ (Filtrelenen Sonuçlar) */}
-                    {selectedCategory !== 'all' && (
-                      <div className="flex items-center justify-between p-3 mb-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-slate-900 to-slate-900 border border-emerald-500/40 text-xs shadow-lg animate-fadeIn">
-                        <div className="flex items-center space-x-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span className="font-semibold text-slate-400">Aktif Kategori:</span>
-                          <span className="font-black text-white flex items-center space-x-1">
-                            <span>
-                              {selectedCategory === 'value' && '🎯 Değer Bahisleri'}
-                              {selectedCategory === 'banko' && '🔥 Bankolar (+%70)'}
-                              {selectedCategory === 'over25' && '⚡ 2.5 Gol Üst'}
-                              {selectedCategory === 'btts' && '✨ KG Var'}
-                              {selectedCategory === 'htft' && '🛡️ İY/MS Sürpriz'}
-                              {selectedCategory === 'favorites' && '⭐ Favoriler'}
-                            </span>
-                          </span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 ml-1">
-                            {upcomingFiltered.length + liveFiltered.length} Karşılaşma
-                          </span>
-                        </div>
+                  <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                    {activeTabMode === 'upcoming' && (
+                      <div className="flex items-center space-x-1 bg-slate-900 border border-slate-800 p-0.5 rounded-xl shadow-inner">
                         <button
                           type="button"
-                          onClick={() => setSelectedCategory('all')}
-                          className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors cursor-pointer"
+                          onClick={() => handleSetViewMode('bulletin')}
+                          className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'bulletin'
+                            ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
+                            : 'text-slate-400 hover:text-white'
+                            }`}
+                          title="Resmi İddaa Bülteni Liste Görünümü"
                         >
-                          <span>Tüm Maçları Göster</span>
-                          <X className="w-3.5 h-3.5" />
+                          <LayoutList className="w-3.5 h-3.5" />
+                          <span>İddaa Bülteni</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSetViewMode('cards')}
+                          className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'cards'
+                            ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
+                            : 'text-slate-400 hover:text-white'
+                            }`}
+                          title="Detaylı Kart Görünümü"
+                        >
+                          <LayoutGrid className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Kartlar</span>
                         </button>
                       </div>
                     )}
 
-                    {/* OYNANACAK MAÇLAR LİSTESİ (BAŞLAMA SAATİNE GÖRE ERKENDEN GEÇE SIRALI) */}
-                    {upcomingFiltered.length > 0 && liveFiltered.length > 0 && (
-                      <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
-                        <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
-                          <Clock className="w-4 h-4" />
-                          <span>Sıradaki Oynanacak Karşılaşmalar ({upcomingFiltered.length})</span>
-                        </div>
-                        <span className="text-[11px] text-slate-400 font-mono">Erkenden Geçe Sıralı</span>
+                    <div className="text-xs text-slate-500 hidden sm:block font-mono">
+                      {activeTabMode === 'upcoming'
+                        ? `${upcomingFiltered.length + liveFiltered.length} Analiz & Maç`
+                        : activeTabMode === 'coupons'
+                          ? '3 Özel Kupon'
+                          : `${finishedFiltered.length} Sonuç`}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SEARCH MODE: Shows all categories clearly separated if searching */}
+              {isSearching ? (
+                <div className="space-y-8">
+                  {/* Search Header */}
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                    <div className="flex items-center space-x-2 text-sm text-slate-300 font-bold">
+                      <Search className="w-4 h-4 text-emerald-400" />
+                      <span>Arama Sonuçları: "{searchQuery}"</span>
+                    </div>
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
+                    >
+                      Aramayı Temizle
+                    </button>
+                  </div>
+
+                  {/* Search Live Matches */}
+                  {liveFiltered.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 text-xs font-bold text-rose-400 uppercase tracking-wider">
+                        <Radio className="w-3.5 h-3.5 text-rose-500 animate-pulse" />
+                        <span>Canlı Devam Eden Karşılaşmalar ({liveFiltered.length})</span>
                       </div>
-                    )}
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                        {liveFiltered?.map((match) => (
+                          <FinishedMatchCard
+                            key={match.id}
+                            match={match}
+                            now={currentTime}
+                            analysis={matchAnalysesMap.get(match.id)}
+                            onOpenLiveTV={handleOpenLiveTV}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Search Upcoming Matches */}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Oynanacak Maçlar ({upcomingFiltered.length})</span>
+                    </div>
 
                     {upcomingFiltered.length > 0 ? (
                       viewMode === 'bulletin' ? (
@@ -2053,140 +1856,310 @@ export const App: React.FC = () => {
                           />
                         </React.Suspense>
                       ) : (
-                        <>
-                          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
-                            {displayedUpcoming.map((match) => {
-                              const analysis = matchAnalysesMap.get(match.id);
-                              if (!analysis) return null;
-                              return (
-                                <MatchCard
-                                  key={match.id}
-                                  match={match}
-                                  analysis={analysis}
-                                  onSelect={(m) => setSelectedMatch(m)}
-                                  isFavorite={favorites.includes(match.id)}
-                                  onToggleFavorite={toggleFavorite}
-                                  onOpenLiveTV={handleOpenLiveTV}
-                                />
-                              );
-                            })}
-                          </div>
-
-                          {upcomingFiltered.length > displayedUpcoming.length && (
-                            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-2.5">
-                              <button
-                                type="button"
-                                onClick={() => setVisibleMatchesCount((prev) => prev + 36)}
-                                className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-slate-900 border border-slate-700 hover:border-emerald-500/50 hover:bg-slate-800 text-white font-black text-xs shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
-                              >
-                                <span>Daha Fazla Maç Göster (+36)</span>
-                                <span className="text-[10px] font-mono text-emerald-400 font-bold">
-                                  ({displayedUpcoming.length} / {upcomingFiltered.length})
-                                </span>
-                              </button>
-                              {upcomingFiltered.length > displayedUpcoming.length + 36 && (
-                                <button
-                                  type="button"
-                                  onClick={() => setVisibleMatchesCount(upcomingFiltered.length)}
-                                  className="text-xs text-slate-400 hover:text-white underline cursor-pointer py-1"
-                                >
-                                  Tümünü Göster ({upcomingFiltered.length})
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </>
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
+                          {upcomingFiltered?.map((match) => {
+                            const analysis = matchAnalysesMap.get(match.id);
+                            if (!analysis) return null;
+                            return (
+                              <MatchCard
+                                key={match.id}
+                                match={match}
+                                analysis={analysis}
+                                onSelect={(m) => setSelectedMatch(m)}
+                                isFavorite={favorites.includes(match.id)}
+                                onToggleFavorite={toggleFavorite}
+                                onOpenLiveTV={handleOpenLiveTV}
+                              />
+                            );
+                          })}
+                        </div>
                       )
-                    ) : liveFiltered.length === 0 ? (
-                      <div className="p-12 text-center rounded-3xl bg-slate-900/60 border border-slate-800 space-y-3">
-                        <Trophy className="w-10 h-10 text-slate-600 mx-auto" />
-                        <h4 className="text-base font-bold text-slate-200">
-                          {totalMatches === 0 ? 'Canlı bülten yükleniyor veya maç bulunamadı' : 'Bu Kriterlere Uygun Oynanacak Maç Bulunamadı'}
-                        </h4>
-                        <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                          {totalMatches === 0
-                            ? 'Canlı bülten verisi henüz gelmedi veya sunucuya bağlanılamadı. Yenile butonuna tıklayarak verileri tekrar çekebilirsiniz.'
-                            : 'Filtrelerinizi gevşeterek veya soldaki lig menüsünden "Tüm Ligler" seçeneğine tıklayarak bülteni görüntüleyebilirsiniz.'}
-                        </p>
-                        <div className="flex items-center justify-center gap-3 pt-2">
-                          {totalMatches === 0 ? (
-                            <button
-                              onClick={handleRefreshBulletin}
-                              disabled={isRefreshing}
-                              className="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold hover:bg-emerald-500/30 transition-colors cursor-pointer"
-                            >
-                              {isRefreshing ? 'Yenileniyor...' : 'Verileri Yenile'}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setSelectedLeague('all');
-                                setSelectedCategory('all');
-                                setSelectedDate('all');
-                                setSearchQuery('');
-                              }}
-                              className="px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer"
-                            >
-                              Tüm Filtreleri Sıfırla
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
-
-                {/* TAB: GÜNÜN KUPONLARI (BANKO, İDEAL, SÜRPRİZ) */}
-                {activeTabMode === 'coupons' && (
-                  <CouponsSection
-                    coupons={curatedCoupons}
-                    allMatches={allMatches}
-                    analysesMap={matchAnalysesMap}
-                    currentTime={currentTime}
-                    user={currentUser}
-                    onOpenVIP={() => setIsVipModalOpen(true)}
-                    onSelectMatch={(m) => setSelectedMatch(m)}
-                    onViewAllMatches={() => setActiveTabMode('upcoming')}
-                    onAddCouponToBetslip={handleAddCuratedCouponToBetslip}
-                    onShareCoupon={(coupon) => setShareSlipCoupon(coupon)}
-                  />
-                )}
-
-                {/* TAB 3: HAFTANIN TAMAMLANAN MAÇLARI (+ BAŞLAMIŞ CANLI MAÇLAR EN ÜSTTE) */}
-                {activeTabMode === 'finished' && (
-                  <div className="space-y-6">
-                    {/* Live Matches Highlight at top if any match is in progress */}
-                    {liveFiltered.length > 0 && (
-                      <div className="space-y-3 p-4 rounded-3xl bg-rose-950/20 border border-rose-500/30">
-                        <div className="flex items-center space-x-2 text-rose-400 font-extrabold text-xs uppercase tracking-wider">
-                          <Radio className="w-4 h-4 animate-pulse text-rose-500" />
-                          <span>Başlamış Canlı Karşılaşmalar ({liveFiltered.length})</span>
-                        </div>
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-                          {liveFiltered?.map((match) => (
-                            <FinishedMatchCard
-                              key={match.id}
-                              match={match}
-                              now={currentTime}
-                              analysis={matchAnalysesMap.get(match.id)}
-                              onOpenLiveTV={handleOpenLiveTV}
-                            />
-                          ))}
-                        </div>
+                    ) : (
+                      <div className="p-6 text-center rounded-2xl bg-slate-900/40 border border-slate-800/80 text-xs text-slate-500">
+                        Oynanacak maç bulunamadı.
                       </div>
                     )}
+                  </div>
 
-                    {/* Finished Matches List */}
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2 text-slate-400 font-extrabold text-xs uppercase tracking-wider pb-1 border-b border-slate-800">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        <span>Haftanın Tamamlanan Maç Sonuçları ({finishedFiltered.length})</span>
+                  {/* Search Finished Matches */}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Haftanın Tamamlanan Maç Sonuçları ({finishedFiltered.length})</span>
+                    </div>
+
+                    {finishedFiltered.length > 0 ? (
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                        {finishedFiltered?.map((match) => (
+                          <FinishedMatchCard
+                            key={match.id}
+                            match={match}
+                            now={currentTime}
+                            analysis={matchAnalysesMap.get(match.id)}
+                            onOpenLiveTV={handleOpenLiveTV}
+                          />
+                        ))}
                       </div>
+                    ) : (
+                      <div className="p-6 text-center rounded-2xl bg-slate-900/40 border border-slate-800/80 text-xs text-slate-500">
+                        Tamamlanan maç bulunamadı.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* TABBED MODE (Standard non-search view) */
+                <div>
+                  {/* TAB 1: OYNANACAK MAÇLAR */}
+                  {activeTabMode === 'upcoming' && (
+                    <div>
+                      {/* EN ÜSTTE BAŞLAMIŞ / CANLI MAÇLAR BÖLÜMÜ (SAAT SIRASINA GÖRE) */}
+                      {liveFiltered.length > 0 && (
+                        <div className="space-y-3 mb-6 p-4 rounded-2xl bg-gradient-to-r from-rose-950/40 via-slate-900/80 to-slate-950 border border-rose-500/40 shadow-xl animate-fadeIn">
+                          <div className="flex items-center justify-between pb-2 border-b border-rose-500/20">
+                            <div className="flex items-center space-x-2.5">
+                              <span className="relative flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                              </span>
+                              <span className="text-xs font-black uppercase tracking-wider text-rose-300 flex items-center space-x-1.5">
+                                <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                                <span>Başlamış / Canlı Devam Eden Karşılaşmalar ({liveFiltered.length})</span>
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
+                              Canlı Skor & Dakika • Başlama Saatine Göre Sıralı
+                            </span>
+                          </div>
 
-                      {finishedFiltered.length > 0 ? (
-                        <>
+                          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
+                            {(isAllLiveExpanded ? liveFiltered : liveFiltered.slice(0, 4)).map((match) => (
+                              <div
+                                key={match.id}
+                                onClick={() => setSelectedMatch(match)}
+                                className="cursor-pointer transform hover:scale-[1.01] transition-all"
+                              >
+                                <FinishedMatchCard
+                                  match={match}
+                                  now={currentTime}
+                                  analysis={matchAnalysesMap.get(match.id)}
+                                  onOpenLiveTV={handleOpenLiveTV}
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          {liveFiltered.length > 4 && (
+                            <div className="pt-2 text-center border-t border-rose-500/20">
+                              <button
+                                type="button"
+                                onClick={() => setIsAllLiveExpanded(!isAllLiveExpanded)}
+                                className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-rose-300 text-xs font-black border border-rose-500/30 transition-all cursor-pointer shadow-sm"
+                              >
+                                {isAllLiveExpanded ? '▲ Daha Az Göster (İlk 4 Maç)' : `▼ Tüm Canlı Maçları Göster (+${liveFiltered.length - 4} Maç)`}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* GÜNÜN VİTRİN KARŞILAŞMASI (HERO SHOWCASE BANNER - Yalnızca Tüm Maçlar Seçiliyken) */}
+                      {heroMatch && heroAnalysis && selectedCategory === 'all' && (
+                        <div className="mb-4">
+                          <MatchOfTheDayBanner
+                            match={heroMatch}
+                            analysis={heroAnalysis}
+                            onSelectMatch={(m) => setSelectedMatch(m)}
+                            onAddToBetslip={handleToggleBetslip}
+                            isAlreadyInBetslip={isHeroInBetslip}
+                          />
+                        </div>
+                      )}
+
+                      {/* 🏆 GÜNÜN PROANALİZ VIP SÜPER 3'LÜ AI KOMBİNİ */}
+                      {selectedCategory === 'all' && allMatches.length >= 3 && (
+                        <AITripleComboCard
+                          matches={allMatches}
+                          analyses={matchAnalysesMap}
+                          onSelectMatch={(m) => setSelectedMatch(m)}
+                          onAddComboToBetslip={handleAddComboToBetslip}
+                          betslipItems={betslipItems}
+                        />
+                      )}
+
+                      {/* AKTİF KATEGORİ FİLTRESİ BAŞLIK ŞERİDİ (Filtrelenen Sonuçlar) */}
+                      {selectedCategory !== 'all' && (
+                        <div className="flex items-center justify-between p-3 mb-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-slate-900 to-slate-900 border border-emerald-500/40 text-xs shadow-lg animate-fadeIn">
+                          <div className="flex items-center space-x-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="font-semibold text-slate-400">Aktif Kategori:</span>
+                            <span className="font-black text-white flex items-center space-x-1">
+                              <span>
+                                {selectedCategory === 'value' && '🎯 Değer Bahisleri'}
+                                {selectedCategory === 'banko' && '🔥 Bankolar (+%70)'}
+                                {selectedCategory === 'over25' && '⚡ 2.5 Gol Üst'}
+                                {selectedCategory === 'btts' && '✨ KG Var'}
+                                {selectedCategory === 'htft' && '🛡️ İY/MS Sürpriz'}
+                                {selectedCategory === 'favorites' && '⭐ Favoriler'}
+                              </span>
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 ml-1">
+                              {upcomingFiltered.length + liveFiltered.length} Karşılaşma
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCategory('all')}
+                            className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors cursor-pointer"
+                          >
+                            <span>Tüm Maçları Göster</span>
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* OYNANACAK MAÇLAR LİSTESİ (BAŞLAMA SAATİNE GÖRE ERKENDEN GEÇE SIRALI) */}
+                      {upcomingFiltered.length > 0 && liveFiltered.length > 0 && (
+                        <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
+                          <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+                            <Clock className="w-4 h-4" />
+                            <span>Sıradaki Oynanacak Karşılaşmalar ({upcomingFiltered.length})</span>
+                          </div>
+                          <span className="text-[11px] text-slate-400 font-mono">Erkenden Geçe Sıralı</span>
+                        </div>
+                      )}
+
+                      {upcomingFiltered.length > 0 ? (
+                        viewMode === 'bulletin' ? (
+                          <React.Suspense fallback={<SectionLoadingFallback label="Geniş Bülten Tablosu Hazırlanıyor..." />}>
+                            <NesineBulletinView
+                              matches={upcomingFiltered}
+                              matchAnalysesMap={matchAnalysesMap}
+                              onSelectMatch={(m) => setSelectedMatch(m)}
+                              favorites={favorites}
+                              onToggleFavorite={toggleFavorite}
+                              betslipItems={betslipItems}
+                              onToggleBetslip={handleToggleBetslip}
+                              sortOption={sortOption}
+                              selectedCategory={selectedCategory}
+                              onOpenLiveTV={(m) => {
+                                setLiveTVTargetMatch(m);
+                                setIsLiveTVModalOpen(true);
+                              }}
+                            />
+                          </React.Suspense>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
+                              {displayedUpcoming.map((match) => {
+                                const analysis = matchAnalysesMap.get(match.id);
+                                if (!analysis) return null;
+                                return (
+                                  <MatchCard
+                                    key={match.id}
+                                    match={match}
+                                    analysis={analysis}
+                                    onSelect={(m) => setSelectedMatch(m)}
+                                    isFavorite={favorites.includes(match.id)}
+                                    onToggleFavorite={toggleFavorite}
+                                    onOpenLiveTV={handleOpenLiveTV}
+                                  />
+                                );
+                              })}
+                            </div>
+
+                            {upcomingFiltered.length > displayedUpcoming.length && (
+                              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setVisibleMatchesCount((prev) => prev + 36)}
+                                  className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-slate-900 border border-slate-700 hover:border-emerald-500/50 hover:bg-slate-800 text-white font-black text-xs shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center space-x-2"
+                                >
+                                  <span>Daha Fazla Maç Göster (+36)</span>
+                                  <span className="text-[10px] font-mono text-emerald-400 font-bold">
+                                    ({displayedUpcoming.length} / {upcomingFiltered.length})
+                                  </span>
+                                </button>
+                                {upcomingFiltered.length > displayedUpcoming.length + 36 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setVisibleMatchesCount(upcomingFiltered.length)}
+                                    className="text-xs text-slate-400 hover:text-white underline cursor-pointer py-1"
+                                  >
+                                    Tümünü Göster ({upcomingFiltered.length})
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )
+                      ) : liveFiltered.length === 0 ? (
+                        <div className="p-12 text-center rounded-3xl bg-slate-900/60 border border-slate-800 space-y-3">
+                          <Trophy className="w-10 h-10 text-slate-600 mx-auto" />
+                          <h4 className="text-base font-bold text-slate-200">
+                            {totalMatches === 0 ? 'Canlı bülten yükleniyor veya maç bulunamadı' : 'Bu Kriterlere Uygun Oynanacak Maç Bulunamadı'}
+                          </h4>
+                          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                            {totalMatches === 0
+                              ? 'Canlı bülten verisi henüz gelmedi veya sunucuya bağlanılamadı. Yenile butonuna tıklayarak verileri tekrar çekebilirsiniz.'
+                              : 'Filtrelerinizi gevşeterek veya soldaki lig menüsünden "Tüm Ligler" seçeneğine tıklayarak bülteni görüntüleyebilirsiniz.'}
+                          </p>
+                          <div className="flex items-center justify-center gap-3 pt-2">
+                            {totalMatches === 0 ? (
+                              <button
+                                onClick={handleRefreshBulletin}
+                                disabled={isRefreshing}
+                                className="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold hover:bg-emerald-500/30 transition-colors cursor-pointer"
+                              >
+                                {isRefreshing ? 'Yenileniyor...' : 'Verileri Yenile'}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setSelectedLeague('all');
+                                  setSelectedCategory('all');
+                                  setSelectedDate('all');
+                                  setSearchQuery('');
+                                }}
+                                className="px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                              >
+                                Tüm Filtreleri Sıfırla
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+
+                  {/* TAB: GÜNÜN KUPONLARI (BANKO, İDEAL, SÜRPRİZ) */}
+                  {activeTabMode === 'coupons' && (
+                    <CouponsSection
+                      coupons={curatedCoupons}
+                      allMatches={allMatches}
+                      analysesMap={matchAnalysesMap}
+                      currentTime={currentTime}
+                      user={currentUser}
+                      onOpenVIP={() => setIsVipModalOpen(true)}
+                      onSelectMatch={(m) => setSelectedMatch(m)}
+                      onViewAllMatches={() => setActiveTabMode('upcoming')}
+                      onAddCouponToBetslip={handleAddCuratedCouponToBetslip}
+                      onShareCoupon={(coupon) => setShareSlipCoupon(coupon)}
+                    />
+                  )}
+
+                  {/* TAB 3: HAFTANIN TAMAMLANAN MAÇLARI (+ BAŞLAMIŞ CANLI MAÇLAR EN ÜSTTE) */}
+                  {activeTabMode === 'finished' && (
+                    <div className="space-y-6">
+                      {/* Live Matches Highlight at top if any match is in progress */}
+                      {liveFiltered.length > 0 && (
+                        <div className="space-y-3 p-4 rounded-3xl bg-rose-950/20 border border-rose-500/30">
+                          <div className="flex items-center space-x-2 text-rose-400 font-extrabold text-xs uppercase tracking-wider">
+                            <Radio className="w-4 h-4 animate-pulse text-rose-500" />
+                            <span>Başlamış Canlı Karşılaşmalar ({liveFiltered.length})</span>
+                          </div>
                           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-                            {displayedFinished.map((match) => (
+                            {liveFiltered?.map((match) => (
                               <FinishedMatchCard
                                 key={match.id}
                                 match={match}
@@ -2196,50 +2169,73 @@ export const App: React.FC = () => {
                               />
                             ))}
                           </div>
-
-                          {finishedFiltered.length > displayedFinished.length && (
-                            <div className="pt-3 flex items-center justify-center">
-                              <button
-                                type="button"
-                                onClick={() => setVisibleFinishedCount((prev) => prev + 30)}
-                                className="px-5 py-2 rounded-xl bg-slate-900 border border-slate-700 hover:border-slate-600 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center space-x-2"
-                              >
-                                <span>Daha Fazla Sonuç Göster (+30)</span>
-                                <span className="text-[10px] font-mono text-slate-400">
-                                  ({displayedFinished.length} / {finishedFiltered.length})
-                                </span>
-                              </button>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="p-10 text-center rounded-3xl bg-slate-900/60 border border-slate-800 space-y-3">
-                          <CalendarCheck className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                          <h4 className="text-sm font-bold text-slate-300">Bu Filtrede Tamamlanan Maç Bulunamadı</h4>
-                          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                            Seçilen lig veya tarih filtresinde tamamlanmış maç yok. Tüm ligler ve günlerdeki bitmiş maçları görmek için filtreleri sıfırlayabilirsiniz.
-                          </p>
-                          <button
-                            onClick={() => {
-                              setSelectedLeague('all');
-                              setSelectedDate('all');
-                              setSearchQuery('');
-                            }}
-                            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-500 transition-colors cursor-pointer shadow-md shadow-blue-900/40"
-                          >
-                            Tüm Biten Maçları Göster (Filtreleri Sıfırla)
-                          </button>
                         </div>
                       )}
+
+                      {/* Finished Matches List */}
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2 text-slate-400 font-extrabold text-xs uppercase tracking-wider pb-1 border-b border-slate-800">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span>Haftanın Tamamlanan Maç Sonuçları ({finishedFiltered.length})</span>
+                        </div>
+
+                        {finishedFiltered.length > 0 ? (
+                          <>
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                              {displayedFinished.map((match) => (
+                                <FinishedMatchCard
+                                  key={match.id}
+                                  match={match}
+                                  now={currentTime}
+                                  analysis={matchAnalysesMap.get(match.id)}
+                                  onOpenLiveTV={handleOpenLiveTV}
+                                />
+                              ))}
+                            </div>
+
+                            {finishedFiltered.length > displayedFinished.length && (
+                              <div className="pt-3 flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  onClick={() => setVisibleFinishedCount((prev) => prev + 30)}
+                                  className="px-5 py-2 rounded-xl bg-slate-900 border border-slate-700 hover:border-slate-600 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center space-x-2"
+                                >
+                                  <span>Daha Fazla Sonuç Göster (+30)</span>
+                                  <span className="text-[10px] font-mono text-slate-400">
+                                    ({displayedFinished.length} / {finishedFiltered.length})
+                                  </span>
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="p-10 text-center rounded-3xl bg-slate-900/60 border border-slate-800 space-y-3">
+                            <CalendarCheck className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                            <h4 className="text-sm font-bold text-slate-300">Bu Filtrede Tamamlanan Maç Bulunamadı</h4>
+                            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                              Seçilen lig veya tarih filtresinde tamamlanmış maç yok. Tüm ligler ve günlerdeki bitmiş maçları görmek için filtreleri sıfırlayabilirsiniz.
+                            </p>
+                            <button
+                              onClick={() => {
+                                setSelectedLeague('all');
+                                setSelectedDate('all');
+                                setSearchQuery('');
+                              }}
+                              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-500 transition-colors cursor-pointer shadow-md shadow-blue-900/40"
+                            >
+                              Tüm Biten Maçları Göster (Filtreleri Sıfırla)
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
+
+            </div>
 
           </div>
-
-        </div>
         )}
 
       </main>

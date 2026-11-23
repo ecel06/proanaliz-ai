@@ -117,6 +117,10 @@ export const HomeHub: React.FC<HomeHubProps> = ({
     spread?: number;
   }>>(() => cachedMacroRates);
 
+  // Interactive Ticker Touch & Pause state
+  const [isTickerPaused, setIsTickerPaused] = useState(false);
+  const [activePressedSymbol, setActivePressedSymbol] = useState<string | null>(null);
+
   // PWA Install prompt listener
   useEffect(() => {
     const handler = (e: any) => {
@@ -543,42 +547,35 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </p>
         </div>
 
-        {/* 🪙 CANLI ALTIN & DÖVİZ PİYASALARI TİCKER (Prominent & Live Dynamic) */}
+        {/* 🪙 CANLI ALTIN & DÖVİZ PİYASALARI TİCKER (Enlarged, Prominent & Touch-Interactive) */}
         <div
           onClick={() => onSelectStocks()}
-          className="w-full rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 border border-slate-800 hover:border-amber-500/50 px-2.5 py-2 sm:px-3.5 sm:py-2.5 transition-all shadow-lg flex items-center justify-between gap-2.5 overflow-hidden cursor-pointer group"
+          className="w-full min-h-[60px] sm:min-h-[70px] rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/98 to-slate-900 border-2 border-slate-700/80 hover:border-amber-400/80 px-3 sm:px-4 py-2.5 sm:py-3.5 transition-all shadow-xl flex items-center justify-between gap-3 sm:gap-4 overflow-hidden cursor-pointer group"
           title="Borsa, Altın ve Döviz Terminaline Git"
         >
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 pr-2 sm:pr-3 border-r border-slate-800/80">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-[11px] sm:text-xs font-black tracking-wider uppercase text-amber-300 whitespace-nowrap flex items-center gap-1">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 pr-3 sm:pr-4 border-r border-slate-700/80">
+            <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-400 animate-pulse shadow-md shadow-amber-400/50 shrink-0" />
+            <span className="text-xs sm:text-sm font-black tracking-wider uppercase text-amber-300 whitespace-nowrap flex items-center gap-1.5">
               <span>🪙 Canlı Piyasa:</span>
             </span>
-            {onOpenLiveGoldModal && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenLiveGoldModal();
-                }}
-                className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[10px] sm:text-[11px] font-bold text-amber-200 transition-colors shadow-sm cursor-pointer"
-                title="Kapalıçarşı Fiziki Altın vs Spot Fiyatları & Hesap Makinesi"
-              >
-                <span>🏛️ Kapalıçarşı Altın</span>
-              </button>
-            )}
           </div>
 
           {/* Infinite Smooth Scrolling Ticker Loop - Hardware Accelerated */}
           <div className="relative overflow-hidden flex-1 min-w-0">
             {/* Smooth Edge Fades */}
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 sm:w-6 bg-gradient-to-r from-slate-900 to-transparent z-10" />
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-4 sm:w-6 bg-gradient-to-l from-slate-900 to-transparent z-10" />
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 sm:w-8 bg-gradient-to-r from-slate-900 to-transparent z-10" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 sm:w-8 bg-gradient-to-l from-slate-900 to-transparent z-10" />
             {macroRates.length > 0 ? (
-              <div className="flex items-center gap-2 sm:gap-2.5 animate-marquee py-0.5">
+              <div
+                className="flex items-center gap-2.5 sm:gap-3.5 animate-marquee py-2"
+                style={{
+                  animationPlayState: isTickerPaused ? 'paused' : 'running',
+                  WebkitAnimationPlayState: isTickerPaused ? 'paused' : 'running',
+                }}
+              >
                 {/* Render two duplicated sets for seamless continuous animation loop */}
                 {[0, 1].map((copyIndex) => (
-                  <div key={copyIndex} className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                  <div key={copyIndex} className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
                     {macroRates.map((item) => {
                       const isGold = item.symbol.includes('ALTIN') || item.symbol === 'GC=F';
                       const isUsd = item.symbol === 'USDTRY=X';
@@ -604,40 +601,69 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                         ? item.price.toLocaleString('tr-TR', { maximumFractionDigits: item.price >= 10000 ? 0 : 2 })
                         : item.price.toFixed(2);
 
+                      const isPressed = activePressedSymbol === item.symbol;
+
                       return (
                         <div
                           key={`${copyIndex}-${item.symbol}`}
+                          onTouchStart={() => {
+                            setIsTickerPaused(true);
+                            setActivePressedSymbol(item.symbol);
+                          }}
+                          onTouchEnd={() => {
+                            setIsTickerPaused(false);
+                            setActivePressedSymbol(null);
+                          }}
+                          onTouchCancel={() => {
+                            setIsTickerPaused(false);
+                            setActivePressedSymbol(null);
+                          }}
+                          onMouseEnter={() => {
+                            setIsTickerPaused(true);
+                            setActivePressedSymbol(item.symbol);
+                          }}
+                          onMouseLeave={() => {
+                            setIsTickerPaused(false);
+                            setActivePressedSymbol(null);
+                          }}
                           onClick={(e) => {
-                            if (isGold && onOpenLiveGoldModal) {
-                              e.stopPropagation();
-                              onOpenLiveGoldModal();
+                            e.stopPropagation();
+                            if (isGold) {
+                              onSelectStocks('gold');
+                            } else {
+                              onSelectStocks(item.symbol);
                             }
                           }}
-                          className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-xl border text-[11px] sm:text-xs whitespace-nowrap shrink-0 transition-transform ${isGold
-                            ? 'bg-amber-500/15 border-amber-500/40 text-amber-200 hover:bg-amber-500/25 hover:border-amber-400/60 cursor-pointer shadow-sm'
-                            : isUsd || isEur || isGbp
-                              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
-                              : 'bg-slate-800/90 border-slate-700/80 text-slate-200'
-                            }`}
-                          title={isGold ? 'Kapalıçarşı & Spot Altın Fiyatları İçin Tıkla' : undefined}
+                          className={`relative select-none flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm whitespace-nowrap shrink-0 transition-all duration-150 cursor-pointer ${
+                            isPressed
+                              ? 'scale-125 z-40 ring-4 ring-amber-400 bg-amber-500/40 border-amber-300 shadow-2xl shadow-amber-500/40'
+                              : isGold
+                                ? 'bg-amber-500/15 border-amber-500/40 text-amber-200 hover:bg-amber-500/30 hover:border-amber-400 shadow-md'
+                                : isUsd || isEur || isGbp
+                                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
+                                  : 'bg-slate-800/90 border-slate-700/80 text-slate-200'
+                          }`}
+                          style={{ touchAction: 'manipulation' }}
+                          title="Tıkla: Detaylı Analiz & Piyasa Terminaline Git"
                         >
-                          <span className="text-xs sm:text-sm">{icon}</span>
-                          <span className="font-extrabold text-slate-200">{cleanLabel}:</span>
+                          <span className="text-base sm:text-lg">{icon}</span>
+                          <span className="font-extrabold text-white text-xs sm:text-sm">{cleanLabel}:</span>
                           {item.buying ? (
                             <span className="font-mono text-white flex items-center gap-1.5 font-bold">
-                              <span className="text-[10px] text-slate-400 font-sans font-normal">A:</span>
-                              <b className="font-bold text-white">{item.buying.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</b>
-                              <span className="text-[10px] text-amber-400/80 font-sans font-normal">S:</span>
-                              <b className="font-black text-amber-300">{(item.selling || item.price).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} {item.unit}</b>
+                              <span className="text-[10px] sm:text-xs text-slate-400 font-sans font-normal">A:</span>
+                              <b className="font-black text-white text-xs sm:text-sm">{item.buying.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</b>
+                              <span className="text-[10px] sm:text-xs text-amber-400/90 font-sans font-normal ml-0.5">S:</span>
+                              <b className="font-black text-amber-300 text-xs sm:text-sm">{(item.selling || item.price).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} {item.unit}</b>
                             </span>
                           ) : (
-                            <span className="font-mono font-black text-white">
+                            <span className="font-mono font-black text-white text-xs sm:text-sm">
                               {formattedPrice} {item.unit}
                             </span>
                           )}
                           <span
-                            className={`font-mono text-[10px] sm:text-[11px] font-black px-1.5 py-0.2 rounded ${isPos ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
-                              }`}
+                            className={`font-mono text-[11px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded ${
+                              isPos ? 'bg-emerald-500/25 text-emerald-300' : 'bg-rose-500/25 text-rose-300'
+                            }`}
                           >
                             {isPos ? '+' : ''}{item.changePct}%
                           </span>
@@ -648,29 +674,27 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="flex items-center space-x-2 text-xs text-slate-400 animate-pulse">
+              <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-400 animate-pulse">
                 <span>Canlı altın ve döviz kurları yükleniyor...</span>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 pl-2 sm:pl-3 border-l border-slate-800/80">
-            {onOpenLiveGoldModal && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenLiveGoldModal();
-                }}
-                className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-[11px] sm:text-xs font-bold text-amber-300 hover:text-amber-200 transition-colors cursor-pointer shadow-sm"
-                title="Kapalıçarşı Fiziki Altın & Spot Farkı"
-              >
-                <span>🏛️ Kapalıçarşı</span>
-              </button>
-            )}
-            <div className="hidden sm:flex items-center gap-1 text-xs font-bold text-slate-400 group-hover:text-cyan-300 transition-colors">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 pl-2.5 sm:pl-3.5 border-l border-slate-700/80">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectStocks('gold');
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500/25 to-yellow-500/20 hover:from-amber-500/40 hover:to-yellow-500/35 border border-amber-400/50 text-xs sm:text-sm font-black text-amber-300 hover:text-amber-200 transition-all cursor-pointer shadow-md shadow-amber-950/30 active:scale-95"
+              title="Kapalıçarşı Fiziki Altın, Çeyrek, Has, Külçe Fiyatları & Borsa Terminali"
+            >
+              <span>🏛️ Kapalıçarşı</span>
+            </button>
+            <div className="hidden sm:flex items-center gap-1 text-xs sm:text-sm font-bold text-slate-400 group-hover:text-cyan-300 transition-colors">
               <span>Terminal</span>
-              <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </div>
           </div>
         </div>

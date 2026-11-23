@@ -157,6 +157,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       setIsKapModalOpen(true);
     } else if (externalAction.action === 'tefas') {
       setIsTefasModalOpen(true);
+    } else if (externalAction.action === 'gold') {
+      setIsGoldModalOpen(true);
     }
   }, [externalAction]);
 
@@ -1005,6 +1007,19 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
               <span>TEFAS Fonları</span>
               <span className="px-1.5 py-0.2 rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 text-[10px] font-bold">
                 AI Sepet
+              </span>
+            </button>
+
+            {/* 🏛️ Kapalıçarşı & Canlı Fiziki Altın */}
+            <button
+              onClick={() => setIsGoldModalOpen(true)}
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-amber-600/25 via-yellow-600/20 to-amber-600/25 hover:from-amber-600/35 hover:to-amber-600/35 border border-amber-400/40 text-amber-200 text-xs font-bold cursor-pointer flex items-center space-x-1.5 transition-all shadow-md shadow-amber-950/40 active:scale-95"
+              title="Kapalıçarşı Fiziki Altın, Çeyrek, Has, Külçe ve Canlı Alış-Satış Fiyatları"
+            >
+              <Coins className="w-3.5 h-3.5 text-amber-400" />
+              <span>Kapalıçarşı Altın</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[10px] font-bold">
+                Canlı
               </span>
             </button>
 
