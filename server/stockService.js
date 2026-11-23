@@ -818,13 +818,20 @@ export async function fetchMacroOverview(force = false) {
     const gramChange = Number((onsObj.changePct + usdObj.changePct).toFixed(2));
     const ceyrekPrice = gramPrice * 1.635;
 
-    // Insert Gram and Çeyrek right after Euro
+    // Insert Gram (Spot), Gram (Kapalıçarşı), and Çeyrek right after Euro
     filtered.splice(3, 0, 
       {
         symbol: 'GRAM_ALTIN',
-        label: 'Gram Altın',
+        label: 'Gram Altın (Spot)',
         unit: '₺',
         price: Number(gramPrice.toFixed(2)),
+        changePct: gramChange,
+      },
+      {
+        symbol: 'KAPALICARSI_GRAM',
+        label: 'Gram (Kapalıçarşı)',
+        unit: '₺',
+        price: Number(Math.round(gramPrice * 1.012)),
         changePct: gramChange,
       },
       {
@@ -841,6 +848,124 @@ export async function fetchMacroOverview(force = false) {
     expiresAt: now + 45 * 1000,
   };
   return filtered;
+}
+
+// 🪙 Canlı Altın Piyasası (Spot Gösterge vs. Kapalıçarşı Serbest Piyasa Alış-Satış)
+let goldMarketCache = { data: null, expiresAt: 0 };
+
+function parseTurkishGoldNumber(str) {
+  if (!str) return 0;
+  const clean = String(str).replace(/\./g, '').replace(',', '.');
+  return parseFloat(clean) || 0;
+}
+
+export async function fetchLiveGoldMarket(force = false) {
+  const now = Date.now();
+  if (!force && goldMarketCache.data && now < goldMarketCache.expiresAt) {
+    return goldMarketCache.data;
+  }
+
+  // 1. Spot değerlerini al (Ons ve Dolar/TL)
+  const macro = await fetchMacroOverview(force);
+  const usdObj = macro.find((m) => m.symbol === 'USDTRY=X');
+  const onsObj = macro.find((m) => m.symbol === 'GC=F');
+  const usdPrice = usdObj?.price || 34.6;
+  const onsPrice = onsObj?.price || 2680;
+  const spotGram = Number(((onsPrice / 31.1034768) * usdPrice).toFixed(2));
+  const spotCeyrek = Number(Math.round(spotGram * 1.635));
+
+  // 2. Kapalıçarşı Serbest Piyasa Verisini Çek
+  let kapalicarsiItems = [];
+  let updateDate = new Date().toISOString();
+
+  try {
+    const raw = await httpRequestJson('https://finans.truncgil.com/v3/today.json');
+    if (raw && typeof raw === 'object') {
+      updateDate = raw.Update_Date || updateDate;
+
+      const mappings = [
+        { key: 'gram-altin', name: 'Gram Altın (Kapalıçarşı)', shortName: 'Gram Altın', isGram: true },
+        { key: 'gram-has-altin', name: 'Has Altın (24 Ayar Külçe)', shortName: 'Has Altın' },
+        { key: 'ceyrek-altin', name: 'Çeyrek Altın', shortName: 'Çeyrek Altın' },
+        { key: 'yarim-altin', name: 'Yarım Altın', shortName: 'Yarım Altın' },
+        { key: 'tam-altin', name: 'Tam Altın', shortName: 'Tam Altın' },
+        { key: 'cumhuriyet-altini', name: 'Cumhuriyet Altını', shortName: 'Cumhuriyet' },
+        { key: 'ata-altin', name: 'Ata Altın', shortName: 'Ata Altın' },
+        { key: '22-ayar-bilezik', name: '22 Ayar Bilezik (Gram)', shortName: '22 Ayar Bilezik' },
+        { key: '18-ayar-altin', name: '18 Ayar Altın (Gram)', shortName: '18 Ayar' },
+        { key: '14-ayar-altin', name: '14 Ayar Altın (Gram)', shortName: '14 Ayar' },
+        { key: 'resat-altin', name: 'Reşat Altın', shortName: 'Reşat Altın' },
+        { key: 'gremse-altin', name: 'Gremse Altın', shortName: 'Gremse' },
+        { key: 'gumus', name: 'Gümüş (Gram)', shortName: 'Gümüş', isSilver: true },
+      ];
+
+      for (const m of mappings) {
+        const item = raw[m.key];
+        if (item) {
+          const buying = parseTurkishGoldNumber(item.Buying);
+          const selling = parseTurkishGoldNumber(item.Selling);
+          const spread = Number((selling - buying).toFixed(2));
+          const changeStr = String(item.Change || '0%').replace('%', '').trim();
+          const changePct = parseFloat(changeStr.replace(',', '.')) || 0;
+
+          kapalicarsiItems.push({
+            id: m.key,
+            name: m.name,
+            shortName: m.shortName,
+            buying,
+            selling,
+            spread,
+            changePct,
+            isGram: Boolean(m.isGram),
+            isSilver: Boolean(m.isSilver),
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Gold] Kapalıçarşı feed fetch error, using calculated fallback:', err.message);
+  }
+
+  // Güvenli Fallback (Eğer feed gecikirse veya boş dönerse)
+  if (kapalicarsiItems.length === 0) {
+    const kSelling = Number((spotGram * 1.012).toFixed(2));
+    const kBuying = Number((spotGram * 1.006).toFixed(2));
+    kapalicarsiItems = [
+      { id: 'gram-altin', name: 'Gram Altın (Kapalıçarşı)', shortName: 'Gram Altın', buying: kBuying, selling: kSelling, spread: Number((kSelling - kBuying).toFixed(2)), changePct: 0.45, isGram: true },
+      { id: 'ceyrek-altin', name: 'Çeyrek Altın', shortName: 'Çeyrek Altın', buying: Math.round(kBuying * 1.635), selling: Math.round(kSelling * 1.635), spread: 45, changePct: 0.45 },
+      { id: 'yarim-altin', name: 'Yarım Altın', shortName: 'Yarım Altın', buying: Math.round(kBuying * 3.27), selling: Math.round(kSelling * 3.27), spread: 90, changePct: 0.45 },
+      { id: 'tam-altin', name: 'Tam Altın', shortName: 'Tam Altın', buying: Math.round(kBuying * 6.54), selling: Math.round(kSelling * 6.54), spread: 180, changePct: 0.45 },
+      { id: 'cumhuriyet-altini', name: 'Cumhuriyet Altını', shortName: 'Cumhuriyet', buying: Math.round(kBuying * 6.68), selling: Math.round(kSelling * 6.68), spread: 210, changePct: 0.45 },
+      { id: '22-ayar-bilezik', name: '22 Ayar Bilezik (Gram)', shortName: '22 Ayar Bilezik', buying: Number((kBuying * 0.916).toFixed(2)), selling: Number((kSelling * 0.916).toFixed(2)), spread: 35, changePct: 0.45 },
+    ];
+  }
+
+  const kapaliGram = kapalicarsiItems.find((k) => k.isGram) || kapalicarsiItems[0];
+  const physicalPremiumTL = kapaliGram ? Number((kapaliGram.selling - spotGram).toFixed(2)) : 0;
+  const physicalPremiumPct = spotGram > 0 ? Number(((physicalPremiumTL / spotGram) * 100).toFixed(2)) : 0;
+
+  const result = {
+    updateDate,
+    timestamp: now,
+    spot: {
+      ons: onsPrice,
+      usdTry: usdPrice,
+      gramAltin: spotGram,
+      ceyrekAltin: spotCeyrek,
+    },
+    kapalicarsi: {
+      premiumTL: physicalPremiumTL,
+      premiumPct: physicalPremiumPct,
+      items: kapalicarsiItems,
+    },
+  };
+
+  goldMarketCache = {
+    data: result,
+    expiresAt: now + 30 * 1000,
+  };
+
+  return result;
 }
 
 export async function fetchStockScreener(market = 'bist', search = '', force = false) {

@@ -25,6 +25,7 @@ import {
   fetchStockChart,
   fetchStockDeepAnalysis,
   fetchMacroOverview,
+  fetchLiveGoldMarket,
   fetchLiveViopContracts
 } from './stockService.js';
 import { getLiveStandings } from './standingsService.js';
@@ -673,6 +674,17 @@ app.get('/api/macro/live', async (req, res) => {
   }
 });
 
+// 🪙 Canlı Altın Piyasası (Spot Gösterge vs. Kapalıçarşı Serbest Piyasa) endpoint
+app.get('/api/gold/live', async (req, res) => {
+  try {
+    const force = req.query.force === 'true';
+    const data = await fetchLiveGoldMarket(force);
+    res.json({ success: true, ...data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // --- User Authentication & VIP Subscription Routes ---
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -1031,7 +1043,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.39';
+const APP_VERSION = '2026.11.20.40';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

@@ -78,6 +78,7 @@ import { StockWatchlistModal } from './StockWatchlistModal';
 import { StockCryptoWidgetsModal } from './StockCryptoWidgetsModal';
 import { StockViopModal } from './StockViopModal';
 import { StockTefasModal } from './StockTefasModal';
+import { LiveGoldModal } from './LiveGoldModal';
 import { DraggableAIFab } from '../DraggableAIFab';
 import { INITIAL_IPOS } from '../../data/ipoData';
 import { INITIAL_KAP_NEWS } from '../../data/kapNewsData';
@@ -137,6 +138,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
   const [isCryptoWidgetsModalOpen, setIsCryptoWidgetsModalOpen] = useState<boolean>(false);
   const [isViopModalOpen, setIsViopModalOpen] = useState<boolean>(false);
   const [isTefasModalOpen, setIsTefasModalOpen] = useState<boolean>(false);
+  const [isGoldModalOpen, setIsGoldModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (!externalAction) return;
@@ -726,29 +728,62 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
 
       {/* 1. MACRO INDICES & FX LIVE TICKER STRIP */}
       {macro.length > 0 && (
-        <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 pb-1">
-          {macro.map((m) => (
-            <div
-              key={m.symbol}
-              className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between shadow-sm"
-            >
-              <div>
-                <div className="text-[10px] font-bold text-slate-400">{m.label}</div>
-                <div className="text-xs sm:text-sm font-mono font-black text-white">
-                  {m.price.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} {m.unit}
-                </div>
-              </div>
-              <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black ${m.changePct >= 0
-                    ? 'bg-emerald-500/15 text-emerald-300'
-                    : 'bg-rose-500/15 text-rose-300'
-                  }`}
+        <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pb-1">
+          {macro.map((m) => {
+            const isGoldItem = m.symbol.includes('ALTIN') || m.symbol === 'GC=F';
+            return (
+              <div
+                key={m.symbol}
+                onClick={isGoldItem ? () => setIsGoldModalOpen(true) : undefined}
+                className={`w-full px-3 py-2 rounded-xl bg-slate-900/90 border flex items-center justify-between shadow-sm transition-all ${
+                  isGoldItem
+                    ? 'border-amber-500/40 hover:border-amber-400 hover:bg-amber-500/10 cursor-pointer'
+                    : 'border-slate-800'
+                }`}
+                title={isGoldItem ? 'Kapalıçarşı & Spot Altın Fiyatlarını İncele' : undefined}
               >
-                {m.changePct >= 0 ? '+' : ''}
-                {m.changePct.toFixed(2)}%
-              </span>
+                <div>
+                  <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                    <span>{m.label}</span>
+                    {isGoldItem && <span className="text-[9px] text-amber-300">🏛️</span>}
+                  </div>
+                  <div className="text-xs sm:text-sm font-mono font-black text-white">
+                    {m.price.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} {m.unit}
+                  </div>
+                </div>
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black ${
+                    m.changePct >= 0
+                      ? 'bg-emerald-500/15 text-emerald-300'
+                      : 'bg-rose-500/15 text-rose-300'
+                  }`}
+                >
+                  {m.changePct >= 0 ? '+' : ''}
+                  {m.changePct.toFixed(2)}%
+                </span>
+              </div>
+            );
+          })}
+
+          {/* Dedicated Kapalıçarşı Altın Quick Access Card */}
+          <button
+            type="button"
+            onClick={() => setIsGoldModalOpen(true)}
+            className="w-full px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-400 flex items-center justify-between shadow-sm transition-all text-left cursor-pointer group"
+          >
+            <div>
+              <div className="text-[10px] font-bold text-amber-300 flex items-center gap-1">
+                <span>🏛️ Kapalıçarşı Altın</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              </div>
+              <div className="text-[11px] font-mono font-bold text-white truncate">
+                Fiziki Alış / Satış / Makas
+              </div>
             </div>
-          ))}
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-200 border border-amber-500/40 group-hover:scale-105 transition-transform shrink-0">
+              İncele ↗
+            </span>
+          </button>
         </section>
       )}
 
@@ -3046,6 +3081,12 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       <StockTefasModal
         isOpen={isTefasModalOpen}
         onClose={() => setIsTefasModalOpen(false)}
+      />
+
+      {/* 🏛️ Kapalıçarşı vs Spot Fiziki Altın Terminali & Çarşı Primi Modal */}
+      <LiveGoldModal
+        isOpen={isGoldModalOpen}
+        onClose={() => setIsGoldModalOpen(false)}
       />
 
       {/* Borsa Dedicated AI Sinyal Robotu Modal */}

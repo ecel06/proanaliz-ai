@@ -43,6 +43,7 @@ interface HomeHubProps {
   onOpenProfile?: () => void;
   onOpenAdmin?: () => void;
   onOpenAIPerformance?: () => void;
+  onOpenLiveGoldModal?: () => void;
   onLogout?: () => void;
   user?: User | null;
   allMatches?: Match[];
@@ -67,6 +68,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   onOpenProfile,
   onOpenAdmin,
   onOpenAIPerformance,
+  onOpenLiveGoldModal,
   onLogout,
   user,
   allMatches = [],
@@ -549,6 +551,19 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             <span className="text-[10px] sm:text-xs font-black tracking-wider uppercase text-amber-300 whitespace-nowrap flex items-center gap-1">
               <span>🪙 Canlı Piyasa:</span>
             </span>
+            {onOpenLiveGoldModal && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenLiveGoldModal();
+                }}
+                className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[9px] sm:text-[10px] font-bold text-amber-200 transition-colors shadow-sm cursor-pointer"
+                title="Kapalıçarşı Fiziki Altın vs Spot Fiyatları & Hesap Makinesi"
+              >
+                <span>🏛️ Kapalıçarşı Altın</span>
+              </button>
+            )}
           </div>
 
           {/* Infinite Smooth Scrolling Ticker Loop - Hardware Accelerated */}
@@ -588,12 +603,19 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                       return (
                         <div
                           key={`${copyIndex}-${item.symbol}`}
+                          onClick={(e) => {
+                            if (isGold && onOpenLiveGoldModal) {
+                              e.stopPropagation();
+                              onOpenLiveGoldModal();
+                            }
+                          }}
                           className={`flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg border text-[10px] sm:text-[11px] whitespace-nowrap shrink-0 transition-transform ${isGold
-                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-200 hover:bg-amber-500/25 hover:border-amber-400/60 cursor-pointer shadow-sm'
                             : isUsd || isEur || isGbp
                               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
                               : 'bg-slate-800/80 border-slate-700/60 text-slate-200'
                             }`}
+                          title={isGold ? 'Kapalıçarşı & Spot Altın Fiyatları İçin Tıkla' : undefined}
                         >
                           <span className="text-[11px] sm:text-xs">{icon}</span>
                           <span className="font-bold text-slate-300">{cleanLabel}:</span>
@@ -619,9 +641,24 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             )}
           </div>
 
-          <div className="hidden sm:flex items-center gap-1 text-[10px] font-bold text-slate-400 group-hover:text-cyan-300 transition-colors shrink-0 pl-1.5 border-l border-slate-800/80">
-            <span>Terminal</span>
-            <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          <div className="flex items-center gap-1.5 shrink-0 pl-1.5 border-l border-slate-800/80">
+            {onOpenLiveGoldModal && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenLiveGoldModal();
+                }}
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-[10px] font-bold text-amber-300 hover:text-amber-200 transition-colors cursor-pointer"
+                title="Kapalıçarşı Fiziki Altın & Spot Farkı"
+              >
+                <span>🏛️ Kapalıçarşı</span>
+              </button>
+            )}
+            <div className="hidden sm:flex items-center gap-1 text-[10px] font-bold text-slate-400 group-hover:text-cyan-300 transition-colors">
+              <span>Terminal</span>
+              <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </div>
           </div>
         </div>
 

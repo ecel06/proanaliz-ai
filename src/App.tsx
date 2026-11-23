@@ -43,6 +43,7 @@ const ShareAppModal = React.lazy(() => import('./components/ShareAppModal').then
 const NesineBulletinView = React.lazy(() => import('./components/NesineBulletinView').then(m => ({ default: m.NesineBulletinView })));
 const FeedbackModal = React.lazy(() => import('./components/FeedbackModal').then(m => ({ default: m.FeedbackModal })));
 const LiveTVModal = React.lazy(() => import('./components/LiveTVModal').then(m => ({ default: m.LiveTVModal })));
+const LiveGoldModal = React.lazy(() => import('./components/stocks/LiveGoldModal').then(m => ({ default: m.LiveGoldModal })));
 
 const SectionLoadingFallback: React.FC<{ label?: string }> = ({ label = 'Modül Yükleniyor...' }) => (
   <div className="flex flex-col items-center justify-center p-12 min-h-[320px] space-y-3">
@@ -385,6 +386,7 @@ export const App: React.FC = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isLiveTVModalOpen, setIsLiveTVModalOpen] = useState(false);
+  const [isLiveGoldModalOpen, setIsLiveGoldModalOpen] = useState(false);
   const [liveTVTargetMatch, setLiveTVTargetMatch] = useState<Match | null>(null);
 
   const handleOpenLiveTV = (match?: Match) => {
@@ -417,7 +419,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.39';
+  const CLIENT_BUILD_VERSION = '2026.11.20.40';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1283,6 +1285,7 @@ export const App: React.FC = () => {
             if (symbol) setStockExternalAction({ action: 'select_symbol', symbol, timestamp: Date.now() });
           }}
           onOpenInstallModal={() => setIsInstallModalOpen(true)}
+          onOpenLiveGoldModal={() => setIsLiveGoldModalOpen(true)}
           onOpenVIP={() => setIsVipModalOpen(true)}
           onOpenAuth={() => setIsAuthModalOpen(true)}
           onOpenProfile={() => setIsProfileModalOpen(true)}
@@ -2479,6 +2482,13 @@ export const App: React.FC = () => {
               setIsLiveTVModalOpen(false);
               setLiveTVTargetMatch(null);
             }}
+          />
+        )}
+
+        {isLiveGoldModalOpen && (
+          <LiveGoldModal
+            isOpen={isLiveGoldModalOpen}
+            onClose={() => setIsLiveGoldModalOpen(false)}
           />
         )}
       </React.Suspense>
