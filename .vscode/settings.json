@@ -1,0 +1,6 @@
+{
+  "git.similarityThreshold": 100,
+  "git.ignoreRebaseWarning": true,
+  "git.openDiffOnClick": false,
+  "git.fetchOnType": false
+}
