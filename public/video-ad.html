@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ProAnaliz AI — 1 Numaralı Sinematik Reklam Stüdyosu</title>
+  <title>ProAnaliz AI — 1 Numaralı 3D Holografik Reklam Stüdyosu</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -11,33 +11,37 @@
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background: #050811;
+      background: #040711;
       color: #f8fafc;
     }
     .video-frame {
       aspect-ratio: 9 / 16;
-      max-height: 80vh;
+      max-height: 82vh;
       width: 100%;
       max-width: 360px;
     }
-    @keyframes pulseGold {
-      0%, 100% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.4), 0 0 50px rgba(16, 185, 129, 0.2); }
-      50% { box-shadow: 0 0 50px rgba(245, 158, 11, 0.85), 0 0 95px rgba(16, 185, 129, 0.5); }
+    @keyframes neonGlow {
+      0%, 100% { 
+        box-shadow: 0 0 30px rgba(168, 85, 247, 0.4), 0 0 60px rgba(56, 189, 248, 0.3), 0 0 90px rgba(245, 158, 11, 0.2); 
+      }
+      50% { 
+        box-shadow: 0 0 50px rgba(168, 85, 247, 0.75), 0 0 100px rgba(56, 189, 248, 0.5), 0 0 140px rgba(245, 158, 11, 0.35); 
+      }
     }
-    .gold-glow {
-      animation: pulseGold 3s infinite ease-in-out;
+    .hologram-glow {
+      animation: neonGlow 3.5s infinite ease-in-out;
+    }
+    video::-webkit-media-controls-panel {
+      background-color: rgba(15, 23, 42, 0.9);
     }
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-start py-6 px-3 sm:px-6">
 
-  <!-- Ses Dosyası (Gerçek Stüdyo Neural Seslendirme) -->
-  <audio id="neuralVoice" src="/sounds/proanaliz-voiceover-ahmet.mp3" preload="auto"></audio>
-
   <!-- Üst Bar -->
   <header class="w-full max-w-6xl flex items-center justify-between pb-6 border-b border-slate-800">
     <div class="flex items-center gap-3">
-      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-emerald-400 flex items-center justify-center font-black text-slate-950 text-2xl shadow-xl shadow-amber-500/25">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-500 via-sky-400 to-amber-400 flex items-center justify-center font-black text-slate-950 text-2xl shadow-xl shadow-purple-500/25">
         PA
       </div>
       <div>
@@ -45,11 +49,11 @@
           <h1 class="text-lg sm:text-2xl font-black tracking-tight text-white">
             ProAnaliz AI
           </h1>
-          <span class="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30 uppercase tracking-wider">
-            🥇 1 NUMARA REKLAM STÜDYOSU
+          <span class="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-500/30 to-sky-500/30 text-purple-300 border border-purple-400/50 uppercase tracking-wider">
+            🔮 3D HOLOGRAFİK VİDEO REKLAM
           </span>
         </div>
-        <p class="text-xs text-slate-400">Gerçek Stüdyo Tok Seslendirme, Bize Has Canlı Veriler & Reels / TikTok İndirici</p>
+        <p class="text-xs text-slate-400">Sinematik 3D Hologram, Kusursuz Akıcı Seslendirme & Reels / TikTok Paketi</p>
       </div>
     </div>
     <a href="/" class="text-xs font-bold px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition-all flex items-center gap-2 active:scale-95 shadow-md">
@@ -57,525 +61,163 @@
     </a>
   </header>
 
-  <!-- Ana Alan -->
+  <!-- Ana Alan (Grid) -->
   <main class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
 
-    <!-- SOL KOLON: 9:16 Video Canvas Oynatıcı -->
+    <!-- SOL KOLON: 3D Holografik Video Oynatıcı -->
     <div class="lg:col-span-5 flex flex-col items-center">
       
-      <div class="relative video-frame rounded-[36px] overflow-hidden bg-slate-950 border-4 border-slate-700/80 gold-glow shadow-2xl flex flex-col items-center justify-center select-none">
-        <canvas id="adCanvas" width="1080" height="1920" class="w-full h-full object-cover rounded-[32px]"></canvas>
+      <div class="relative video-frame rounded-[36px] overflow-hidden bg-slate-950 border-4 border-purple-500/60 hologram-glow shadow-2xl flex flex-col items-center justify-center select-none">
+        <!-- 3D Hologram Video -->
+        <video 
+          id="holoVideo"
+          src="/videos/proanaliz-hologram-ad.mp4" 
+          playsinline 
+          controls 
+          loop 
+          autoplay
+          class="w-full h-full object-cover rounded-[32px]"
+          poster="/og-image.png"
+        ></video>
 
-        <div class="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-amber-400/40">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="text-[10px] font-black text-amber-300 tracking-wider">PROANALIZ AI LIVE</span>
+        <!-- Canlı 3D Hologram Rozeti -->
+        <div class="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-purple-400/40">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          <span class="text-[10px] font-black text-cyan-300 tracking-wider">3D HOLOGRAM LIVE</span>
         </div>
 
-        <div class="absolute top-4 right-4 z-20 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-slate-700 text-[10px] font-black text-white">
-          🥇 #1
+        <div class="absolute top-4 right-4 z-20 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-amber-400/50 text-[10px] font-black text-amber-300">
+          10s REELS
         </div>
       </div>
 
-      <!-- Oynatma ve İndirme Butonları -->
+      <!-- İndirme ve Hızlı Butonlar -->
       <div class="w-full max-w-[360px] space-y-2.5 mt-4">
-        <button id="btnPlayCustom" class="w-full py-4 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-black text-sm transition-all shadow-xl shadow-amber-400/30 active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
-          <span id="customPlayIcon" class="text-lg">▶️</span>
-          <span id="customPlayText">Stüdyo Tok Sesiyle Oynat (Reels / TikTok)</span>
-        </button>
-
-        <button id="btnRecordVideo" class="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 font-black text-xs border border-emerald-500/40 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-lg">
-          <span id="recordIcon">🔴</span>
-          <span id="recordText">Bu Reklamı HD Video (MP4/WebM) Olarak İndir</span>
-        </button>
-
         <a 
-          href="/sounds/proanaliz-voiceover-ahmet.mp3" 
-          download="proanaliz-1-numara-ses.mp3"
-          class="w-full py-2.5 px-3 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-300 font-bold text-xs border border-slate-800 transition-all flex items-center justify-center gap-2 block text-center"
+          href="/videos/proanaliz-hologram-ad.mp4" 
+          download="proanaliz-ai-3d-hologram-reklam.mp4"
+          class="w-full py-4 px-4 rounded-xl bg-gradient-to-r from-purple-500 via-sky-500 to-emerald-400 hover:from-purple-400 hover:to-sky-400 text-slate-950 font-black text-sm transition-all shadow-xl shadow-purple-500/30 active:scale-95 flex items-center justify-center gap-2 cursor-pointer text-center"
         >
-          <span>🎙️ Stüdyo Ses Kaydını İndir (.MP3)</span>
+          <span>📥 3D Reklam Videosunu İndir (1080p MP4)</span>
         </a>
 
-        <p class="text-[11px] text-slate-400 text-center">
-          ✅ <strong>Sıfır Robot Ses:</strong> Gerçek radyo/reklam spikeri tonunda stüdyo neural Türkçe seslendirme kullanılmıştır.
-        </p>
+        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-center space-y-1">
+          <div class="text-xs font-black text-white flex items-center justify-center gap-1.5">
+            <span>🌐 Ekranda Doğrudan Adresimiz Yazıyor:</span>
+          </div>
+          <div class="text-xs font-mono font-bold text-amber-300 bg-black/60 py-1 px-2 rounded-lg border border-slate-800 inline-block">
+            Proanaliz-ai.onrender.com
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">
+            Videonun sonunda logomuz ve web adresimiz 3D parıltılarla ekranda belirir.
+          </p>
+        </div>
       </div>
 
     </div>
 
-    <!-- SAĞ KOLON: Ses Dökümü, Canlı Veriler & Gönderi Paketi -->
+    <!-- SAĞ KOLON: Sahne Analizi, Seslendirme ve Paylaşım Kiti -->
     <div class="lg:col-span-7 space-y-5">
 
-      <!-- 1. Kutu: Stüdyo Seslendirme Dinleme ve Detaylar -->
+      <!-- 1. Kutu: Seslendirme ve 3D Sahne Akışı -->
       <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-5 space-y-3">
         <div class="flex items-center justify-between">
-          <h2 class="text-xs sm:text-sm font-black text-amber-300 uppercase tracking-wider flex items-center gap-2">
-            <span>🎙️ Yeni Stüdyo Seslendirmesi (Tok & Karizmatik Spiker)</span>
+          <h2 class="text-xs sm:text-sm font-black text-purple-300 uppercase tracking-wider flex items-center gap-2">
+            <span>🎙️ Seslendirme ve 3D Hologram Sahne Dökümü</span>
           </h2>
-          <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-            24kHz HD NEURAL SES
+          <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+            KUSURSUZ 10 SANİYE
           </span>
         </div>
 
-        <!-- Doğrudan Ses Çalma Çubuğu -->
-        <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
-          <div class="text-xs text-slate-300">
-            <span class="font-bold text-white">Stüdyo Kaydı Önizleme:</span> 
-            <span class="text-slate-400 block text-[11px]">Doğal ton, otoriter reklam anlatımı</span>
+        <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80 space-y-2.5 text-xs sm:text-sm text-slate-200 leading-relaxed font-medium">
+          <div class="flex items-start gap-2 border-b border-slate-900 pb-2">
+            <span class="text-purple-400 font-bold shrink-0">00:00 - 00:02:</span>
+            <div>
+              <p class="text-white font-bold">"Futbol, at yarışı ve borsa tek adreste..."</p>
+              <p class="text-[11px] text-slate-400">Telefondan havaya yükselen 3D holografik futbol sahası ve taktiksel pas ağları.</p>
+            </div>
           </div>
-          <audio controls src="/sounds/proanaliz-voiceover-ahmet.mp3" class="h-9 max-w-[260px]"></audio>
-        </div>
 
-        <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80 space-y-2 text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
-          <p><span class="text-amber-400 font-bold">00:00 - 00:03:</span> "Sıradan tahminlerle vakit kaybetmeyi bırakın. Türkiye'nin bir numaralı yapay zeka analiz platformu ProAnaliz AI ile tanışın."</p>
-          <p><span class="text-amber-400 font-bold">00:03 - 00:08:</span> "Borsada tavan serilerini yakalayın, Kapalıçarşı canlı altın ve döviz makasını anlık takip edin."</p>
-          <p><span class="text-amber-400 font-bold">00:08 - 00:12:</span> "Futbolda yüzde seksenin üzerinde banko isabeti ve canlı TJK TV at yarışı analizleri tek ekranda!"</p>
-          <p><span class="text-amber-400 font-bold">00:12 - 00:16:</span> "Geleceğin finansal zekası cebinizde. Hemen ücretsiz deneyin, bir numarayla kazanın!"</p>
+          <div class="flex items-start gap-2 border-b border-slate-900 pb-2">
+            <span class="text-sky-400 font-bold shrink-0">00:02 - 00:04:</span>
+            <div>
+              <p class="text-white font-bold">"Yapay zeka ile anlık futbol analizleri..."</p>
+              <p class="text-[11px] text-slate-400">Canlı ısı haritaları, gol ihtimali %85 ve anlık veri grafikleri.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2 border-b border-slate-900 pb-2">
+            <span class="text-amber-400 font-bold shrink-0">00:04 - 00:06:</span>
+            <div>
+              <p class="text-white font-bold">"Detaylı at yarışı tahminleri ve istatistikler..."</p>
+              <p class="text-[11px] text-slate-400">Dönen neon pistte koşan yarış atları ve %92 kazanç olasılığı halkası.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2 border-b border-slate-900 pb-2">
+            <span class="text-emerald-400 font-bold shrink-0">00:06 - 00:08:</span>
+            <div>
+              <p class="text-white font-bold">"Borsada kazandıran canlı veriler..."</p>
+              <p class="text-[11px] text-slate-400">Telefondan fışkıran 3D neon yeşil mum grafikleri ve +%110 getiri okları.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2 pt-1">
+            <span class="text-cyan-400 font-bold shrink-0">00:08 - 00:10:</span>
+            <div>
+              <p class="text-white font-bold">"ProAnaliz AI ile hep bir adım öndesiniz!"</p>
+              <p class="text-[11px] text-amber-300 font-bold">Ekranda glowing ProAnaliz AI logosu ve Proanaliz-ai.onrender.com bağlantısı.</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- 2. Kutu: Bizim Uygulamanın 4 Dev Farkı -->
-      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-5 space-y-3">
-        <h2 class="text-xs sm:text-sm font-black text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-          <span>👑 Neden 1 Numara? (Gerçek Veri Gücümüz)</span>
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div class="p-3 rounded-xl bg-slate-950 border border-emerald-500/30 space-y-1">
-            <div class="font-black text-emerald-300">📈 BIST 100 Tavanı (SELEC)</div>
-            <p class="text-slate-400 text-[11px]">Bugün tam kilitlenen <strong>+%9.98 günlük tavan</strong> başarısı.</p>
-          </div>
-          <div class="p-3 rounded-xl bg-slate-950 border border-amber-400/30 space-y-1">
-            <div class="font-black text-amber-300">🏛️ Kapalıçarşı Fiziki Altın</div>
-            <p class="text-slate-400 text-[11px]">Bankalar kapalıyken bile anlık Tahtakale serbest piyasa radarı.</p>
-          </div>
-          <div class="p-3 rounded-xl bg-slate-950 border border-yellow-500/30 space-y-1">
-            <div class="font-black text-yellow-300">⚽ %82.5 Banko İsabeti</div>
-            <p class="text-slate-400 text-[11px]">Günün maçlarında 66/80 doğruluk, xG ve yapay zeka analizleri.</p>
-          </div>
-          <div class="p-3 rounded-xl bg-slate-950 border border-purple-500/30 space-y-1">
-            <div class="font-black text-purple-300">🐎 Canlı TJK TV Entegreli</div>
-            <p class="text-slate-400 text-[11px]">Canlı yarış yayını + AGF ve yapay zeka favori şablonları.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. Kutu: Paylaşıma Hazır Post Açıklaması -->
+      <!-- 2. Kutu: Instagram Reels & TikTok Hazır Açıklama Metni -->
       <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-5 space-y-3">
         <div class="flex items-center justify-between">
-          <h2 class="text-xs sm:text-sm font-black text-amber-300 uppercase tracking-wider">
-            📝 1 Numaralı Reels & TikTok Gönderi Metni
+          <h2 class="text-xs sm:text-sm font-black text-amber-300 uppercase tracking-wider flex items-center gap-2">
+            <span>📝 Reels & TikTok Gönderi Metni (Tek Tıkla Kopyala)</span>
           </h2>
           <button id="btnCopyCaption" class="px-3 py-1 rounded-lg bg-amber-400 text-slate-950 text-xs font-black transition-all active:scale-95 cursor-pointer shadow-md">
             📋 Kopyala
           </button>
         </div>
-        <textarea id="captionBox" readonly rows="7" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm text-slate-300 font-mono focus:outline-none leading-relaxed select-all">Sıradan tahminlerle vakit kaybetmeyi bırakın! 🏆
-Türkiye'nin 1 numaralı yapay zeka analiz platformu ProAnaliz AI ile tanışın.
+        <textarea id="captionBox" readonly rows="7" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm text-slate-300 font-mono focus:outline-none leading-relaxed select-all">Futbol, at yarışı ve borsa tek adreste! 🚀
+ProAnaliz AI ile hep bir adım öndesiniz.
 
-🔥 Bugünün Kanıtlanmış Başarıları:
-📈 BIST 100: SELEC hissesinde +%9.98 TAVAN yakalandı!
-🏛️ Kapalıçarşı: Anlık canlı Tahtakale altın & döviz makası!
-⚽ Futbol: Banko kuponlarda %82.5 doğrulanmış galibiyet!
-🐎 At Yarışı: Canlı TJK TV ve yapay zeka favori şablonları!
+🤖 Yapay zeka ile anlık futbol analizleri
+🐎 Detaylı at yarışı tahminleri & canlı TJK TV
+📈 Borsada kazandıran canlı veriler & tavan serileri
+🪙 Kapalıçarşı anlık altın ve döviz radarı
 
-🥇 1 Numara ile kazanmaya başlamak için hemen ücretsiz dene:
+📲 Hemen ücretsiz dene:
 🔗 Link biyografide: proanaliz-ai.onrender.com
 
-#proanaliz #borsa #bist100 #tavanserisi #kapalicarsi #altın #iddaa #futbolanaliz #yapayzeka #finans #tjk #atyarisi</textarea>
+#proanaliz #borsa #bist100 #altın #iddaa #futbolanaliz #yapayzeka #atveborsa #finans #tjk</textarea>
+      </div>
+
+      <!-- 3. Kutu: Yayın Tavsiyeleri -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-5 space-y-2.5">
+        <h2 class="text-xs sm:text-sm font-black text-cyan-300 uppercase tracking-wider">
+          💡 Reklamı Yayınlarken Dikkat Edilecek 2 Altın Kural
+        </h2>
+        <ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed">
+          <li class="flex items-start gap-2">
+            <span class="text-purple-400 font-bold">1.</span>
+            <span><strong>Döngü (Loop) Avantajı:</strong> Video tam 10 saniye olduğu için kullanıcılar 2-3 defa izler. Bu durum Instagram ve TikTok algoritmalarında videoyu anında "Keşfet" sekmesine taşır.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-purple-400 font-bold">2.</span>
+            <span><strong>Kapak Resmi (Thumbnail):</strong> Kapak resmi olarak videonun 00:09'daki logolu ve <code class="text-amber-300 font-bold">Proanaliz-ai.onrender.com</code> yazılı son karesini seçin.</span>
+          </li>
+        </ul>
       </div>
 
     </div>
   </main>
 
   <script>
-    const canvas = document.getElementById('adCanvas');
-    const ctx = canvas.getContext('2d');
-    const W = 1080;
-    const H = 1920;
-
-    const neuralVoice = document.getElementById('neuralVoice');
-    const btnPlayCustom = document.getElementById('btnPlayCustom');
-    const customPlayIcon = document.getElementById('customPlayIcon');
-    const customPlayText = document.getElementById('customPlayText');
-    const btnRecordVideo = document.getElementById('btnRecordVideo');
-    const recordIcon = document.getElementById('recordIcon');
-    const recordText = document.getElementById('recordText');
-
-    let isPlaying = false;
-    let animFrameId = null;
-    let startTime = 0;
-    const TOTAL_DURATION = 16500; // 16.5 Saniye (Ses süresiyle birebir uyumlu)
-
-    // Canvas Çizim Fonksiyonu (1080 x 1920)
-    function drawFrame(elapsed) {
-      // 1. Arka Plan
-      const bgGrad = ctx.createRadialGradient(W/2, H/2, 200, W/2, H/2, 1100);
-      bgGrad.addColorStop(0, '#0f172a');
-      bgGrad.addColorStop(0.6, '#090d16');
-      bgGrad.addColorStop(1, '#030712');
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, W, H);
-
-      // Neon Altın & Zümrüt Işık Küreleri
-      const pulse = Math.sin(elapsed / 350) * 0.15 + 0.85;
-      const glowGrad = ctx.createRadialGradient(W/2, 500, 50, W/2, 500, 600 * pulse);
-      glowGrad.addColorStop(0, 'rgba(245, 158, 11, 0.25)');
-      glowGrad.addColorStop(0.5, 'rgba(16, 185, 129, 0.12)');
-      glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = glowGrad;
-      ctx.fillRect(0, 0, W, H);
-
-      // Üst Başlık & Marka
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '900 68px "Plus Jakarta Sans", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('PROANALİZ AI', W/2, 220);
-
-      // Alt Başlık Rozeti
-      ctx.fillStyle = '#f59e0b';
-      ctx.font = '800 36px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('🏆 TÜRKİYE\'NİN 1 NUMARALI ANALİZ PLATFORMU', W/2, 290);
-
-      // İlerleme Çubuğu (En Üstte)
-      const progress = Math.min(1, elapsed / TOTAL_DURATION);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-      ctx.fillRect(80, 110, W - 160, 12);
-      const barGrad = ctx.createLinearGradient(80, 0, W - 80, 0);
-      barGrad.addColorStop(0, '#f59e0b');
-      barGrad.addColorStop(1, '#10b981');
-      ctx.fillStyle = barGrad;
-      ctx.fillRect(80, 110, (W - 160) * progress, 12);
-
-      // SAHNELER
-      if (elapsed < 3500) {
-        // SAHNE 1: GİRİŞ (1 NUMARA HOOK)
-        ctx.save();
-        ctx.translate(W/2, H/2 - 60);
-
-        ctx.rotate(elapsed / 900);
-        ctx.lineWidth = 14;
-        ctx.strokeStyle = '#f59e0b';
-        ctx.shadowColor = '#f59e0b';
-        ctx.shadowBlur = 40;
-        ctx.beginPath();
-        ctx.arc(0, 0, 240, 0, Math.PI * 1.5);
-        ctx.stroke();
-
-        ctx.restore();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '900 84px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('SIRADAN', W/2, H/2 - 120);
-        ctx.fillText('TAHMİNLERİ', W/2, H/2 - 20);
-        ctx.fillStyle = '#ef4444';
-        ctx.fillText('UNUTUN! ❌', W/2, H/2 + 80);
-
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = '800 44px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('Geleceğin Finansal Zekası Geldi', W/2, H/2 + 200);
-
-      } else if (elapsed < 8000) {
-        // SAHNE 2: BORSA TAVAN & KAPALIÇARŞI CANLI ALTIN
-        ctx.fillStyle = '#10b981';
-        ctx.font = '900 52px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('📈 BIST 100 TAVAN AVCISI', W/2, 450);
-
-        // BIST Kartı
-        ctx.fillStyle = '#0f172a';
-        ctx.strokeStyle = '#10b981';
-        ctx.lineWidth = 6;
-        ctx.shadowColor = 'rgba(16, 185, 129, 0.4)';
-        ctx.shadowBlur = 35;
-        roundRect(ctx, 100, 520, W - 200, 360, 40);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '900 68px "Plus Jakarta Sans", sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText('SELEC', 160, 630);
-
-        ctx.fillStyle = '#10b981';
-        ctx.font = '900 82px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('+9.98% 🚀', 160, 740);
-
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '700 38px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('91.45 ₺ — Günün Tavanı Kilitlendi!', 160, 810);
-
-        // Kapalıçarşı Altın Kartı
-        ctx.fillStyle = '#0f172a';
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 6;
-        ctx.shadowColor = 'rgba(245, 158, 11, 0.4)';
-        ctx.shadowBlur = 35;
-        roundRect(ctx, 100, 940, W - 200, 340, 40);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = '900 50px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('🏛️ KAPALIÇARŞI CANLI ALTIN', 160, 1030);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '900 70px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('Gram: 3,095 ₺', 160, 1130);
-
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = '800 42px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('Dolar: 50.59 ₺  |  Tahtakale Makası Anlık', 160, 1210);
-
-      } else if (elapsed < 12500) {
-        // SAHNE 3: FUTBOL %82.5 BANKO & CANLI TJK TV
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = '900 52px "Plus Jakarta Sans", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('⚽ YAPAY ZEKA FUTBOL BANKOLARI', W/2, 450);
-
-        // Futbol Kartı
-        ctx.fillStyle = '#0f172a';
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 6;
-        ctx.shadowColor = 'rgba(245, 158, 11, 0.4)';
-        ctx.shadowBlur = 35;
-        roundRect(ctx, 100, 520, W - 200, 380, 40);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = '900 120px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('%82.5 🎯', W/2, 670);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '900 52px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('66/80 Banko Maç Kazandı!', W/2, 770);
-
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '700 36px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('xG İstatistiği & Canlı Kadro Veritabanı', W/2, 840);
-
-        // TJK Kartı
-        ctx.fillStyle = '#0f172a';
-        ctx.strokeStyle = '#a855f7';
-        ctx.lineWidth = 6;
-        ctx.shadowColor = 'rgba(168, 85, 247, 0.4)';
-        ctx.shadowBlur = 35;
-        roundRect(ctx, 100, 960, W - 200, 320, 40);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#c084fc';
-        ctx.font = '900 50px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('🐎 CANLI TJK TV & AT YARIŞI', W/2, 1060);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '900 60px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('Yarışı Canlı İzle & Şablonu Al!', W/2, 1160);
-
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = '700 36px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('Antalya & Adana Favori İsabeti %100', W/2, 1220);
-
-      } else {
-        // SAHNE 4: BÜYÜK ÇAĞRI
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '900 76px "Plus Jakarta Sans", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('1 NUMARAYLA', W/2, H/2 - 240);
-        ctx.fillStyle = '#10b981';
-        ctx.fillText('KAZANMAYA BAŞLA!', W/2, H/2 - 140);
-
-        ctx.fillStyle = '#f59e0b';
-        ctx.shadowColor = 'rgba(245, 158, 11, 0.8)';
-        ctx.shadowBlur = 50;
-        roundRect(ctx, 120, H/2 - 30, W - 240, 160, 45);
-        ctx.fill();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#030712';
-        ctx.font = '900 60px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('HEMEN ÜCRETSİZ DENE', W/2, H/2 + 75);
-
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = '800 48px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('proanaliz-ai.onrender.com', W/2, H/2 + 250);
-
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = '700 38px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('👆 Link Biyografide & Açıklamada!', W/2, H/2 + 330);
-      }
-
-      // Alt Konuşan Altyazı Kutusu (Sarı / Beyaz Vurgulu)
-      ctx.textAlign = 'center';
-      const activeSubtitle = getActiveSubtitle(elapsed);
-      if (activeSubtitle) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 4;
-        roundRect(ctx, 80, H - 320, W - 160, 190, 30);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = '#facc15';
-        ctx.font = '900 42px "Plus Jakarta Sans", sans-serif';
-        wrapText(ctx, `"${activeSubtitle}"`, W/2, H - 240, W - 220, 52);
-      }
-    }
-
-    function getActiveSubtitle(elapsed) {
-      if (elapsed < 3500) {
-        return "Sıradan tahminleri bırakın. Türkiye'nin 1 numaralı platformu: ProAnaliz AI!";
-      } else if (elapsed < 8000) {
-        return "Borsada tavan serileri, Kapalıçarşı anlık canlı altın ve döviz radarı!";
-      } else if (elapsed < 12500) {
-        return "Futbolda %82.5 banko isabeti ve canlı TJK TV ile at yarışları tek ekranda!";
-      } else {
-        return "Geleceğin finansal zekası. Hemen ücretsiz deneyin, 1 numarayla kazanın!";
-      }
-    }
-
-    function roundRect(ctx, x, y, width, height, radius) {
-      ctx.beginPath();
-      ctx.moveTo(x + radius, y);
-      ctx.lineTo(x + width - radius, y);
-      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-      ctx.lineTo(x + width, y + height - radius);
-      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-      ctx.lineTo(x + radius, y + height);
-      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-      ctx.lineTo(x, y + radius);
-      ctx.quadraticCurveTo(x, y, x + radius, y);
-      ctx.closePath();
-    }
-
-    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-      const words = text.split(' ');
-      let line = '';
-      let curY = y;
-      for (let n = 0; n < words.length; n++) {
-        const testLine = line + words[n] + ' ';
-        const metrics = ctx.measureText(testLine);
-        if (metrics.width > maxWidth && n > 0) {
-          ctx.fillText(line, x, curY);
-          line = words[n] + ' ';
-          curY += lineHeight;
-        } else {
-          line = testLine;
-        }
-      }
-      ctx.fillText(line, x, curY);
-    }
-
-    // Animasyon ve Ses Başlatma
-    function animate(timestamp) {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-
-      drawFrame(elapsed);
-
-      if (elapsed < TOTAL_DURATION && isPlaying) {
-        animFrameId = requestAnimationFrame(animate);
-      } else if (elapsed >= TOTAL_DURATION) {
-        isPlaying = false;
-        neuralVoice.pause();
-        neuralVoice.currentTime = 0;
-        customPlayText.textContent = "Tekrar Oynat (Stüdyo Sesi)";
-        customPlayIcon.textContent = "🔄";
-      }
-    }
-
-    btnPlayCustom.addEventListener('click', () => {
-      if (isPlaying) {
-        isPlaying = false;
-        if (animFrameId) cancelAnimationFrame(animFrameId);
-        neuralVoice.pause();
-        customPlayText.textContent = "Devam Et";
-        customPlayIcon.textContent = "▶️";
-      } else {
-        isPlaying = true;
-        startTime = 0;
-        neuralVoice.currentTime = 0;
-        neuralVoice.play();
-        customPlayText.textContent = "Durdur";
-        customPlayIcon.textContent = "⏸️";
-        animFrameId = requestAnimationFrame(animate);
-      }
-    });
-
-    // Otomatik Video Kaydı ve İndirme (Canvas + Gerçek Audio Stream Birleşimi)
-    btnRecordVideo.addEventListener('click', async () => {
-      if (typeof MediaRecorder === 'undefined') {
-        alert('Tarayıcınız MediaRecorder API desteklemiyor.');
-        return;
-      }
-
-      recordText.textContent = "🔴 Video & Stüdyo Sesi Kaydediliyor...";
-      recordIcon.textContent = "⏳";
-      btnRecordVideo.disabled = true;
-
-      // Canvas Stream
-      const canvasStream = canvas.captureStream(60);
-
-      // Audio Context ile neuralVoice sesini akışa bağla
-      const aCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const source = aCtx.createMediaElementSource(neuralVoice);
-      const dest = aCtx.createMediaStreamDestination();
-      source.connect(dest);
-      source.connect(aCtx.destination); // Kullanıcı da duysun
-
-      // Video + Audio Parçalarını Birleştir
-      const combinedStream = new MediaStream([
-        ...canvasStream.getVideoTracks(),
-        ...dest.stream.getAudioTracks()
-      ]);
-
-      const recorder = new MediaRecorder(combinedStream, {
-        mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm'
-      });
-
-      const chunks = [];
-      recorder.ondataavailable = e => chunks.push(e.data);
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'proanaliz-1-numara-reklam.webm';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        recordText.textContent = "✅ Video Başarıyla İndirildi!";
-        recordIcon.textContent = "🎉";
-        btnRecordVideo.disabled = false;
-        setTimeout(() => {
-          recordText.textContent = "Bu Reklamı HD Video (MP4/WebM) Olarak İndir";
-          recordIcon.textContent = "🔴";
-        }, 4000);
-      };
-
-      recorder.start();
-
-      isPlaying = true;
-      startTime = 0;
-      neuralVoice.currentTime = 0;
-      neuralVoice.play();
-      animFrameId = requestAnimationFrame(animate);
-
-      setTimeout(() => {
-        if (recorder.state === 'recording') {
-          recorder.stop();
-          isPlaying = false;
-          neuralVoice.pause();
-        }
-      }, TOTAL_DURATION + 500);
-    });
-
-    // Açıklama Kopyalama
     const btnCopyCaption = document.getElementById('btnCopyCaption');
     const captionBox = document.getElementById('captionBox');
 
@@ -590,9 +232,6 @@ Türkiye'nin 1 numaralı yapay zeka analiz platformu ProAnaliz AI ile tanışın
         }, 2500);
       });
     });
-
-    // İlk Kare Çizimi
-    drawFrame(0);
   </script>
 </body>
 </html>
