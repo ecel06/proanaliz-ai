@@ -1,6 +1,9 @@
 {
+  "git.enabled": false,
+  "git.autorefresh": false,
+  "git.autofetch": false,
+  "git.autoRepositoryDetection": false,
   "git.similarityThreshold": 100,
   "git.ignoreRebaseWarning": true,
-  "git.openDiffOnClick": false,
-  "git.fetchOnType": false
+  "git.openDiffOnClick": false
 }
