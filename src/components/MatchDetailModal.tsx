@@ -92,10 +92,19 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
       return x - Math.floor(x);
     };
 
-    const hScore = Number((match as any).homeScore || 0);
-    const aScore = Number((match as any).awayScore || 0);
-    const hXg = analysis ? Number((analysis as any).xgHome || (analysis as any).expectedHomeGoals || 1.4) : 1.4;
-    const aXg = analysis ? Number((analysis as any).xgAway || (analysis as any).expectedAwayGoals || 1.1) : 1.1;
+    const hScore = Number(liveState?.displayScore?.home ?? match.currentScore?.home ?? match.finalScore?.home ?? 0);
+    const aScore = Number(liveState?.displayScore?.away ?? match.currentScore?.away ?? match.finalScore?.away ?? 0);
+    const hXg = analysis ? Number((analysis as any).expectedHomeGoals || (analysis as any).xgHome || 1.4) : 1.4;
+    const aXg = analysis ? Number((analysis as any).expectedAwayGoals || (analysis as any).xgAway || 1.1) : 1.1;
+
+    // Detect live match minute
+    let currentEvaluatedMinute = 90;
+    if (liveState?.isLive) {
+      const parsedMin = parseInt(String(liveState.liveMinute || '').replace(/\D/g, ''), 10);
+      currentEvaluatedMinute = isNaN(parsedMin)
+        ? (String(liveState.liveMinute).includes('İY') || String(liveState.liveMinute).includes('HT') ? 45 : 30)
+        : Math.max(1, Math.min(90, parsedMin));
+    }
 
     // Generate minute-by-minute bars (0' to 90')
     const timeline: Array<{
@@ -107,45 +116,55 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
       isDanger?: boolean;
     }> = [];
 
-    const homeGoalMinutes = [
-      Math.floor(18 + pseudoRand(1) * 20),
-      Math.floor(58 + pseudoRand(2) * 25),
-      Math.floor(78 + pseudoRand(3) * 10),
-    ].slice(0, hScore);
-
-    const awayGoalMinutes = [
-      Math.floor(25 + pseudoRand(4) * 15),
-      Math.floor(70 + pseudoRand(5) * 15),
-    ].slice(0, aScore);
+    // Goals distributed within actual playing time or realistic windows
+    const maxGoalMin = liveState?.isLive ? currentEvaluatedMinute : 90;
+    const homeGoalMinutes: number[] = [];
+    for (let i = 0; i < hScore; i++) {
+      const idealMin = Math.floor(15 + (i * 28) + pseudoRand(i + 1) * 15);
+      homeGoalMinutes.push(Math.min(maxGoalMin, Math.max(5, idealMin)));
+    }
+    const awayGoalMinutes: number[] = [];
+    for (let i = 0; i < aScore; i++) {
+      const idealMin = Math.floor(22 + (i * 30) + pseudoRand(i + 5) * 15);
+      awayGoalMinutes.push(Math.min(maxGoalMin, Math.max(8, idealMin)));
+    }
 
     let homeDangerousCount = 0;
     let awayDangerousCount = 0;
     let homeTotalPressure = 0;
     let awayTotalPressure = 0;
 
+    // Relative strength bias scaled reasonably so natural football waves always alternate
+    const totalXg = (hXg + aXg) || 2.5;
+    const hShare = hXg / totalXg; // e.g. 0.55
+    const baseBias = (hShare - 0.5) * 14; // gentle tilt between -7 and +7
+
     for (let m = 1; m <= 90; m++) {
-      const wave = Math.sin(m / 5 + seed) * 35;
-      const noise = (pseudoRand(m) - 0.5) * 45;
-      const bias = (hXg - aXg) * 18;
-      let net = Math.round(wave + noise + bias);
+      // Natural attack cycles: teams trade momentum back and forth
+      const wave = Math.sin(m / 4.2 + seed) * 36;
+      const secondWave = Math.cos(m / 7.5 + seed * 1.3) * 18;
+      const noise = (pseudoRand(m) - 0.5) * 28;
+      let net = Math.round(wave + secondWave + noise + baseBias);
 
       // Spike near goals
-      if (homeGoalMinutes.includes(m)) net = 85 + Math.floor(pseudoRand(m * 2) * 15);
-      if (awayGoalMinutes.includes(m)) net = -(85 + Math.floor(pseudoRand(m * 3) * 15));
+      if (homeGoalMinutes.includes(m)) net = 80 + Math.floor(pseudoRand(m * 2) * 16);
+      if (awayGoalMinutes.includes(m)) net = -(80 + Math.floor(pseudoRand(m * 3) * 16));
 
       net = Math.max(-100, Math.min(100, net));
 
       const isHome = net >= 0;
       const intensity = Math.abs(net);
       const isGoal = homeGoalMinutes.includes(m) ? 'home' : awayGoalMinutes.includes(m) ? 'away' : undefined;
-      const isDanger = intensity > 60;
+      const isDanger = intensity > 58;
 
-      if (isHome) {
-        homeTotalPressure += intensity;
-        if (isDanger) homeDangerousCount++;
-      } else {
-        awayTotalPressure += intensity;
-        if (isDanger) awayDangerousCount++;
+      if (m <= currentEvaluatedMinute) {
+        if (isHome) {
+          homeTotalPressure += intensity;
+          if (isDanger) homeDangerousCount++;
+        } else {
+          awayTotalPressure += intensity;
+          if (isDanger) awayDangerousCount++;
+        }
       }
 
       timeline.push({
@@ -159,13 +178,16 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
     }
 
     const totalSum = homeTotalPressure + awayTotalPressure || 1;
-    const homeDominance = Math.round((homeTotalPressure / totalSum) * 100);
+    const rawHomeDominance = Math.round((homeTotalPressure / totalSum) * 100);
+    // Realistic Opta/SofaScore calibration: matches between professional teams stay within 35% - 65%
+    const homeDominance = Math.max(32, Math.min(68, Math.round(50 + (rawHomeDominance - 50) * 0.52)));
     const awayDominance = 100 - homeDominance;
 
     return {
       timeline,
       homeDominance,
       awayDominance,
+      currentEvaluatedMinute,
       homeDangerousCount,
       awayDangerousCount,
       homeBoxEntries: Math.round(homeDangerousCount * 0.42) + 4,
@@ -174,7 +196,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
       awayGoalMinutes,
       peakThreatWindow: homeDominance >= 50 ? '60-75. dakikalar arası' : '30-45. dakikalar arası',
     };
-  }, [match, analysis]);
+  }, [match, analysis, liveState]);
 
   useEffect(() => {
     setInsights(null);
@@ -645,8 +667,17 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                                                     <span>{homeTeam.name} Hakimiyeti:</span>
                                                     <strong className="text-emerald-300 font-mono text-sm">%{momentumData.homeDominance}</strong>
                                                   </span>
-                                                  <span className="text-slate-400 text-[11px] font-medium hidden sm:inline">
-                                                    90 Dakika Toplam Saha Tehdidi Oranı
+                                                  <span className="text-slate-400 text-[10px] sm:text-[11px] font-medium text-center">
+                                                    {liveState?.isLive ? (
+                                                      <span className="inline-flex items-center gap-1.5 text-amber-300 font-bold bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                                                        <span>Canlı: {momentumData.currentEvaluatedMinute}'. Dk Saha Tehdidi</span>
+                                                      </span>
+                                                    ) : liveState?.isFinished || match.status === 'finished' ? (
+                                                      '90 Dakika Toplam Saha Tehdidi Oranı'
+                                                    ) : (
+                                                      'Beklenen 90 Dk Saha Hakimiyeti (AI xG Modeli)'
+                                                    )}
                                                   </span>
                                                   <span className="text-amber-400 flex items-center space-x-1">
                                                     <span>{awayTeam.name} Hakimiyeti:</span>
@@ -755,17 +786,28 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                                                     const isDanger = item.isDanger;
                                                     const isHovered = hoveredMomentumMinute === item.minute;
 
+                                                    const isFuture = liveState?.isLive && item.minute > momentumData.currentEvaluatedMinute;
+                                                    const isCurrentMinute = liveState?.isLive && item.minute === momentumData.currentEvaluatedMinute;
+
                                                     return (
                                                       <div
                                                         key={item.minute}
                                                         onMouseEnter={() => setHoveredMomentumMinute(item.minute)}
                                                         onMouseLeave={() => setHoveredMomentumMinute(null)}
                                                         onClick={() => setHoveredMomentumMinute(item.minute)}
-                                                        title={`${item.minute}. Dk: ${isHome ? homeTeam.name : awayTeam.name} Baskısı (%${barPercent})${item.isGoal ? ' ⚽ GOL!' : isDanger ? ' 🔥 Tehlikeli Atak' : ''
+                                                        title={`${item.minute}. Dk: ${isFuture ? '(Henüz Oynanmadı)' : `${isHome ? homeTeam.name : awayTeam.name} Baskısı (%${barPercent})`}${item.isGoal ? ' ⚽ GOL!' : isDanger ? ' 🔥 Tehlikeli Atak' : ''
                                                           }`}
                                                         className={`flex-1 h-full flex flex-col justify-center items-center relative group cursor-pointer transition-transform ${isHovered ? 'scale-110 z-40' : ''
-                                                          }`}
+                                                          } ${isFuture ? 'opacity-30' : 'opacity-100'}`}
                                                       >
+                                                        {/* Live Current Minute Cursor Indicator */}
+                                                        {isCurrentMinute && (
+                                                          <div className="absolute -top-3 z-30 flex flex-col items-center pointer-events-none">
+                                                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                                          </div>
+                                                        )}
+
                                                         {/* Goal Marker Indicator */}
                                                         {item.isGoal && (
                                                           <div
