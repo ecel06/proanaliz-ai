@@ -45,7 +45,7 @@ const otpCacheMap = new Map();
 // Site-Wide Announcement Banner
 let currentAnnouncement = {
   enabled: true,
-  text: '👑 DÜNKÜ YÖNETİCİ KUPONUMUZ 3.85 ORANLA KAZANDIRDI! BUGÜNÜN YENİ BANKO KUPONLARI YAYINDA!',
+  text: '👑 DÜNKÜ YÖNETİCİ KUPONUMUZ 4.85 ORANLA KAZANDIRDI! BUGÜNÜN YENİ BANKO KUPONLARI YAYINDA!',
   variant: 'gold', // 'gold' | 'emerald' | 'rose' | 'blue'
   link: '',
   updatedAt: Date.now()
@@ -188,7 +188,7 @@ function seedDefaultEditorCoupons() {
           matchTime: '18:00',
           matchDate: 'Dün',
           prediction: 'MS 1',
-          odds: 1.75,
+          odds: 1.70,
           confidence: 94,
           status: 'won',
           homeScore: 2,
@@ -218,7 +218,7 @@ function seedDefaultEditorCoupons() {
           matchTime: '20:30',
           matchDate: 'Dün',
           prediction: '2.5 Alt',
-          odds: 1.68,
+          odds: 1.45,
           confidence: 93,
           status: 'won',
           homeScore: 2,
@@ -233,7 +233,7 @@ function seedDefaultEditorCoupons() {
           matchTime: '22:45',
           matchDate: 'Dün',
           prediction: '1.5 Üst',
-          odds: 1.25,
+          odds: 1.23,
           confidence: 98,
           status: 'won',
           homeScore: 4,
