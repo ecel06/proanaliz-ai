@@ -22,6 +22,7 @@ import {
   Share2,
   Gift,
   Video,
+  ChevronDown,
 } from 'lucide-react';
 import { Match, MatchAnalysis } from '../types';
 import { User } from '../utils/authHelper';
@@ -136,6 +137,30 @@ export const HomeHub: React.FC<HomeHubProps> = ({
     }
     return macroRates;
   }, [macroRates, tickerCategory]);
+
+  // Mobile scroll down detection for floating guide indicator
+  const [hasScrolledDown, setHasScrolledDown] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      setHasScrolledDown(scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  const scrollToOpportunities = () => {
+    const el = document.getElementById('daily-opportunities-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   // PWA Install prompt listener
   useEffect(() => {
@@ -762,13 +787,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         </div>
 
         {/* Clean Portal Cards: Futbol, At Yarışı & Borsa (Proportioned to fit screen) */}
-        <div className="w-full shrink-0 grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3">
+        <div className="w-full shrink-0 grid grid-cols-1 md:grid-cols-3 gap-1.5 sm:gap-2.5 md:gap-3">
           {/* FUTBOL CARD */}
           <button
             onClick={() => onSelectFootball()}
-            className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-emerald-400/70 p-2.5 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-emerald-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-1 md:space-y-1.5"
+            className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-emerald-400/70 p-2 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-emerald-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-0.5 sm:space-y-1 md:space-y-1.5"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-emerald-500/10">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-lg sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-emerald-500/10">
               ⚽
             </div>
             <div className="text-center space-y-0.5">
@@ -786,9 +811,9 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           {/* AT YARIŞI CARD */}
           <button
             onClick={() => onSelectHorseRacing()}
-            className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-400/70 p-2.5 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-amber-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-1 md:space-y-1.5"
+            className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-400/70 p-2 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-amber-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-0.5 sm:space-y-1 md:space-y-1.5"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-amber-500/10">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-lg sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-amber-500/10">
               🏇
             </div>
             <div className="text-center space-y-0.5">
@@ -806,9 +831,9 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           {/* BORSA CARD */}
           <button
             onClick={() => onSelectStocks()}
-            className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-cyan-400/70 p-2.5 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-cyan-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-1 md:space-y-1.5"
+            className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-cyan-400/70 p-2 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-cyan-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-0.5 sm:space-y-1 md:space-y-1.5"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-xl sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-cyan-500/10">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-lg sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-cyan-500/10">
               📈
             </div>
             <div className="text-center space-y-0.5">
@@ -824,8 +849,28 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </button>
         </div>
 
+        {/* 🎯 MOBİLDE AŞAĞI KAYDIR VE FIRSATLARI KEŞFET ŞERİDİ */}
+        <div
+          onClick={scrollToOpportunities}
+          className="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/15 via-emerald-500/15 to-amber-500/15 border border-amber-400/40 flex items-center justify-between text-xs font-bold text-amber-300 cursor-pointer active:scale-[0.99] transition-all hover:border-amber-400/70 shadow-sm"
+        >
+          <div className="flex items-center gap-2 text-[11px] sm:text-xs font-black text-white">
+            <span className="text-sm animate-bounce">👇</span>
+            <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent font-black">
+              Günün Altın Fırsatları &amp; Başarı Karnesi
+            </span>
+          </div>
+          <div className="flex items-center gap-1 text-[10px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full shadow-xs">
+            <span>Aşağı Kaydır</span>
+            <ChevronDown className="w-3 h-3 animate-pulse" />
+          </div>
+        </div>
+
         {/* 🌟 GÜNÜN YAPAY ZEKA ÖZETİ, CANLI BAŞARI KARNESİ & ALTIN FIRSATLAR (Birleşik & Sade Tasarım) */}
-        <div className="w-full shrink-0 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-900/95 border border-amber-500/30 p-2.5 sm:p-3 md:py-2 md:px-3 space-y-1.5 shadow-2xl">
+        <div
+          id="daily-opportunities-section"
+          className="w-full shrink-0 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-900/95 border border-amber-500/30 p-2.5 sm:p-3 md:py-2 md:px-3 space-y-1.5 shadow-2xl"
+        >
           {/* Üst Başlık & Canlı Genel Başarı Skoru */}
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5 flex-wrap gap-2">
             <div className="flex items-center gap-2">
@@ -1070,6 +1115,19 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </div>
         </div>
       </div>
+
+      {/* 🚀 Mobil Ekran İçin Yüzen 'Fırsatlar Aşağıda' Göstergesi (Kullanıcı aşağı inene kadar zıplayarak rehberlik eder) */}
+      {!hasScrolledDown && (
+        <button
+          type="button"
+          onClick={scrollToOpportunities}
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 sm:hidden flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/95 backdrop-blur-md border-2 border-amber-400/80 shadow-2xl shadow-amber-500/40 text-amber-300 font-black text-xs cursor-pointer active:scale-95 transition-all animate-bounce"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span>Günün Fırsatları &amp; Karnesi Aşağıda</span>
+          <ChevronDown className="w-4 h-4 text-amber-300" />
+        </button>
+      )}
     </div>
   );
 };
