@@ -43,6 +43,18 @@ export interface TVChannel {
 
 export const TV_CHANNELS: TVChannel[] = [
   {
+    id: 'trt1',
+    name: 'TRT 1 HD',
+    country: 'Türkiye',
+    countryFlag: '🇹🇷',
+    category: 'UEFA Avrupa Ligi & Şampiyonlar Ligi',
+    badge: 'CANLI MAÇ HD',
+    streamUrl: 'https://trt.daioncdn.net/trt-1/master.m3u8?app=web&platform=trt1',
+    logoText: 'TRT 1',
+    accentColor: '#E11D48',
+    description: '🔴 Canlı Yayın • UEFA Avrupa Ligi, Galatasaray & Şampiyonlar Ligi'
+  },
+  {
     id: 'trtspor',
     name: 'TRT Spor HD',
     country: 'Türkiye',
@@ -77,18 +89,6 @@ export const TV_CHANNELS: TVChannel[] = [
     logoText: 'HT SPOR',
     accentColor: '#8B5CF6',
     description: '🔴 Canlı Yayın • Süper Lig & Taktik Analizleri'
-  },
-  {
-    id: 'tjktv',
-    name: 'TJK TV HD',
-    country: 'Türkiye',
-    countryFlag: '🇹🇷',
-    category: 'Canlı At Yarışları & Yurt İçi/Dışı',
-    badge: 'AT YARIŞI HD',
-    streamUrl: 'https://tjktv.ercdn.net/tjktv/tjktv.m3u8',
-    logoText: 'TJK TV',
-    accentColor: '#F59E0B',
-    description: '🔴 Canlı Yayın • Türkiye Jokey Kulübü Resmi Canlı Yayını'
   }
 ];
 
@@ -597,7 +597,7 @@ export const LiveTVModal: React.FC<LiveTVModalProps> = ({
   onSelectMatch,
   onToggleBetslip,
   betslipItems = [],
-  initialChannelId = 'trtspor'
+  initialChannelId = 'trt1'
 }) => {
   const [activeMatch, setActiveMatch] = useState<Match | null>(targetMatch);
   const [channels] = useState<TVChannel[]>(TV_CHANNELS);

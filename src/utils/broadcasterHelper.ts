@@ -303,6 +303,29 @@ export const COUNTRY_BROADCASTER_PRESETS: Record<string, MatchBroadcasterInfo> =
     watchGuide: 'Bu maç Türkiye’de resmi olarak beIN SPORTS 1 HD ve TOD TV platformunda canlı yayınlanmaktadır.'
   },
 
+  // 🇹🇷 TRT 1 HD (UEFA Avrupa Ligi, Şampiyonlar Ligi, Galatasaray & Avrupa Kupaları)
+  trt1: {
+    channelId: 'trt1',
+    channelName: 'TRT 1 HD',
+    shortLabel: '🇹🇷 TRT 1',
+    country: 'Türkiye',
+    countryFlag: '🇹🇷',
+    category: 'UEFA Avrupa Ligi & Şampiyonlar Ligi',
+    badge: '🇹🇷 ŞİFRESİZ CANLI HD',
+    logoText: 'TRT 1',
+    accentColor: '#E11D48',
+    description: '🔴 Canlı Yayın • UEFA Avrupa Ligi, Galatasaray & Şampiyonlar Ligi',
+    isLivePlayable: true,
+    streamUrl: 'https://trt.daioncdn.net/trt-1/master.m3u8?app=web&platform=trt1',
+    youtubeId: '',
+    fallbackWebUrl: 'https://www.trtizle.com/canli/tv/trt-1',
+    officialStreamUrl: 'https://www.trtizle.com/canli/tv/trt-1',
+    provider: 'TRT',
+    turkishBroadcaster: 'TRT 1 HD (Şifresiz HD)',
+    nesineLiveUrl: 'https://www.nesine.com/canli-iddaa',
+    watchGuide: 'Bu maç TRT 1 HD ekranlarında şifresiz ve ücretsiz canlı yayınlanmaktadır.'
+  },
+
   // 🇹🇷 TÜRKİYE 1. LİG (TFF 1. Lig - Şifresiz Açık Canlı Yayın)
   trtspor: {
     channelId: 'trtspor',
@@ -472,7 +495,7 @@ export function getMatchBroadcaster(match?: Match | null): MatchBroadcasterInfo 
     return COUNTRY_BROADCASTER_PRESETS.brazil;
   }
 
-  // 11. UEFA Avrupa Kupaları (Şampiyonlar Ligi / Avrupa Ligi / Konferans Ligi)
+  // 11. UEFA Avrupa Kupaları (Şampiyonlar Ligi / Avrupa Ligi / Konferans Ligi - TRT 1 Canlı Yayın)
   if (
     lg.includes('şampiyonlar') ||
     lg.includes('champions') ||
@@ -482,9 +505,12 @@ export function getMatchBroadcaster(match?: Match | null): MatchBroadcasterInfo 
     cat === 'cl' ||
     cat === 'el' ||
     cat === 'ecl' ||
-    country.includes('avrupa')
+    country.includes('avrupa') ||
+    (country.includes('türkiye') && (home.includes('galatasaray') || away.includes('galatasaray')) && (lg.includes('avrupa') || lg.includes('uefa'))) ||
+    home.includes('galatasaray') ||
+    away.includes('galatasaray')
   ) {
-    return COUNTRY_BROADCASTER_PRESETS.uefa;
+    return COUNTRY_BROADCASTER_PRESETS.trt1;
   }
 
   // 12. Türkiye 1. Lig (TRT Spor HD şifresiz canlı verir)

@@ -1,0 +1,11 @@
+# Mark media and binary files so Git never tries to mmap or diff them
+*.mp4 binary -diff
+*.mp3 binary -diff
+*.wav binary -diff
+*.png binary -diff
+*.jpg binary -diff
+*.jpeg binary -diff
+*.ico binary -diff
+*.webp binary -diff
+*.zip binary -diff
+*.exe binary -diff

@@ -33,7 +33,8 @@ import {
   History,
   Save,
   Globe,
-  LifeBuoy
+  LifeBuoy,
+  Video
 } from 'lucide-react';
 import { 
   User, 
@@ -708,6 +709,17 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             <Layers className="w-3.5 h-3.5" />
             <span>Free vs. VIP</span>
           </button>
+
+          <a
+            href="/video-ad.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-2.5 py-1.5 rounded-xl font-black text-xs transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap bg-gradient-to-r from-purple-500/20 to-sky-500/20 border border-purple-500/40 text-purple-300 hover:text-white"
+            title="Instagram Reels & TikTok 3D Reklam Stüdyosu (Yeni Sekmede Aç)"
+          >
+            <Video className="w-3.5 h-3.5 text-purple-400" />
+            <span>🎬 3D Reklam Stüdyosu ↗</span>
+          </a>
         </div>
 
         {/* TAB 1: USERS LIST */}
