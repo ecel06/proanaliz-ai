@@ -21,6 +21,7 @@ import {
   LogOut,
   Share2,
   Gift,
+  Video,
 } from 'lucide-react';
 import { Match, MatchAnalysis } from '../types';
 import { User } from '../utils/authHelper';
@@ -1034,6 +1035,14 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               <span>Doğrulanmış Başarı Karnesi</span>
             </button>
           )}
+          <a
+            href="/video-ad.html"
+            className="hover:text-pink-300 flex items-center gap-1.5 cursor-pointer transition-colors text-[11px] px-2.5 py-1 rounded-full bg-slate-900 border border-pink-500/30 text-pink-300 font-bold"
+            title="Instagram Reels ve TikTok Video Reklam Paketi"
+          >
+            <Video className="w-3.5 h-3.5 text-pink-400" />
+            <span>🎬 Video Reklam Paketi</span>
+          </a>
         </div>
 
         {/* 🛡️ YASAL UYARI, +18 & SORUMLULUK REDDİ (YTD) - Belirgin & Göze Hitap Eden Tasarım */}
