@@ -452,8 +452,8 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         ? bestHorse.isWinner
           ? `${bestHorse.title} (1. Oldu 🏆)`
           : bestHorse.isFinished
-          ? `${bestHorse.title} (${bestHorse.finishOrder}. Oldu)`
-          : `${bestHorse.title} (Günün Favorisi ⭐)`
+            ? `${bestHorse.title} (${bestHorse.finishOrder}. Oldu)`
+            : `${bestHorse.title} (Günün Favorisi ⭐)`
         : 'Günün Bankosu (#3 KIRDOĞAN 🏆)',
       stockHitsText: bestStock ? `${bestStock.symbol} (+%0.47) • KONTR (+%5.77)` : 'THYAO (+%0.47) • KONTR (+%5.77)',
     };
@@ -593,13 +593,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             </div>
           </div>
 
-          {/* 2. SATIR: HIZLI KATEGORİ FİLTRELERİ (Tümü, Altın, Döviz, BIST - 4 Eşit Kolon) */}
-          <div className="grid grid-cols-4 gap-1 sm:gap-2 px-1 pt-0.5 w-full">
+          {/* 2. SATIR: HIZLI KATEGORİ FİLTRELERİ (Tümü, Altın, Döviz, BIST - 4 Eşit Kolon, Sıfır Kayma) */}
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2 px-1 pt-0.5 w-full">
             {[
-              { id: 'all', label: '🌐 Tümü' },
-              { id: 'gold', label: '🪙 Altın' },
-              { id: 'fx', label: '💵 Döviz' },
-              { id: 'bist', label: '📈 BIST' },
+              { id: 'all', label: 'Tümü', icon: '🌐' },
+              { id: 'gold', label: 'Altın', icon: '🪙' },
+              { id: 'fx', label: 'Döviz', icon: '💵' },
+              { id: 'bist', label: 'BIST', icon: '📈' },
             ].map((f) => (
               <button
                 key={f.id}
@@ -608,13 +608,13 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                   e.stopPropagation();
                   setTickerCategory(f.id as any);
                 }}
-                className={`w-full py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer text-center flex items-center justify-center gap-1 ${
-                  tickerCategory === f.id
+                className={`w-full py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer text-center flex items-center justify-center gap-1 ${tickerCategory === f.id
                     ? 'bg-amber-400 text-slate-950 font-black shadow-sm ring-1 ring-amber-300'
                     : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60'
-                }`}
+                  }`}
               >
-                <span>{f.label}</span>
+                <span>{f.icon}</span>
+                <span className="truncate whitespace-nowrap">{f.label}</span>
               </button>
             ))}
           </div>
@@ -671,12 +671,12 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                         <div
                           key={`${copyIndex}-${item.symbol}`}
                           onPointerDown={(e) => {
-                            try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+                            try { e.currentTarget.setPointerCapture(e.pointerId); } catch { }
                             setIsTickerPaused(true);
                             setActivePressedSymbol(item.symbol);
                           }}
                           onPointerUp={(e) => {
-                            try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+                            try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { }
                             setIsTickerPaused(false);
                             setActivePressedSymbol(null);
                           }}
@@ -712,15 +712,14 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                               onSelectStocks(item.symbol);
                             }
                           }}
-                          className={`relative select-none flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm whitespace-nowrap shrink-0 transition-all duration-150 cursor-pointer ${
-                            isPressed
+                          className={`relative select-none flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm whitespace-nowrap shrink-0 transition-all duration-150 cursor-pointer ${isPressed
                               ? 'scale-120 z-50 ring-4 ring-amber-400 bg-slate-900 border-2 border-amber-300 shadow-[0_0_35px_rgba(245,158,11,0.85)] -translate-y-0.5'
                               : isGold
                                 ? 'bg-amber-500/15 border-amber-500/40 text-amber-200 hover:bg-amber-500/30 hover:border-amber-400 shadow-md'
                                 : isUsd || isEur || isGbp
                                   ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
                                   : 'bg-slate-800/90 border-slate-700/80 text-slate-200'
-                          }`}
+                            }`}
                           style={{
                             zIndex: isPressed ? 9999 : 1,
                             touchAction: 'manipulation',
@@ -742,9 +741,8 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                             </span>
                           )}
                           <span
-                            className={`font-mono text-[11px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded ${
-                              isPos ? 'bg-emerald-500/25 text-emerald-300' : 'bg-rose-500/25 text-rose-300'
-                            }`}
+                            className={`font-mono text-[11px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded ${isPos ? 'bg-emerald-500/25 text-emerald-300' : 'bg-rose-500/25 text-rose-300'
+                              }`}
                           >
                             {isPos ? '+' : ''}{item.changePct}%
                           </span>
@@ -939,13 +937,12 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                     </span>
                     <div className="flex items-center gap-1">
                       {bestHorse?.statusText && (
-                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold border ${
-                          bestHorse.isWinner
+                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold border ${bestHorse.isWinner
                             ? 'bg-emerald-500/25 text-emerald-300 border-emerald-400/30'
                             : bestHorse.isFinished
-                            ? 'bg-slate-800 text-slate-300 border-slate-700'
-                            : 'bg-amber-500/20 text-amber-300 border-amber-400/30'
-                        }`}>
+                              ? 'bg-slate-800 text-slate-300 border-slate-700'
+                              : 'bg-amber-500/20 text-amber-300 border-amber-400/30'
+                          }`}>
                           {bestHorse.statusText}
                         </span>
                       )}
