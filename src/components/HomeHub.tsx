@@ -857,7 +857,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           <div className="flex items-center gap-2 text-[11px] sm:text-xs font-black text-white">
             <span className="text-sm animate-bounce">👇</span>
             <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent font-black">
-              Günün Altın Fırsatları &amp; Başarı Karnesi
+              Günün Fırsatları &amp; Başarı Karnesi
             </span>
           </div>
           <div className="flex items-center gap-1 text-[10px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full shadow-xs">
@@ -866,7 +866,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </div>
         </div>
 
-        {/* 🌟 GÜNÜN YAPAY ZEKA ÖZETİ, CANLI BAŞARI KARNESİ & ALTIN FIRSATLAR (Birleşik & Sade Tasarım) */}
+        {/* 🌟 GÜNÜN YAPAY ZEKA ÖZETİ, CANLI BAŞARI KARNESİ & GÜNÜN FIRSATLARI (Birleşik & Sade Tasarım) */}
         <div
           id="daily-opportunities-section"
           className="w-full shrink-0 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-900/95 border border-amber-500/30 p-2.5 sm:p-3 md:py-2 md:px-3 space-y-1.5 shadow-2xl"
@@ -879,7 +879,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               </div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <h3 className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
-                  <span>Günün Yapay Zeka Özeti &amp; Altın Fırsatları</span>
+                  <span>Günün Yapay Zeka Özeti &amp; Fırsatları</span>
                 </h3>
                 <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
