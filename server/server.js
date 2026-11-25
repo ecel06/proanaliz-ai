@@ -1043,8 +1043,122 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
   }
 });
 
+// --- 👑 ADMIN AI CO-PILOT (POWERED BY GOOGLE GEMINI) ---
+app.post('/api/admin/ai-copilot', adminMiddleware, async (req, res) => {
+  try {
+    const { message, chatHistory = [], customApiKey, clientContext = {} } = req.body;
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ success: false, error: 'Mesaj metni zorunludur.' });
+    }
+
+    const apiKey = customApiKey?.trim() || process.env.GEMINI_API_KEY || '';
+
+    // Snapshot live context to give Gemini deep understanding of the app's current state
+    const matchesCount = Array.isArray(cachedBulletin?.matches) ? cachedBulletin.matches.length : 0;
+    const liveMatches = Array.isArray(cachedBulletin?.matches)
+      ? cachedBulletin.matches
+          .filter((m) => m.isLive || m.minute > 0)
+          .map((m) => `${m.homeTeam} ${m.homeScore ?? 0}-${m.awayScore ?? 0} ${m.awayTeam} (${m.minute || 0}')`)
+          .slice(0, 8)
+      : [];
+
+    const bistContext = clientContext?.bist || {};
+    const tavanCandidates = Array.isArray(bistContext.tavanCandidates)
+      ? bistContext.tavanCandidates.slice(0, 10)
+      : [];
+    const sessionPhase = bistContext.sessionPhase || 'Bilinmiyor';
+
+    // If no API key is available, return an intelligent guided response
+    if (!apiKey) {
+      return res.json({
+        success: true,
+        reply: `👑 **Admin AI Co-Pilot Hazır!**\n\nGoogle Gemini API anahtarınız henüz girilmedi. Doğrudan canlı Gemini yapay zekasıyla konuşabilmek için:\n\n1. [Google AI Studio (aistudio.google.com)](https://aistudio.google.com) adresinden **30 saniyede ücretsiz** bir API anahtarı edinin.\n2. Sağ üstteki **⚙️ API Anahtarı** butonuna tıklayıp anahtarınızı kaydedin.\n\n*Not: Canlı sistem verilerimiz ve BIST radarı arka planda tam olarak taranmaktadır.*`,
+        hasApiKey: false,
+      });
+    }
+
+    const systemInstruction = `
+Sen ProAnaliz AI platformunun kurumsal baş analisti ve üst düzey yönetici yapay zeka asistanısın (👑 Admin AI Co-Pilot).
+Şu anda doğrudan platformun kurucusu ve tek sistem yöneticisi (Admin) ile konuşuyorsun.
+Görevin: Admin'e BIST hisse senetleri (tavan adayları, teknik kırılımlar, hacim patlamaları), iddaa maç tahminleri, kupon analizleri ve platform durumu hakkında en üst seviye analitik içgörüler sunmak.
+
+Kişiliğin:
+- Saygılı, net, güven veren, analitik ve stratejik.
+- Gereksiz laf kalabalığı yapmaz, doğrudan rakamlar, yüzdeler, hedefler ve risklerle konuşur.
+- Yanıtlarını zengin Türkçe Markdown formatında (kalın başlıklar, emoji maddeleri, net özetler) sunar.
+
+Platformun Canlı Durumu:
+- BIST Seans Durumu: ${sessionPhase}
+- BIST Tavan Radarı Adayları: ${
+      tavanCandidates.length > 0 ? JSON.stringify(tavanCandidates) : 'Şu an radar taranıyor veya seans kapalı.'
+    }
+- Canlı Maçlar: ${liveMatches.length > 0 ? liveMatches.join(', ') : 'Şu anda canlı maç yok.'}
+- Toplam Bülten Maç Sayısı: ${matchesCount}
+- Kullanıcı: Sistem Yöneticisi (Admin)
+
+Admin'in sorusuna doğrudan, kapsamlı ve profesyonel bir şekilde yanıt ver.
+`.trim();
+
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    const contents = [];
+
+    // Add recent conversation history for memory
+    if (Array.isArray(chatHistory)) {
+      chatHistory.slice(-6).forEach((h) => {
+        contents.push({
+          role: h.sender === 'user' ? 'user' : 'model',
+          parts: [{ text: h.text }],
+        });
+      });
+    }
+
+    // Add current user prompt with injected system context
+    contents.push({
+      role: 'user',
+      parts: [
+        {
+          text: `[Sistem Bağlamı ve Talimatları:\n${systemInstruction}]\n\nAdmin Sorusu: ${message}`,
+        },
+      ],
+    });
+
+    const response = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        },
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok || data.error) {
+      console.error('Gemini API Hatası:', data.error);
+      return res.status(response.status || 500).json({
+        success: false,
+        error: data.error?.message || 'Gemini API yanıt vermedi. Lütfen API anahtarınızı kontrol edin.',
+        hasApiKey: true,
+      });
+    }
+
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Yanıt oluşturulamadı.';
+    return res.json({
+      success: true,
+      reply,
+      hasApiKey: true,
+    });
+  } catch (err) {
+    console.error('Admin AI Co-Pilot Sunucu Hatası:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.74';
+const APP_VERSION = '2026.11.20.75';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

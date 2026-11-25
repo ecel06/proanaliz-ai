@@ -721,6 +721,36 @@ export async function updateAdminSupportTicketApi(
   }
 }
 
+// --- 👑 Admin AI Co-Pilot API ---
+export async function callAdminAICoPilotApi(
+  message: string,
+  chatHistory: { sender: 'user' | 'assistant'; text: string }[] = [],
+  customApiKey?: string,
+  clientContext?: any
+): Promise<{ success: boolean; reply?: string; error?: string; hasApiKey?: boolean }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Yönetici oturumu bulunamadı. Lütfen giriş yapın.' };
+
+  try {
+    const res = await fetch('/api/admin/ai-copilot', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        message,
+        chatHistory,
+        customApiKey,
+        clientContext
+      })
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Sunucuya bağlanılamadı.' };
+  }
+}
+
 // --- Şifre Güçlülüğü Hesaplayıcı ---
 export function evaluatePasswordStrength(password: string): {
   score: number; // 0 to 4

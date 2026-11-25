@@ -38,6 +38,7 @@ interface HeaderProps {
   onOpenVIP?: () => void;
   onOpenShare?: () => void;
   onOpenAdmin?: () => void;
+  onOpenAdminAICoPilot?: () => void;
   onOpenProfile?: () => void;
   onLogout?: () => void;
   onGoHome?: () => void;
@@ -77,6 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenVIP,
   onOpenShare,
   onOpenAdmin,
+  onOpenAdminAICoPilot,
   onOpenProfile,
   onLogout,
   onGoHome,
@@ -262,6 +264,18 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     <ShieldCheck className="w-3.5 h-3.5 text-rose-400" />
                     <span className="hidden sm:inline">Admin</span>
+                  </button>
+                )}
+
+                {/* 👑 Only Admin AI Co-Pilot Button */}
+                {user.role === 'admin' && onOpenAdminAICoPilot && (
+                  <button
+                    onClick={onOpenAdminAICoPilot}
+                    className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/25 via-yellow-500/20 to-amber-500/25 border border-amber-400/60 hover:border-amber-300 text-amber-300 hover:text-white font-black text-xs shadow-md shadow-amber-500/20 cursor-pointer active:scale-95 shrink-0 animate-pulse"
+                    title="Yalnızca Yönetici: Gemini AI Co-Pilot"
+                  >
+                    <Crown className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">Admin AI</span>
                   </button>
                 )}
 

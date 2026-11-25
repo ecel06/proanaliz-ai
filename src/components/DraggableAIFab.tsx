@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Sparkles, GripVertical } from 'lucide-react';
 
 export interface DraggableAIFabProps {
-  id: 'football' | 'stocks' | 'horse';
+  id: 'football' | 'stocks' | 'horse' | 'admin-copilot';
   onClick: () => void;
   title: string;
   label: string;
@@ -36,6 +36,12 @@ const THEME_CONFIGS = {
     bg: 'linear-gradient(135deg, #f59e0b 0%, #facc15 50%, #eab308 100%)',
     border: '2px solid rgba(254, 240, 138, 0.9)',
     shadow: '0 10px 25px -4px rgba(245, 158, 11, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35)',
+    textColor: '#020617',
+  },
+  'admin-copilot': {
+    bg: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #d97706 100%)',
+    border: '2px solid rgba(254, 240, 138, 0.95)',
+    shadow: '0 10px 25px -4px rgba(245, 158, 11, 0.6), 0 4px 12px rgba(0, 0, 0, 0.35)',
     textColor: '#020617',
   },
 };

@@ -72,6 +72,7 @@ interface AdminModalProps {
   currentUser: User | null;
   onRefreshBulletin?: () => void;
   allMatches?: Match[];
+  onOpenAdminAICoPilot?: () => void;
 }
 
 export const AdminModal: React.FC<AdminModalProps> = ({
@@ -80,6 +81,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   currentUser,
   onRefreshBulletin,
   allMatches = [],
+  onOpenAdminAICoPilot,
 }) => {
   const [activeTab, setActiveTab] = useState<'users' | 'tickets' | 'finance' | 'editor_coupons' | 'announcement' | 'logs' | 'system' | 'promos' | 'tiers'>('users');
   const [loading, setLoading] = useState(false);
@@ -522,6 +524,19 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {onOpenAdminAICoPilot && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenAdminAICoPilot();
+                }}
+                className="px-2.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/25 to-yellow-500/25 hover:from-amber-500/35 hover:to-yellow-500/35 text-amber-300 border border-amber-400/50 text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 shadow-sm animate-pulse"
+                title="👑 Admin AI Co-Pilot (Gemini) Sohbetini Başlat"
+              >
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Admin AI Co-Pilot</span>
+              </button>
+            )}
             <button
               onClick={handleChangeOwnAdminPassword}
               className="px-2.5 py-2 rounded-xl bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"

@@ -44,6 +44,7 @@ const NesineBulletinView = React.lazy(() => import('./components/NesineBulletinV
 const FeedbackModal = React.lazy(() => import('./components/FeedbackModal').then(m => ({ default: m.FeedbackModal })));
 const LiveTVModal = React.lazy(() => import('./components/LiveTVModal').then(m => ({ default: m.LiveTVModal })));
 const LiveGoldModal = React.lazy(() => import('./components/stocks/LiveGoldModal').then(m => ({ default: m.LiveGoldModal })));
+const AdminAICoPilotModal = React.lazy(() => import('./components/AdminAICoPilotModal').then(m => ({ default: m.AdminAICoPilotModal })));
 
 const SectionLoadingFallback: React.FC<{ label?: string }> = ({ label = 'Modül Yükleniyor...' }) => (
   <div className="flex flex-col items-center justify-center p-12 min-h-[320px] space-y-3">
@@ -360,6 +361,7 @@ export const App: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isAdminAICoPilotOpen, setIsAdminAICoPilotOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [siteAnnouncement, setSiteAnnouncement] = useState<SiteAnnouncement | null>(null);
 
@@ -419,7 +421,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.74';
+  const CLIENT_BUILD_VERSION = '2026.11.20.75';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -810,6 +812,7 @@ export const App: React.FC = () => {
       if (isProfileModalOpen) { setIsProfileModalOpen(false); return; }
       if (isVipModalOpen) { setIsVipModalOpen(false); return; }
       if (isAdminModalOpen) { setIsAdminModalOpen(false); return; }
+      if (isAdminAICoPilotOpen) { setIsAdminAICoPilotOpen(false); return; }
       if (isOnboardingOpen) { setIsOnboardingOpen(false); return; }
       if (isInstallModalOpen) { setIsInstallModalOpen(false); return; }
       if (isCustomAnalyzerOpen) { setIsCustomAnalyzerOpen(false); return; }
@@ -848,6 +851,7 @@ export const App: React.FC = () => {
     isProfileModalOpen,
     isVipModalOpen,
     isAdminModalOpen,
+    isAdminAICoPilotOpen,
     isOnboardingOpen,
     isInstallModalOpen,
     isCustomAnalyzerOpen,
@@ -1459,6 +1463,7 @@ export const App: React.FC = () => {
         onOpenProfile={() => setIsProfileModalOpen(true)}
         onOpenVIP={() => setIsVipModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
+        onOpenAdminAICoPilot={() => setIsAdminAICoPilotOpen(true)}
         onLogout={handleLogout}
         onGoHome={() => {
           handleNavigateSection('home');
@@ -2354,6 +2359,19 @@ export const App: React.FC = () => {
           />
         )}
 
+        {/* 👑 Floating Admin AI Co-Pilot FAB (Yalnızca Yönetici oturumunda görünür) */}
+        {currentUser?.role === 'admin' && !isAdminAICoPilotOpen && (
+          <DraggableAIFab
+            id="admin-copilot"
+            onClick={() => setIsAdminAICoPilotOpen(true)}
+            title="Yalnızca Yönetici: Gemini AI Co-Pilot"
+            label="👑 Admin AI"
+            gradientClass="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600"
+            borderColorClass="border-amber-200/90"
+            shadowColorClass="shadow-amber-500/50 hover:shadow-amber-500/80 animate-pulse"
+          />
+        )}
+
         {isBankrollModalOpen && (
           <BankrollTrackerModal
             isOpen={isBankrollModalOpen}
@@ -2442,7 +2460,22 @@ export const App: React.FC = () => {
             currentUser={currentUser}
             onRefreshBulletin={handleRefreshBulletin}
             allMatches={allMatches}
+            onOpenAdminAICoPilot={() => setIsAdminAICoPilotOpen(true)}
           />
+        )}
+
+        {isAdminAICoPilotOpen && (
+          <React.Suspense fallback={<SectionLoadingFallback label="Admin Co-Pilot Başlatılıyor..." />}>
+            <AdminAICoPilotModal
+              isOpen={isAdminAICoPilotOpen}
+              onClose={() => setIsAdminAICoPilotOpen(false)}
+              currentUser={currentUser}
+              onShowToast={(msg) => {
+                setRefreshToast(msg);
+                setTimeout(() => setRefreshToast(null), 3500);
+              }}
+            />
+          </React.Suspense>
         )}
 
         {isShareModalOpen && (
