@@ -84,7 +84,7 @@ import { INITIAL_IPOS } from '../../data/ipoData';
 import { INITIAL_KAP_NEWS } from '../../data/kapNewsData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
-type PresetFilter = 'all' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
+type PresetFilter = 'all' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
 type StockSort = 'ai_desc' | 'change_desc' | 'volume_desc' | 'rsi_asc' | 'pe_asc';
 
 export interface StockMarketViewProps {
@@ -614,7 +614,9 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       );
     }
 
-    if (preset === 'strong_buy') {
+    if (preset === 'tavan') {
+      list = list.filter((s) => s.changePct >= 9.0);
+    } else if (preset === 'strong_buy') {
       list = list.filter((s) => analysesMap.get(s.symbol)?.signal === 'GÜÇLÜ AL');
     } else if (preset === 'buy') {
       list = list.filter((s) => {
@@ -654,13 +656,15 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     let strongBuy = 0;
     let buy = 0;
     let sell = 0;
+    let tavan = 0;
     stocks.forEach((s) => {
+      if ((s.changePct || 0) >= 9.0) tavan++;
       const sig = analysesMap.get(s.symbol)?.signal;
       if (sig === 'GÜÇLÜ AL') strongBuy++;
       else if (sig === 'AL') buy++;
       else if (sig === 'SAT' || sig === 'GÜÇLÜ SAT') sell++;
     });
-    return { strongBuy, buy, sell };
+    return { strongBuy, buy, sell, tavan };
   }, [stocks, analysesMap]);
 
   const getSignalStyle = (sig: StockQuantAnalysis['signal']) => {
@@ -1393,6 +1397,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
           <div className="flex flex-wrap gap-1.5">
             {[
               { id: 'all', label: `Tümü (${stocks.length})` },
+              { id: 'tavan', label: `🚀 Tavanlar (${statsSummary.tavan})` },
               { id: 'strong_buy', label: `🔥 Güçlü AL (${statsSummary.strongBuy})` },
               { id: 'buy', label: `✅ AL (${statsSummary.strongBuy + statsSummary.buy})` },
               { id: 'value', label: '💎 Ucuz Değer' },
@@ -1401,13 +1406,18 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
               { id: 'watchlist', label: `⭐ Takip (${watchlist.length})` },
             ].map((p) => {
               const active = preset === p.id;
+              const isTavan = p.id === 'tavan';
               return (
                 <button
                   key={p.id}
                   onClick={() => setPreset(p.id as PresetFilter)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${active
-                      ? 'bg-emerald-500 text-slate-950 border-emerald-400'
-                      : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
+                      ? isTavan
+                        ? 'bg-amber-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/25'
+                        : 'bg-emerald-500 text-slate-950 border-emerald-400'
+                      : isTavan
+                        ? 'bg-amber-500/10 text-amber-300 border-amber-500/40 hover:bg-amber-500/20'
+                        : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
                     }`}
                 >
                   {p.label}
@@ -1820,6 +1830,11 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                               {isSel && (
                                 <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-cyan-400 text-slate-950 uppercase tracking-wider">
                                   Seçili
+                                </span>
+                              )}
+                              {(st.changePct || 0) >= 9.8 && (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-amber-400 to-yellow-400 text-slate-950 uppercase tracking-wider shadow-sm animate-pulse">
+                                  TAVAN 🚀
                                 </span>
                               )}
                               {(() => {
