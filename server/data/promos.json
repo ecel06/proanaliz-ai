@@ -1,0 +1,20 @@
+[
+  {
+    "code": "PRO2026",
+    "days": 7,
+    "label": "7 Günlük Tanıtım VIP",
+    "createdBy": "system"
+  },
+  {
+    "code": "HOSGELDIN",
+    "days": 3,
+    "label": "3 Günlük Deneme VIP",
+    "createdBy": "system"
+  },
+  {
+    "code": "KRALVIP",
+    "days": 30,
+    "label": "30 Günlük VIP Kampanya",
+    "createdBy": "system"
+  }
+]

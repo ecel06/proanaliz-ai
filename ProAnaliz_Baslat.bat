@@ -20,7 +20,7 @@ if errorlevel 1 (
     :: Sunucunun hazir olmasini bekle (maksimum 8 saniye)
     set /a attempts=0
     :WAIT_SERVER
-    timeout /t 1 /nobreak >nul 2>&1
+    ping 127.0.0.1 -n 2 >nul 2>&1
     netstat -ano | findstr /R /C:":3001 .*LISTENING" >nul 2>&1
     if errorlevel 1 (
         set /a attempts+=1

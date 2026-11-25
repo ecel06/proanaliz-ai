@@ -6,6 +6,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import http from 'http';
 import { fileURLToPath } from 'url';
 import { fetchLiveBulletin, fetchMatchInsights, SUPPORTED_LEAGUES } from './bulletinService.js';
 import {
@@ -1043,7 +1044,7 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.66';
+const APP_VERSION = '2026.11.20.67';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -1148,5 +1149,18 @@ app.listen(PORT, '0.0.0.0', () => {
 
   // Start background periodic live score & bulletin sync (every 30 seconds)
   setInterval(runBulletinSync, 30 * 1000);
+
+  // Dual-port bridge: also serve on port 5173 if not in use (handles legacy bookmarks, PWA desktop shortcuts and browser tabs)
+  if (String(PORT) !== '5173') {
+    try {
+      const bridge5173 = http.createServer(app);
+      bridge5173.on('error', () => {
+        // Port 5173 already used or restricted, ignore safely
+      });
+      bridge5173.listen(5173, '0.0.0.0', () => {
+        console.log(`🌐 [Server] Port 5173 köprüsü aktif -> PWA kısayolları ve http://localhost:5173 doğrudan erişilebilir!`);
+      });
+    } catch (_) {}
+  }
 });
 
