@@ -79,6 +79,8 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      setLoading(false);
     }
   }, [messages, isOpen, loading]);
 
@@ -130,6 +132,10 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setLoading(true);
+
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 19000);
 
     try {
       const chatHistory = messages.slice(-6).map((m) => ({
@@ -193,6 +199,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
       };
       setMessages((prev) => [...prev, failMsg]);
     } finally {
+      clearTimeout(safetyTimer);
       setLoading(false);
     }
   };

@@ -743,7 +743,8 @@ export async function callAdminAICoPilotApi(
         chatHistory,
         customApiKey,
         clientContext
-      })
+      }),
+      signal: AbortSignal.timeout(18000)
     });
     return await res.json();
   } catch (err: any) {
