@@ -444,13 +444,71 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     return map;
   }, [stocks]);
 
-  // Live BIST Market Session Status (10:00 - 18:10 Weekdays Istanbul Time)
-  const isBistOpen = useMemo(() => {
+  // 🕒 BIST Akıllı Seans Zamanı Motoru (Hafta içi/sonu, Sabah Seans Öncesi, Canlı Seans, Akşam Kapanış)
+  const bistSessionPhase = useMemo(() => {
     const trNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Istanbul' }));
-    const day = trNow.getDay();
+    const day = trNow.getDay(); // 0: Pazar, 1: Pzt, ..., 5: Cuma, 6: Cmt
     const mins = trNow.getHours() * 60 + trNow.getMinutes();
     const isWeekday = day >= 1 && day <= 5;
-    return isWeekday && mins >= 10 * 60 && mins <= 18 * 60 + 10;
+
+    // 1. Hafta sonu (Cumartesi / Pazar)
+    if (!isWeekday) {
+      return {
+        phase: 'weekend' as const,
+        isLive: false,
+        singularTitle: '🎯 Pazartesi Tavan Adayı',
+        pluralTitle: '🎯 Pazartesi Tavan Adayları',
+        badgeText: '🏖️ Hafta Sonu • Pazartesi Seansı Hazırlığı',
+        descText: 'Hafta sonu BIST kapalıdır. Cuma gün sonu kapanış verileri ve teknik sıkışma modelleriyle Pazartesi seansı için hesaplanan tavan potansiyeli kurulumu.',
+      };
+    }
+
+    // 2. Hafta içi: Sabah Seans Öncesi (00:00 - 09:55) -> Aynı gün seans 10:00'da açılacak!
+    if (mins < 9 * 60 + 55) {
+      return {
+        phase: 'pre_market' as const,
+        isLive: false,
+        singularTitle: '🎯 Günün Tavan Adayı',
+        pluralTitle: '🎯 Bugünün Tavan Adayları',
+        badgeText: '🌅 Seans Öncesi • Bugün 10:00 Açılış Hazırlığı',
+        descText: 'Bugünkü seans öncesi hazırlık. Dünün kapanış verileri, aşırı satım dip tepkisi ve daralan bant kırılımlarıyla bugünün seansında tavan potansiyeli taşıyan hisseler.',
+      };
+    }
+
+    // 3. Hafta içi: Canlı Seans (09:55 - 18:10) -> Seans AÇIK!
+    if (mins <= 18 * 60 + 10) {
+      return {
+        phase: 'in_session' as const,
+        isLive: true,
+        singularTitle: '🎯 Günün Tavan Adayı',
+        pluralTitle: '🎯 Günün Tavan Adayları',
+        badgeText: '⚡ Canlı Seans (10:00–18:10)',
+        descText: 'Canlı seanstaki anlık anormal hacim artışı (RVol), volatilite patlaması ve gün içi en yükseğe kilitlenme ivmesiyle tavana koşan adaylar.',
+      };
+    }
+
+    // 4. Hafta içi: Akşam Seans Sonrası (18:10 - 23:59)
+    // Cuma akşamı ise bir sonraki seans Pazartesi'dir!
+    if (day === 5) {
+      return {
+        phase: 'post_market' as const,
+        isLive: false,
+        singularTitle: '🎯 Pazartesi Tavan Adayı',
+        pluralTitle: '🎯 Pazartesi Tavan Adayları',
+        badgeText: '🌙 Seans Kapandı • Pazartesi Kurulumu',
+        descText: 'Haftanın son seansı kapandı. Cuma gün sonu kapanış hacmi ve aşırı satım dip uyumsuzluğuyla Pazartesi seansı için tavan adayı hisseler.',
+      };
+    }
+
+    // Pazartesi - Perşembe akşamı ise bir sonraki seans yarındır!
+    return {
+      phase: 'post_market' as const,
+      isLive: false,
+      singularTitle: '🎯 Yarının Tavan Adayı',
+      pluralTitle: '🎯 Yarının Tavan Adayları',
+      badgeText: '🌙 Seans Kapandı • Yarının Kurulumu',
+      descText: 'Bugünkü BIST seansı kapandı. Gün sonu kapanış hacmi, aşırı satım dip uyumsuzluğu ve Bollinger daralmasıyla yarınki seansın potansiyel tavan kurulumu.',
+    };
   }, []);
 
   // All Ceiling / Breakout Candidates (Tavan Potansiyeli Yüksek Hisselerin Tümü)
@@ -1434,9 +1492,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
               { id: 'all', label: `Tümü (${stocks.length})` },
               {
                 id: 'tavan_aday',
-                label: isBistOpen
-                  ? `🎯 Günün Tavan Adayları (${statsSummary.tavanAday})`
-                  : `🎯 Yarının Tavan Adayları (${statsSummary.tavanAday})`,
+                label: `${bistSessionPhase.pluralTitle} (${statsSummary.tavanAday})`,
               },
               { id: 'tavan', label: `🚀 Kilit Tavanlar (${statsSummary.tavan})` },
               { id: 'strong_buy', label: `🔥 Güçlü AL (${statsSummary.strongBuy})` },
@@ -1498,7 +1554,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-2 border-t border-slate-800/80">
             {[
               alphaHighlights.topTavanCand && {
-                tag: isBistOpen ? '🎯 Günün Tavan Adayı' : '🎯 Yarının Tavan Adayı',
+                tag: bistSessionPhase.singularTitle,
                 sym: alphaHighlights.topTavanCand.symbol,
                 meta: `+${alphaHighlights.topTavanCand.changePct.toFixed(2)}% • %${analysesMap.get(alphaHighlights.topTavanCand.symbol)?.tavanPotential?.score || 80}`,
                 tone: 'border-amber-400/50 bg-amber-500/10 text-amber-300 ring-1 ring-amber-400/30',
@@ -2377,7 +2433,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                                 <span>🎯 AI Tavan &amp; Patlama Radarı</span>
                               </h3>
                               <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-bold">
-                                {isBistOpen ? '⚡ Canlı Seans' : '🌙 Seans Kapalı • Yarının Kurulumu'}
+                                {bistSessionPhase.badgeText}
                               </span>
                               {selectedAnalysis.tavanPotential.isAlreadyCeiling ? (
                                 <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black animate-pulse">
@@ -2398,9 +2454,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                               )}
                             </div>
                             <p className="text-[10px] text-slate-400 mt-0.5">
-                              {isBistOpen
-                                ? 'Canlı seans hacim anomalisi, volatilite daralması ve dip tepki matematiğiyle erken tavan tespiti'
-                                : 'Bugünkü BIST seansı kapandı. Kapanış hacmi, aşırı satım dip uyumsuzluğu ve sıkışma patlamasıyla yarınki seansın potansiyel tavan kurulumu'}
+                              {bistSessionPhase.descText}
                             </p>
                           </div>
                         </div>
