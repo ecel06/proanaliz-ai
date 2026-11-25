@@ -334,7 +334,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
                 type="password"
                 value={tempApiKey}
                 onChange={(e) => setTempApiKey(e.target.value)}
-                placeholder="AIzaSy... ile başlayan Gemini API anahtarınızı yapıştırın"
+                placeholder="Gemini API anahtarınızı yapıştırın (AQ... veya AIzaSy...)"
                 className="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs sm:text-sm text-white font-mono focus:outline-hidden focus:border-amber-400"
               />
               <div className="flex space-x-2">

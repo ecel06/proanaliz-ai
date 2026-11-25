@@ -1120,28 +1120,34 @@ Admin'in sorusuna doğrudan, kapsamlı ve profesyonel bir şekilde yanıt ver.
       ],
     });
 
-    // Models cascade to try in order
-    const modelsToTry = [
-      'gemini-1.5-flash',
-      'gemini-2.0-flash',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-pro',
-      'gemini-pro',
-      'gemini-2.0-flash-exp'
+    // Modern Gemini models cascade (fastest & most responsive first)
+    const candidateConfigs = [
+      { ver: 'v1beta', model: 'gemini-3.5-flash-lite' },
+      { ver: 'v1beta', model: 'gemini-3.1-flash-lite' },
+      { ver: 'v1beta', model: 'gemini-3.5-flash' },
+      { ver: 'v1beta', model: 'gemini-3.6-flash' },
+      { ver: 'v1beta', model: 'gemini-3.7-flash' },
+      { ver: 'v1beta', model: 'gemini-3.8-flash' },
+      { ver: 'v1beta', model: 'gemini-flash-latest' },
+      { ver: 'v1beta', model: 'gemini-pro-latest' },
+      { ver: 'v1beta', model: 'gemini-2.0-flash' },
+      { ver: 'v1beta', model: 'gemini-1.5-flash' }
     ];
 
     let lastError = null;
     let reply = null;
 
-    for (const modelName of modelsToTry) {
+    const reqHeaders = {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey,
+    };
+
+    for (const cfg of candidateConfigs) {
       try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/${cfg.ver}/models/${cfg.model}:generateContent?key=${apiKey}`;
         const response = await fetch(geminiUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': apiKey,
-          },
+          headers: reqHeaders,
           body: JSON.stringify({
             contents,
             generationConfig: {
@@ -1184,7 +1190,7 @@ Admin'in sorusuna doğrudan, kapsamlı ve profesyonel bir şekilde yanıt ver.
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.77';
+const APP_VERSION = '2026.11.20.78';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
