@@ -151,7 +151,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
         const errorMsg: ChatMsg = {
           id: 'err-' + Date.now(),
           sender: 'assistant',
-          text: `⚠️ **Hata:** ${res.error || 'Yapay zeka yanıtı alınamadı.'}\n\nLütfen Gemini API anahtarınızı kontrol ediniz.`,
+          text: `⚠️ **Sistem Bildirimi:** ${res.error || 'Yapay zeka yanıtı alınamadı.'}`,
           timestamp: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, errorMsg]);

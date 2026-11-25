@@ -1190,7 +1190,7 @@ Admin'in sorusuna doğrudan, kapsamlı ve profesyonel bir şekilde yanıt ver.
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.78';
+const APP_VERSION = '2026.11.20.79';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

@@ -421,7 +421,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.76';
+  const CLIENT_BUILD_VERSION = '2026.11.20.79';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -465,11 +465,18 @@ export const App: React.FC = () => {
         if (res.ok) {
           const data = await res.json();
           if (data.version && data.version !== CLIENT_BUILD_VERSION) {
+            const dismissed = localStorage.getItem('proanaliz_dismissed_version');
+            if (dismissed === data.version) {
+              setNewVersionAvailable(false);
+              return;
+            }
             setServerVersion(data.version);
             setNewVersionAvailable(true);
             if ('serviceWorker' in navigator) {
               navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => { });
             }
+          } else {
+            setNewVersionAvailable(false);
           }
         }
       } catch (e) {
