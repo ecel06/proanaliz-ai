@@ -1077,14 +1077,6 @@ app.post('/api/admin/ai-copilot', adminMiddleware, async (req, res) => {
       });
     }
 
-    if (apiKey.startsWith('AQ.')) {
-      return res.json({
-        success: false,
-        error: `Girdiğiniz anahtar bir Google Cloud (IAM) anahtarıdır (AQ. ile başlar). Gemini API için doğrudan Google AI Studio'dan alınan ve 'AIzaSy...' ile başlayan anahtar gereklidir.\n\nLütfen https://aistudio.google.com/app/apikey adresinde 'Create API key in new project' seçeneğine basarak 'AIzaSy...' ile başlayan ücretsiz anahtarı kopyalayınız.`,
-        hasApiKey: false,
-      });
-    }
-
     const systemInstruction = `
 Sen ProAnaliz AI platformunun kurumsal baş analisti ve üst düzey yönetici yapay zeka asistanısın (👑 Admin AI Co-Pilot).
 Şu anda doğrudan platformun kurucusu ve tek sistem yöneticisi (Admin) ile konuşuyorsun.
@@ -1107,13 +1099,35 @@ Platformun Canlı Durumu:
 Admin'in sorusuna doğrudan, kapsamlı ve profesyonel bir şekilde yanıt ver.
 `.trim();
 
+    // Prepare contents array with conversation history and system instructions
+    const contents = [];
+
+    if (Array.isArray(chatHistory)) {
+      chatHistory.slice(-6).forEach((h) => {
+        contents.push({
+          role: h.sender === 'user' ? 'user' : 'model',
+          parts: [{ text: h.text }],
+        });
+      });
+    }
+
+    contents.push({
+      role: 'user',
+      parts: [
+        {
+          text: `[Sistem Bağlamı ve Talimatları:\n${systemInstruction}]\n\nAdmin Sorusu: ${message}`,
+        },
+      ],
+    });
+
     // Models cascade to try in order
     const modelsToTry = [
       'gemini-1.5-flash',
-      'gemini-1.5-flash-latest',
       'gemini-2.0-flash',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-pro',
       'gemini-pro',
-      'gemini-1.5-pro'
+      'gemini-2.0-flash-exp'
     ];
 
     let lastError = null;
@@ -1124,7 +1138,10 @@ Admin'in sorusuna doğrudan, kapsamlı ve profesyonel bir şekilde yanıt ver.
         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
         const response = await fetch(geminiUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
           body: JSON.stringify({
             contents,
             generationConfig: {
@@ -1167,7 +1184,7 @@ Admin'in sorusuna doğrudan, kapsamlı ve profesyonel bir şekilde yanıt ver.
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.76';
+const APP_VERSION = '2026.11.20.77';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
