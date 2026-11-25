@@ -27,6 +27,8 @@ import {
 import { Match, MatchAnalysis } from '../types';
 import { User } from '../utils/authHelper';
 import { OverallPerformanceReport } from '../utils/aiPerformanceHelper';
+import { analyzeStockQuant } from '../utils/stockAnalysisEngine';
+import { getProgramHighlights } from '../utils/horseRacingEngine';
 
 export interface HorseTarget {
   programId?: number;
@@ -194,6 +196,49 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           const placeName = prog?.place ? `${prog.place} Hipodromu` : 'TJK Bugün Bülteni';
 
           if (detail?.races && detail.races.length > 0) {
+            // At Yarışı modülünün BİREBİR KULLANDIĞI getProgramHighlights analiz motorunu çalıştır
+            const highlights = getProgramHighlights(detail);
+            const bestBanko = highlights?.bestBanko;
+
+            if (bestBanko && bestBanko.topHorse) {
+              const race = bestBanko.race;
+              const topHorse = bestBanko.topHorse;
+              const rNum = race.number || 1;
+              const isFinished = Boolean(race.isFinished);
+              const finishOrder = Number(topHorse.order || 0);
+              const isWinner = isFinished && finishOrder === 1;
+              const actualWinner = race.horses.find((h: any) => Number(h.order) === 1);
+
+              let statusText = '⏳ KOŞACAK';
+              if (isFinished) {
+                if (isWinner) {
+                  statusText = '🏆 KAZANDI';
+                } else if (actualWinner) {
+                  statusText = `Geldi: #${actualWinner.number}`;
+                } else {
+                  statusText = finishOrder > 0 ? `${finishOrder}. Oldu` : 'Koştu';
+                }
+              }
+
+              const horseObj = {
+                programId: progId,
+                raceNo: rNum,
+                horseNumber: topHorse.number,
+                title: `#${topHorse.number} ${topHorse.name}`,
+                place: `${placeName} • ${rNum}. Koşu`,
+                jockey: topHorse.jockey?.name ? `Jokey: ${topHorse.jockey.name}` : undefined,
+                badge: `AI Bankosu (%${bestBanko.top.score} Skor)`,
+                recommendation: `Öne Çıkan Banko: #${topHorse.number} ${topHorse.name} (Fark: +${bestBanko.gap})`,
+                isFinished,
+                isWinner,
+                finishOrder,
+                statusText,
+              };
+              cachedBestHorse = horseObj;
+              setBestHorse(horseObj);
+              return;
+            }
+
             let topHorse: any = null;
             let topRaceNum = 1;
             let highestAgf = 0;
@@ -280,25 +325,46 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         })
         .catch(() => { });
 
-      // 2. Fetch real today's BIST stock leader
+      // 2. Fetch real today's BIST stock leader using EXACT Borsa Quant Engine
       fetch('/api/stocks/screener?market=bist')
         .then((r) => r.json())
         .then((data) => {
           const stocks = data?.stocks;
           if (stocks && stocks.length > 0) {
-            const positive = stocks.filter((s: any) => s.changePct > 0);
-            const pool = positive.length > 0 ? positive : stocks;
-            const sorted = [...pool].sort((a: any, b: any) => (b.volume || 0) - (a.volume || 0));
+            // Borsa bölümünde kullanılan analyzeStockQuant fonksiyonunu her hisseye uygula!
+            const analyzedStocks = stocks.map((s: any) => ({
+              stock: s,
+              analysis: analyzeStockQuant(s),
+            }));
+
+            // Borsa ile birebir aynı: Önce 'GÜÇLÜ AL' olanları, yoksa 'AL' olanları ara
+            const strongBuys = analyzedStocks.filter((x: any) => x.analysis.signal === 'GÜÇLÜ AL');
+            const buys = analyzedStocks.filter((x: any) => x.analysis.signal === 'AL');
+            const candidatePool = strongBuys.length > 0 ? strongBuys : buys.length > 0 ? buys : analyzedStocks;
+
+            // Quant puanına (overallScore) göre sırala, eşitlikte hacme bak
+            const sorted = [...candidatePool].sort((a: any, b: any) => {
+              if (b.analysis.overallScore !== a.analysis.overallScore) {
+                return b.analysis.overallScore - a.analysis.overallScore;
+              }
+              if ((b.stock.changePct || 0) !== (a.stock.changePct || 0)) {
+                return (b.stock.changePct || 0) - (a.stock.changePct || 0);
+              }
+              return (b.stock.volume || 0) - (a.stock.volume || 0);
+            });
+
             const top = sorted[0];
             if (top) {
+              const bestReason = top.analysis.bullishReasons?.[0] || `RSI: ${Math.round(top.analysis.rsi)} • Quant Alım Sinyali`;
               const stockObj = {
-                symbol: top.symbol,
-                name: top.name || 'Borsa İstanbul',
-                price: `${top.close?.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} ₺`,
-                changePct: `${top.changePct >= 0 ? '+' : ''}${top.changePct?.toFixed(2)}%`,
-                isPositive: top.changePct >= 0,
-                recommendation: `RSI: ${Math.round(top.rsi || 55)} • Quant Alım Sinyali`,
-                badge: 'GÜÇLÜ AL',
+                symbol: top.stock.symbol,
+                name: top.stock.name || 'Borsa İstanbul',
+                price: `${top.stock.close?.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} ₺`,
+                changePct: `${top.stock.changePct >= 0 ? '+' : ''}${top.stock.changePct?.toFixed(2)}%`,
+                isPositive: (top.stock.changePct || 0) >= 0,
+                recommendation: `${bestReason} (%${top.analysis.overallScore} Skor)`,
+                badge: top.analysis.signal, // Borsa sayfasıyla %100 birebir aynı sinyal!
+                score: top.analysis.overallScore,
               };
               cachedBestStock = stockObj;
               setBestStock(stockObj);
@@ -1024,7 +1090,15 @@ export const HomeHub: React.FC<HomeHubProps> = ({
                     <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
                       <span>📈 Günün Hissesi &amp; Quant</span>
                     </span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold">
+                    <span className={`text-[9px] px-1.5 py-0.2 rounded font-black border ${
+                      bestStock?.badge === 'GÜÇLÜ AL'
+                        ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-xs'
+                        : bestStock?.badge === 'AL'
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-extrabold'
+                        : bestStock?.badge === 'TUT'
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                    }`}>
                       {bestStock ? bestStock.badge : 'GÜÇLÜ AL'}
                     </span>
                   </div>

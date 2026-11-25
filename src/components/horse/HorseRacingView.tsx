@@ -2387,15 +2387,51 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                   const isHorseLocked = c.strategy !== 'EKONOMİK' && !user?.isVip;
                   const visibleLegs = isHorseLocked ? c.legs.slice(0, 2) : c.legs;
 
+                  // Kupondaki ayakların koşu sonuçlarını ve kazanan/kaybeden durumunu hesapla
+                  const evaluatedLegs = visibleLegs.map((leg) => {
+                    const race = detail?.races.find((r) => r.number === leg.raceNumber);
+                    const winner = race?.horses.find((h) => Number(h.order) === 1);
+                    const isFinished = Boolean(winner) || Boolean(race?.isFinished);
+                    const isWon = Boolean(winner && leg.horses.includes(winner.number));
+                    const isLost = Boolean(isFinished && winner && !leg.horses.includes(winner.number));
+                    const isPending = !isFinished;
+
+                    return {
+                      ...leg,
+                      race,
+                      winner,
+                      isFinished,
+                      isWon,
+                      isLost,
+                      isPending,
+                    };
+                  });
+
+                  const wonLegsCount = evaluatedLegs.filter((l) => l.isWon).length;
+                  const lostLegsCount = evaluatedLegs.filter((l) => l.isLost).length;
+                  const totalFinishedLegs = evaluatedLegs.filter((l) => l.isFinished && l.winner).length;
+                  const firstLostLeg = evaluatedLegs.find((l) => l.isLost);
+                  const isCouponAllWon = totalFinishedLegs === c.legs.length && wonLegsCount === c.legs.length && c.legs.length > 0;
+                  const isCouponLost = lostLegsCount > 0;
+                  const isCouponLive = wonLegsCount > 0 && lostLegsCount === 0 && totalFinishedLegs < c.legs.length;
+
                   return (
                     <div
                       key={c.id}
-                      className="rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-amber-400/50 p-4 flex flex-col justify-between space-y-4 transition-all"
+                      className={`rounded-2xl border p-4 flex flex-col justify-between space-y-4 transition-all ${
+                        isCouponAllWon
+                          ? 'bg-gradient-to-b from-slate-900 to-emerald-950/40 border-emerald-500/70 shadow-xl shadow-emerald-500/10'
+                          : isCouponLost
+                          ? 'bg-slate-900/90 border-slate-800/80 hover:border-slate-700'
+                          : isCouponLive
+                          ? 'bg-gradient-to-b from-slate-900 to-amber-950/20 border-amber-400/50 shadow-lg'
+                          : 'bg-slate-900/90 border-slate-800 hover:border-amber-400/50'
+                      }`}
                     >
                       <div className="space-y-3">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <div className="flex items-center gap-1.5 mb-1.5">
+                            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                               <span
                                 className={`inline-block px-2 py-0.5 rounded text-[10px] font-black ${c.strategy === 'EKONOMİK'
                                   ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
@@ -2406,6 +2442,25 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                               >
                                 {c.strategy} KURGU
                               </span>
+
+                              {/* Canlı Kupon Sonuç Rozetleri */}
+                              {isCouponAllWon && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-black bg-gradient-to-r from-emerald-400 to-amber-300 text-slate-950 shadow-md animate-pulse">
+                                  🏆 KUPON TUTTU!
+                                </span>
+                              )}
+                              {isCouponLost && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                                  ❌ {firstLostLeg ? `${firstLostLeg.legIndex}. Ayakta Yattı` : 'Tutmadı'}
+                                </span>
+                              )}
+                              {isCouponLive && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                  <span>{wonLegsCount}/{totalFinishedLegs} Ayak Geldi • Canlı</span>
+                                </span>
+                              )}
+
                               {isHorseLocked && (
                                 <span className="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black text-[9px] flex items-center gap-1 shadow-xs">
                                   <Lock className="w-2.5 h-2.5" />
@@ -2423,27 +2478,68 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
                         <p className="text-xs text-slate-400 leading-relaxed">{c.subtitle}</p>
 
                         <div className="space-y-1.5 bg-slate-950/70 rounded-xl p-3 border border-slate-800/80">
-                          {visibleLegs.map((leg) => (
+                          {evaluatedLegs.map((leg) => (
                             <div
                               key={leg.legIndex}
-                              className="flex items-center justify-between text-xs py-1 border-b border-slate-800/60 last:border-0"
+                              className={`flex items-center justify-between text-xs py-1.5 px-2 rounded-xl transition-all ${
+                                leg.isWon
+                                  ? 'bg-emerald-950/40 border border-emerald-500/40 shadow-xs'
+                                  : leg.isLost
+                                  ? 'bg-rose-950/30 border border-rose-500/40 shadow-xs'
+                                  : 'border-b border-slate-800/60 last:border-0'
+                              }`}
                             >
-                              <span className="font-bold text-slate-400">
-                                {leg.legIndex}. Ayak <span className="text-[10px]">({leg.raceNumber}. Koşu)</span>
-                              </span>
-                              <div className="flex items-center gap-1 flex-wrap justify-end">
-                                {leg.horses.map((hNo) => (
-                                  <span
-                                    key={hNo}
-                                    className={`px-2 py-0.5 rounded font-mono font-black text-[11px] ${leg.banko === hNo
-                                      ? 'bg-amber-400 text-slate-950'
-                                      : 'bg-slate-800 text-white border border-slate-700'
-                                      }`}
-                                  >
-                                    {hNo}
-                                    {leg.banko === hNo ? ' TEK' : ''}
+                              <div className="flex items-center gap-1.5 min-w-[95px] shrink-0">
+                                <span className="font-bold text-slate-300">
+                                  {leg.legIndex}. Ayak <span className="text-[10px] text-slate-500 font-mono">({leg.raceNumber}.K)</span>
+                                </span>
+                                {leg.isWon && (
+                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-500 text-slate-950 flex items-center gap-0.5 shadow-xs">
+                                    <CheckCircle2 className="w-2.5 h-2.5" />
+                                    <span>TUTTU</span>
                                   </span>
-                                ))}
+                                )}
+                                {leg.isLost && (
+                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500 text-white flex items-center gap-0.5 shadow-xs">
+                                    <X className="w-2.5 h-2.5" />
+                                    <span>TUTMADI</span>
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                                {leg.horses.map((hNo) => {
+                                  const isThisWinner = leg.winner && leg.winner.number === hNo;
+                                  return (
+                                    <span
+                                      key={hNo}
+                                      className={`px-2 py-0.5 rounded font-mono font-black text-[11px] transition-all ${
+                                        isThisWinner
+                                          ? 'bg-emerald-400 text-slate-950 ring-2 ring-emerald-300 shadow-sm'
+                                          : leg.isLost
+                                          ? 'bg-slate-900 text-slate-400 border border-slate-800 line-through decoration-rose-500/60'
+                                          : leg.banko === hNo
+                                          ? 'bg-amber-400 text-slate-950'
+                                          : 'bg-slate-800 text-white border border-slate-700'
+                                      }`}
+                                    >
+                                      {isThisWinner ? `✓ ${hNo}` : hNo}
+                                      {leg.banko === hNo && !isThisWinner ? ' TEK' : ''}
+                                    </span>
+                                  );
+                                })}
+
+                                {/* Tutmadıysa kırmızıyla gelen atı yaz */}
+                                {leg.isLost && leg.winner && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-rose-500/25 text-rose-200 border border-rose-500/50 flex items-center gap-1 font-mono">
+                                    <span className="text-rose-400">Gelen:</span>
+                                    <strong className="text-white bg-rose-600/40 px-1 rounded">#{leg.winner.number}</strong>
+                                    <span className="truncate max-w-[80px]">{leg.winner.name}</span>
+                                    {leg.winner.ganyan ? (
+                                      <span className="text-amber-300 text-[9px]">({leg.winner.ganyan} Gny)</span>
+                                    ) : null}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           ))}
