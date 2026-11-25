@@ -1072,7 +1072,15 @@ app.post('/api/admin/ai-copilot', adminMiddleware, async (req, res) => {
     if (!apiKey) {
       return res.json({
         success: true,
-        reply: `👑 **Admin AI Co-Pilot Hazır!**\n\nGoogle Gemini API anahtarınız henüz girilmedi. Doğrudan canlı Gemini yapay zekasıyla konuşabilmek için:\n\n1. [Google AI Studio (aistudio.google.com)](https://aistudio.google.com) adresinden **30 saniyede ücretsiz** bir API anahtarı edinin.\n2. Sağ üstteki **⚙️ API Anahtarı** butonuna tıklayıp anahtarınızı kaydedin.\n\n*Not: Canlı sistem verilerimiz ve BIST radarı arka planda tam olarak taranmaktadır.*`,
+        reply: `👑 **Admin AI Co-Pilot Hazır!**\n\nGoogle Gemini API anahtarınız henüz girilmedi. Doğrudan canlı Gemini yapay zekasıyla konuşabilmek için:\n\n1. [Google AI Studio (aistudio.google.com/app/apikey)](https://aistudio.google.com/app/apikey) adresinden **30 saniyede ücretsiz** bir API anahtarı edinin.\n2. Sağ üstteki **⚙️ API Anahtarı** butonuna tıklayıp **AIzaSy...** ile başlayan anahtarınızı kaydedin.\n\n*Not: Canlı sistem verilerimiz ve BIST radarı arka planda tam olarak taranmaktadır.*`,
+        hasApiKey: false,
+      });
+    }
+
+    if (apiKey.startsWith('AQ.')) {
+      return res.json({
+        success: false,
+        error: `Girdiğiniz anahtar bir Google Cloud (IAM) anahtarıdır (AQ. ile başlar). Gemini API için doğrudan Google AI Studio'dan alınan ve 'AIzaSy...' ile başlayan anahtar gereklidir.\n\nLütfen https://aistudio.google.com/app/apikey adresinde 'Create API key in new project' seçeneğine basarak 'AIzaSy...' ile başlayan ücretsiz anahtarı kopyalayınız.`,
         hasApiKey: false,
       });
     }
@@ -1099,53 +1107,54 @@ Platformun Canlı Durumu:
 Admin'in sorusuna doğrudan, kapsamlı ve profesyonel bir şekilde yanıt ver.
 `.trim();
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Models cascade to try in order
+    const modelsToTry = [
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-latest',
+      'gemini-2.0-flash',
+      'gemini-pro',
+      'gemini-1.5-pro'
+    ];
 
-    const contents = [];
+    let lastError = null;
+    let reply = null;
 
-    // Add recent conversation history for memory
-    if (Array.isArray(chatHistory)) {
-      chatHistory.slice(-6).forEach((h) => {
-        contents.push({
-          role: h.sender === 'user' ? 'user' : 'model',
-          parts: [{ text: h.text }],
+    for (const modelName of modelsToTry) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        const response = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents,
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 2048,
+            },
+          }),
         });
-      });
+
+        const data = await response.json();
+        if (response.ok && !data.error && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+          reply = data.candidates[0].content.parts[0].text;
+          break; // Succeeded!
+        } else {
+          lastError = data.error?.message || `HTTP ${response.status}`;
+        }
+      } catch (e) {
+        lastError = e.message;
+      }
     }
 
-    // Add current user prompt with injected system context
-    contents.push({
-      role: 'user',
-      parts: [
-        {
-          text: `[Sistem Bağlamı ve Talimatları:\n${systemInstruction}]\n\nAdmin Sorusu: ${message}`,
-        },
-      ],
-    });
-
-    const response = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-        },
-      }),
-    });
-
-    const data = await response.json();
-    if (!response.ok || data.error) {
-      console.error('Gemini API Hatası:', data.error);
-      return res.status(response.status || 500).json({
+    if (!reply) {
+      console.error('Gemini API Hatası:', lastError);
+      return res.status(500).json({
         success: false,
-        error: data.error?.message || 'Gemini API yanıt vermedi. Lütfen API anahtarınızı kontrol edin.',
+        error: lastError || 'Gemini modellerinden yanıt alınamadı. Lütfen API anahtarınızı kontrol edin.',
         hasApiKey: true,
       });
     }
 
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Yanıt oluşturulamadı.';
     return res.json({
       success: true,
       reply,
@@ -1158,7 +1167,7 @@ Admin'in sorusuna doğrudan, kapsamlı ve profesyonel bir şekilde yanıt ver.
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.75';
+const APP_VERSION = '2026.11.20.76';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
