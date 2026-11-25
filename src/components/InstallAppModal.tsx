@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Smartphone, 
+  Monitor,
   Download, 
   QrCode, 
   Copy, 
@@ -31,7 +32,8 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
   onDirectInstall
 }) => {
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'android' | 'ios'>('android');
+  const isMobileDevice = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const [activeTab, setActiveTab] = useState<'pc' | 'android' | 'ios'>(() => isMobileDevice ? 'android' : 'pc');
   const [networkUrl, setNetworkUrl] = useState<string>('');
   const [networkIp, setNetworkIp] = useState<string>('');
   const [isLoadingIp, setIsLoadingIp] = useState(true);
@@ -110,19 +112,19 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
         {/* Modal Header */}
         <div className="flex items-start space-x-3.5 pr-8">
           <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-teal-500/15 to-indigo-500/20 border border-emerald-500/30 text-emerald-400">
-            <Smartphone className="w-7 h-7" />
+            {activeTab === 'pc' ? <Monitor className="w-7 h-7 text-cyan-400" /> : <Smartphone className="w-7 h-7" />}
           </div>
           <div>
             <div className="flex items-center space-x-2">
               <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                Telefona İndir & Kur
+                Uygulamayı İndir & Kur
               </h2>
               <span className="px-2 py-0.5 text-[11px] font-bold uppercase rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                PWA Mobil
+                PC &amp; Mobil
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Google Play ya da App Store'a gerek kalmadan, doğrudan telefonunuza tam ekran uygulama olarak kurun.
+              Bilgisayarınıza (Windows/Mac) veya telefonunuza bağımsız uygulama olarak doğrudan kurun.
             </p>
           </div>
         </div>
@@ -214,13 +216,23 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
           </div>
         </div>
 
-        {/* Step-by-Step Installation Tabs (Android / iOS) */}
+        {/* Step-by-Step Installation Tabs (PC / Android / iOS) */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span className="text-xs font-bold text-slate-200">
-              2. Adım: Telefonunuzun Ana Ekranına Ekleyin
+              {activeTab === 'pc' ? '💻 Bilgisayara Masaüstü Uygulaması Olarak Kurma:' : '📱 Telefon Ana Ekranına Kurma:'}
             </span>
-            <div className="flex rounded-lg bg-slate-800 p-0.5 border border-slate-700">
+            <div className="flex rounded-lg bg-slate-800 p-0.5 border border-slate-700 self-start sm:self-auto">
+              <button
+                onClick={() => setActiveTab('pc')}
+                className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'pc'
+                    ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                💻 Bilgisayar (PC)
+              </button>
               <button
                 onClick={() => setActiveTab('android')}
                 className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
@@ -235,7 +247,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
                 onClick={() => setActiveTab('ios')}
                 className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                   activeTab === 'ios'
-                    ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                    ? 'bg-indigo-500 text-white shadow-sm'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -243,6 +255,57 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
               </button>
             </div>
           </div>
+
+          {/* PC / Windows / Mac Guide */}
+          {activeTab === 'pc' && (
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-3 animate-in fade-in">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+                  <div className="flex items-center space-x-2 text-xs font-bold text-cyan-400">
+                    <span className="w-5 h-5 rounded-full bg-cyan-500/20 flex items-center justify-center text-[11px]">1</span>
+                    <span>Chrome veya Edge</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-normal">
+                    Bilgisayarınızda <strong className="text-white">Google Chrome</strong> veya <strong className="text-white">Microsoft Edge</strong> ile siteyi açın.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+                  <div className="flex items-center space-x-2 text-xs font-bold text-cyan-400">
+                    <span className="w-5 h-5 rounded-full bg-cyan-500/20 flex items-center justify-center text-[11px]">2</span>
+                    <span>Yükle Simgesi</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-normal">
+                    Adres çubuğunun sağındaki <strong className="text-cyan-300">"Uygulamayı Yükle" (💻 simgesi)</strong> veya menüden <strong className="text-white">"ProAnaliz AI Uygulamasını Yükle"</strong> seçeneğine tıklayın.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+                  <div className="flex items-center space-x-2 text-xs font-bold text-cyan-400">
+                    <span className="w-5 h-5 rounded-full bg-cyan-500/20 flex items-center justify-center text-[11px]">3</span>
+                    <span>Masaüstü Programı</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-normal">
+                    Windows Masaüstünüze ve Başlat menüsüne simge eklenir; tarayıcıdan bağımsız tam ekran program olarak açılır.
+                  </p>
+                </div>
+              </div>
+
+              {deferredPrompt && (
+                <div className="pt-2 flex justify-center">
+                  <button
+                    onClick={() => {
+                      if (onDirectInstall) onDirectInstall();
+                    }}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-cyan-500/25 transition-transform active:scale-95 cursor-pointer flex items-center space-x-2"
+                  >
+                    <Monitor className="w-4 h-4" />
+                    <span>Hemen Bilgisayara Masaüstü Uygulaması Olarak Kur</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Android Guide */}
           {activeTab === 'android' && (
