@@ -337,6 +337,16 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               }
             }
 
+            // At Yarışı AI Robotu ile %100 senkronize context üret ve sakla
+            try {
+              const horsePayload = {
+                bestHorse: cachedBestHorse,
+                cities: data?.programs?.map((p: any) => p.place || p.name).filter(Boolean).slice(0, 5),
+              };
+              (window as any).__PROANALIZ_HORSE_CONTEXT__ = horsePayload;
+              localStorage.setItem('proanaliz_horse_context', JSON.stringify(horsePayload));
+            } catch {}
+
             // Dinamik TJK Başarı Karnesi İstatistikleri Hesaplama
             let finRaces = 0;
             let wonRaces = 0;
@@ -478,6 +488,11 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           if (data?.items && Array.isArray(data.items)) {
             cachedMacroRates = data.items;
             setMacroRates(data.items);
+            try {
+              const macroPayload = data.items.slice(0, 6).map((i: any) => `${i.label || i.symbol}: ${i.price} TL (${i.changePct >= 0 ? '+' : ''}%${i.changePct})`);
+              (window as any).__PROANALIZ_MACRO_CONTEXT__ = macroPayload;
+              localStorage.setItem('proanaliz_macro_context', JSON.stringify(macroPayload));
+            } catch {}
           }
         })
         .catch(() => { });

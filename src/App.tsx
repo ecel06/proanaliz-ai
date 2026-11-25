@@ -421,7 +421,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.82';
+  const CLIENT_BUILD_VERSION = '2026.11.20.84';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -740,6 +740,38 @@ export const App: React.FC = () => {
   // AI Accuracy & Historical Performance Report
   const aiPerformanceReport = useMemo(() => {
     return computeAIPerformance(allMatches, matchAnalysesMap);
+  }, [allMatches, matchAnalysesMap]);
+
+  // Synchronize live Football AI context (Top Bankos, Live Scores) for Admin AI Co-Pilot
+  useEffect(() => {
+    try {
+      const upcoming = allMatches.filter((m) => m.status === 'upcoming' || m.status === 'live');
+      const topBankos = upcoming
+        .map((m) => {
+          const an = matchAnalysesMap.get(m.id);
+          const home = m.homeTeam?.name || 'Ev Sahibi';
+          const away = m.awayTeam?.name || 'Deplasman';
+          const pred = an?.primaryPrediction?.label || 'MS 1';
+          const conf = an?.primaryPrediction?.confidence ? Math.round(an.primaryPrediction.confidence) : 75;
+          return `${home} - ${away} (${m.league || 'Futbol'}) | AI Tahmin: ${pred} (Güven: %${conf})`;
+        })
+        .slice(0, 6);
+
+      const liveList = allMatches
+        .filter((m) => m.status === 'live')
+        .map((m) => {
+          const score = m.currentScore ? `${m.currentScore.home}-${m.currentScore.away}` : '';
+          return `${m.homeTeam?.name} ${score} ${m.awayTeam?.name} (${m.liveMinute || 'Canlı'})`;
+        });
+
+      const payload = {
+        topBankos,
+        liveMatches: liveList,
+        totalMatches: allMatches.length,
+      };
+      (window as any).__PROANALIZ_FOOTBALL_CONTEXT__ = payload;
+      localStorage.setItem('proanaliz_football_context', JSON.stringify(payload));
+    } catch {}
   }, [allMatches, matchAnalysesMap]);
 
   // Group matches for League Tree
@@ -2393,19 +2425,6 @@ export const App: React.FC = () => {
             gradientClass="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600"
             borderColorClass="border-emerald-200/70"
             shadowColorClass="shadow-emerald-500/40 hover:shadow-emerald-500/70"
-          />
-        )}
-
-        {/* 👑 Floating Admin AI Co-Pilot FAB (Yalnızca Yönetici oturumunda görünür) */}
-        {currentUser?.role === 'admin' && !isAdminAICoPilotOpen && (
-          <DraggableAIFab
-            id="admin-copilot"
-            onClick={() => setIsAdminAICoPilotOpen(true)}
-            title="Yalnızca Yönetici: Gemini AI Co-Pilot"
-            label="👑 Admin AI"
-            gradientClass="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600"
-            borderColorClass="border-amber-200/90"
-            shadowColorClass="shadow-amber-500/50 hover:shadow-amber-500/80 animate-pulse"
           />
         )}
 

@@ -137,15 +137,32 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
         text: m.text,
       }));
 
-      // Dynamically fetch live BIST context to guarantee 100% synchronization with Tavan Radar
-      let dynamicContext = clientContext || {};
+      // Dynamically fetch live multi-domain context for 100% unified AI integration
+      let dynamicContext: any = { ...(clientContext || {}) };
       try {
-        const stored = localStorage.getItem('proanaliz_bist_context');
-        const winCtx = (window as any).__PROANALIZ_BIST_CONTEXT__;
-        const bistCtx = stored ? JSON.parse(stored) : winCtx;
-        if (bistCtx && (bistCtx.tavanCandidates || bistCtx.sessionPhase)) {
-          dynamicContext = { ...dynamicContext, bist: bistCtx };
-        }
+        // 1. BIST Tavan Radarı
+        const storedBist = localStorage.getItem('proanaliz_bist_context');
+        const winBist = (window as any).__PROANALIZ_BIST_CONTEXT__;
+        const bistCtx = storedBist ? JSON.parse(storedBist) : winBist;
+        if (bistCtx) dynamicContext.bist = bistCtx;
+
+        // 2. Futbol AI Robotu & Bankolar
+        const storedFt = localStorage.getItem('proanaliz_football_context');
+        const winFt = (window as any).__PROANALIZ_FOOTBALL_CONTEXT__;
+        const ftCtx = storedFt ? JSON.parse(storedFt) : winFt;
+        if (ftCtx) dynamicContext.football = ftCtx;
+
+        // 3. At Yarışı (TJK) AI Robotu & Bankosu
+        const storedHorse = localStorage.getItem('proanaliz_horse_context');
+        const winHorse = (window as any).__PROANALIZ_HORSE_CONTEXT__;
+        const horseCtx = storedHorse ? JSON.parse(storedHorse) : winHorse;
+        if (horseCtx) dynamicContext.horses = horseCtx;
+
+        // 4. Canlı Altın & Döviz
+        const storedMacro = localStorage.getItem('proanaliz_macro_context');
+        const winMacro = (window as any).__PROANALIZ_MACRO_CONTEXT__;
+        const macroCtx = storedMacro ? JSON.parse(storedMacro) : winMacro;
+        if (macroCtx) dynamicContext.macro = macroCtx;
       } catch {}
 
       const res = await callAdminAICoPilotApi(text, chatHistory, apiKey, dynamicContext);
