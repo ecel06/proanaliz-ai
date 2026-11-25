@@ -444,6 +444,29 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     return map;
   }, [stocks]);
 
+  // Live BIST Market Session Status (10:00 - 18:10 Weekdays Istanbul Time)
+  const isBistOpen = useMemo(() => {
+    const trNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Istanbul' }));
+    const day = trNow.getDay();
+    const mins = trNow.getHours() * 60 + trNow.getMinutes();
+    const isWeekday = day >= 1 && day <= 5;
+    return isWeekday && mins >= 10 * 60 && mins <= 18 * 60 + 10;
+  }, []);
+
+  // All Ceiling / Breakout Candidates (Tavan Potansiyeli Yüksek Hisselerin Tümü)
+  const tavanCandidates = useMemo(() => {
+    return [...stocks]
+      .filter((s) => {
+        const qa = analysesMap.get(s.symbol);
+        return Boolean(qa?.tavanPotential?.isCandidate && (s.changePct || 0) < 9.7);
+      })
+      .sort(
+        (a, b) =>
+          (analysesMap.get(b.symbol)?.tavanPotential?.score || 0) -
+          (analysesMap.get(a.symbol)?.tavanPotential?.score || 0)
+      );
+  }, [stocks, analysesMap]);
+
   // 🌟 GÜNÜN BİST AI ZİRVESİ: SÜPER 3'LÜ VİTRİNİ
   const bistTopPicks = useMemo(() => {
     if (!stocks || stocks.length < 3) return null;
@@ -1409,7 +1432,12 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
           <div className="flex flex-wrap gap-1.5">
             {[
               { id: 'all', label: `Tümü (${stocks.length})` },
-              { id: 'tavan_aday', label: `🎯 Tavan Adayları (${statsSummary.tavanAday})` },
+              {
+                id: 'tavan_aday',
+                label: isBistOpen
+                  ? `🎯 Günün Tavan Adayları (${statsSummary.tavanAday})`
+                  : `🎯 Yarının Tavan Adayları (${statsSummary.tavanAday})`,
+              },
               { id: 'tavan', label: `🚀 Kilit Tavanlar (${statsSummary.tavan})` },
               { id: 'strong_buy', label: `🔥 Güçlü AL (${statsSummary.strongBuy})` },
               { id: 'buy', label: `✅ AL (${statsSummary.strongBuy + statsSummary.buy})` },
@@ -1470,7 +1498,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-2 border-t border-slate-800/80">
             {[
               alphaHighlights.topTavanCand && {
-                tag: '🎯 Günün Tavan Adayı',
+                tag: isBistOpen ? '🎯 Günün Tavan Adayı' : '🎯 Yarının Tavan Adayı',
                 sym: alphaHighlights.topTavanCand.symbol,
                 meta: `+${alphaHighlights.topTavanCand.changePct.toFixed(2)}% • %${analysesMap.get(alphaHighlights.topTavanCand.symbol)?.tavanPotential?.score || 80}`,
                 tone: 'border-amber-400/50 bg-amber-500/10 text-amber-300 ring-1 ring-amber-400/30',
@@ -2348,6 +2376,9 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                               <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
                                 <span>🎯 AI Tavan &amp; Patlama Radarı</span>
                               </h3>
+                              <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-bold">
+                                {isBistOpen ? '⚡ Canlı Seans' : '🌙 Seans Kapalı • Yarının Kurulumu'}
+                              </span>
                               {selectedAnalysis.tavanPotential.isAlreadyCeiling ? (
                                 <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black animate-pulse">
                                   TAVAN KİLİTLİ 🚀
@@ -2367,7 +2398,9 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                               )}
                             </div>
                             <p className="text-[10px] text-slate-400 mt-0.5">
-                              Hacim anomalisi, volatilite daralması ve dip tepki matematiğiyle erken tavan tespiti
+                              {isBistOpen
+                                ? 'Canlı seans hacim anomalisi, volatilite daralması ve dip tepki matematiğiyle erken tavan tespiti'
+                                : 'Bugünkü BIST seansı kapandı. Kapanış hacmi, aşırı satım dip uyumsuzluğu ve sıkışma patlamasıyla yarınki seansın potansiyel tavan kurulumu'}
                             </p>
                           </div>
                         </div>
