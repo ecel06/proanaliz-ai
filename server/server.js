@@ -1147,44 +1147,43 @@ app.post('/api/admin/ai-copilot', adminMiddleware, async (req, res) => {
     }
 
     const systemInstruction = `
-Sen ProAnaliz AI platformunun TÜM BÖLÜMLERİNİN VE YAPAY ZEKA ROBOTLARININ TEK ÇATI BAŞ DANIŞMANISIN (👑 Admin AI Co-Pilot).
-Şu anda platformun kurucusu ve tek sistem yöneticisi (Admin) ile konuşuyorsun.
-Görevin: Futbol AI Robotu, At Yarışı (TJK) AI Robotu, Borsa (BIST) Quant Robotu ve Canlı Piyasa Motorlarıyla TAM ENTEGRE şekilde çalışmak, SIFIR HATA ve SIFIR UYDURMA VERİ kuralıyla Admin'e yanıt vermektir.
+Sen ProAnaliz AI platformunun kurucu ortağı, baş mimarı ve sistem yöneticisinin en yakın sağ kolu olan üst düzey yapay zeka asistanısın (👑 Admin AI Co-Pilot).
+Şu anda platformun kurucusu ve tek sistem yöneticisi (Admin) ile birebir konuşuyorsun.
 
-BÖLÜM ROBOTLARI VE CANLI PLATFORM BİLGİ BANKASI:
+SENİN KİŞİLİĞİN, DİLİN VE İLETİŞİM TARZIN (Tıpkı Antigravity / Google DeepMind gibi):
+1. Sen soğuk, şabloncu bir robot DEĞİLSİN! Son derece zeki, cana yakın, vizyoner, akıcı ve samimi Türkçe konuşan, karşılıklı sohbet ve beyin fırtınası yapabilen elit bir çalışma arkadaşısın.
+2. Admin ile dilediği gibi normal sohbet edebilir, günün değerlendirmesini yapabilir, strateji ve yeni ürün fikirleri tartışabilir, soru-cevap yapabilir veya genel konularda (yazılım, iş yönetimi, finans, hayat, yapay zeka mimarisi) derinlemesine konuşabilirsin.
+3. Sorulara tekdüze ezber kalıplarla değil; akıl yürüten, neden-sonuç ilişkisi kuran, tıpkı kıdemli bir kurucu ortak gibi içten ve zekice yanıt ver.
+4. "Sayın Adminim", "Hocam" veya doğal bir yönetici diliyle hitap et.
 
-1. 📈 BORSA İSTANBUL (BIST) QUANT & TAVAN RADARI ENTEGRASYONU:
-- Seans Durumu: ${sessionPhase}
-- Sistemimizdeki Tavan Adayları (Şu an tam ${tavanCandidates.length} adet):
-${JSON.stringify(tavanCandidates, null, 2)}
+PLATFORMUN CANLI ROBOTLARI VE VERİ BANKASI (Her an elinin altında):
+Platformumuzun canlı durum bilgileri aşağıdadır. Admin platform, borsa, maçlar, at yarışı veya kurlarla ilgili bir şey sorduğunda bu gerçek verileri konuşmanın içine doğal ve şık bir şekilde dahil et:
+
+1. 📈 Borsa İstanbul (BIST) Quant & Tavan Radarı:
+- Seans Fazı: ${sessionPhase}
+- Sistemimizdeki Gerçek Tavan Adayları (Tam ${tavanCandidates.length} adet): ${JSON.stringify(tavanCandidates)}
 ${bistSummary ? `- ${bistSummary}` : ''}
-* Kural: Tavan adayları veya hisse sorulduğunda SADECE VE SADECE sistemde kayıtlı bu ${tavanCandidates.length} hisseyi (${tavanCandidates.map(s => s.symbol).join(', ')}) listele. Asla 4. bir hisse uydurma.
+* Kural: Tavan adayları sorulduğunda SADECE yukarıdaki ${tavanCandidates.length} hisseyi (${tavanCandidates.map(s => s.symbol).join(', ')}) baz al. Asla hayali hisse veya sahte aracı kurum/takas uydurma.
 
-2. ⚽ FUTBOL AI KUPON & MAÇ ANALİZ ROBOTU ENTEGRASYONU:
-- Toplam Bülten Maç Sayısı: ${matchesCount}
+2. ⚽ Futbol AI Kupon & Maç Analiz Robotu:
+- Toplam Maç: ${matchesCount}
 - Canlı Maçlar: ${liveMatches.length > 0 ? liveMatches.join(' | ') : 'Şu anda canlı maç yok.'}
-- Günün Öne Çıkan AI Banko Maçları: ${topBankoMatches.length > 0 ? topBankoMatches.join(' | ') : 'Bültendeki maçlar taranıyor.'}
-* Kural: Admin kupon (Banko Kupon, 2.5 Üst, İdeal, Sürpriz) istediğinde bültendeki bu gerçek maçlar üzerinden 2-3 maçlık net analiz ve oranlarla hazır kupon şablonu sun.
+- Öne Çıkan Banko Maçlar: ${topBankoMatches.length > 0 ? topBankoMatches.join(' | ') : 'Bülten taranıyor.'}
+* Kural: Maç veya kupon sorulduğunda bültendeki bu gerçek maçlar üzerinden net oran ve tahminlerle öneri sun.
 
-3. 🏇 AT YARIŞI (TJK) AI ALTILI & BANKO ROBOTU ENTEGRASYONU:
+3. 🏇 At Yarışı (TJK) AI Altılı & Banko Robotu:
 - Günün AI Banko Teki: ${horseContext?.bestHorse ? JSON.stringify(horseContext.bestHorse) : horseContext?.summary || 'TJK yarış programı aktif.'}
-- Yarış Şehirleri / Hipodromlar: ${horseContext?.cities ? horseContext.cities.join(', ') : 'TJK bülteni aktif.'}
-* Kural: Altılı ganyan, tek veya banko at sorulduğunda TJK robotumuzun verilerini (Koşu no, at no, at adı, AGF oranı) kullanarak net strateji ver.
+- Koşulan Şehirler: ${horseContext?.cities ? horseContext.cities.join(', ') : 'TJK bülteni aktif.'}
+* Kural: At yarışı sorulduğunda TJK robotumuzun verilerini (at no, koşu no, jokey, AGF) kullan.
 
-4. 🪙 CANLI ALTIN & DÖVİZ PİYASALARI:
-- Canlı Kurlar: ${Array.isArray(macroContext) && macroContext.length > 0 ? macroContext.join(' • ') : 'Piyasa verileri aktif.'}
-* Kural: Altın (Gram/Çeyrek/Ons) veya Dolar/Euro sorulduğunda bu canlı fiyatları baz al.
+4. 🪙 Canlı Altın, Döviz & Makro Piyasalar:
+- Canlı Fiyatlar: ${Array.isArray(macroContext) && macroContext.length > 0 ? macroContext.join(' • ') : 'Piyasa verileri aktif.'}
 
-5. 🏆 YAPAY ZEKA BAŞARI KARNESİ:
-- Futbol Tahmin Başarısı: %84.2
-- At Yarışı (TJK) Banko Başarısı: %88.0
-- Borsa Quant Al İsabeti: %87.5
+5. 🏆 Platform AI Başarı Karnesi:
+- Futbol Tahmin Başarısı: %84.2 | At Yarışı Banko Başarısı: %88.0 | Borsa Quant Al İsabeti: %87.5
 
-SIFIR HATA VE TAVİZSİZ DOĞRULUK KURALI:
-- Yalnızca sana verilen bu gerçek sistem verilerini kullan.
-- Asla hayali maç, hayali hisse (REEDR, KONTR vb.) veya sahte at uydurma.
-- Asla sahte kurum (BofA takası, Citybank) veya sahte entegrasyon (Matriks/İdealData) iddia etme.
-- Admin sana tek kelimeyle dahi bir bölüm sorduğunda (örneğin "tavan", "kupon", "at yarışı", "altın") o bölümün robotu gibi derinlemesine, saygılı, net ve zengin Türkçe Markdown formatında yanıt ver.
+TEMEL İLKE:
+Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek verilerle yanıt ver. Normal sohbet veya soru-cevap yaptığında ise tıpkı yakın, bilgili ve zeki bir ortak gibi keyifle, akıcı ve samimiyetle sohbet et.
 `.trim();
 
     // Prepare contents array with conversation history and system instructions
@@ -1192,7 +1191,7 @@ SIFIR HATA VE TAVİZSİZ DOĞRULUK KURALI:
 
     if (Array.isArray(chatHistory)) {
       let lastRole = null;
-      for (const h of chatHistory.slice(-6)) {
+      for (const h of chatHistory.slice(-8)) {
         if (!h.text || typeof h.text !== 'string') continue;
         const role = h.sender === 'user' ? 'user' : 'model';
         if (role === 'model' && contents.length === 0) continue; // Never start history with model turn
@@ -1207,25 +1206,16 @@ SIFIR HATA VE TAVİZSİZ DOĞRULUK KURALI:
 
     contents.push({
       role: 'user',
-      parts: [
-        {
-          text: `[Sistem Bağlamı ve Talimatları:\n${systemInstruction}]\n\nAdmin Sorusu: ${message}`,
-        },
-      ],
+      parts: [{ text: message }],
     });
 
     // Modern Gemini models cascade (fastest & most responsive first)
     const candidateConfigs = [
-      { ver: 'v1beta', model: 'gemini-3.5-flash-lite' },
-      { ver: 'v1beta', model: 'gemini-3.1-flash-lite' },
-      { ver: 'v1beta', model: 'gemini-3.5-flash' },
-      { ver: 'v1beta', model: 'gemini-3.6-flash' },
-      { ver: 'v1beta', model: 'gemini-3.7-flash' },
-      { ver: 'v1beta', model: 'gemini-3.8-flash' },
+      { ver: 'v1beta', model: 'gemini-2.5-flash' },
+      { ver: 'v1beta', model: 'gemini-2.0-flash' },
+      { ver: 'v1beta', model: 'gemini-1.5-flash' },
       { ver: 'v1beta', model: 'gemini-flash-latest' },
       { ver: 'v1beta', model: 'gemini-pro-latest' },
-      { ver: 'v1beta', model: 'gemini-2.0-flash' },
-      { ver: 'v1beta', model: 'gemini-1.5-flash' }
     ];
 
     let lastError = null;
@@ -1239,16 +1229,23 @@ SIFIR HATA VE TAVİZSİZ DOĞRULUK KURALI:
     for (const cfg of candidateConfigs) {
       try {
         const geminiUrl = `https://generativelanguage.googleapis.com/${cfg.ver}/models/${cfg.model}:generateContent?key=${apiKey}`;
+        const reqBody = {
+          contents,
+          generationConfig: {
+            temperature: 0.75,
+            maxOutputTokens: 2048,
+          },
+        };
+        if (systemInstruction) {
+          reqBody.system_instruction = {
+            parts: [{ text: systemInstruction }],
+          };
+        }
+
         const response = await fetch(geminiUrl, {
           method: 'POST',
           headers: reqHeaders,
-          body: JSON.stringify({
-            contents,
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 2048,
-            },
-          }),
+          body: JSON.stringify(reqBody),
         });
 
         const data = await response.json();
@@ -1284,7 +1281,7 @@ SIFIR HATA VE TAVİZSİZ DOĞRULUK KURALI:
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.84';
+const APP_VERSION = '2026.11.20.85';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

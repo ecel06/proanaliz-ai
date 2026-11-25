@@ -65,7 +65,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
       {
         id: 'welcome',
         sender: 'assistant',
-        text: `👑 **Hoş Geldiniz Sayın Yöneticim!**\n\nBen doğrudan platformun içine entegre edilmiş **Admin AI Co-Pilot** (Google Gemini) yapay zeka asistanınızım. Gün içinde bilgisayar başında olamadığınız anlarda cebinizden canlı BIST tavan adaylarını, maç analizlerini ve sistem durumunu yönetebilirsiniz.\n\nBana ne danışmak istersiniz?`,
+        text: `👑 **Selamlar Sayın Adminim!**\n\nBen ProAnaliz AI'daki yapay zeka çalışma ortağınız ve sağ kolunuzum (Google Gemini). Platformumuzdaki canlı BIST tavan adayları, maç tahminleri veya at yarışları hakkında danışabileceğiniz gibi; dilediğiniz her konuda soru sorabilir, strateji geliştirebilir veya normal sohbet edebiliriz.\n\nBugün nereden başlayalım, ne üzerine konuşalım?`,
         timestamp: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
       },
     ];
@@ -403,11 +403,12 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
             <span>Hızlı Soru:</span>
           </span>
           {[
+            '💬 Selam, günün bülten ve piyasa durumu nasıl?',
             '🎯 BIST Tavan Adaylarını Raporla',
-            '⚡ Portföyümdeki Hisseleri Analiz Et',
             '⚽ Günün En Güvendiğin 3 Maçı',
-            '📊 BIST Seans Görünümü & Strateji',
-            '🖥️ Platform Sağlık ve Servis Durumu',
+            '🏇 At Yarışı Günün Bankosu & Hipodromlar',
+            '🪙 Altın & Döviz Canlı Kurları',
+            '💡 Platformu Büyütmek İçin Tavsiyen Ne?',
           ].map((promptText) => (
             <button
               key={promptText}
