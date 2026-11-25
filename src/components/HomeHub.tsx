@@ -1,6 +1,7 @@
 // src/components/HomeHub.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import {
+  Home,
   ChevronRight,
   Sparkles,
   Download,
@@ -46,6 +47,7 @@ interface HomeHubProps {
   onOpenAuth?: () => void;
   onOpenProfile?: () => void;
   onOpenAdmin?: () => void;
+  onOpenAdminAICoPilot?: () => void;
   onOpenAIPerformance?: () => void;
   onOpenLiveGoldModal?: () => void;
   onLogout?: () => void;
@@ -77,6 +79,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   onOpenAuth,
   onOpenProfile,
   onOpenAdmin,
+  onOpenAdminAICoPilot,
   onOpenAIPerformance,
   onOpenLiveGoldModal,
   onLogout,
@@ -689,6 +692,17 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               </button>
             )}
 
+            {user?.role === 'admin' && onOpenAdminAICoPilot && (
+              <button
+                onClick={onOpenAdminAICoPilot}
+                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/25 to-yellow-500/25 border border-amber-400/60 text-amber-300 font-black text-xs hover:text-white cursor-pointer active:scale-95 transition-all shadow-xs"
+                title="Yalnızca Yönetici: Gemini AI Co-Pilot"
+              >
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Admin AI</span>
+              </button>
+            )}
+
             {onOpenVIP && (
               <button
                 onClick={onOpenVIP}
@@ -723,6 +737,50 @@ export const HomeHub: React.FC<HomeHubProps> = ({
             )}
           </div>
         </header>
+
+        {/* 🌟 4 CORE CATEGORY NAVIGATION BAR (Ana Sayfa, Futbol, At Yarışı, Borsa) */}
+        <nav
+          aria-label="Ana Menü Hızlı Geçiş"
+          className="w-full pb-1 pt-1"
+        >
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5 p-1 rounded-xl bg-slate-900/90 border border-slate-800 shadow-inner w-full sm:max-w-2xl sm:mx-auto">
+            <button
+              type="button"
+              className="flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-2 px-1 rounded-lg font-black text-xs sm:text-sm bg-slate-800 text-white shadow-sm ring-1 ring-slate-700 transition-all cursor-default min-w-0"
+              title="Şu anki sayfa: Ana Sayfa"
+            >
+              <Home className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+              <span className="truncate">Ana Sayfa</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelectFootball()}
+              className="flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-2 px-1 rounded-lg font-black text-xs sm:text-sm text-slate-300 hover:text-white hover:bg-slate-800/60 transition-all cursor-pointer min-w-0"
+              title="Futbol & Canlı Maç Bültenine Git"
+            >
+              <span>⚽</span>
+              <span className="truncate">Futbol</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelectHorseRacing()}
+              className="flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-2 px-1 rounded-lg font-black text-xs sm:text-sm text-slate-300 hover:text-amber-300 hover:bg-slate-800/60 transition-all cursor-pointer min-w-0"
+              title="At Yarışı & Altılı Robotuna Git"
+            >
+              <span>🏇</span>
+              <span className="truncate">At Yarışı</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelectStocks()}
+              className="flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-2 px-1 rounded-lg font-black text-xs sm:text-sm text-slate-300 hover:text-cyan-300 hover:bg-slate-800/60 transition-all cursor-pointer min-w-0"
+              title="Borsa & Kripto Terminaline Git"
+            >
+              <span>📈</span>
+              <span className="truncate">Borsa</span>
+            </button>
+          </div>
+        </nav>
 
         <div className="text-center space-y-1">
           <h1 className="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-white">

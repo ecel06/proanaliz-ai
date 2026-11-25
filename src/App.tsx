@@ -421,7 +421,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.79';
+  const CLIENT_BUILD_VERSION = '2026.11.20.80';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1304,6 +1304,7 @@ export const App: React.FC = () => {
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenProfile={() => setIsProfileModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
+        onOpenAdminAICoPilot={() => setIsAdminAICoPilotOpen(true)}
         onOpenAIPerformance={() => {
           setAiPerformanceInitialTab('overall');
           setIsAIPerformanceOpen(true);
@@ -2477,6 +2478,15 @@ export const App: React.FC = () => {
               isOpen={isAdminAICoPilotOpen}
               onClose={() => setIsAdminAICoPilotOpen(false)}
               currentUser={currentUser}
+              clientContext={{
+                bist: (() => {
+                  try {
+                    const saved = localStorage.getItem('proanaliz_bist_context');
+                    if (saved) return JSON.parse(saved);
+                  } catch {}
+                  return (window as any).__PROANALIZ_BIST_CONTEXT__ || {};
+                })(),
+              }}
               onShowToast={(msg) => {
                 setRefreshToast(msg);
                 setTimeout(() => setRefreshToast(null), 3500);

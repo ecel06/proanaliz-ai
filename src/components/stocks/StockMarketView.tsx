@@ -525,6 +525,30 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       );
   }, [stocks, analysesMap]);
 
+  // Synchronize live BIST tavan radar and session phase to global context for Admin AI Co-Pilot
+  useEffect(() => {
+    try {
+      const candidatesPayload = tavanCandidates.slice(0, 10).map((s) => {
+        const qa = analysesMap.get(s.symbol);
+        return {
+          symbol: s.symbol,
+          name: s.name,
+          price: s.close ? `${s.close} TL` : '—',
+          changePct: s.changePct !== undefined ? `%${s.changePct.toFixed(2)}` : '—',
+          score: qa?.tavanPotential?.score || qa?.score || 75,
+          tavanMargin: qa?.tavanPotential?.tavanMargin,
+          primaryReason: qa?.tavanPotential?.primaryReason,
+        };
+      });
+      const context = {
+        tavanCandidates: candidatesPayload,
+        sessionPhase: bistSessionPhase.badgeText,
+      };
+      (window as any).__PROANALIZ_BIST_CONTEXT__ = context;
+      localStorage.setItem('proanaliz_bist_context', JSON.stringify(context));
+    } catch {}
+  }, [tavanCandidates, analysesMap, bistSessionPhase]);
+
   // 🌟 GÜNÜN BİST AI ZİRVESİ: SÜPER 3'LÜ VİTRİNİ
   const bistTopPicks = useMemo(() => {
     if (!stocks || stocks.length < 3) return null;

@@ -298,14 +298,11 @@ export const Header: React.FC<HeaderProps> = ({
                 {user.isVip ? (
                   <button
                     onClick={onOpenVIP}
-                    className="flex items-center space-x-1 px-2 py-1.5 rounded-xl bg-amber-400/20 border border-amber-400/50 text-amber-300 font-black text-xs shadow-xs cursor-pointer active:scale-95 shrink-0"
+                    className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-amber-400/20 border border-amber-400/50 text-amber-300 font-black text-xs shadow-xs cursor-pointer active:scale-95 shrink-0"
                     title={`VIP Üyelik Aktif (Plan: ${user.vipPlan || 'VIP'})`}
                   >
                     <Crown className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                    <span className="hidden sm:inline font-bold truncate max-w-[80px]">
-                      {user.name.split(' ')[0]}
-                    </span>
-                    <span className="text-[10px] px-1 py-0.2 rounded bg-amber-400 text-slate-950 font-black">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black">
                       VIP
                     </span>
                   </button>

@@ -1062,11 +1062,36 @@ app.post('/api/admin/ai-copilot', adminMiddleware, async (req, res) => {
           .slice(0, 8)
       : [];
 
-    const bistContext = clientContext?.bist || {};
-    const tavanCandidates = Array.isArray(bistContext.tavanCandidates)
+    let bistContext = clientContext?.bist || {};
+    let tavanCandidates = Array.isArray(bistContext.tavanCandidates)
       ? bistContext.tavanCandidates.slice(0, 10)
       : [];
-    const sessionPhase = bistContext.sessionPhase || 'Bilinmiyor';
+    let sessionPhase = bistContext.sessionPhase || 'Bilinmiyor';
+
+    // If no tavan candidates provided by client, dynamically scan real BIST screener data on server
+    let bistSummary = '';
+    if (tavanCandidates.length === 0) {
+      try {
+        const screenerData = await fetchStockScreener('bist', '', false);
+        if (Array.isArray(screenerData?.stocks) && screenerData.stocks.length > 0) {
+          const sorted = [...screenerData.stocks].sort((a, b) => (b.changePct || 0) - (a.changePct || 0));
+          const topGainers = sorted.filter(s => (s.changePct || 0) > 0).slice(0, 8);
+          const topLosers = sorted.filter(s => (s.changePct || 0) < 0).slice(-4).reverse();
+          
+          tavanCandidates = topGainers.map(s => ({
+            symbol: s.symbol,
+            name: s.name,
+            price: s.price ? `${s.price} TL` : '—',
+            changePct: s.changePct !== undefined ? `%${s.changePct.toFixed(2)}` : '—',
+            rsi: s.rsi ? Math.round(s.rsi) : null,
+          }));
+
+          bistSummary = `BIST Gerçek Seans Özeti: En çok yükselenler: ${topGainers.map(s => `${s.symbol} (%${s.changePct?.toFixed(2) || 0})`).join(', ')}. En çok düşenler: ${topLosers.map(s => `${s.symbol} (%${s.changePct?.toFixed(2) || 0})`).join(', ')}.`;
+        }
+      } catch (err) {
+        console.warn('Admin Co-Pilot live screener fetch warning:', err.message);
+      }
+    }
 
     // If no API key is available, return an intelligent guided response
     if (!apiKey) {
@@ -1080,35 +1105,45 @@ app.post('/api/admin/ai-copilot', adminMiddleware, async (req, res) => {
     const systemInstruction = `
 Sen ProAnaliz AI platformunun kurumsal baş analisti ve üst düzey yönetici yapay zeka asistanısın (👑 Admin AI Co-Pilot).
 Şu anda doğrudan platformun kurucusu ve tek sistem yöneticisi (Admin) ile konuşuyorsun.
-Görevin: Admin'e BIST hisse senetleri (tavan adayları, teknik kırılımlar, hacim patlamaları), iddaa maç tahminleri, kupon analizleri ve platform durumu hakkında en üst seviye analitik içgörüler sunmak.
 
-Kişiliğin:
-- Saygılı, net, güven veren, analitik ve stratejik.
-- Gereksiz laf kalabalığı yapmaz, doğrudan rakamlar, yüzdeler, hedefler ve risklerle konuşur.
-- Yanıtlarını zengin Türkçe Markdown formatında (kalın başlıklar, emoji maddeleri, net özetler) sunar.
-
-Platformun Canlı Durumu:
+Platformun Canlı Durumu ve Gerçek Veritabanı:
 - BIST Seans Durumu: ${sessionPhase}
-- BIST Tavan Radarı Adayları: ${
-      tavanCandidates.length > 0 ? JSON.stringify(tavanCandidates) : 'Şu an radar taranıyor veya seans kapalı.'
+- BIST Gerçek Piyasa / Tavan Radarı: ${
+      tavanCandidates.length > 0
+        ? JSON.stringify(tavanCandidates)
+        : 'Sistemde şu an tavan şartlarını sağlayan hisse yok veya seans kapalı.'
     }
+${bistSummary ? `- ${bistSummary}` : ''}
 - Canlı Maçlar: ${liveMatches.length > 0 ? liveMatches.join(', ') : 'Şu anda canlı maç yok.'}
 - Toplam Bülten Maç Sayısı: ${matchesCount}
 - Kullanıcı: Sistem Yöneticisi (Admin)
 
-Admin'in sorusuna doğrudan, kapsamlı ve profesyonel bir şekilde yanıt ver.
+KESİN VE TAVİZSİZ KURALLAR (HALÜSİNASYON ENGELİ):
+1. YALNIZCA VE YALNIZCA sana yukarıda verilen GERÇEK hisseleri ve gerçek verileri kullan.
+2. ASLA HAYALİ HİSSE UYDURMA! Sana verilen listede olmayan hiçbir hisseyi (örneğin REEDR, KONTR vb.) kendi kafandan uydurarak tavan adayı ilan etme.
+3. ASLA SAHTE ARACI KURUM VEYA TAKAS VERİSİ (Bank of America alımı, Citybank takası vb.) UYDURMA! Platformumuzda aracı kurum takas verisi yoktur; sahte veri üretmek kesinlikle YASAKTIR.
+4. ASLA SAHTE ENTEGRASYON İDDİA ETME! "Matriks / İdealData entegrasyonu" gibi yalan bilgiler uydurma. Platformumuz kendi bağımsız algoritmik tarayıcısını kullanır.
+5. ASLA SAHTE ÇANAK-KULP VEYA GRAFİK FORMASYONLARI UYDURMA! Yalnızca sana verilen teknik göstergelerle (Fiyat, Yüzde Değişim, RSI, Hacim) konuş.
+6. Eğer Admin tavan adaylarını sorarsa ve yukarıdaki listede hisse yoksa, dürüst ve net ol: "Şu anda seans kapalı olduğu veya kriterleri (%3+ hacimli ivme) karşılayan hisse bulunmadığı için aktif tavan adayı taranmamıştır. Son seans verilerine göre piyasa durumu şöyledir..." diyerek gerçek hisselerin durumunu özetle.
+7. Yanıtlarını profesyonel, saygılı ve zengin Türkçe Markdown formatında (kalın başlıklar, emoji maddeleri, net özetler) sun.
 `.trim();
 
     // Prepare contents array with conversation history and system instructions
     const contents = [];
 
     if (Array.isArray(chatHistory)) {
-      chatHistory.slice(-6).forEach((h) => {
+      let lastRole = null;
+      for (const h of chatHistory.slice(-6)) {
+        if (!h.text || typeof h.text !== 'string') continue;
+        const role = h.sender === 'user' ? 'user' : 'model';
+        if (role === 'model' && contents.length === 0) continue; // Never start history with model turn
+        if (role === lastRole) continue; // Never consecutive same roles
         contents.push({
-          role: h.sender === 'user' ? 'user' : 'model',
+          role,
           parts: [{ text: h.text }],
         });
-      });
+        lastRole = role;
+      }
     }
 
     contents.push({
@@ -1190,7 +1225,7 @@ Admin'in sorusuna doğrudan, kapsamlı ve profesyonel bir şekilde yanıt ver.
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.79';
+const APP_VERSION = '2026.11.20.80';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
