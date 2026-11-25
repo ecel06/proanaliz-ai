@@ -239,8 +239,8 @@ export function analyzeStockQuant(stock: StockItem): StockQuantAnalysis {
 
   fundamentalScore = hasFundamentals ? clamp(Math.round(fundamentalScore)) : 50;
 
-  // --- 4. COMPOSITE QUANT SCORE & SIGNAL ---
-  const score = clamp(
+  // --- 4. COMPOSITE QUANT SCORE & SIGNAL HARMONIZATION ---
+  let score = clamp(
     Math.round(
       stock.market === 'crypto'
         ? trendScore * 0.5 + momentumScore * 0.5
@@ -248,8 +248,19 @@ export function analyzeStockQuant(stock: StockItem): StockQuantAnalysis {
     )
   );
 
-  // Overbought & Top Reversal Guard (Prevents giving "AL" at the peak of a rally)
-  const isOverbought = Boolean(
+  // 🚀 TAVAN & KIRILIM İVMESİ UYUMU:
+  // Eğer hisse gün içi güçlü primle (+%4.0 ve üzeri) tavana koşuyorsa (Örn: GENIL +%7.58, ISKPL +%7.09):
+  // Bu bir 'aşırı alım yorgunluğu' değil, canlı bir kırılım/tavan ivmesidir.
+  // Bu nedenle aşırı alım baskılanması kaldırılır ve skor/sinyal AL veya GÜÇLÜ AL seviyesine yükseltilir.
+  const isTavanSurge = (stock.changePct || 0) >= 4.0;
+  if (isTavanSurge) {
+    if (score < 66) score = Math.max(score, 68); // TUT yerine AL sinyaline yükselt
+    if ((stock.changePct || 0) >= 6.5 && score < 76) score = Math.max(score, 77); // Güçlü tavan atağında GÜÇLÜ AL'a taşı
+    bullReasons.unshift(`🎯 Güçlü gün içi alıcı ivmesi ve tavan atağı (+%${(stock.changePct || 0).toFixed(2)})`);
+  }
+
+  // Overbought & Top Reversal Guard (Yalnızca tavan koşusu olmayan yatay/yorgun hisselerde aşırı alımı kısıtla)
+  const isOverbought = !isTavanSurge && Boolean(
     (stock.rsi !== null && stock.rsi >= 74) ||
     (stock.bbUpper !== null && price >= stock.bbUpper * 1.01)
   );
@@ -326,7 +337,11 @@ export function analyzeStockQuant(stock: StockItem): StockQuantAnalysis {
     ? `${stock.symbol}, teknik göstergelerde (${signal}) zayıflama veya aşırı alım baskısı taşıyor. Pozisyon yönetimi için ${formatStockPrice(s1, stock.currency)} desteği kritik eşik konumunda.`
     : `${stock.symbol} şu anda kararsız / yatay denge bölgesinde (Nötr). Yön teyidi için ${formatStockPrice(r1, stock.currency)} direnci üstü kırılım veya ${formatStockPrice(s1, stock.currency)} desteği tepkisi beklenmelidir.`;
 
-  const tavanPotential = calculateTavanPotential(stock);
+  const tavanPotential = calculateTavanPotential(stock, {
+    rawScore: score,
+    rawSignal: signal,
+    trendScore,
+  });
 
   return {
     symbol: stock.symbol,
@@ -365,7 +380,10 @@ export function analyzeStockQuant(stock: StockItem): StockQuantAnalysis {
   };
 }
 
-export function calculateTavanPotential(stock: StockItem): TavanPotentialResult {
+export function calculateTavanPotential(
+  stock: StockItem,
+  quantContext?: { rawScore?: number; rawSignal?: StockSignalType; trendScore?: number }
+): TavanPotentialResult {
   const price = stock.close || 1;
   const changePct = stock.changePct || 0;
   const reasons: string[] = [];
@@ -383,90 +401,105 @@ export function calculateTavanPotential(stock: StockItem): TavanPotentialResult 
       relativeVolume: 1.0,
       squeezeStatus: 'Patlama Başladı',
       targetCeilingPrice: Number(price.toFixed(2)),
+      tavanMargin: 0,
+      primaryReason: 'Hisse günün tavan marjını kilitledi.',
     };
   }
 
   // Tavan hedef fiyatı hesabı (Dünkü kapanışın +%10'u)
   const prevClose = price / (1 + changePct / 100);
   const targetCeilingPrice = Number((prevClose * 1.1).toFixed(2));
+  const tavanMargin = Number(Math.max(0, 10 - changePct).toFixed(2));
 
-  let score = 25; // Taban başlangıç potansiyeli
+  // Taban başlangıç potansiyeli (Şişirmeyi önlemek için 10'a çekildi)
+  let score = 10;
 
-  // 1. GÜN İÇİ ALICI İVMESİ
-  if (changePct > 0) {
-    if (changePct >= 2.5 && changePct <= 8.5) {
-      score += 25;
-      reasons.push(`Kuvvetli gün içi alıcı momentumu (+%${changePct.toFixed(2)})`);
-    } else if (changePct >= 0.8 && changePct < 2.5) {
-      score += 15;
-      reasons.push(`Pozitif başlangıç ivmesi (+%${changePct.toFixed(2)})`);
-    }
+  // 1. GÜN İÇİ ALICI İVMESİ (Gerçek primlenme şartı)
+  if (changePct >= 6.0 && changePct < 9.7) {
+    score += 35;
+    reasons.push(`Tavan sınırına yakın kuvvetli alıcı baskısı (+%${changePct.toFixed(2)})`);
+  } else if (changePct >= 3.5 && changePct < 6.0) {
+    score += 25;
+    reasons.push(`Belirgin yukarı ivmelenme (+%${changePct.toFixed(2)})`);
+  } else if (changePct >= 2.0 && changePct < 3.5) {
+    score += 10;
+    reasons.push(`Ilımlı başlangıç ivmesi (+%${changePct.toFixed(2)})`);
+  } else if (changePct <= 0) {
+    score -= 20;
   }
 
-  // 2. HACİM ANOMALİSİ (RVol)
+  // 2. HACİM ANOMALİSİ (RVol) - Yalnızca fiyatta gerçek bir prim (+%2.0+) varsa ödüllendir
   let rvol = 1.0;
   if (stock.valueTraded && stock.marketCap && stock.marketCap > 0) {
     const turnoverRate = (stock.valueTraded / stock.marketCap) * 100;
-    if (turnoverRate >= 3.5) {
-      rvol = Number((turnoverRate / 1.8).toFixed(1));
-      score += 25;
-      reasons.push(`Büyük kurumsal para girişi & hacim anomalisi (${rvol}x RVol)`);
-    } else if (turnoverRate >= 1.5) {
+    if (turnoverRate >= 3.0 && changePct >= 2.5) {
+      rvol = Number((turnoverRate / 1.5).toFixed(1));
+      score += 20;
+      reasons.push(`Kuvvetli para girişi ve hacim anomalisi (${rvol}x RVol)`);
+    } else if (turnoverRate >= 1.5 && changePct >= 2.0) {
       rvol = Number((turnoverRate / 1.2).toFixed(1));
-      score += 15;
-      reasons.push(`Hacimde belirgin hareketlenme (${rvol}x RVol)`);
+      score += 10;
+      reasons.push(`Hacim desteğiyle yükseliş (${rvol}x RVol)`);
     }
   }
 
-  // 3. VOLATİLİTE SIKIŞMASI (Bollinger Squeeze)
+  // 3. VOLATİLİTE SIKIŞMASI (Bollinger Squeeze Breakout)
   let squeezeStatus: 'Daralma / Yay Eşiğinde' | 'Patlama Başladı' | 'Normal' = 'Normal';
   if (stock.bbLower !== null && stock.bbUpper !== null && stock.bbUpper > 0) {
     const bbMid = (stock.bbUpper + stock.bbLower) / 2;
     const bbWidth = (stock.bbUpper - stock.bbLower) / (bbMid || 1);
-    if (bbWidth <= 0.08) {
-      score += 25;
+    if (bbWidth <= 0.08 && changePct >= 2.5) {
+      score += 20;
       squeezeStatus = 'Daralma / Yay Eşiğinde';
-      reasons.push('Bollinger bantlarında aşırı daralma (Yay gibi gerilme - Sıkışma Patlaması Eşiği)');
-    } else if (price >= stock.bbUpper * 0.985 && changePct >= 1.5) {
+      reasons.push('Bollinger sıkışması sonrası yukarı patlama eşiği');
+    } else if (price >= stock.bbUpper * 0.99 && changePct >= 3.0) {
       score += 20;
       squeezeStatus = 'Patlama Başladı';
-      reasons.push('Üst Bollinger bandı yukarı yönde kırılıyor');
+      reasons.push('Üst Bollinger bandı hacimle yukarı deliniyor');
     }
   }
 
-  // 4. DİP TEPKİ & AŞIRI SATIM DÖNÜŞÜ (KATMR & REEDR Tipi Sıçrama)
+  // 4. DİP TEPKİ & AŞIRI SATIM DÖNÜŞÜ (Sadece teyitli sert sıçramalar)
   let isDipReversal = false;
-  if (stock.rsi !== null && stock.rsi <= 45) {
-    if (stock.rsi <= 35) {
-      score += 25;
-      isDipReversal = true;
-      reasons.push(`Aşırı satım dip bölgesinden sert tepki (RSI: ${stock.rsi.toFixed(1)})`);
-    } else if (stock.rsi <= 45 && changePct >= 1.0) {
-      score += 15;
-      isDipReversal = true;
-      reasons.push(`Dip toparlanma teyidi (RSI: ${stock.rsi.toFixed(1)})`);
-    }
+  if (stock.rsi !== null && stock.rsi <= 40 && changePct >= 3.0) {
+    score += 20;
+    isDipReversal = true;
+    reasons.push(`Aşırı satım dip bölgesinden teyitli sert sıçrama (RSI: ${stock.rsi.toFixed(1)})`);
   }
-  if ((stock.perfW && stock.perfW < -8) || (stock.perf1M && stock.perf1M < -15)) {
-    if (changePct >= 1.0) {
-      score += 15;
-      isDipReversal = true;
-      reasons.push('Haftalık/Aylık dip seviyeden dönüş ve tepki alımı');
-    }
+  if (((stock.perfW && stock.perfW < -10) || (stock.perf1M && stock.perf1M < -18)) && changePct >= 3.0) {
+    score += 15;
+    isDipReversal = true;
+    reasons.push('Aylık dip seviyeden dönüş ve tepki alımı');
   }
 
   // 5. MOMENTUM & MACD KESİŞİMİ
-  if (stock.macd !== null && stock.macdSignal !== null && stock.macd > stock.macdSignal) {
-    score += 15;
+  if (stock.macd !== null && stock.macdSignal !== null && stock.macd > stock.macdSignal && changePct >= 1.5) {
+    score += 10;
     reasons.push('MACD pozitif alım bölgesinde yukarı ivmeleniyor');
   }
 
   // 6. GÜNÜN ZİRVESİNE KİLİTLENME
   if (stock.high && stock.low && stock.high > stock.low) {
     const positionInBar = (price - stock.low) / (stock.high - stock.low);
-    if (positionInBar >= 0.85 && changePct >= 1.5) {
+    if (positionInBar >= 0.85 && changePct >= 3.0) {
       score += 15;
-      reasons.push('Fiyat günün zirvesinde kapanışa kilitleniyor (Alıcı baskın)');
+      reasons.push('Fiyat günün en yükseğinde kapanışa kilitleniyor (Alıcı baskın)');
+    }
+  }
+
+  // 7. 🛡️ QUANT MODELİ & TREND UYUMU (ASTOR & DMRGD Çelişki Koruması)
+  if (quantContext) {
+    const { rawSignal, rawScore } = quantContext;
+    if (rawSignal === 'SAT' || rawSignal === 'GÜÇLÜ SAT' || (rawScore !== undefined && rawScore <= 38)) {
+      if (changePct < 5.5) {
+        score -= 35; // SAT hissesine ağır ceza!
+        reasons.push('Ana teknik trend düşüş yönünde (SAT); tavan potansiyeli baskılanıyor');
+      }
+    } else if (rawSignal === 'GÜÇLÜ AL' || (rawScore !== undefined && rawScore >= 76)) {
+      score += 15;
+      reasons.push('AI Quant ana trendi (GÜÇLÜ AL) hareketi teyit ediyor');
+    } else if (rawSignal === 'AL' || (rawScore !== undefined && rawScore >= 64)) {
+      score += 10;
     }
   }
 
@@ -489,7 +522,15 @@ export function calculateTavanPotential(stock: StockItem): TavanPotentialResult 
     categoryLabel = '🔥 Hacim & İvme Adayı';
   }
 
-  const isCandidate = score >= 65 && changePct >= 0.8 && changePct <= 9.0;
+  // Adaylık Kriteri:
+  // En az %3.0 gün içi prim olmalı VE puan >= 65 olmalı VE SAT sinyalinde olmamalı!
+  const isCandidate =
+    score >= 65 &&
+    changePct >= 3.0 &&
+    changePct < 9.7 &&
+    quantContext?.rawSignal !== 'SAT' &&
+    quantContext?.rawSignal !== 'GÜÇLÜ SAT';
+
   const isHighProbability = score >= 78 && isCandidate;
 
   return {
@@ -503,6 +544,8 @@ export function calculateTavanPotential(stock: StockItem): TavanPotentialResult 
     relativeVolume: rvol,
     squeezeStatus,
     targetCeilingPrice,
+    tavanMargin,
+    primaryReason: reasons[0] || 'Dengeli seyir',
   };
 }
 

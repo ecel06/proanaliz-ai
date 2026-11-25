@@ -152,6 +152,8 @@ export interface TavanPotentialResult {
   relativeVolume: number; // e.g. 2.4x
   squeezeStatus: 'Daralma / Yay Eşiğinde' | 'Patlama Başladı' | 'Normal';
   targetCeilingPrice: number; // +10% tavan fiyatı
+  tavanMargin?: number; // tavana kalan marj %
+  primaryReason?: string;
 }
 
 export interface TimeframeSnapshot {
