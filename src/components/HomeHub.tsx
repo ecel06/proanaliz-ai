@@ -689,18 +689,6 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               </button>
             )}
 
-            {onOpenInstallModal && (
-              <button
-                onClick={onOpenInstallModal}
-                className="inline-flex items-center space-x-1 px-2.5 sm:px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/40 text-indigo-300 font-bold text-xs hover:bg-indigo-500/25 cursor-pointer active:scale-95 transition-all shadow-xs"
-                title="ProAnaliz AI Uygulamasını Telefona İndir & Kur"
-              >
-                <Smartphone className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="hidden sm:inline">Uygulamayı İndir</span>
-                <span className="sm:hidden">İndir</span>
-              </button>
-            )}
-
             {onOpenVIP && (
               <button
                 onClick={onOpenVIP}

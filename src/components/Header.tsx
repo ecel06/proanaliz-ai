@@ -228,19 +228,6 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* 📲 PWA / Mobil Uygulamayı İndir & Kur Butonu */}
-            {onOpenInstallApp && (
-              <button
-                onClick={onOpenInstallApp}
-                className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/40 hover:border-indigo-400/60 font-bold text-xs transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 group"
-                title="ProAnaliz AI Uygulamasını Telefona İndir & Kur (PWA)"
-              >
-                <Smartphone className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
-                <span className="hidden sm:inline">Uygulamayı İndir</span>
-                <span className="sm:hidden text-[11px]">İndir</span>
-              </button>
-            )}
-
             {/* 👤 User Auth & 👑 VIP Membership Actions */}
             {!user ? (
               <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
