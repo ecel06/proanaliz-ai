@@ -138,10 +138,13 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
     }, 19000);
 
     try {
-      const chatHistory = messages.slice(-6).map((m) => ({
-        sender: m.sender,
-        text: m.text,
-      }));
+      const chatHistory = messages
+        .filter((m) => !m.text.startsWith('⚠️') && m.id !== 'welcome' && !m.id.startsWith('welcome-'))
+        .slice(-6)
+        .map((m) => ({
+          sender: m.sender,
+          text: m.text,
+        }));
 
       // Dynamically fetch live multi-domain context for 100% unified AI integration
       let dynamicContext: any = { ...(clientContext || {}) };

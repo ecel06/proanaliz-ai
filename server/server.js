@@ -1163,34 +1163,53 @@ TEMEL İLKE:
 Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek verilerle yanıt ver. Normal sohbet veya soru-cevap yaptığında ise tıpkı yakın, bilgili ve zeki bir ortak gibi keyifle, akıcı ve samimiyetle sohbet et.
 `.trim();
 
-    // Prepare contents array with conversation history and system instructions
+    // Strictly alternating contents array for Google Gemini: user -> model -> user -> model -> user
     const contents = [];
 
     if (Array.isArray(chatHistory)) {
-      let lastRole = null;
       for (const h of chatHistory.slice(-8)) {
-        if (!h.text || typeof h.text !== 'string') continue;
-        const role = h.sender === 'user' ? 'user' : 'model';
-        if (role === 'model' && contents.length === 0) continue; // Never start history with model turn
-        if (role === lastRole) continue; // Never consecutive same roles
-        contents.push({
-          role,
-          parts: [{ text: h.text }],
-        });
-        lastRole = role;
+        if (!h.text || typeof h.text !== 'string' || !h.text.trim()) continue;
+        // Clean out previous error messages or system notifications from history
+        if (h.text.startsWith('⚠️') || h.text.includes('Sistem Bildirimi') || h.text.includes('Bağlantı Hatası')) continue;
+
+        const role = (h.sender === 'user' || h.role === 'user') ? 'user' : 'model';
+        
+        // Multiturn conversation cannot start with model
+        if (role === 'model' && contents.length === 0) continue;
+
+        // If consecutive roles match, merge texts to strictly preserve alternation
+        if (contents.length > 0 && contents[contents.length - 1].role === role) {
+          contents[contents.length - 1].parts[0].text += `\n\n${h.text.trim()}`;
+        } else {
+          contents.push({
+            role,
+            parts: [{ text: h.text.trim() }],
+          });
+        }
       }
     }
 
-    contents.push({
-      role: 'user',
-      parts: [{ text: message }],
-    });
+    // Embed systemInstruction directly inside prompt text (universal across all Gemini versions & endpoints)
+    const promptText = `[Rolün & ProAnaliz Canlı Sistem Durumu:\n${systemInstruction}]\n\nAdmin: ${message.trim()}`;
 
-    // Modern Gemini models cascade (fastest & most responsive first)
+    // Ensure the last turn is user and strictly alternates
+    if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+      contents[contents.length - 1].parts[0].text += `\n\n${promptText}`;
+    } else {
+      contents.push({
+        role: 'user',
+        parts: [{ text: promptText }],
+      });
+    }
+
+    // Modern Gemini model cascade with 100% free-tier verified models
     const candidateConfigs = [
       { ver: 'v1beta', model: 'gemini-1.5-flash' },
+      { ver: 'v1beta', model: 'gemini-1.5-flash-latest' },
       { ver: 'v1beta', model: 'gemini-2.0-flash' },
-      { ver: 'v1beta', model: 'gemini-1.5-pro' },
+      { ver: 'v1beta', model: 'gemini-2.0-flash-exp' },
+      { ver: 'v1beta', model: 'gemini-1.5-flash-8b' },
+      { ver: 'v1', model: 'gemini-1.5-flash' },
     ];
 
     let lastError = null;
@@ -1201,21 +1220,17 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
       'x-goog-api-key': apiKey,
     };
 
+    const reqBody = {
+      contents,
+      generationConfig: {
+        temperature: 0.75,
+        maxOutputTokens: 2048,
+      },
+    };
+
     for (const cfg of candidateConfigs) {
       try {
         const geminiUrl = `https://generativelanguage.googleapis.com/${cfg.ver}/models/${cfg.model}:generateContent?key=${apiKey}`;
-        const reqBody = {
-          contents,
-          generationConfig: {
-            temperature: 0.75,
-            maxOutputTokens: 2048,
-          },
-        };
-        if (systemInstruction) {
-          reqBody.systemInstruction = {
-            parts: [{ text: systemInstruction }],
-          };
-        }
 
         const response = await fetch(geminiUrl, {
           method: 'POST',
@@ -1230,17 +1245,23 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
           break; // Succeeded!
         } else {
           lastError = data.error?.message || `HTTP ${response.status}`;
+          console.warn(`[Gemini Attempt ${cfg.model} (${cfg.ver}) Failed]:`, lastError);
         }
       } catch (e) {
         lastError = e.message;
+        console.warn(`[Gemini Attempt ${cfg.model} (${cfg.ver}) Exception]:`, e.message);
       }
     }
 
     if (!reply) {
       console.error('Gemini API Hatası:', lastError);
+      let userFriendlyError = lastError || 'Gemini servisinden yanıt alınamadı. Lütfen API anahtarınızı kontrol edin.';
+      if (typeof userFriendlyError === 'string' && (userFriendlyError.includes('API key not valid') || userFriendlyError.includes('API_KEY_INVALID'))) {
+        userFriendlyError = 'Google Gemini API anahtarınız geçersiz. Lütfen sağ üstteki API Anahtarı butonuna tıklayıp geçerli bir anahtar (AIzaSy...) kaydedin.';
+      }
       return res.json({
         success: false,
-        error: lastError || 'Gemini servisinden yanıt alınamadı. Lütfen API anahtarınızı kontrol edin.',
+        error: userFriendlyError,
         hasApiKey: true,
       });
     }
@@ -1257,7 +1278,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.86';
+const APP_VERSION = '2026.11.20.87';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
