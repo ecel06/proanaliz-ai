@@ -130,6 +130,28 @@ export interface StockQuantAnalysis {
   bullReasons: string[];
   bearReasons: string[];
   summaryText: string;
+  tavanPotential?: TavanPotentialResult;
+}
+
+export type TavanCategoryType =
+  | 'KIRILIM_TAVANI'
+  | 'DIP_TEPKI_TAVANI'
+  | 'HACIM_PATLAMASI'
+  | 'SIKISMA_PATLAMASI'
+  | 'TAVAN_KILIT'
+  | 'NORMAL';
+
+export interface TavanPotentialResult {
+  score: number; // 0 - 100
+  isCandidate: boolean; // score >= 68 && changePct between 1.0 and 8.8
+  isHighProbability: boolean; // score >= 80
+  isAlreadyCeiling: boolean; // changePct >= 9.7
+  category: TavanCategoryType;
+  categoryLabel: string;
+  reasons: string[];
+  relativeVolume: number; // e.g. 2.4x
+  squeezeStatus: 'Daralma / Yay Eşiğinde' | 'Patlama Başladı' | 'Normal';
+  targetCeilingPrice: number; // +10% tavan fiyatı
 }
 
 export interface TimeframeSnapshot {

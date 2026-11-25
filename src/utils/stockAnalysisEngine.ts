@@ -6,6 +6,8 @@ import {
   StockPortfolioPosition,
   StockQuantAnalysis,
   StockSignalType,
+  TavanPotentialResult,
+  TavanCategoryType,
 } from '../types/stocks';
 
 function clamp(n: number, min = 0, max = 100): number {
@@ -324,6 +326,8 @@ export function analyzeStockQuant(stock: StockItem): StockQuantAnalysis {
     ? `${stock.symbol}, teknik göstergelerde (${signal}) zayıflama veya aşırı alım baskısı taşıyor. Pozisyon yönetimi için ${formatStockPrice(s1, stock.currency)} desteği kritik eşik konumunda.`
     : `${stock.symbol} şu anda kararsız / yatay denge bölgesinde (Nötr). Yön teyidi için ${formatStockPrice(r1, stock.currency)} direnci üstü kırılım veya ${formatStockPrice(s1, stock.currency)} desteği tepkisi beklenmelidir.`;
 
+  const tavanPotential = calculateTavanPotential(stock);
+
   return {
     symbol: stock.symbol,
     signal,
@@ -357,6 +361,148 @@ export function analyzeStockQuant(stock: StockItem): StockQuantAnalysis {
     bullReasons,
     bearReasons,
     summaryText,
+    tavanPotential,
+  };
+}
+
+export function calculateTavanPotential(stock: StockItem): TavanPotentialResult {
+  const price = stock.close || 1;
+  const changePct = stock.changePct || 0;
+  const reasons: string[] = [];
+
+  // 1. Zaten tavan kitlemiş hisseler (+%9.7 ve üstü)
+  if (changePct >= 9.7) {
+    return {
+      score: 100,
+      isCandidate: false,
+      isHighProbability: true,
+      isAlreadyCeiling: true,
+      category: 'TAVAN_KILIT',
+      categoryLabel: 'Tavan Kilitli 🚀',
+      reasons: ['Hisse bugün BIST tavan marjına (%10) kilitledi.'],
+      relativeVolume: 1.0,
+      squeezeStatus: 'Patlama Başladı',
+      targetCeilingPrice: Number(price.toFixed(2)),
+    };
+  }
+
+  // Tavan hedef fiyatı hesabı (Dünkü kapanışın +%10'u)
+  const prevClose = price / (1 + changePct / 100);
+  const targetCeilingPrice = Number((prevClose * 1.1).toFixed(2));
+
+  let score = 25; // Taban başlangıç potansiyeli
+
+  // 1. GÜN İÇİ ALICI İVMESİ
+  if (changePct > 0) {
+    if (changePct >= 2.5 && changePct <= 8.5) {
+      score += 25;
+      reasons.push(`Kuvvetli gün içi alıcı momentumu (+%${changePct.toFixed(2)})`);
+    } else if (changePct >= 0.8 && changePct < 2.5) {
+      score += 15;
+      reasons.push(`Pozitif başlangıç ivmesi (+%${changePct.toFixed(2)})`);
+    }
+  }
+
+  // 2. HACİM ANOMALİSİ (RVol)
+  let rvol = 1.0;
+  if (stock.valueTraded && stock.marketCap && stock.marketCap > 0) {
+    const turnoverRate = (stock.valueTraded / stock.marketCap) * 100;
+    if (turnoverRate >= 3.5) {
+      rvol = Number((turnoverRate / 1.8).toFixed(1));
+      score += 25;
+      reasons.push(`Büyük kurumsal para girişi & hacim anomalisi (${rvol}x RVol)`);
+    } else if (turnoverRate >= 1.5) {
+      rvol = Number((turnoverRate / 1.2).toFixed(1));
+      score += 15;
+      reasons.push(`Hacimde belirgin hareketlenme (${rvol}x RVol)`);
+    }
+  }
+
+  // 3. VOLATİLİTE SIKIŞMASI (Bollinger Squeeze)
+  let squeezeStatus: 'Daralma / Yay Eşiğinde' | 'Patlama Başladı' | 'Normal' = 'Normal';
+  if (stock.bbLower !== null && stock.bbUpper !== null && stock.bbUpper > 0) {
+    const bbMid = (stock.bbUpper + stock.bbLower) / 2;
+    const bbWidth = (stock.bbUpper - stock.bbLower) / (bbMid || 1);
+    if (bbWidth <= 0.08) {
+      score += 25;
+      squeezeStatus = 'Daralma / Yay Eşiğinde';
+      reasons.push('Bollinger bantlarında aşırı daralma (Yay gibi gerilme - Sıkışma Patlaması Eşiği)');
+    } else if (price >= stock.bbUpper * 0.985 && changePct >= 1.5) {
+      score += 20;
+      squeezeStatus = 'Patlama Başladı';
+      reasons.push('Üst Bollinger bandı yukarı yönde kırılıyor');
+    }
+  }
+
+  // 4. DİP TEPKİ & AŞIRI SATIM DÖNÜŞÜ (KATMR & REEDR Tipi Sıçrama)
+  let isDipReversal = false;
+  if (stock.rsi !== null && stock.rsi <= 45) {
+    if (stock.rsi <= 35) {
+      score += 25;
+      isDipReversal = true;
+      reasons.push(`Aşırı satım dip bölgesinden sert tepki (RSI: ${stock.rsi.toFixed(1)})`);
+    } else if (stock.rsi <= 45 && changePct >= 1.0) {
+      score += 15;
+      isDipReversal = true;
+      reasons.push(`Dip toparlanma teyidi (RSI: ${stock.rsi.toFixed(1)})`);
+    }
+  }
+  if ((stock.perfW && stock.perfW < -8) || (stock.perf1M && stock.perf1M < -15)) {
+    if (changePct >= 1.0) {
+      score += 15;
+      isDipReversal = true;
+      reasons.push('Haftalık/Aylık dip seviyeden dönüş ve tepki alımı');
+    }
+  }
+
+  // 5. MOMENTUM & MACD KESİŞİMİ
+  if (stock.macd !== null && stock.macdSignal !== null && stock.macd > stock.macdSignal) {
+    score += 15;
+    reasons.push('MACD pozitif alım bölgesinde yukarı ivmeleniyor');
+  }
+
+  // 6. GÜNÜN ZİRVESİNE KİLİTLENME
+  if (stock.high && stock.low && stock.high > stock.low) {
+    const positionInBar = (price - stock.low) / (stock.high - stock.low);
+    if (positionInBar >= 0.85 && changePct >= 1.5) {
+      score += 15;
+      reasons.push('Fiyat günün zirvesinde kapanışa kilitleniyor (Alıcı baskın)');
+    }
+  }
+
+  score = clamp(Math.round(score));
+
+  let category: TavanCategoryType = 'NORMAL';
+  let categoryLabel = 'Normal Seyir';
+
+  if (isDipReversal && score >= 65) {
+    category = 'DIP_TEPKI_TAVANI';
+    categoryLabel = '🎯 Dip Tepki Tavanı Adayı';
+  } else if (squeezeStatus === 'Daralma / Yay Eşiğinde' && score >= 65) {
+    category = 'SIKISMA_PATLAMASI';
+    categoryLabel = '⚡ Sıkışma Patlaması Adayı';
+  } else if (score >= 75) {
+    category = 'KIRILIM_TAVANI';
+    categoryLabel = '🚀 Güçlü Tavan Adayı';
+  } else if (score >= 60) {
+    category = 'HACIM_PATLAMASI';
+    categoryLabel = '🔥 Hacim & İvme Adayı';
+  }
+
+  const isCandidate = score >= 65 && changePct >= 0.8 && changePct <= 9.0;
+  const isHighProbability = score >= 78 && isCandidate;
+
+  return {
+    score,
+    isCandidate,
+    isHighProbability,
+    isAlreadyCeiling: false,
+    category,
+    categoryLabel,
+    reasons,
+    relativeVolume: rvol,
+    squeezeStatus,
+    targetCeilingPrice,
   };
 }
 

@@ -84,7 +84,7 @@ import { INITIAL_IPOS } from '../../data/ipoData';
 import { INITIAL_KAP_NEWS } from '../../data/kapNewsData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
-type PresetFilter = 'all' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
+type PresetFilter = 'all' | 'tavan_aday' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
 type StockSort = 'ai_desc' | 'change_desc' | 'volume_desc' | 'rsi_asc' | 'pe_asc';
 
 export interface StockMarketViewProps {
@@ -569,7 +569,15 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       .filter((s) => s.rsi !== null && s.rsi <= 40)
       .sort((a, b) => (a.rsi ?? 99) - (b.rsi ?? 99));
     const byVol = [...stocks].sort((a, b) => (b.valueTraded || 0) - (a.valueTraded || 0));
+    const byTavanCand = [...stocks]
+      .filter((s) => (s.changePct || 0) < 9.7)
+      .sort(
+        (a, b) =>
+          (analysesMap.get(b.symbol)?.tavanPotential?.score || 0) -
+          (analysesMap.get(a.symbol)?.tavanPotential?.score || 0)
+      );
     return {
+      topTavanCand: byTavanCand[0] || null,
       topQuant: byScore[0] || null,
       topGainer: byChange[0] || null,
       topDip: byOversold[0] || null,
@@ -614,8 +622,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       );
     }
 
-    if (preset === 'tavan') {
-      list = list.filter((s) => s.changePct >= 9.0);
+    if (preset === 'tavan_aday') {
+      list = list.filter((s) => analysesMap.get(s.symbol)?.tavanPotential?.isCandidate);
+    } else if (preset === 'tavan') {
+      list = list.filter((s) => (s.changePct || 0) >= 9.7);
     } else if (preset === 'strong_buy') {
       list = list.filter((s) => analysesMap.get(s.symbol)?.signal === 'GÜÇLÜ AL');
     } else if (preset === 'buy') {
@@ -657,14 +667,16 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     let buy = 0;
     let sell = 0;
     let tavan = 0;
+    let tavanAday = 0;
     stocks.forEach((s) => {
-      if ((s.changePct || 0) >= 9.0) tavan++;
+      if ((s.changePct || 0) >= 9.7) tavan++;
+      if (analysesMap.get(s.symbol)?.tavanPotential?.isCandidate) tavanAday++;
       const sig = analysesMap.get(s.symbol)?.signal;
       if (sig === 'GÜÇLÜ AL') strongBuy++;
       else if (sig === 'AL') buy++;
       else if (sig === 'SAT' || sig === 'GÜÇLÜ SAT') sell++;
     });
-    return { strongBuy, buy, sell, tavan };
+    return { strongBuy, buy, sell, tavan, tavanAday };
   }, [stocks, analysesMap]);
 
   const getSignalStyle = (sig: StockQuantAnalysis['signal']) => {
@@ -1397,7 +1409,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
           <div className="flex flex-wrap gap-1.5">
             {[
               { id: 'all', label: `Tümü (${stocks.length})` },
-              { id: 'tavan', label: `🚀 Tavanlar (${statsSummary.tavan})` },
+              { id: 'tavan_aday', label: `🎯 Tavan Adayları (${statsSummary.tavanAday})` },
+              { id: 'tavan', label: `🚀 Kilit Tavanlar (${statsSummary.tavan})` },
               { id: 'strong_buy', label: `🔥 Güçlü AL (${statsSummary.strongBuy})` },
               { id: 'buy', label: `✅ AL (${statsSummary.strongBuy + statsSummary.buy})` },
               { id: 'value', label: '💎 Ucuz Değer' },
@@ -1407,17 +1420,22 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             ].map((p) => {
               const active = preset === p.id;
               const isTavan = p.id === 'tavan';
+              const isRadar = p.id === 'tavan_aday';
               return (
                 <button
                   key={p.id}
                   onClick={() => setPreset(p.id as PresetFilter)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${active
-                      ? isTavan
-                        ? 'bg-amber-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/25'
-                        : 'bg-emerald-500 text-slate-950 border-emerald-400'
-                      : isTavan
-                        ? 'bg-amber-500/10 text-amber-300 border-amber-500/40 hover:bg-amber-500/20'
-                        : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
+                      ? isRadar
+                        ? 'bg-amber-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/30'
+                        : isTavan
+                          ? 'bg-emerald-400 text-slate-950 border-emerald-300 font-black shadow-md shadow-emerald-400/25'
+                          : 'bg-emerald-500 text-slate-950 border-emerald-400'
+                      : isRadar
+                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
+                        : isTavan
+                          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+                          : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
                     }`}
                 >
                   {p.label}
@@ -1449,8 +1467,14 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
 
         {/* Live Alpha Radar Quick Jumps */}
         {alphaHighlights && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 pt-2 border-t border-slate-800/80">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-2 border-t border-slate-800/80">
             {[
+              alphaHighlights.topTavanCand && {
+                tag: '🎯 Günün Tavan Adayı',
+                sym: alphaHighlights.topTavanCand.symbol,
+                meta: `+${alphaHighlights.topTavanCand.changePct.toFixed(2)}% • %${analysesMap.get(alphaHighlights.topTavanCand.symbol)?.tavanPotential?.score || 80}`,
+                tone: 'border-amber-400/50 bg-amber-500/10 text-amber-300 ring-1 ring-amber-400/30',
+              },
               alphaHighlights.topQuant && {
                 tag: 'En Güçlü AI Sinyali',
                 sym: alphaHighlights.topQuant.symbol,
@@ -1802,9 +1826,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
               ) : (
                 <div className="divide-y divide-slate-800/80 xl:overflow-y-auto flex-1 overscroll-auto touch-pan-y">
                   {filteredStocks.map((st) => {
-                    const qa = analysesMap.get(st.symbol) || { signal: 'TUT' as const, score: 70 };
+                    const qa = analysesMap.get(st.symbol) || { signal: 'TUT' as const, score: 70, tavanPotential: undefined };
                     const isSel = selectedStock?.symbol === st.symbol;
                     const isFav = watchlist.includes(st.symbol);
+                    const tp = qa?.tavanPotential;
                     return (
                       <div
                         key={st.symbol}
@@ -1832,11 +1857,18 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                                   Seçili
                                 </span>
                               )}
-                              {(st.changePct || 0) >= 9.8 && (
-                                <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-amber-400 to-yellow-400 text-slate-950 uppercase tracking-wider shadow-sm animate-pulse">
+                              {(st.changePct || 0) >= 9.7 ? (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 uppercase tracking-wider shadow-sm animate-pulse">
                                   TAVAN 🚀
                                 </span>
-                              )}
+                              ) : tp?.isCandidate ? (
+                                <span
+                                  className="px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-400 text-slate-950 uppercase tracking-wider shadow-sm animate-pulse"
+                                  title={`Tavan Potansiyeli: %${tp.score} (${tp.categoryLabel})`}
+                                >
+                                  🎯 ADAY %{tp.score}
+                                </span>
+                              ) : null}
                               {(() => {
                                 const openRisk = risksBySymbolMap.get(st.symbol);
                                 if (
@@ -2300,6 +2332,102 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                       <div className="p-2.5 rounded-lg bg-slate-950/90 border border-emerald-500/30 text-[11px] font-bold text-emerald-200">
                         {aiMemo.actionCallout}
                       </div>
+                    </div>
+                  )}
+
+                  {/* 🎯 AI TAVAN & PATLAMA RADARI (CEILING HUNTER RADAR) */}
+                  {selectedAnalysis?.tavanPotential && (
+                    <div className="rounded-2xl bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-950 border-2 border-amber-500/40 p-4 space-y-3 shadow-xl">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-xs">
+                            <Rocket className="w-4 h-4 animate-bounce" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                                <span>🎯 AI Tavan &amp; Patlama Radarı</span>
+                              </h3>
+                              {selectedAnalysis.tavanPotential.isAlreadyCeiling ? (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black animate-pulse">
+                                  TAVAN KİLİTLİ 🚀
+                                </span>
+                              ) : selectedAnalysis.tavanPotential.isHighProbability ? (
+                                <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black animate-pulse shadow-sm shadow-amber-400/30">
+                                  YÜKSEK İHTİMAL 🔥
+                                </span>
+                              ) : selectedAnalysis.tavanPotential.isCandidate ? (
+                                <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] font-black">
+                                  RADARDA 🎯
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-bold">
+                                  Dengeli
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              Hacim anomalisi, volatilite daralması ve dip tepki matematiğiyle erken tavan tespiti
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <div className="text-lg font-black font-mono text-amber-300">
+                            %{selectedAnalysis.tavanPotential.score}
+                          </div>
+                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                            Tavan İhtimali
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 4 Metric Cards */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
+                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                          <div className="text-[10px] text-slate-400">Kategori</div>
+                          <div className="font-bold text-amber-300 mt-0.5 truncate">
+                            {selectedAnalysis.tavanPotential.categoryLabel}
+                          </div>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                          <div className="text-[10px] text-slate-400">Hedef Tavan (+%10)</div>
+                          <div className="font-mono font-black text-emerald-400 mt-0.5">
+                            {formatStockPrice(selectedAnalysis.tavanPotential.targetCeilingPrice, selectedStock.currency)}
+                          </div>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                          <div className="text-[10px] text-slate-400">Hacim Baskısı</div>
+                          <div className="font-mono font-bold text-cyan-300 mt-0.5">
+                            {selectedAnalysis.tavanPotential.relativeVolume > 1.2
+                              ? `${selectedAnalysis.tavanPotential.relativeVolume}x Normal`
+                              : 'Normal Akış'}
+                          </div>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                          <div className="text-[10px] text-slate-400">Sıkışma Eşiği</div>
+                          <div className="font-bold text-slate-200 mt-0.5 truncate">
+                            {selectedAnalysis.tavanPotential.squeezeStatus}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Reasons list */}
+                      {selectedAnalysis.tavanPotential.reasons.length > 0 && (
+                        <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            Yapay Zeka Tarafından Doğrulanan Erken Sinyaller:
+                          </div>
+                          <div className="space-y-1">
+                            {selectedAnalysis.tavanPotential.reasons.map((r, i) => (
+                              <div key={i} className="text-xs text-amber-200/90 flex items-center space-x-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                                <span>{r}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
