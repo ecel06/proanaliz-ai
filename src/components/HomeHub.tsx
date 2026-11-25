@@ -420,6 +420,30 @@ export const HomeHub: React.FC<HomeHubProps> = ({
               setBestStock(stockObj);
             }
 
+            // Borsa Tavan Radarı ile %100 senkronize context üret ve sakla
+            try {
+              const tavanItems = analyzedStocks
+                .filter((x: any) => Boolean(x.analysis?.tavanPotential?.isCandidate && (x.stock.changePct || 0) < 9.7))
+                .sort((a: any, b: any) => (b.analysis?.tavanPotential?.score || 0) - (a.analysis?.tavanPotential?.score || 0));
+
+              const tavanPayload = tavanItems.slice(0, 10).map((x: any) => ({
+                symbol: x.stock.symbol,
+                name: x.stock.name,
+                price: x.stock.close ? `${x.stock.close} TL` : '—',
+                changePct: x.stock.changePct !== undefined ? `%${x.stock.changePct.toFixed(2)}` : '—',
+                score: x.analysis?.tavanPotential?.score || x.analysis?.overallScore || 75,
+                tavanMargin: x.analysis?.tavanPotential?.tavanMargin,
+                primaryReason: x.analysis?.tavanPotential?.primaryReason,
+              }));
+
+              const bistCtx = {
+                tavanCandidates: tavanPayload,
+                sessionPhase: 'BIST Gün Sonu / Seans Kapalı',
+              };
+              (window as any).__PROANALIZ_BIST_CONTEXT__ = bistCtx;
+              localStorage.setItem('proanaliz_bist_context', JSON.stringify(bistCtx));
+            } catch {}
+
             // Borsa dinamik başarı istatistikleri
             const recommendedPool = strongBuys.length > 0 ? strongBuys : buys;
             const targetPool = recommendedPool.length > 0 ? recommendedPool : analyzedStocks.slice(0, 10);

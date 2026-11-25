@@ -137,7 +137,18 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
         text: m.text,
       }));
 
-      const res = await callAdminAICoPilotApi(text, chatHistory, apiKey, clientContext);
+      // Dynamically fetch live BIST context to guarantee 100% synchronization with Tavan Radar
+      let dynamicContext = clientContext || {};
+      try {
+        const stored = localStorage.getItem('proanaliz_bist_context');
+        const winCtx = (window as any).__PROANALIZ_BIST_CONTEXT__;
+        const bistCtx = stored ? JSON.parse(stored) : winCtx;
+        if (bistCtx && (bistCtx.tavanCandidates || bistCtx.sessionPhase)) {
+          dynamicContext = { ...dynamicContext, bist: bistCtx };
+        }
+      } catch {}
+
+      const res = await callAdminAICoPilotApi(text, chatHistory, apiKey, dynamicContext);
 
       if (res.success && res.reply) {
         const assistantMsg: ChatMsg = {
