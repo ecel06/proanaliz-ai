@@ -1439,7 +1439,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.98';
+const APP_VERSION = '2026.11.20.99';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

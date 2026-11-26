@@ -50,6 +50,7 @@ import {
   StockMarketType,
   StockPortfolioPosition,
   StockQuantAnalysis,
+  TavanStreakInfo,
 } from '../../types/stocks';
 import {
   fetchStockChart,
@@ -124,6 +125,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
   const [deepLoading, setDeepLoading] = useState<boolean>(false);
   const [capitalInput, setCapitalInput] = useState<string>('100000');
   const [riskPctInput, setRiskPctInput] = useState<string>('2');
+  const [tavanSimBudget, setTavanSimBudget] = useState<number>(50000);
   const [isAIChatOpen, setIsAIChatOpen] = useState<boolean>(false);
 
   // Elite Extension Modals: Karnesi, Alarmlar, Sanal Portföy, Halka Arz
@@ -192,6 +194,35 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     try {
       localStorage.setItem('proanaliz_stock_portfolio_v1', JSON.stringify(next));
     } catch { }
+  };
+
+  const handleToggleTavanWatchdog = (stock: StockItem, streak?: TavanStreakInfo) => {
+    if (!stock) return;
+    const existingIndex = alerts.findIndex(
+      (a) => a.symbol === stock.symbol && (a.note?.includes('Tavan Koruma') || a.id.startsWith('alert-tavan-'))
+    );
+
+    if (existingIndex >= 0) {
+      const updated = alerts.filter((_, i) => i !== existingIndex);
+      saveAlerts(updated);
+      onShowToast?.(`🔕 ${stock.symbol} Tavan Koruma Alarmı kaldırıldı.`);
+    } else {
+      const targetVal = streak?.trailingStopPrice || Number((stock.close * 0.955).toFixed(2));
+      const newAlert: StockAlertItem = {
+        id: `alert-tavan-${stock.symbol}-${Date.now()}`,
+        symbol: stock.symbol,
+        name: stock.name,
+        market: stock.market,
+        condition: 'price_below',
+        targetValue: targetVal,
+        initialValue: stock.close,
+        note: `🛡️ Tavan Koruma & Çözülme Alarmı: Fiyat ${formatStockPrice(targetVal, stock.currency)} altına inerse kâr koruma stopu devreye girer!`,
+        createdAt: new Date().toLocaleDateString('tr-TR'),
+        triggered: false,
+      };
+      saveAlerts([newAlert, ...alerts]);
+      onShowToast?.(`🔔 ${stock.symbol} için Tavan Koruma Alarmı kuruldu! (${formatStockPrice(targetVal, stock.currency)} izleyen stop)`);
+    }
   };
 
   const activeAlertsCount = alerts.filter((a) => !a.triggered).length;
@@ -760,6 +791,57 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     const tp2Profit = units * Math.max(0, selectedAnalysis.tradePlan.tp2 - entry);
     return { units, totalCost, slLoss, tp1Profit, tp2Profit };
   }, [capitalInput, riskPctInput, selectedStock, selectedAnalysis]);
+
+  const isTavanWatchdogActive = Boolean(
+    selectedStock &&
+    alerts.some(
+      (a) => a.symbol === selectedStock.symbol && !a.triggered && (a.note?.includes('Tavan Koruma') || a.id.startsWith('alert-tavan-'))
+    )
+  );
+
+  const smartMoneyFlow = useMemo(() => {
+    if (!selectedStock) return null;
+    const v = selectedStock.valueTraded || 0;
+    const mCap = selectedStock.marketCap || 1;
+    const turnover = (v / mCap) * 100;
+    const chg = selectedStock.changePct || 0;
+
+    if (turnover >= 3.0 && chg >= 2.0) {
+      return {
+        status: 'GÜÇLÜ KURUMSAL PARA GİRİŞİ',
+        badge: '🟢 Akıllı Para Topluyor',
+        tone: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30',
+        desc: `Devir hızı %${turnover.toFixed(1)} ile kurumsal alıcılar tahtadaki satışları emerek karşılıyor.`,
+      };
+    } else if (turnover >= 1.5 && chg >= 0.5) {
+      return {
+        status: 'DENGELİ KURUMSAL AKIŞ',
+        badge: '🟢 Kurumsal İlgi Pozitif',
+        tone: 'text-teal-300 bg-teal-500/15 border-teal-500/30',
+        desc: 'Hacim desteğiyle kademeli kurumsal birikim devam ediyor.',
+      };
+    } else if (chg >= 8.0 && turnover < 1.0) {
+      return {
+        status: 'SIĞ TAHTA / DÜŞÜK HACİM',
+        badge: '⚠️ Düşük Hacimli Tavan',
+        tone: 'text-amber-300 bg-amber-500/15 border-amber-500/30',
+        desc: 'Tavan düşük hacimle yapıldı; açılışta sert volatilite veya kâr realizasyonuna dikkat edilmelidir.',
+      };
+    } else if (chg <= -2.0 && turnover >= 2.5) {
+      return {
+        status: 'KURUMSAL DAĞITIM',
+        badge: '🔴 Para Çıkışı / Satış Baskısı',
+        tone: 'text-rose-300 bg-rose-500/15 border-rose-500/30',
+        desc: 'Yüksek hacimle net kurumsal satış gerçekleşiyor.',
+      };
+    }
+    return {
+      status: 'NÖTR PARA AKIŞI',
+      badge: '⚪ Dengeli Akış',
+      tone: 'text-slate-300 bg-slate-800 border-slate-700',
+      desc: 'Tahtada belirgin bir kurumsal yığılma veya para çıkışı gözlenmiyor.',
+    };
+  }, [selectedStock]);
 
   const filteredStocks = useMemo(() => {
     let list = [...stocks];
@@ -2651,6 +2733,19 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                             </div>
                           </div>
 
+                          {/* 🟢 Kurumsal Para Girişi & Takas Barometresi */}
+                          {smartMoneyFlow && (
+                            <div className={`p-2 rounded-lg border flex items-center justify-between flex-wrap gap-1.5 text-[10px] ${smartMoneyFlow.tone}`}>
+                              <div className="flex items-center space-x-1.5 font-black">
+                                <span>{smartMoneyFlow.badge}</span>
+                                <span className="opacity-90">({smartMoneyFlow.status})</span>
+                              </div>
+                              <div className="text-[9px] opacity-90 italic">
+                                {smartMoneyFlow.desc}
+                              </div>
+                            </div>
+                          )}
+
                           {/* 5-Step Ceiling Ladder */}
                           <div className="grid grid-cols-5 gap-1.5 text-center">
                             {selectedAnalysis.tavanPotential.streakInfo.targetSteps.map((step) => {
@@ -2684,10 +2779,68 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                             })}
                           </div>
 
-                          {/* Dynamic Trailing Stop & Risk Guard Banner */}
+                          {/* 💰 İnteraktif Tavan Bileşik Kâr Simülatörü */}
+                          <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 space-y-2">
+                            <div className="flex items-center justify-between flex-wrap gap-2 text-[10px]">
+                              <div className="flex items-center space-x-1.5 font-black text-amber-300">
+                                <span>💰</span>
+                                <span>Tavan Bileşik Kâr Simülatörü:</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                {[25000, 50000, 100000, 250000].map((amt) => (
+                                  <button
+                                    key={amt}
+                                    onClick={() => setTavanSimBudget(amt)}
+                                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold cursor-pointer transition-all ${
+                                      tavanSimBudget === amt
+                                        ? 'bg-amber-400 text-slate-950 font-black'
+                                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                    }`}
+                                  >
+                                    {amt >= 1000 ? `${amt / 1000} Bin ₺` : `${amt} ₺`}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* 3 Milestone Profit Projections */}
+                            <div className="grid grid-cols-3 gap-1.5 text-center text-[10px]">
+                              <div className="p-1.5 rounded bg-slate-950 border border-slate-800">
+                                <div className="text-slate-400 text-[9px]">1. Tavan (+%10)</div>
+                                <div className="font-mono font-bold text-white mt-0.5">
+                                  ₺{Math.round(tavanSimBudget * 1.10).toLocaleString('tr-TR')}
+                                </div>
+                                <div className="font-mono font-black text-emerald-400 text-[9px]">
+                                  +₺{Math.round(tavanSimBudget * 0.10).toLocaleString('tr-TR')} Net
+                                </div>
+                              </div>
+
+                              <div className="p-1.5 rounded bg-slate-950 border border-slate-800">
+                                <div className="text-slate-400 text-[9px]">2. Tavan (+%21)</div>
+                                <div className="font-mono font-bold text-white mt-0.5">
+                                  ₺{Math.round(tavanSimBudget * 1.21).toLocaleString('tr-TR')}
+                                </div>
+                                <div className="font-mono font-black text-emerald-400 text-[9px]">
+                                  +₺{Math.round(tavanSimBudget * 0.21).toLocaleString('tr-TR')} Net
+                                </div>
+                              </div>
+
+                              <div className="p-1.5 rounded bg-slate-950 border border-slate-800">
+                                <div className="text-slate-400 text-[9px]">3. Tavan (+%33.1)</div>
+                                <div className="font-mono font-bold text-white mt-0.5">
+                                  ₺{Math.round(tavanSimBudget * 1.331).toLocaleString('tr-TR')}
+                                </div>
+                                <div className="font-mono font-black text-emerald-400 text-[9px]">
+                                  +₺{Math.round(tavanSimBudget * 0.331).toLocaleString('tr-TR')} Net
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Dynamic Trailing Stop & 1-Tıkla Tavan Koruma Alarmı */}
                           <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between flex-wrap gap-2 text-[10px]">
                             <div className="flex items-center space-x-1.5">
-                              <span className="text-cyan-400 font-bold">🛡️ Kâr Koruma İzleyen Stop (Trailing):</span>
+                              <span className="text-cyan-400 font-bold">🛡️ Kâr Koruma İzleyen Stop:</span>
                               <span className="font-mono font-black text-cyan-200 text-xs">
                                 {formatStockPrice(
                                   selectedAnalysis.tavanPotential.streakInfo.trailingStopPrice,
@@ -2698,9 +2851,17 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                                 ({selectedAnalysis.tavanPotential.streakInfo.trailingStopPct}%)
                               </span>
                             </div>
-                            <div className="text-slate-400 italic text-[9px]">
-                              Tavanda çözülme veya tarihi hacim anomalisi görüldüğünde seriden kârla çıkılır.
-                            </div>
+
+                            <button
+                              onClick={() => handleToggleTavanWatchdog(selectedStock, selectedAnalysis.tavanPotential?.streakInfo)}
+                              className={`px-2.5 py-1 rounded-lg font-black text-[10px] flex items-center space-x-1 transition-all cursor-pointer shadow-xs ${
+                                isTavanWatchdogActive
+                                  ? 'bg-emerald-500 text-slate-950 ring-1 ring-emerald-400 animate-pulse'
+                                  : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black'
+                              }`}
+                            >
+                              <span>{isTavanWatchdogActive ? '🛡️ Alarm Aktif (İzleniyor)' : '🔔 1-Tıkla Tavan Alarmı Kur'}</span>
+                            </button>
                           </div>
                         </div>
                       )}
