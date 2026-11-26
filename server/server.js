@@ -1200,6 +1200,7 @@ ${bistSummary ? `- ${bistSummary}` : ''}
 - BIST Tavan Anatomisi Araştırma Sonuçları (Sistemimizdeki 106 Tavan Olayının Matematiksel Modeli):
   * Tavanların %57.5'i Aşırı Satım Dip Dönüşünden (RSI < 35, satıcıların tükendiği taban noktası, örn: HEKTS, ASTOR, TCKRC) çıkar.
   * Tavanların %36.8'i Daralan Bollinger Bandı Sıkışması (volatilite depolaması, örn: KATMR 1. tavan) sonrası patlar.
+  * Tavan Serisi Merdiveni (Peş Peşe Tavan Koşuları): 1. Tavan (+%10.0), 2. Tavan (+%21.0), 3. Tavan (+%33.1), 4. Tavan (+%46.4), 5. Tavan (+%61.1). Tavan serisi taze kopuş, ivme teyidi ve mega seri olarak 3 aşamada izlenir; dinamik izleyen kâr koruma stopu (-%4.5) ile korunur.
   * Tavanların kalan kısmı ise Tavan Serisi (peş peşe tavan koşusu, örn: KATMR 2. tavan) ve Zirve Kırılımı modelleridir.
   * Sektörel Domino & Sympathy Sinerjisi: Sektör lideri (+%7.5 - +%10) tavan kilitlediğinde, aynı sektördeki kardeş hisseler gecikmeli takip ivmesiyle tavana sürüklenir.
   * KAP Haber Katalizörleri (Episodic Pivot): Yüksek tutarlı yeni iş sözleşmeleri ve stratejik yatırımlar anlık tavan hacmi yaratır.
@@ -1438,7 +1439,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.96';
+const APP_VERSION = '2026.11.20.97';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

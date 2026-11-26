@@ -8,6 +8,8 @@ import {
   StockSignalType,
   TavanPotentialResult,
   TavanCategoryType,
+  TavanStreakInfo,
+  TavanStreakTargetStep,
 } from '../types/stocks';
 
 function clamp(n: number, min = 0, max = 100): number {
@@ -432,6 +434,144 @@ export interface TavanQuantContext {
   kapCatalystSummary?: string;
 }
 
+export function computeTavanStreakInfo(
+  stock: StockItem,
+  price: number,
+  changePct: number,
+  isAlreadyCeiling: boolean
+): TavanStreakInfo {
+  // 1. Determine currentStreak
+  let currentStreak = 0;
+  const perfW = stock.perfW || 0;
+  const perf1M = stock.perf1M || 0;
+
+  if (changePct >= 9.4) {
+    if (perfW >= 28 || perf1M >= 50) {
+      currentStreak = 3;
+    } else if (perfW >= 17 || perf1M >= 22) {
+      currentStreak = 2;
+    } else {
+      currentStreak = 1;
+    }
+  } else if (perfW >= 18 && changePct >= 2.5) {
+    currentStreak = Math.min(3, Math.max(1, Math.round(perfW / 10)));
+  }
+
+  let streakStage: TavanStreakInfo['streakStage'] = 'ERKEN_ADAY';
+  let streakStageLabel = '🌱 Tavan Serisi Başlangıç Adayı';
+
+  if (currentStreak >= 3) {
+    streakStage = 'MEGA_SERI';
+    streakStageLabel = '🚀 3. Tavan+ (Mega Seri Koşusu)';
+  } else if (currentStreak === 2) {
+    streakStage = 'IVME_TEYIDI';
+    streakStageLabel = '🔥 2. Tavan (İvme Teyidi & Devam)';
+  } else if (currentStreak === 1) {
+    streakStage = 'KOPUS_TAVANI';
+    streakStageLabel = '🎯 1. Tavan (Taze Kopuş Evresi)';
+  }
+
+  // Base price calculation before the streak
+  let basePrice = price / (1 + (changePct || 0) / 100);
+  if (currentStreak > 1) {
+    basePrice = price / Math.pow(1.10, currentStreak);
+  }
+
+  const p1 = Number((basePrice * 1.10).toFixed(price < 1 ? 4 : 2));
+  const p2 = Number((basePrice * 1.21).toFixed(price < 1 ? 4 : 2));
+  const p3 = Number((basePrice * 1.331).toFixed(price < 1 ? 4 : 2));
+  const p4 = Number((basePrice * 1.4641).toFixed(price < 1 ? 4 : 2));
+  const p5 = Number((basePrice * 1.6105).toFixed(price < 1 ? 4 : 2));
+
+  const targetSteps: TavanStreakTargetStep[] = [
+    {
+      step: 1,
+      label: '1. Tavan (Kopuş)',
+      price: p1,
+      cumulativePct: 10.0,
+      status: currentStreak >= 1 ? 'TAMAMLANDI' : 'HEDEF',
+    },
+    {
+      step: 2,
+      label: '2. Tavan (İvme)',
+      price: p2,
+      cumulativePct: 21.0,
+      status: currentStreak >= 2 ? 'TAMAMLANDI' : currentStreak === 1 ? 'HEDEF' : 'BEKLEMEDE',
+    },
+    {
+      step: 3,
+      label: '3. Tavan (Seri)',
+      price: p3,
+      cumulativePct: 33.1,
+      status: currentStreak >= 3 ? 'TAMAMLANDI' : currentStreak === 2 ? 'HEDEF' : 'BEKLEMEDE',
+    },
+    {
+      step: 4,
+      label: '4. Tavan (Ralli)',
+      price: p4,
+      cumulativePct: 46.4,
+      status: currentStreak >= 4 ? 'TAMAMLANDI' : currentStreak === 3 ? 'HEDEF' : 'BEKLEMEDE',
+    },
+    {
+      step: 5,
+      label: '5. Tavan (Zirve)',
+      price: p5,
+      cumulativePct: 61.1,
+      status: currentStreak >= 5 ? 'TAMAMLANDI' : currentStreak === 4 ? 'HEDEF' : 'BEKLEMEDE',
+    },
+  ];
+
+  let nextCeilingPrice = p1;
+  let nextCeilingCumulativePct = 10.0;
+  if (currentStreak === 1) {
+    nextCeilingPrice = p2;
+    nextCeilingCumulativePct = 21.0;
+  } else if (currentStreak === 2) {
+    nextCeilingPrice = p3;
+    nextCeilingCumulativePct = 33.1;
+  } else if (currentStreak === 3) {
+    nextCeilingPrice = p4;
+    nextCeilingCumulativePct = 46.4;
+  } else if (currentStreak >= 4) {
+    nextCeilingPrice = p5;
+    nextCeilingCumulativePct = 61.1;
+  }
+
+  const cumulativeReturnPct = Number((((price - basePrice) / basePrice) * 100).toFixed(1));
+
+  // Dinamik İzleyen Kâr Koruma Stopu (-%4.5 alt seviye)
+  const trailingStopPrice = Number((price * 0.955).toFixed(price < 1 ? 4 : 2));
+  const trailingStopPct = -4.5;
+
+  // Çözülme Riski
+  let breakdownRiskLevel: TavanStreakInfo['breakdownRiskLevel'] = 'DÜŞÜK';
+  if ((stock.rsi || 50) > 82 || (stock.perfW || 0) > 45) {
+    breakdownRiskLevel = 'YÜKSEK';
+  } else if ((stock.rsi || 50) > 72 || currentStreak >= 3) {
+    breakdownRiskLevel = 'ORTA';
+  }
+
+  // Kilit Gücü
+  let queueLockStrength: TavanStreakInfo['queueLockStrength'] = 'ZAYIF';
+  if (changePct >= 9.7) queueLockStrength = 'ÇOK GÜÇLÜ';
+  else if (changePct >= 9.4) queueLockStrength = 'GÜÇLÜ';
+  else if (changePct >= 5.0) queueLockStrength = 'NORMAL';
+
+  return {
+    currentStreak,
+    streakStage,
+    streakStageLabel,
+    cumulativeReturnPct,
+    nextCeilingPrice,
+    nextCeilingCumulativePct,
+    trailingStopPrice,
+    trailingStopPct,
+    breakdownRiskLevel,
+    queueLockStrength,
+    targetSteps,
+  };
+}
+
 export function calculateTavanPotential(
   stock: StockItem,
   quantContext?: TavanQuantContext
@@ -457,6 +597,14 @@ export function calculateTavanPotential(
     isLiveSession = day >= 1 && day <= 5 && mins >= 9 * 60 + 55 && mins <= 18 * 60 + 10;
   }
 
+  // Tavan hedef fiyatı hesabı (Dünkü kapanışın +%10'u)
+  const prevClose = price / (1 + changePct / 100);
+  const targetCeilingPrice = Number((prevClose * 1.1).toFixed(2));
+  const tavanMargin = Number(Math.max(0, 10 - changePct).toFixed(2));
+
+  // Tavan Serisi ve Çoklu Tavan Projeksiyon Analizi
+  const streakInfo = computeTavanStreakInfo(stock, price, changePct, changePct >= 9.7);
+
   // 1. Zaten tavan kitlemiş hisseler (+%9.7 ve üstü)
   if (changePct >= 9.7) {
     return {
@@ -465,20 +613,21 @@ export function calculateTavanPotential(
       isHighProbability: true,
       isAlreadyCeiling: true,
       category: 'TAVAN_KILIT',
-      categoryLabel: 'Tavan Kilitli 🚀',
-      reasons: ['Hisse bugün BIST tavan marjına (%10) kilitledi.'],
+      categoryLabel: streakInfo.currentStreak >= 2 ? streakInfo.streakStageLabel : 'Tavan Kilitli 🚀',
+      reasons: [
+        `Hisse bugün BIST tavan marjına (%10) kilitledi.`,
+        streakInfo.currentStreak >= 2
+          ? `${streakInfo.streakStageLabel}: Kümülatif getiri +%${streakInfo.cumulativeReturnPct}. Bir sonraki tavan hedefi ${formatStockPrice(streakInfo.nextCeilingPrice, stock.currency)} (+%${streakInfo.nextCeilingCumulativePct}).`
+          : `Tavan kilit gücü: ${streakInfo.queueLockStrength}. İzleyen kâr koruma stopu: ${formatStockPrice(streakInfo.trailingStopPrice, stock.currency)}.`
+      ],
       relativeVolume: 1.0,
       squeezeStatus: 'Patlama Başladı',
       targetCeilingPrice: Number(price.toFixed(2)),
       tavanMargin: 0,
       primaryReason: 'Hisse günün tavan marjını kilitledi.',
+      streakInfo,
     };
   }
-
-  // Tavan hedef fiyatı hesabı (Dünkü kapanışın +%10'u)
-  const prevClose = price / (1 + changePct / 100);
-  const targetCeilingPrice = Number((prevClose * 1.1).toFixed(2));
-  const tavanMargin = Number(Math.max(0, 10 - changePct).toFixed(2));
 
   // --- 1.5 TAVAN SERİSİ / ARDIŞIK TAVAN İVMESİ (KATMR Tipi Peş Peşe Tavan Koşusu) ---
   const isNearCeilingClose = changePct >= 9.4;
@@ -489,17 +638,18 @@ export function calculateTavanPotential(
       isHighProbability: true,
       isAlreadyCeiling: false,
       category: 'TAVAN_SERISI',
-      categoryLabel: '🔥 Tavan Serisi (2. Tavan Adayı)',
+      categoryLabel: streakInfo.streakStageLabel,
       reasons: [
         `Günün tavan marjına (+%${changePct.toFixed(2)}) kilitlendi.`,
-        'Kurumsal alıcı baskısı ve tavan sırası birikimiyle ertesi seans açılışında seri tavan adayı.',
-        'Not: Açılışta tavan çözülmesi riskine karşı izleyen stop (trailing stop) ile takip edilmelidir.'
+        `${streakInfo.streakStageLabel}: Bir sonraki tavan hedefi ${formatStockPrice(streakInfo.nextCeilingPrice, stock.currency)} (Kümülatif +%${streakInfo.nextCeilingCumulativePct}).`,
+        `Kâr koruma izleyen stop seviyesi: ${formatStockPrice(streakInfo.trailingStopPrice, stock.currency)} (${streakInfo.trailingStopPct}%). Tavan çözülme riski: ${streakInfo.breakdownRiskLevel}.`
       ],
       relativeVolume: 2.5,
       squeezeStatus: 'Patlama Başladı',
       targetCeilingPrice,
       tavanMargin: 0,
-      primaryReason: 'Dünü tavanda kilitledi; açılışta 2. tavan serisi potansiyeli yüksek.',
+      primaryReason: 'Dünü tavanda kilitledi; açılışta tavan serisi potansiyeli yüksek.',
+      streakInfo,
     };
   }
 
@@ -706,6 +856,7 @@ export function calculateTavanPotential(
     targetCeilingPrice,
     tavanMargin,
     primaryReason: reasons[0] || 'Dengeli seyir',
+    streakInfo,
   };
 }
 

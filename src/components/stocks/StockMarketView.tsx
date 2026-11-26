@@ -591,6 +591,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
           tavanMargin: qa?.tavanPotential?.tavanMargin,
           category: qa?.tavanPotential?.category,
           categoryLabel: qa?.tavanPotential?.categoryLabel,
+          streakStage: qa?.tavanPotential?.streakInfo?.streakStageLabel,
+          currentStreak: qa?.tavanPotential?.streakInfo?.currentStreak,
+          nextCeilingPrice: qa?.tavanPotential?.streakInfo?.nextCeilingPrice,
+          trailingStopPrice: qa?.tavanPotential?.streakInfo?.trailingStopPrice,
           primaryReason: qa?.tavanPotential?.primaryReason,
         };
       });
@@ -2013,7 +2017,14 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                                   Seçili
                                 </span>
                               )}
-                              {(st.changePct || 0) >= 9.7 ? (
+                              {tp?.streakInfo && tp.streakInfo.currentStreak >= 2 ? (
+                                <span
+                                  className="px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-orange-500 via-amber-400 to-yellow-300 text-slate-950 uppercase tracking-wider shadow-sm animate-pulse"
+                                  title={`${tp.streakInfo.streakStageLabel} | Kümülatif: +%${tp.streakInfo.cumulativeReturnPct} | Sıradaki Hedef: +%${tp.streakInfo.nextCeilingCumulativePct}`}
+                                >
+                                  🔥 {tp.streakInfo.currentStreak}. TAVAN SERİSİ
+                                </span>
+                              ) : (st.changePct || 0) >= 9.7 ? (
                                 <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 uppercase tracking-wider shadow-sm animate-pulse">
                                   TAVAN 🚀
                                 </span>
@@ -2584,6 +2595,95 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                                 <span>{r}</span>
                               </div>
                             ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 🔥 TAVAN SERİSİ VE ÇOKLU TAVAN KAZANÇ MERDİVENİ (STREAK PROJECTION MATRIX) */}
+                      {selectedAnalysis.tavanPotential.streakInfo && (
+                        <div className="p-3 rounded-xl bg-slate-950/80 border border-amber-500/30 space-y-2.5 shadow-inner">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-amber-400 font-black text-xs flex items-center gap-1">
+                                <span>🔥</span>
+                                <span>Tavan Serisi &amp; Çoklu Tavan Projeksiyonu</span>
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">
+                                {selectedAnalysis.tavanPotential.streakInfo.streakStageLabel}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-[10px]">
+                              <span className="text-slate-400">
+                                Kilit: <strong className="text-emerald-400">{selectedAnalysis.tavanPotential.streakInfo.queueLockStrength}</strong>
+                              </span>
+                              <span className="text-slate-500">•</span>
+                              <span className="text-slate-400">
+                                Çözülme Riski:{' '}
+                                <strong
+                                  className={
+                                    selectedAnalysis.tavanPotential.streakInfo.breakdownRiskLevel === 'YÜKSEK'
+                                      ? 'text-rose-400'
+                                      : selectedAnalysis.tavanPotential.streakInfo.breakdownRiskLevel === 'ORTA'
+                                      ? 'text-amber-400'
+                                      : 'text-emerald-400'
+                                  }
+                                >
+                                  {selectedAnalysis.tavanPotential.streakInfo.breakdownRiskLevel}
+                                </strong>
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* 5-Step Ceiling Ladder */}
+                          <div className="grid grid-cols-5 gap-1.5 text-center">
+                            {selectedAnalysis.tavanPotential.streakInfo.targetSteps.map((step) => {
+                              const isDone = step.status === 'TAMAMLANDI';
+                              const isTarget = step.status === 'HEDEF';
+                              return (
+                                <div
+                                  key={step.step}
+                                  className={`p-2 rounded-lg border transition-all ${
+                                    isDone
+                                      ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                                      : isTarget
+                                      ? 'bg-amber-500/20 border-amber-400 text-amber-200 ring-1 ring-amber-400/40 animate-pulse'
+                                      : 'bg-slate-900/60 border-slate-800 text-slate-500'
+                                  }`}
+                                >
+                                  <div className="text-[9px] font-bold uppercase tracking-wider truncate">
+                                    {step.label}
+                                  </div>
+                                  <div className="text-xs font-black font-mono mt-0.5">
+                                    {formatStockPrice(step.price, selectedStock.currency)}
+                                  </div>
+                                  <div className="text-[9px] font-bold mt-0.5 text-emerald-400 font-mono">
+                                    +{step.cumulativePct}%
+                                  </div>
+                                  <div className="text-[8px] font-black uppercase mt-1">
+                                    {isDone ? '✓ Kilitli' : isTarget ? '🎯 Sıradaki' : 'Beklemede'}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Dynamic Trailing Stop & Risk Guard Banner */}
+                          <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between flex-wrap gap-2 text-[10px]">
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-cyan-400 font-bold">🛡️ Kâr Koruma İzleyen Stop (Trailing):</span>
+                              <span className="font-mono font-black text-cyan-200 text-xs">
+                                {formatStockPrice(
+                                  selectedAnalysis.tavanPotential.streakInfo.trailingStopPrice,
+                                  selectedStock.currency
+                                )}
+                              </span>
+                              <span className="text-slate-400">
+                                ({selectedAnalysis.tavanPotential.streakInfo.trailingStopPct}%)
+                              </span>
+                            </div>
+                            <div className="text-slate-400 italic text-[9px]">
+                              Tavanda çözülme veya tarihi hacim anomalisi görüldüğünde seriden kârla çıkılır.
+                            </div>
                           </div>
                         </div>
                       )}

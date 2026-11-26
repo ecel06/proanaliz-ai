@@ -144,6 +144,28 @@ export type TavanCategoryType =
   | 'TAVAN_KILIT'
   | 'NORMAL';
 
+export interface TavanStreakTargetStep {
+  step: number; // 1, 2, 3, 4, 5
+  label: string; // '1. Tavan', '2. Tavan', ...
+  price: number;
+  cumulativePct: number; // e.g. 10.0, 21.0, 33.1, 46.4, 61.1
+  status: 'TAMAMLANDI' | 'HEDEF' | 'BEKLEMEDE';
+}
+
+export interface TavanStreakInfo {
+  currentStreak: number; // 0 = henüz tavan yapmadı, 1 = 1. tavan, 2 = 2. tavan, 3+ = mega seri
+  streakStage: 'KOPUS_TAVANI' | 'IVME_TEYIDI' | 'MEGA_SERI' | 'ERKEN_ADAY';
+  streakStageLabel: string; // '🎯 1. Tavan (Kopuş Evresi)', '🔥 2. Tavan (İvme Teyidi)', '🚀 3. Tavan+ (Mega Seri)'
+  cumulativeReturnPct: number; // e.g. 10.0%, 21.0%, 33.1%, 46.4%, 61.1%
+  nextCeilingPrice: number; // Bir sonraki tavan hedef fiyatı
+  nextCeilingCumulativePct: number; // Bir sonraki tavan gerçekleştiğinde toplam kâr %
+  trailingStopPrice: number; // Tavan serisini koruyan dinamik izleyen stop fiyatı
+  trailingStopPct: number; // Stop marjı %
+  breakdownRiskLevel: 'DÜŞÜK' | 'ORTA' | 'YÜKSEK'; // Tavan çözülme riski
+  queueLockStrength: 'ÇOK GÜÇLÜ' | 'GÜÇLÜ' | 'NORMAL' | 'ZAYIF'; // Bekleyen alıcı kilit gücü
+  targetSteps: TavanStreakTargetStep[];
+}
+
 export interface TavanPotentialResult {
   score: number; // 0 - 100
   isCandidate: boolean; // score >= 68 && changePct between 1.0 and 8.8
@@ -157,6 +179,7 @@ export interface TavanPotentialResult {
   targetCeilingPrice: number; // +10% tavan fiyatı
   tavanMargin?: number; // tavana kalan marj %
   primaryReason?: string;
+  streakInfo?: TavanStreakInfo;
 }
 
 export interface TimeframeSnapshot {
