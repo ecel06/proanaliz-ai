@@ -511,18 +511,19 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     return map;
   }, [stocks, bistSessionPhase]);
 
-  // All Ceiling / Breakout Candidates (Tavan Potansiyeli Yüksek Hisselerin Tümü)
+  // All Ceiling / Breakout Candidates (Tavan Potansiyeli Yüksek Hisselerin Tümü - Stabil Sıralama)
   const tavanCandidates = useMemo(() => {
     return [...stocks]
       .filter((s) => {
         const qa = analysesMap.get(s.symbol);
         return Boolean(qa?.tavanPotential?.isCandidate && (s.changePct || 0) < 9.7);
       })
-      .sort(
-        (a, b) =>
-          (analysesMap.get(b.symbol)?.tavanPotential?.score || 0) -
-          (analysesMap.get(a.symbol)?.tavanPotential?.score || 0)
-      );
+      .sort((a, b) => {
+        const scoreA = analysesMap.get(a.symbol)?.tavanPotential?.score || 0;
+        const scoreB = analysesMap.get(b.symbol)?.tavanPotential?.score || 0;
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        return (b.changePct || 0) - (a.changePct || 0);
+      });
   }, [stocks, analysesMap]);
 
   // Synchronize live BIST tavan radar and session phase to global context for Admin AI Co-Pilot

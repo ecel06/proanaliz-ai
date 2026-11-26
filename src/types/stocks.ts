@@ -106,7 +106,7 @@ export interface StockQuantAnalysis {
   fundamentalScore: number; // 0-100
   riskLevel: 'DÜŞÜK' | 'ORTA' | 'YÜKSEK';
   tradePlan: {
-    bias: 'LONG (AL)' | 'SHORT / KAR AL' | 'BEKLE';
+    bias: 'LONG (AL)' | 'SHORT / KAR AL' | 'BEKLE' | 'POZİSYONU KORU (TAVANI İZLE)';
     entryLow: number;
     entryHigh: number;
     stopLoss: number;

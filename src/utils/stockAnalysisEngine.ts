@@ -251,21 +251,23 @@ export function analyzeStockQuant(
     )
   );
 
-  // 🚀 TAVAN & KIRILIM İVMESİ UYUMU:
-  // Eğer hisse gün içi güçlü primle (+%4.0 ve üzeri) tavana koşuyorsa (Örn: GENIL +%7.58, ISKPL +%7.09):
-  // Bu bir 'aşırı alım yorgunluğu' değil, canlı bir kırılım/tavan ivmesidir.
-  // Bu nedenle aşırı alım baskılanması kaldırılır ve skor/sinyal AL veya GÜÇLÜ AL seviyesine yükseltilir.
-  const isTavanSurge = (stock.changePct || 0) >= 4.0;
-  if (isTavanSurge) {
-    if (score < 66) score = Math.max(score, 68); // TUT yerine AL sinyaline yükselt
-    if ((stock.changePct || 0) >= 6.5 && score < 76) score = Math.max(score, 77); // Güçlü tavan atağında GÜÇLÜ AL'a taşı
-    bullReasons.unshift(`🎯 Güçlü gün içi alıcı ivmesi ve tavan atağı (+%${(stock.changePct || 0).toFixed(2)})`);
+  // 🛡️ ÖNCÜ SİNYAL vs. GEÇ KALINMIŞ SİNYAL AYRIMI:
+  // Fiyat zaten +%5.5 ve üstü uçmuşsa, yatırımcıya YENİ ALIM yaptırmak tepeyi satın alma riski doğurur!
+  // 1. Öncü Sinyal (Erken Evre): Hisse henüz +%0 ile +%4.5 arasındayken dip dönüşü veya sıkışma kırılımı yapıyorsa gerçek GÜÇLÜ AL / AL üretilir.
+  // 2. İleri Evre (+%5.5 ve üstü): Eğer hisse zaten tavan koşusundaysa sinyal zorlanmaz; tradePlan bias'ı "POZİSYONU KORU (TAVANI İZLE)" olarak ayarlanır.
+  const isLateSurge = (stock.changePct || 0) >= 5.5;
+  const isEarlyBreakout = (stock.changePct || 0) >= 0.8 && (stock.changePct || 0) < 5.5;
+
+  if (isEarlyBreakout) {
+    bullReasons.unshift(`🎯 Erken Kırılım İvmesi: Fiyat kontrollü primle (+%${(stock.changePct || 0).toFixed(2)}) erken alım bölgesinde.`);
+  } else if (isLateSurge) {
+    bearReasons.unshift(`⚠️ İleri Aşama Prim (+%${(stock.changePct || 0).toFixed(2)}): Fiyat tavan marjına yakın. Yeni alım riski yüksektir; mevcut pozisyonlar izleyen stopla korunmalıdır.`);
   }
 
-  // Overbought & Top Reversal Guard (Yalnızca tavan koşusu olmayan yatay/yorgun hisselerde aşırı alımı kısıtla)
-  const isOverbought = !isTavanSurge && Boolean(
-    (stock.rsi !== null && stock.rsi >= 74) ||
-    (stock.bbUpper !== null && price >= stock.bbUpper * 1.01)
+  // Overbought & Top Reversal Guard
+  const isOverbought = Boolean(
+    (stock.rsi !== null && stock.rsi >= 75) ||
+    (stock.bbUpper !== null && price >= stock.bbUpper * 1.02)
   );
 
   if (isOverbought && score >= 60) {
@@ -273,8 +275,9 @@ export function analyzeStockQuant(
   }
 
   let signal: StockSignalType = 'TUT';
-  if (score >= 76 && !isOverbought) signal = 'GÜÇLÜ AL';
-  else if (score >= 64 && !isOverbought) signal = 'AL';
+  if (score >= 76 && !isOverbought && !isLateSurge) signal = 'GÜÇLÜ AL';
+  else if (score >= 64 && !isOverbought && !isLateSurge) signal = 'AL';
+  else if (isLateSurge && score >= 64) signal = 'TUT'; // Uçmuş hissede yeni AL yok, TUT ve izle!
   else if (score <= 26) signal = 'GÜÇLÜ SAT';
   else if (score <= 38) signal = 'SAT';
   else signal = 'TUT'; // Healthy neutral/hold range (39 - 63)
@@ -356,7 +359,13 @@ export function analyzeStockQuant(
     fundamentalScore,
     riskLevel,
     tradePlan: {
-      bias: isBullBias ? 'LONG (AL)' : isBearBias ? 'SHORT / KAR AL' : 'BEKLE',
+      bias: isLateSurge
+        ? 'POZİSYONU KORU (TAVANI İZLE)'
+        : isBullBias
+        ? 'LONG (AL)'
+        : isBearBias
+        ? 'SHORT / KAR AL'
+        : 'BEKLE',
       entryLow,
       entryHigh,
       stopLoss,
