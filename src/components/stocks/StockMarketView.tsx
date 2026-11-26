@@ -84,7 +84,7 @@ import { INITIAL_IPOS } from '../../data/ipoData';
 import { INITIAL_KAP_NEWS } from '../../data/kapNewsData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
-type PresetFilter = 'all' | 'tavan_aday' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
+type PresetFilter = 'all' | 'tavan_aday' | 'tavan_serisi' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
 type StockSort = 'ai_desc' | 'change_desc' | 'volume_desc' | 'rsi_asc' | 'pe_asc';
 
 export interface StockMarketViewProps {
@@ -781,6 +781,11 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
 
     if (preset === 'tavan_aday') {
       list = list.filter((s) => analysesMap.get(s.symbol)?.tavanPotential?.isCandidate);
+    } else if (preset === 'tavan_serisi') {
+      list = list.filter((s) => {
+        const tp = analysesMap.get(s.symbol)?.tavanPotential;
+        return Boolean(tp && (tp.streakInfo?.currentStreak && tp.streakInfo.currentStreak >= 2 || tp.category === 'TAVAN_SERISI'));
+      });
     } else if (preset === 'tavan') {
       list = list.filter((s) => (s.changePct || 0) >= 9.7);
     } else if (preset === 'strong_buy') {
@@ -825,15 +830,21 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     let sell = 0;
     let tavan = 0;
     let tavanAday = 0;
+    let tavanSerisi = 0;
     stocks.forEach((s) => {
+      const qa = analysesMap.get(s.symbol);
+      const tp = qa?.tavanPotential;
       if ((s.changePct || 0) >= 9.7) tavan++;
-      if (analysesMap.get(s.symbol)?.tavanPotential?.isCandidate) tavanAday++;
-      const sig = analysesMap.get(s.symbol)?.signal;
+      if (tp?.isCandidate) tavanAday++;
+      if (Boolean(tp && (tp.streakInfo?.currentStreak && tp.streakInfo.currentStreak >= 2 || tp.category === 'TAVAN_SERISI'))) {
+        tavanSerisi++;
+      }
+      const sig = qa?.signal;
       if (sig === 'GÜÇLÜ AL') strongBuy++;
       else if (sig === 'AL') buy++;
       else if (sig === 'SAT' || sig === 'GÜÇLÜ SAT') sell++;
     });
-    return { strongBuy, buy, sell, tavan, tavanAday };
+    return { strongBuy, buy, sell, tavan, tavanAday, tavanSerisi };
   }, [stocks, analysesMap]);
 
   const getSignalStyle = (sig: StockQuantAnalysis['signal']) => {
@@ -1570,6 +1581,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                 id: 'tavan_aday',
                 label: `${bistSessionPhase.pluralTitle} (${statsSummary.tavanAday})`,
               },
+              { id: 'tavan_serisi', label: `🔥 Tavan Serisi (${statsSummary.tavanSerisi})` },
               { id: 'tavan', label: `🚀 Kilit Tavanlar (${statsSummary.tavan})` },
               { id: 'strong_buy', label: `🔥 Güçlü AL (${statsSummary.strongBuy})` },
               { id: 'buy', label: `✅ AL (${statsSummary.strongBuy + statsSummary.buy})` },
@@ -1581,6 +1593,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
               const active = preset === p.id;
               const isTavan = p.id === 'tavan';
               const isRadar = p.id === 'tavan_aday';
+              const isStreak = p.id === 'tavan_serisi';
               return (
                 <button
                   key={p.id}
@@ -1588,14 +1601,18 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${active
                       ? isRadar
                         ? 'bg-amber-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/30'
-                        : isTavan
-                          ? 'bg-emerald-400 text-slate-950 border-emerald-300 font-black shadow-md shadow-emerald-400/25'
-                          : 'bg-emerald-500 text-slate-950 border-emerald-400'
+                        : isStreak
+                          ? 'bg-gradient-to-r from-orange-500 via-amber-400 to-yellow-400 text-slate-950 border-orange-400 font-black shadow-md shadow-orange-500/30'
+                          : isTavan
+                            ? 'bg-emerald-400 text-slate-950 border-emerald-300 font-black shadow-md shadow-emerald-400/25'
+                            : 'bg-emerald-500 text-slate-950 border-emerald-400'
                       : isRadar
                         ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
-                        : isTavan
-                          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
-                          : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
+                        : isStreak
+                          ? 'bg-orange-500/15 text-orange-300 border-orange-500/40 hover:bg-orange-500/25'
+                          : isTavan
+                            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+                            : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
                     }`}
                 >
                   {p.label}
