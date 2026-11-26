@@ -19,7 +19,12 @@ import {
   Activity,
   Layers,
 } from 'lucide-react';
-import { User, callAdminAICoPilotApi } from '../utils/authHelper';
+import {
+  User,
+  callAdminAICoPilotApi,
+  fetchAdminAICoPilotSync,
+  saveAdminAICoPilotSync,
+} from '../utils/authHelper';
 
 interface AdminAICoPilotModalProps {
   isOpen: boolean;
@@ -84,26 +89,96 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
     }
   }, [messages, isOpen, loading]);
 
-  // Persist messages
+  // Synchronize state with cloud on open & periodic background sync across devices
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+
+    const syncWithCloud = async () => {
+      try {
+        const res = await fetchAdminAICoPilotSync();
+        if (!isMounted || !res.success) return;
+
+        if (res.geminiApiKey) {
+          setApiKey(res.geminiApiKey);
+          setTempApiKey(res.geminiApiKey);
+          try {
+            localStorage.setItem(STORAGE_KEY_API, res.geminiApiKey);
+          } catch {}
+        }
+
+        if (Array.isArray(res.messages) && res.messages.length > 0) {
+          const incoming = res.messages as ChatMsg[];
+          setMessages(incoming);
+          try {
+            localStorage.setItem(STORAGE_KEY_MSGS, JSON.stringify(incoming));
+          } catch {}
+        }
+      } catch (err) {
+        console.warn('[AdminAICoPilot] Cloud sync fetch warning:', err);
+      }
+    };
+
+    syncWithCloud();
+
+    // Periodic sync every 6 seconds while open (so messages sent from PC appear on mobile live)
+    const interval = setInterval(async () => {
+      if (loading) return;
+      try {
+        const res = await fetchAdminAICoPilotSync();
+        if (!isMounted || !res.success) return;
+
+        if (res.geminiApiKey && !apiKey) {
+          setApiKey(res.geminiApiKey);
+          setTempApiKey(res.geminiApiKey);
+          try {
+            localStorage.setItem(STORAGE_KEY_API, res.geminiApiKey);
+          } catch {}
+        }
+
+        if (Array.isArray(res.messages) && res.messages.length > 0) {
+          const incoming = res.messages as ChatMsg[];
+          setMessages((prev: ChatMsg[]) => {
+            if (incoming.length !== prev.length || incoming[incoming.length - 1]?.id !== prev[prev.length - 1]?.id) {
+              return incoming;
+            }
+            return prev;
+          });
+        }
+      } catch {}
+    }, 6000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [isOpen, loading, apiKey]);
+
+  // Persist messages to local storage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_MSGS, JSON.stringify(messages));
     } catch {}
   }, [messages]);
 
-  // Save API key
-  const handleSaveApiKey = () => {
+  // Save API key to cloud & local device
+  const handleSaveApiKey = async () => {
     const trimmed = tempApiKey.trim();
     setApiKey(trimmed);
     try {
       localStorage.setItem(STORAGE_KEY_API, trimmed);
     } catch {}
     setIsSettingsOpen(false);
-    onShowToast?.('✅ Gemini API Anahtarı başarıyla kaydedildi!');
+    onShowToast?.('✅ Gemini API Anahtarı buluta ve cihaza kaydedildi!');
+    try {
+      await saveAdminAICoPilotSync({ geminiApiKey: trimmed });
+    } catch (e) {
+      console.warn('Sync API key error:', e);
+    }
   };
 
-  const handleClearHistory = () => {
-    if (window.confirm('Sohbet geçmişini sıfırlamak istiyor musunuz?')) {
+  const handleClearHistory = async () => {
+    if (window.confirm('Sohbet geçmişini tüm cihazlarda sıfırlamak istiyor musunuz?')) {
       const welcome: ChatMsg = {
         id: 'welcome-' + Date.now(),
         sender: 'assistant',
@@ -114,7 +189,12 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
       try {
         localStorage.removeItem(STORAGE_KEY_MSGS);
       } catch {}
-      onShowToast?.('Sohbet geçmişi temizlendi.');
+      onShowToast?.('Sohbet geçmişi tüm cihazlarda temizlendi.');
+      try {
+        await saveAdminAICoPilotSync({ messages: [welcome] });
+      } catch (e) {
+        console.warn('Sync clear history error:', e);
+      }
     }
   };
 
@@ -183,7 +263,11 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
           text: res.reply,
           timestamp: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
         };
-        setMessages((prev) => [...prev, assistantMsg]);
+        setMessages((prev) => {
+          const updated = [...prev, assistantMsg];
+          saveAdminAICoPilotSync({ messages: updated }).catch(() => {});
+          return updated;
+        });
       } else {
         const errorMsg: ChatMsg = {
           id: 'err-' + Date.now(),
@@ -311,7 +395,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
                 )}
               </div>
               <p className="text-[11px] text-slate-400">
-                Google DeepMind Gemini 1.5 Entegrasyonu • Cebinizdeki 7/24 Baş Analist
+                Google DeepMind Gemini Entegrasyonu • Çok Cihazlı Bulut Senkronizasyonu
               </p>
             </div>
           </div>
@@ -385,13 +469,18 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
                 </button>
                 {apiKey && (
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setTempApiKey('');
                       setApiKey('');
                       try {
                         localStorage.removeItem(STORAGE_KEY_API);
                       } catch {}
                       onShowToast?.('API anahtarı kaldırıldı.');
+                      try {
+                        await saveAdminAICoPilotSync({ geminiApiKey: '' });
+                      } catch (e) {
+                        console.warn('Sync clear API key error:', e);
+                      }
                     }}
                     className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-300 text-xs font-bold cursor-pointer"
                   >
@@ -401,7 +490,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
               </div>
             </div>
             <p className="text-[10px] text-slate-400">
-              * Bu anahtar yalnızca sizin tarayıcınızda ve oturumunuzda saklanır, üçüncü şahıslarla asla paylaşılmaz.
+              * API anahtarınız ve sohbet geçmişiniz güvenli sunucu bulutunda saklanır; hem bilgisayarınız hem telefonunuz anında eşitlenir.
             </p>
           </div>
         )}

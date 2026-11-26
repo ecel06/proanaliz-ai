@@ -752,6 +752,51 @@ export async function callAdminAICoPilotApi(
   }
 }
 
+export async function fetchAdminAICoPilotSync(): Promise<{
+  success: boolean;
+  geminiApiKey?: string;
+  messages?: any[];
+  error?: string;
+}> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Oturum bulunamadı.' };
+
+  try {
+    const res = await fetch('/api/admin/ai-copilot/sync', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function saveAdminAICoPilotSync(data: {
+  geminiApiKey?: string;
+  messages?: any[];
+}): Promise<{ success: boolean; state?: any; error?: string }> {
+  const token = getStoredToken();
+  if (!token) return { success: false, error: 'Oturum bulunamadı.' };
+
+  try {
+    const res = await fetch('/api/admin/ai-copilot/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+      signal: AbortSignal.timeout(8000),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 // --- Şifre Güçlülüğü Hesaplayıcı ---
 export function evaluatePasswordStrength(password: string): {
   score: number; // 0 to 4

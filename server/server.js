@@ -68,7 +68,9 @@ import {
   getUserSupportTickets,
   updateSupportTicketStatus,
   invalidateOtherSessions,
-  deleteOwnAccount
+  deleteOwnAccount,
+  getAdminAiState,
+  saveAdminAiState
 } from './userService.js';
 import {
   securityHeadersMiddleware,
@@ -1043,6 +1045,23 @@ app.post('/api/admin/support/tickets/:id/status', adminMiddleware, (req, res) =>
   }
 });
 
+// --- 👑 ADMIN AI CO-PILOT SYNC (MULTI-DEVICE CLOUD SYNC) ---
+app.get('/api/admin/ai-copilot/sync', adminMiddleware, (req, res) => {
+  const state = getAdminAiState();
+  res.json({
+    success: true,
+    geminiApiKey: state.geminiApiKey || '',
+    messages: state.messages || [],
+    updatedAt: state.updatedAt,
+  });
+});
+
+app.post('/api/admin/ai-copilot/sync', adminMiddleware, (req, res) => {
+  const { geminiApiKey, messages } = req.body;
+  const state = saveAdminAiState({ geminiApiKey, messages });
+  res.json({ success: true, state });
+});
+
 // --- 👑 ADMIN AI CO-PILOT (POWERED BY GOOGLE GEMINI) ---
 app.post('/api/admin/ai-copilot', adminMiddleware, async (req, res) => {
   try {
@@ -1051,7 +1070,13 @@ app.post('/api/admin/ai-copilot', adminMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Mesaj metni zorunludur.' });
     }
 
-    const apiKey = customApiKey?.trim() || process.env.GEMINI_API_KEY || '';
+    const adminAiState = getAdminAiState();
+    const apiKey = customApiKey?.trim() || adminAiState.geminiApiKey || process.env.GEMINI_API_KEY || '';
+
+    // Permanently remember key in cloud for multi-device sync
+    if (customApiKey && customApiKey.trim() !== adminAiState.geminiApiKey) {
+      saveAdminAiState({ geminiApiKey: customApiKey.trim() });
+    }
 
     // 1. FUTBOL AI ROBOTU VERİLERİ (Bülten, Canlı Maçlar, AI Bankoları)
     const matchesCount = Array.isArray(cachedBulletin?.matches) ? cachedBulletin.matches.length : 0;
@@ -1355,6 +1380,29 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
       });
     }
 
+    // Persist new turn into synced cloud messages for seamless PC <-> Mobile sync
+    try {
+      const currentSynced = adminAiState.messages || [];
+      const newMessages = [
+        ...currentSynced,
+        {
+          id: 'u-' + Date.now(),
+          sender: 'user',
+          text: message.trim(),
+          timestamp: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+        },
+        {
+          id: 'a-' + (Date.now() + 1),
+          sender: 'assistant',
+          text: reply,
+          timestamp: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+        },
+      ];
+      saveAdminAiState({ messages: newMessages });
+    } catch (saveErr) {
+      console.warn('[AdminAI Sync Turn Error]:', saveErr.message);
+    }
+
     return res.json({
       success: true,
       reply,
@@ -1368,7 +1416,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.90';
+const APP_VERSION = '2026.11.20.91';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

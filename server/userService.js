@@ -16,6 +16,7 @@ const ANNOUNCEMENT_FILE = path.join(DATA_DIR, 'announcement.json');
 const TICKETS_FILE = path.join(DATA_DIR, 'support_tickets.json');
 const PROMOS_FILE = path.join(DATA_DIR, 'promos.json');
 const JWT_SECRET_FILE = path.join(DATA_DIR, '.jwt_secret');
+const ADMIN_AI_FILE = path.join(DATA_DIR, 'admin_ai_state.json');
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
@@ -141,6 +142,51 @@ function loadUsers() {
   }
   // Guarantee master admin exists at all times across container reboots
   seedDefaultAdmin();
+  loadAdminAiState();
+}
+
+let adminAiState = {
+  geminiApiKey: '',
+  messages: [],
+  updatedAt: Date.now(),
+};
+
+function loadAdminAiState() {
+  try {
+    if (fs.existsSync(ADMIN_AI_FILE)) {
+      const raw = fs.readFileSync(ADMIN_AI_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed) {
+        adminAiState = {
+          geminiApiKey: typeof parsed.geminiApiKey === 'string' ? parsed.geminiApiKey : '',
+          messages: Array.isArray(parsed.messages) ? parsed.messages : [],
+          updatedAt: parsed.updatedAt || Date.now(),
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[UserService] Could not load admin_ai_state:', err.message);
+  }
+}
+
+export function getAdminAiState() {
+  return adminAiState;
+}
+
+export function saveAdminAiState({ geminiApiKey, messages }) {
+  if (geminiApiKey !== undefined) {
+    adminAiState.geminiApiKey = String(geminiApiKey || '').trim();
+  }
+  if (Array.isArray(messages)) {
+    adminAiState.messages = messages.slice(-60);
+  }
+  adminAiState.updatedAt = Date.now();
+  try {
+    fs.writeFileSync(ADMIN_AI_FILE, JSON.stringify(adminAiState, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[UserService] Could not save admin_ai_state:', err.message);
+  }
+  return adminAiState;
 }
 
 function saveUsers() {
