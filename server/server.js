@@ -1202,18 +1202,69 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
       });
     }
 
-    // Modern Gemini model cascade with 100% free-tier verified models
-    const candidateConfigs = [
-      { ver: 'v1beta', model: 'gemini-1.5-flash' },
-      { ver: 'v1beta', model: 'gemini-1.5-flash-latest' },
-      { ver: 'v1beta', model: 'gemini-2.0-flash' },
-      { ver: 'v1beta', model: 'gemini-2.0-flash-exp' },
-      { ver: 'v1beta', model: 'gemini-1.5-flash-8b' },
-      { ver: 'v1', model: 'gemini-1.5-flash' },
-    ];
+    // 1. Dynamic Discovery via ModelService.ListModels for 100% exact API key compatibility
+    let candidateConfigs = [];
+    try {
+      const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+      const listRes = await fetch(listUrl, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (listRes.ok) {
+        const listData = await listRes.json();
+        if (Array.isArray(listData.models) && listData.models.length > 0) {
+          const contentModels = listData.models
+            .filter((m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+            .map((m) => m.name.replace(/^models\//, ''));
+
+          // Priority sorting: modern flash models first (2.5-flash, 2.0-flash, 1.5-flash, etc.)
+          contentModels.sort((a, b) => {
+            const getScore = (name) => {
+              if (name.includes('2.5-flash')) return 100;
+              if (name.includes('2.0-flash')) return 90;
+              if (name.includes('flash')) return 80;
+              if (name.includes('2.5')) return 70;
+              if (name.includes('2.0')) return 60;
+              if (name.includes('1.5-flash')) return 50;
+              if (name.includes('1.5')) return 40;
+              return 10;
+            };
+            return getScore(b) - getScore(a);
+          });
+
+          if (contentModels.length > 0) {
+            console.log(`[Gemini Dynamic Discovery] ${contentModels.length} models found for key:`, contentModels.slice(0, 5));
+            candidateConfigs = contentModels.slice(0, 8).map((m) => ({ ver: 'v1beta', model: m }));
+          }
+        }
+      } else {
+        const listErr = await listRes.text();
+        console.warn(`[Gemini Discovery HTTP ${listRes.status}]:`, listErr);
+      }
+    } catch (listErr) {
+      console.warn('[Gemini Discovery Exception]:', listErr.message);
+    }
+
+    // 2. Verified fallback cascade if listModels could not be queried
+    if (candidateConfigs.length === 0) {
+      candidateConfigs = [
+        { ver: 'v1beta', model: 'gemini-2.5-flash' },
+        { ver: 'v1beta', model: 'gemini-2.0-flash' },
+        { ver: 'v1beta', model: 'gemini-2.0-flash-001' },
+        { ver: 'v1beta', model: 'gemini-2.0-flash-exp' },
+        { ver: 'v1beta', model: 'gemini-1.5-flash' },
+        { ver: 'v1beta', model: 'gemini-1.5-flash-latest' },
+      ];
+    }
 
     let lastError = null;
     let reply = null;
+    let successfulModel = null;
+    const attemptErrors = [];
 
     const reqHeaders = {
       'Content-Type': 'application/json',
@@ -1242,19 +1293,24 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
         const data = await response.json();
         if (response.ok && !data.error && data.candidates?.[0]?.content?.parts?.[0]?.text) {
           reply = data.candidates[0].content.parts[0].text;
+          successfulModel = cfg.model;
+          console.log(`[Gemini Success] Responded using model: ${cfg.model} (${cfg.ver})`);
           break; // Succeeded!
         } else {
-          lastError = data.error?.message || `HTTP ${response.status}`;
-          console.warn(`[Gemini Attempt ${cfg.model} (${cfg.ver}) Failed]:`, lastError);
+          const errMsg = data.error?.message || `HTTP ${response.status}`;
+          attemptErrors.push(`${cfg.model}: ${errMsg}`);
+          lastError = errMsg;
+          console.warn(`[Gemini Attempt ${cfg.model} (${cfg.ver}) Failed]:`, errMsg);
         }
       } catch (e) {
+        attemptErrors.push(`${cfg.model}: ${e.message}`);
         lastError = e.message;
         console.warn(`[Gemini Attempt ${cfg.model} (${cfg.ver}) Exception]:`, e.message);
       }
     }
 
     if (!reply) {
-      console.error('Gemini API Hatası:', lastError);
+      console.error('[Gemini All Models Failed]:', attemptErrors.join(' | '));
       let userFriendlyError = lastError || 'Gemini servisinden yanıt alınamadı. Lütfen API anahtarınızı kontrol edin.';
       if (typeof userFriendlyError === 'string' && (userFriendlyError.includes('API key not valid') || userFriendlyError.includes('API_KEY_INVALID'))) {
         userFriendlyError = 'Google Gemini API anahtarınız geçersiz. Lütfen sağ üstteki API Anahtarı butonuna tıklayıp geçerli bir anahtar (AIzaSy...) kaydedin.';
@@ -1263,12 +1319,14 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
         success: false,
         error: userFriendlyError,
         hasApiKey: true,
+        debugAttempts: attemptErrors.slice(0, 3),
       });
     }
 
     return res.json({
       success: true,
       reply,
+      modelUsed: successfulModel,
       hasApiKey: true,
     });
   } catch (err) {
@@ -1278,7 +1336,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.87';
+const APP_VERSION = '2026.11.20.88';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
