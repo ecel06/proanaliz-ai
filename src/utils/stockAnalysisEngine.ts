@@ -447,7 +447,7 @@ export function calculateTavanPotential(
   const isNearCeilingClose = changePct >= 9.4;
   if (isNearCeilingClose && !isLiveSession) {
     return {
-      score: 90,
+      score: 92,
       isCandidate: true,
       isHighProbability: true,
       isAlreadyCeiling: false,
@@ -466,53 +466,47 @@ export function calculateTavanPotential(
     };
   }
 
-  let score = 15;
+  let score = 10;
 
   // --- 2. VOLATİLİTE SIKIŞMASI (Bollinger Squeeze - Tavanların %36.8'i bu modelden çıkar) ---
   let squeezeStatus: 'Daralma / Yay Eşiğinde' | 'Patlama Başladı' | 'Normal' = 'Normal';
   if (stock.bbLower !== null && stock.bbUpper !== null && stock.bbUpper > 0) {
     const bbMid = (stock.bbUpper + stock.bbLower) / 2;
     const bbWidth = (stock.bbUpper - stock.bbLower) / (bbMid || 1);
-    if (bbWidth <= 0.09) {
+    if (bbWidth <= 0.075) {
       squeezeStatus = 'Daralma / Yay Eşiğinde';
-      score += 26;
-      reasons.push('Bollinger bantları daralmış (yay gibi sıkışmış); kırılım patlaması eşiğinde');
+      score += 24;
+      reasons.push('Bollinger bantları aşırı daralmış (yay gibi sıkışmış); kırılım patlaması eşiğinde');
     } else if (price >= stock.bbUpper * 0.99 && changePct >= 2.5) {
       squeezeStatus = 'Patlama Başladı';
-      score += 20;
+      score += 18;
       reasons.push('Üst Bollinger bandı hacimli deliniyor; ivme kırılımı teyitli');
     }
   }
 
-  // --- 3. DİP TEPKİ & AŞIRI SATIM DÖNÜŞÜ (BIST Tavanlarının %57.5'i bu modelden çıkar - HEKTS/ASTOR Modeli) ---
+  // --- 3. DİP TEPKİ & AŞIRI SATIM DÖNÜŞÜ (BIST Tavanlarının %57.5'i bu modelden çıkar - HEKTS/ASTOR/TCKRC Modeli) ---
   let isDipReversal = false;
-  if (stock.rsi !== null && stock.rsi <= 35) {
-    score += 28;
+  if (stock.rsi !== null && stock.rsi <= 32) {
+    score += 26;
     isDipReversal = true;
     reasons.push(`Aşırı satım dip seviyesi (RSI: ${stock.rsi.toFixed(1)}). Satıcıların tükendiği seviyede kurumsal dip tepkisi eşiği.`);
-  } else if (stock.rsi !== null && stock.rsi <= 42 && changePct >= 0.8) {
-    score += 20;
+  } else if (stock.rsi !== null && stock.rsi <= 38 && changePct >= 1.0) {
+    score += 16;
     isDipReversal = true;
     reasons.push(`Dipten pozitif dönüş mumuyla (RSI: ${stock.rsi.toFixed(1)}) ivmelenme`);
-  }
-
-  if (((stock.perfW && stock.perfW < -8) || (stock.perf1M && stock.perf1M < -15)) && changePct >= -3.5) {
-    score += 18;
-    isDipReversal = true;
-    reasons.push('Çok haftalık dip seviyeden kurumsal taleple dönüş ve taban oluşumu kurulumu');
   }
 
   // --- 4. HACİM VE DEVİR HIZI ANOMALİSİ (RVol & Turnover) ---
   let rvol = 1.0;
   if (stock.valueTraded && stock.marketCap && stock.marketCap > 0) {
     const turnoverRate = (stock.valueTraded / stock.marketCap) * 100;
-    if (turnoverRate >= 3.0) {
+    if (turnoverRate >= 3.5) {
       rvol = Number((turnoverRate / 1.5).toFixed(1));
-      score += 22;
+      score += 20;
       reasons.push(`Kuvvetli para girişi ve hacim anomalisi (${rvol}x RVol, %${turnoverRate.toFixed(1)} devir hızı)`);
-    } else if (turnoverRate >= 1.5) {
+    } else if (turnoverRate >= 1.8) {
       rvol = Number((turnoverRate / 1.2).toFixed(1));
-      score += 12;
+      score += 10;
       reasons.push(`Hacim desteğiyle kurumsal alım ilgisi (${rvol}x RVol)`);
     }
   }
@@ -521,10 +515,10 @@ export function calculateTavanPotential(
   if (isLiveSession) {
     // CANLI SEANS (10:00 - 18:10): Gün içi tavan marjına (+%10) koşan hisseler
     if (changePct >= 5.5 && changePct < 9.7) {
-      score += 35;
+      score += 32;
       reasons.push(`Canlı seansta tavan marjına yakın kuvvetli alıcı baskısı (+%${changePct.toFixed(2)})`);
     } else if (changePct >= 2.5 && changePct < 5.5) {
-      score += 22;
+      score += 20;
       reasons.push(`Günün tavanına doğru canlı ivmelenme (+%${changePct.toFixed(2)})`);
     } else if (changePct <= 0) {
       score -= 25;
@@ -532,8 +526,8 @@ export function calculateTavanPotential(
     // Günün en yükseğine kilitlenme
     if (stock.high && stock.low && stock.high > stock.low) {
       const pos = (price - stock.low) / (stock.high - stock.low);
-      if (pos >= 0.85 && changePct >= 2.5) {
-        score += 15;
+      if (pos >= 0.88 && changePct >= 2.5) {
+        score += 14;
         reasons.push('Fiyat günün zirvesine yakın işlem görüyor (Satıcılar karşılanıyor)');
       }
     }
@@ -541,24 +535,27 @@ export function calculateTavanPotential(
     // SEANS KAPALI / AKŞAM (18:10 - 10:00): YARININ TAVAN ADAYI SEÇİMİ
     // 🛡️ DÜN TAVAN KİLİTLEYEMEYİP AŞIRI PRİMLENENLERE KÂR SATIŞI UYARISI:
     if (changePct >= 6.5 && !isNearCeilingClose) {
-      score -= 28; // Tavana kilitleyememiş hisse yarın sabah kâr satışına uğrar!
+      score -= 35; // Tavana kilitleyememiş hisse yarın sabah kâr satışına uğrar!
       reasons.push(`⚠️ Kâr Realizasyonu Riski: Hisse bugün +%${changePct.toFixed(2)} primlendi ancak tavan kilitleyemedi; ertesi seans açılışında kâr satışı riski yüksektir.`);
-    } else if (changePct >= 0.5 && changePct <= 4.5 && squeezeStatus === 'Daralma / Yay Eşiğinde') {
-      score += 32; // İDEAL SIKIŞMA ADAYI: Dinlenmiş, sıkışmış, henüz kopmamış!
+    } else if (changePct >= 0.8 && changePct <= 4.2 && squeezeStatus === 'Daralma / Yay Eşiğinde') {
+      score += 26; // İDEAL SIKIŞMA ADAYI: Dinlenmiş, sıkışmış, henüz kopmamış!
       reasons.push(`🎯 İdeal Sıkışma Kurulumu: Dengeli primlenme (+%${changePct.toFixed(2)}) ve daralan bant ile yarın seans açılışında patlama adayı.`);
-    } else if (isDipReversal && changePct >= -4.5 && changePct <= 3.5) {
-      score += 30; // İDEAL DİP DÖNÜŞ ADAYI (HEKTS / ASTOR / TCKRC Modeli - %57.5 İstatistiği)
+    } else if (isDipReversal && changePct >= -3.5 && changePct <= 3.0) {
+      score += 24; // İDEAL DİP DÖNÜŞ ADAYI (HEKTS / ASTOR / TCKRC Modeli - %57.5 İstatistiği)
       reasons.push(`🎯 İdeal Dip Reversal (Satıcı Tükenişi): Aşırı satım tabanında satıcılar karşılandı; yarınki seansın dip sıçrama tavan adayı.`);
-    } else if (changePct <= -5.0 && !isDipReversal) {
-      score -= 20;
+    } else if (changePct <= -4.0 && !isDipReversal) {
+      score -= 25;
     }
   }
 
-  // --- 6. PİYASA DEĞERİ & TAHTA AĞIRLIĞI DİNAMİĞİ ---
-  if (stock.marketCap && stock.marketCap > 180e9) {
-    score -= 10; // BIST 30 devleri tek günde nadiren tavan kilitler
-  } else if (stock.marketCap && stock.marketCap < 45e9 && stock.marketCap > 1e9) {
-    score += 10; // Çevik orta/küçük ölçekli tavan dinamizmi
+  // --- 6. PİYASA DEĞERİ & TAHTA AĞIRLIĞI DİNAMİĞİ (MEGA-CAP DEV KORUMASI) ---
+  // MGROS, BIMAS, THYAO, TUPRS, KCHOL, SAHOL, EREGL, GARAN vb. BIST 30 devleri tek günde tavan yapamaz!
+  const isMegaCap = Boolean(stock.marketCap && stock.marketCap > 65e9);
+  if (isMegaCap) {
+    score = Math.min(score, 52); // Asla tavan adayı eşiğini (78) geçemez!
+    reasons.push('Yüksek piyasa değeri (BIST 30 ağır sıklet dev tahta); tek seanslık tavan dinamiğine uygun değildir.');
+  } else if (stock.marketCap && stock.marketCap < 35e9 && stock.marketCap > 1.5e9) {
+    score += 8; // Çevik orta/küçük ölçekli tavan dinamizmi
   }
 
   // --- 7. QUANT MODELİ & TREND UYUMU ---
@@ -570,40 +567,48 @@ export function calculateTavanPotential(
         reasons.push('Ana teknik trend düşüş yönünde (SAT); tavan potansiyeli baskılanıyor');
       }
     } else if (rawSignal === 'GÜÇLÜ AL' || (rawScore !== undefined && rawScore >= 76)) {
-      score += 15;
+      score += 12;
       reasons.push('AI Quant ana modeli (GÜÇLÜ AL) ile tam uyumlu');
-    } else if (rawSignal === 'AL' || (rawScore !== undefined && rawScore >= 64)) {
-      score += 8;
     }
   }
 
-  score = clamp(Math.round(score));
+  // Clamp maximum score to 92 for candidate setups (only 100 for already locked ceiling)
+  score = clamp(Math.round(score), 0, 92);
 
   let category: TavanCategoryType = 'NORMAL';
   let categoryLabel = 'Normal Seyir';
 
-  if (isDipReversal && score >= 65) {
-    category = 'DIP_TEPKI_TAVANI';
-    categoryLabel = '🎯 Dip Tepki Tavanı Adayı';
-  } else if (squeezeStatus === 'Daralma / Yay Eşiğinde' && score >= 65) {
-    category = 'SIKISMA_PATLAMASI';
-    categoryLabel = '⚡ Sıkışma Patlaması Adayı';
-  } else if (score >= 75) {
-    category = 'KIRILIM_TAVANI';
-    categoryLabel = '🚀 Güçlü Tavan Adayı';
-  } else if (score >= 60) {
-    category = 'HACIM_PATLAMASI';
-    categoryLabel = '🔥 Hacim & İvme Adayı';
+  if (!isMegaCap) {
+    if (isDipReversal && score >= 75) {
+      category = 'DIP_TEPKI_TAVANI';
+      categoryLabel = '🎯 Dip Tepki Tavanı Adayı';
+    } else if (squeezeStatus === 'Daralma / Yay Eşiğinde' && score >= 75) {
+      category = 'SIKISMA_PATLAMASI';
+      categoryLabel = '⚡ Sıkışma Patlaması Adayı';
+    } else if (score >= 80) {
+      category = 'KIRILIM_TAVANI';
+      categoryLabel = '🚀 Güçlü Tavan Adayı';
+    } else if (score >= 70) {
+      category = 'HACIM_PATLAMASI';
+      categoryLabel = '🔥 Hacim & İvme Adayı';
+    }
   }
 
-  // Adaylık Kriteri (Son 1 Ayın 106 Tavan Verisiyle Optimize Edildi):
-  // Canlı seansta: %2.0+ primli ve skoru >= 65
-  // Seans dışında (yarın için): Dip dönüşü (-%4 ile +%3.5) veya Sıkışma (+%0.2 ile +%4.5) veya Tavan Serisi, skoru >= 68
-  const isCandidate = isLiveSession
-    ? score >= 65 && changePct >= 2.0 && changePct < 9.7 && quantContext?.rawSignal !== 'SAT'
-    : score >= 68 && ((changePct >= -4.5 && changePct <= 3.5 && isDipReversal) || (changePct >= 0.2 && changePct < 6.5)) && (quantContext?.rawSignal !== 'SAT' || isDipReversal);
+  // Adaylık Kriteri (Sıkı & Elit Filtreleme - En Fazla 3-5 Hisse Seçilir):
+  // 1. Asla Mega-Cap dev olamaz (MGROS, BIMAS, THYAO elenir)
+  // 2. Canlı seansta: %2.5+ primli ve skoru >= 75
+  // 3. Seans dışında: Skoru >= 78 ve (Gerçek Dip RSI <= 32 veya Sıkışma + kontrollü prim veya Tavan Serisi)
+  const isCandidate = !isMegaCap && (
+    isLiveSession
+      ? score >= 75 && changePct >= 2.5 && changePct < 9.7 && quantContext?.rawSignal !== 'SAT'
+      : score >= 78 && (
+          (changePct >= -3.5 && changePct <= 3.0 && isDipReversal && stock.rsi !== null && stock.rsi <= 32) ||
+          (changePct >= 0.8 && changePct <= 4.2 && squeezeStatus === 'Daralma / Yay Eşiğinde') ||
+          isNearCeilingClose
+        ) && (quantContext?.rawSignal !== 'SAT' || isDipReversal)
+  );
 
-  const isHighProbability = score >= 78 && isCandidate;
+  const isHighProbability = score >= 82 && isCandidate;
 
   return {
     score,

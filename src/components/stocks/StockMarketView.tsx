@@ -511,7 +511,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     return map;
   }, [stocks, bistSessionPhase]);
 
-  // All Ceiling / Breakout Candidates (Tavan Potansiyeli Yüksek Hisselerin Tümü - Stabil Sıralama)
+  // All Ceiling / Breakout Candidates (Tavan Potansiyeli Yüksek Hisselerin En Elit 3-5 Tanesi)
   const tavanCandidates = useMemo(() => {
     return [...stocks]
       .filter((s) => {
@@ -523,7 +523,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         const scoreB = analysesMap.get(b.symbol)?.tavanPotential?.score || 0;
         if (scoreB !== scoreA) return scoreB - scoreA;
         return (b.changePct || 0) - (a.changePct || 0);
-      });
+      })
+      .slice(0, 5); // 🎯 ELİT LİSTE SINIRI: En fazla 3 ila 5 yüksek olasılıklı aday listelenir!
   }, [stocks, analysesMap]);
 
   // Synchronize live BIST tavan radar and session phase to global context for Admin AI Co-Pilot
@@ -675,13 +676,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       .filter((s) => s.rsi !== null && s.rsi <= 40)
       .sort((a, b) => (a.rsi ?? 99) - (b.rsi ?? 99));
     const byVol = [...stocks].sort((a, b) => (b.valueTraded || 0) - (a.valueTraded || 0));
-    const byTavanCand = [...stocks]
-      .filter((s) => (s.changePct || 0) < 9.7)
-      .sort(
-        (a, b) =>
-          (analysesMap.get(b.symbol)?.tavanPotential?.score || 0) -
-          (analysesMap.get(a.symbol)?.tavanPotential?.score || 0)
-      );
+    const byTavanCand = tavanCandidates;
     return {
       topTavanCand: byTavanCand[0] || null,
       topQuant: byScore[0] || null,
@@ -1581,7 +1576,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
               alphaHighlights.topTavanCand && {
                 tag: bistSessionPhase.singularTitle,
                 sym: alphaHighlights.topTavanCand.symbol,
-                meta: `+${alphaHighlights.topTavanCand.changePct.toFixed(2)}% • %${analysesMap.get(alphaHighlights.topTavanCand.symbol)?.tavanPotential?.score || 80}`,
+                meta: `${alphaHighlights.topTavanCand.changePct >= 0 ? '+' : ''}${alphaHighlights.topTavanCand.changePct.toFixed(2)}% • %${analysesMap.get(alphaHighlights.topTavanCand.symbol)?.tavanPotential?.score || 80}`,
                 tone: 'border-amber-400/50 bg-amber-500/10 text-amber-300 ring-1 ring-amber-400/30',
               },
               alphaHighlights.topQuant && {
