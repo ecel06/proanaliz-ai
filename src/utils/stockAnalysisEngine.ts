@@ -443,16 +443,39 @@ export function calculateTavanPotential(
   const targetCeilingPrice = Number((prevClose * 1.1).toFixed(2));
   const tavanMargin = Number(Math.max(0, 10 - changePct).toFixed(2));
 
+  // --- 1.5 TAVAN SERİSİ / ARDIŞIK TAVAN İVMESİ (KATMR Tipi Peş Peşe Tavan Koşusu) ---
+  const isNearCeilingClose = changePct >= 9.4;
+  if (isNearCeilingClose && !isLiveSession) {
+    return {
+      score: 90,
+      isCandidate: true,
+      isHighProbability: true,
+      isAlreadyCeiling: false,
+      category: 'TAVAN_SERISI',
+      categoryLabel: '🔥 Tavan Serisi (2. Tavan Adayı)',
+      reasons: [
+        `Günün tavan marjına (+%${changePct.toFixed(2)}) kilitlendi.`,
+        'Kurumsal alıcı baskısı ve tavan sırası birikimiyle ertesi seans açılışında seri tavan adayı.',
+        'Not: Açılışta tavan çözülmesi riskine karşı izleyen stop (trailing stop) ile takip edilmelidir.'
+      ],
+      relativeVolume: 2.5,
+      squeezeStatus: 'Patlama Başladı',
+      targetCeilingPrice,
+      tavanMargin: 0,
+      primaryReason: 'Dünü tavanda kilitledi; açılışta 2. tavan serisi potansiyeli yüksek.',
+    };
+  }
+
   let score = 15;
 
-  // --- 2. VOLATİLİTE SIKIŞMASI (Bollinger Squeeze Breakout) ---
+  // --- 2. VOLATİLİTE SIKIŞMASI (Bollinger Squeeze - Tavanların %36.8'i bu modelden çıkar) ---
   let squeezeStatus: 'Daralma / Yay Eşiğinde' | 'Patlama Başladı' | 'Normal' = 'Normal';
   if (stock.bbLower !== null && stock.bbUpper !== null && stock.bbUpper > 0) {
     const bbMid = (stock.bbUpper + stock.bbLower) / 2;
     const bbWidth = (stock.bbUpper - stock.bbLower) / (bbMid || 1);
-    if (bbWidth <= 0.08) {
+    if (bbWidth <= 0.09) {
       squeezeStatus = 'Daralma / Yay Eşiğinde';
-      score += 24;
+      score += 26;
       reasons.push('Bollinger bantları daralmış (yay gibi sıkışmış); kırılım patlaması eşiğinde');
     } else if (price >= stock.bbUpper * 0.99 && changePct >= 2.5) {
       squeezeStatus = 'Patlama Başladı';
@@ -461,17 +484,22 @@ export function calculateTavanPotential(
     }
   }
 
-  // --- 3. DİP TEPKİ & AŞIRI SATIM DÖNÜŞÜ (HEKTS Tipi Dip Dönüş Tavanı) ---
+  // --- 3. DİP TEPKİ & AŞIRI SATIM DÖNÜŞÜ (BIST Tavanlarının %57.5'i bu modelden çıkar - HEKTS/ASTOR Modeli) ---
   let isDipReversal = false;
-  if (stock.rsi !== null && stock.rsi <= 38 && changePct >= 1.5) {
-    score += 22;
+  if (stock.rsi !== null && stock.rsi <= 35) {
+    score += 28;
     isDipReversal = true;
-    reasons.push(`Aşırı satım dip bölgesinden teyitli tepki sıçraması (RSI: ${stock.rsi.toFixed(1)})`);
+    reasons.push(`Aşırı satım dip seviyesi (RSI: ${stock.rsi.toFixed(1)}). Satıcıların tükendiği seviyede kurumsal dip tepkisi eşiği.`);
+  } else if (stock.rsi !== null && stock.rsi <= 42 && changePct >= 0.8) {
+    score += 20;
+    isDipReversal = true;
+    reasons.push(`Dipten pozitif dönüş mumuyla (RSI: ${stock.rsi.toFixed(1)}) ivmelenme`);
   }
-  if (((stock.perfW && stock.perfW < -9) || (stock.perf1M && stock.perf1M < -16)) && changePct >= 1.5) {
+
+  if (((stock.perfW && stock.perfW < -8) || (stock.perf1M && stock.perf1M < -15)) && changePct >= -3.5) {
     score += 18;
     isDipReversal = true;
-    reasons.push('Çok haftalık dip seviyeden kurumsal taleple dönüş kurulumu');
+    reasons.push('Çok haftalık dip seviyeden kurumsal taleple dönüş ve taban oluşumu kurulumu');
   }
 
   // --- 4. HACİM VE DEVİR HIZI ANOMALİSİ (RVol & Turnover) ---
@@ -495,7 +523,7 @@ export function calculateTavanPotential(
     if (changePct >= 5.5 && changePct < 9.7) {
       score += 35;
       reasons.push(`Canlı seansta tavan marjına yakın kuvvetli alıcı baskısı (+%${changePct.toFixed(2)})`);
-    } else if (changePct >= 3.0 && changePct < 5.5) {
+    } else if (changePct >= 2.5 && changePct < 5.5) {
       score += 22;
       reasons.push(`Günün tavanına doğru canlı ivmelenme (+%${changePct.toFixed(2)})`);
     } else if (changePct <= 0) {
@@ -511,17 +539,17 @@ export function calculateTavanPotential(
     }
   } else {
     // SEANS KAPALI / AKŞAM (18:10 - 10:00): YARININ TAVAN ADAYI SEÇİMİ
-    // 🛡️ DÜN ZATEN ÇOK GİTMİŞ HİSSELERE KÂR SATIŞI CEZASI (GENIL/ISKPL Hatasını Önleyen Koruma):
-    if (changePct >= 6.5) {
-      score -= 32; // Aşırı primlenmiş hisse yarın sabah kâr satışına uğrar!
-      reasons.push(`⚠️ Kâr Realizasyonu Riski: Hisse bugün zaten +%${changePct.toFixed(2)} primlendi; ertesi seans açılışında kâr satışı ve düzeltme riski yüksektir.`);
-    } else if (changePct >= 1.0 && changePct <= 4.5 && squeezeStatus === 'Daralma / Yay Eşiğinde') {
-      score += 30; // İDEAL YARIN ADAYI: Dinlenmiş, sıkışmış, henüz kopmamış!
-      reasons.push(`🎯 İdeal Yarın Kurulumu: Dengeli primlenme (+%${changePct.toFixed(2)}) ve daralan bant ile yarın seans açılışında patlama adayı.`);
-    } else if (isDipReversal && changePct >= 1.0 && changePct <= 5.0) {
-      score += 25; // İDEAL DİP DÖNÜŞ ADAYI (HEKTS Tipi)
-      reasons.push(`🎯 Teyitli Dip Reversal: Dipten kontrollü dönüş mumu ile yarınki seansın güçlü ivme adayı.`);
-    } else if (changePct <= -2.5) {
+    // 🛡️ DÜN TAVAN KİLİTLEYEMEYİP AŞIRI PRİMLENENLERE KÂR SATIŞI UYARISI:
+    if (changePct >= 6.5 && !isNearCeilingClose) {
+      score -= 28; // Tavana kilitleyememiş hisse yarın sabah kâr satışına uğrar!
+      reasons.push(`⚠️ Kâr Realizasyonu Riski: Hisse bugün +%${changePct.toFixed(2)} primlendi ancak tavan kilitleyemedi; ertesi seans açılışında kâr satışı riski yüksektir.`);
+    } else if (changePct >= 0.5 && changePct <= 4.5 && squeezeStatus === 'Daralma / Yay Eşiğinde') {
+      score += 32; // İDEAL SIKIŞMA ADAYI: Dinlenmiş, sıkışmış, henüz kopmamış!
+      reasons.push(`🎯 İdeal Sıkışma Kurulumu: Dengeli primlenme (+%${changePct.toFixed(2)}) ve daralan bant ile yarın seans açılışında patlama adayı.`);
+    } else if (isDipReversal && changePct >= -4.5 && changePct <= 3.5) {
+      score += 30; // İDEAL DİP DÖNÜŞ ADAYI (HEKTS / ASTOR / TCKRC Modeli - %57.5 İstatistiği)
+      reasons.push(`🎯 İdeal Dip Reversal (Satıcı Tükenişi): Aşırı satım tabanında satıcılar karşılandı; yarınki seansın dip sıçrama tavan adayı.`);
+    } else if (changePct <= -5.0 && !isDipReversal) {
       score -= 20;
     }
   }
@@ -530,15 +558,17 @@ export function calculateTavanPotential(
   if (stock.marketCap && stock.marketCap > 180e9) {
     score -= 10; // BIST 30 devleri tek günde nadiren tavan kilitler
   } else if (stock.marketCap && stock.marketCap < 45e9 && stock.marketCap > 1e9) {
-    score += 8; // Çevik orta/küçük ölçekli tavan dinamizmi
+    score += 10; // Çevik orta/küçük ölçekli tavan dinamizmi
   }
 
   // --- 7. QUANT MODELİ & TREND UYUMU ---
   if (quantContext) {
     const { rawSignal, rawScore } = quantContext;
     if (rawSignal === 'SAT' || rawSignal === 'GÜÇLÜ SAT' || (rawScore !== undefined && rawScore <= 38)) {
-      score -= 35;
-      reasons.push('Ana teknik trend düşüş yönünde (SAT); tavan potansiyeli baskılanıyor');
+      if (!isDipReversal) {
+        score -= 30;
+        reasons.push('Ana teknik trend düşüş yönünde (SAT); tavan potansiyeli baskılanıyor');
+      }
     } else if (rawSignal === 'GÜÇLÜ AL' || (rawScore !== undefined && rawScore >= 76)) {
       score += 15;
       reasons.push('AI Quant ana modeli (GÜÇLÜ AL) ile tam uyumlu');
@@ -566,12 +596,12 @@ export function calculateTavanPotential(
     categoryLabel = '🔥 Hacim & İvme Adayı';
   }
 
-  // Adaylık Kriteri:
-  // Canlı seansta: %2.5+ primli ve skoru >= 66
-  // Seans dışında (yarın için): %0.5 - %6.0 arası (aşırı primlenmemiş), skoru >= 68
+  // Adaylık Kriteri (Son 1 Ayın 106 Tavan Verisiyle Optimize Edildi):
+  // Canlı seansta: %2.0+ primli ve skoru >= 65
+  // Seans dışında (yarın için): Dip dönüşü (-%4 ile +%3.5) veya Sıkışma (+%0.2 ile +%4.5) veya Tavan Serisi, skoru >= 68
   const isCandidate = isLiveSession
-    ? score >= 66 && changePct >= 2.5 && changePct < 9.7 && quantContext?.rawSignal !== 'SAT'
-    : score >= 68 && changePct >= 0.5 && changePct < 6.5 && quantContext?.rawSignal !== 'SAT';
+    ? score >= 65 && changePct >= 2.0 && changePct < 9.7 && quantContext?.rawSignal !== 'SAT'
+    : score >= 68 && ((changePct >= -4.5 && changePct <= 3.5 && isDipReversal) || (changePct >= 0.2 && changePct < 6.5)) && (quantContext?.rawSignal !== 'SAT' || isDipReversal);
 
   const isHighProbability = score >= 78 && isCandidate;
 

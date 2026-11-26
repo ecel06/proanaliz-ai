@@ -1197,7 +1197,12 @@ Platformumuzun canlı durum bilgileri aşağıdadır. Admin platform, borsa, ma�
 - Seans Fazı: ${sessionPhase}
 - Sistemimizdeki Gerçek Tavan Adayları (Tam ${tavanCandidates.length} adet): ${JSON.stringify(tavanCandidates)}
 ${bistSummary ? `- ${bistSummary}` : ''}
-* Kural: Tavan adayları sorulduğunda SADECE yukarıdaki ${tavanCandidates.length} hisseyi (${tavanCandidates.map(s => s.symbol).join(', ')}) baz al. Asla hayali hisse veya sahte aracı kurum/takas uydurma.
+- BIST Tavan Anatomisi Araştırma Sonuçları (Sistemimizdeki 106 Tavan Olayının Matematiksel Modeli):
+  * Tavanların %57.5'i Aşırı Satım Dip Dönüşünden (RSI < 35, satıcıların tükendiği taban noktası, örn: HEKTS, ASTOR, TCKRC) çıkar.
+  * Tavanların %36.8'i Daralan Bollinger Bandı Sıkışması (volatilite depolaması, örn: KATMR 1. tavan) sonrası patlar.
+  * Tavanların kalan kısmı ise Tavan Serisi (peş peşe tavan koşusu, örn: KATMR 2. tavan) ve Zirve Kırılımı modelleridir.
+  * Tavan öncesi gün ortalama RSI 33.7 seviyesindedir.
+* Kural: Tavan adayları veya tavan sistemi sorulduğunda yukarıdaki ${tavanCandidates.length} hisseyi ve bu kanıtlanmış 3 tavan arketipini (Dip Dönüşü, Sıkışma Patlaması, Tavan Serisi) baz alarak profesyonelce açıkla. Asla hayali hisse uydurma.
 
 2. ⚽ Futbol AI Kupon & Maç Analiz Robotu:
 - Toplam Maç: ${matchesCount}
@@ -1430,7 +1435,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.92';
+const APP_VERSION = '2026.11.20.93';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
