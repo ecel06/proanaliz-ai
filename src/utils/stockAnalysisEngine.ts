@@ -274,13 +274,37 @@ export function analyzeStockQuant(
     bearReasons.push('Fiyat aşırı alım / direnç tavanında. Yeni pozisyon açmak yerine kâr realizasyonu veya düzeltme beklenmeli.');
   }
 
+  // 1. Tavan potansiyelini önceden hesapla
+  const tavanPotential = calculateTavanPotential(stock, {
+    rawScore: score,
+    rawSignal: score >= 76 ? 'GÜÇLÜ AL' : score >= 64 ? 'AL' : score <= 38 ? 'SAT' : 'TUT',
+    trendScore,
+    sessionPhase: options?.sessionPhase,
+  });
+
+  // 🛡️ MUTLAK SİNYAL TUTARLILIĞI:
+  // Bir hisse "Tavan Adayı" ise, sistemin ona "SAT" veya "TUT" demesi TAM BİR ÇELİŞKİDİR!
+  // Tavan adayı olan hisse doğrudan alım yönlü (GÜÇLÜ AL veya AL) olmak zorundadır!
   let signal: StockSignalType = 'TUT';
-  if (score >= 76 && !isOverbought && !isLateSurge) signal = 'GÜÇLÜ AL';
-  else if (score >= 64 && !isOverbought && !isLateSurge) signal = 'AL';
-  else if (isLateSurge && score >= 64) signal = 'TUT'; // Uçmuş hissede yeni AL yok, TUT ve izle!
-  else if (score <= 26) signal = 'GÜÇLÜ SAT';
-  else if (score <= 38) signal = 'SAT';
-  else signal = 'TUT'; // Healthy neutral/hold range (39 - 63)
+  if (tavanPotential.isCandidate && !tavanPotential.isAlreadyCeiling) {
+    signal = tavanPotential.score >= 80 ? 'GÜÇLÜ AL' : 'AL';
+    score = Math.max(score, tavanPotential.score >= 80 ? 84 : 74);
+    bullReasons.unshift(`🎯 ${tavanPotential.categoryLabel}: Tavan potansiyeli (%${tavanPotential.score}) ile kurumsal alım bölgesine girdi.`);
+  } else if (tavanPotential.isAlreadyCeiling) {
+    signal = 'TUT'; // Tavan marjına kilitlenmiş hisse pozisyonu koruyarak izlenir
+  } else if (score >= 76 && !isOverbought && !isLateSurge) {
+    signal = 'GÜÇLÜ AL';
+  } else if (score >= 64 && !isOverbought && !isLateSurge) {
+    signal = 'AL';
+  } else if (isLateSurge && score >= 64) {
+    signal = 'TUT'; // Uçmuş hissede yeni AL yok, TUT ve izle!
+  } else if (score <= 26) {
+    signal = 'GÜÇLÜ SAT';
+  } else if (score <= 38) {
+    signal = 'SAT';
+  } else {
+    signal = 'TUT'; // Healthy neutral/hold range (39 - 63)
+  }
 
   // --- 5. PIVOTS, FIBONACCI & ATR RISK/REWARD TRADE PLAN ---
   const highDay = stock.high || price * 1.015;
@@ -337,18 +361,13 @@ export function analyzeStockQuant(
     bearReasons.push('Kısa vadede belirgin aşırı satım/direnç kırılım riski görülmüyor');
   }
 
-  const summaryText = isBullBias
+  const summaryText = tavanPotential.isCandidate && !tavanPotential.isAlreadyCeiling
+    ? `${stock.symbol}, ${tavanPotential.categoryLabel} olarak tespit edildi. Sistem tavan potansiyeli (%${tavanPotential.score}) doğrultusunda ${formatStockPrice(tavanPotential.targetCeilingPrice, stock.currency)} tavan hedefiyle (${signal}) yönünde pozisyonlanmaktadır.`
+    : isBullBias
     ? `${stock.symbol}, Trend (%${trendScore}) ve Momentum (%${momentumScore}) uyumuyla kurumsal alım bölgesinde. ${formatStockPrice(stopLoss, stock.currency)} zarar-kes korunarak ${formatStockPrice(tp1, stock.currency)} ve ${formatStockPrice(tp2, stock.currency)} hedefleri takip edilebilir.`
     : isBearBias
     ? `${stock.symbol}, teknik göstergelerde (${signal}) zayıflama veya aşırı alım baskısı taşıyor. Pozisyon yönetimi için ${formatStockPrice(s1, stock.currency)} desteği kritik eşik konumunda.`
     : `${stock.symbol} şu anda kararsız / yatay denge bölgesinde (Nötr). Yön teyidi için ${formatStockPrice(r1, stock.currency)} direnci üstü kırılım veya ${formatStockPrice(s1, stock.currency)} desteği tepkisi beklenmelidir.`;
-
-  const tavanPotential = calculateTavanPotential(stock, {
-    rawScore: score,
-    rawSignal: signal,
-    trendScore,
-    sessionPhase: options?.sessionPhase,
-  });
 
   return {
     symbol: stock.symbol,
