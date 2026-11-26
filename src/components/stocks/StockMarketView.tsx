@@ -436,7 +436,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     }
   }, [stocks]);
 
-  // 🕒 BIST Akıllı Seans Zamanı Motoru (Hafta içi/sonu, Sabah Seans Öncesi, Canlı Seans, Akşam Kapanış)
+  // 🕒 BIST Akıllı Seans Zamanı Motoru (Hafta içi/sonu, Sabah Seans Öncesi, Açılış Eşleşmesi, Canlı Seans, Akşam Kapanış)
   const bistSessionPhase = useMemo(() => {
     const trNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Istanbul' }));
     const day = trNow.getDay(); // 0: Pazar, 1: Pzt, ..., 5: Cuma, 6: Cmt
@@ -455,8 +455,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       };
     }
 
-    // 2. Hafta içi: Sabah Seans Öncesi (00:00 - 09:55) -> Aynı gün seans 10:00'da açılacak!
-    if (mins < 9 * 60 + 55) {
+    // 2. Hafta içi: Sabah Seans Öncesi (00:00 - 09:40) -> Aynı gün seans 10:00'da açılacak!
+    if (mins < 9 * 60 + 40) {
       return {
         phase: 'pre_market' as const,
         isLive: false,
@@ -464,6 +464,18 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         pluralTitle: '🎯 Bugünün Tavan Adayları',
         badgeText: '🌅 Seans Öncesi • Bugün 10:00 Açılış Hazırlığı',
         descText: 'Bugünkü seans öncesi hazırlık. Dünün kapanış verileri, aşırı satım dip tepkisi ve daralan bant kırılımlarıyla bugünün seansında tavan potansiyeli taşıyan hisseler.',
+      };
+    }
+
+    // 2.5 Hafta içi: Açılış Eşleşme Seansı (09:40 - 09:55) -> Emir Toplama & Teorik Eşleşme!
+    if (mins < 9 * 60 + 55) {
+      return {
+        phase: 'call_auction' as const,
+        isLive: true,
+        singularTitle: '🌅 Açılış Eşleşme Tavanı',
+        pluralTitle: '🌅 Açılış Eşleşme Tavanları',
+        badgeText: '⚡ 09:40–09:55 Açılış Eşleşmesi (Teorik Tavanlar)',
+        descText: 'Sürekli müzayede öncesi teorik eşleşme fiyatı ve tavanda bekleyen alıcı fazlasıyla saat 10:00 tavan açılış adayları.',
       };
     }
 
@@ -503,13 +515,51 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     };
   }, []);
 
+  // 🔗 Sektör Liderleri Haritası (Sektörel Domino & Sympathy Momentum için)
+  const sectorLeadersMap = useMemo(() => {
+    const map = new Map<string, { symbol: string; changePct: number; sector: string }>();
+    stocks.forEach((s) => {
+      if (!s.sector) return;
+      const current = map.get(s.sector);
+      const chg = s.changePct || 0;
+      if (!current || chg > current.changePct) {
+        map.set(s.sector, { symbol: s.symbol, changePct: chg, sector: s.sector });
+      }
+    });
+    return map;
+  }, [stocks]);
+
+  // ⚡ KAP Haber Katalizörleri Haritası (Episodic Pivot için)
+  const kapCatalystsMap = useMemo(() => {
+    const map = new Map<string, { hasCatalyst: boolean; summary: string }>();
+    INITIAL_KAP_NEWS.forEach((k) => {
+      if (k.aiImpact === 'ÇOK POZİTİF' || (k.aiScore && k.aiScore >= 90)) {
+        map.set(k.code, {
+          hasCatalyst: true,
+          summary: k.title,
+        });
+      }
+    });
+    return map;
+  }, []);
+
   const analysesMap = useMemo(() => {
     const map = new Map<string, StockQuantAnalysis>();
     stocks.forEach((s) => {
-      map.set(s.symbol, analyzeStockQuant(s, { sessionPhase: bistSessionPhase.phase }));
+      const kap = kapCatalystsMap.get(s.symbol);
+      const secLeader = s.sector ? sectorLeadersMap.get(s.sector) : undefined;
+      map.set(
+        s.symbol,
+        analyzeStockQuant(s, {
+          sessionPhase: bistSessionPhase.phase,
+          sectorLeader: secLeader,
+          hasKapCatalyst: kap?.hasCatalyst,
+          kapCatalystSummary: kap?.summary,
+        })
+      );
     });
     return map;
-  }, [stocks, bistSessionPhase]);
+  }, [stocks, bistSessionPhase, sectorLeadersMap, kapCatalystsMap]);
 
   // All Ceiling / Breakout Candidates (Tavan Potansiyeli Yüksek Hisselerin En Elit 3-5 Tanesi)
   const tavanCandidates = useMemo(() => {
@@ -539,6 +589,8 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
           changePct: s.changePct !== undefined ? `%${s.changePct.toFixed(2)}` : '—',
           score: qa?.tavanPotential?.score || qa?.score || 75,
           tavanMargin: qa?.tavanPotential?.tavanMargin,
+          category: qa?.tavanPotential?.category,
+          categoryLabel: qa?.tavanPotential?.categoryLabel,
           primaryReason: qa?.tavanPotential?.primaryReason,
         };
       });

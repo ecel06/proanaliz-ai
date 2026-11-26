@@ -139,6 +139,8 @@ export type TavanCategoryType =
   | 'HACIM_PATLAMASI'
   | 'SIKISMA_PATLAMASI'
   | 'TAVAN_SERISI'
+  | 'SEKTOR_DOMINO'
+  | 'HABER_KATALIZOR'
   | 'TAVAN_KILIT'
   | 'NORMAL';
 

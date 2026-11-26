@@ -1201,8 +1201,11 @@ ${bistSummary ? `- ${bistSummary}` : ''}
   * Tavanların %57.5'i Aşırı Satım Dip Dönüşünden (RSI < 35, satıcıların tükendiği taban noktası, örn: HEKTS, ASTOR, TCKRC) çıkar.
   * Tavanların %36.8'i Daralan Bollinger Bandı Sıkışması (volatilite depolaması, örn: KATMR 1. tavan) sonrası patlar.
   * Tavanların kalan kısmı ise Tavan Serisi (peş peşe tavan koşusu, örn: KATMR 2. tavan) ve Zirve Kırılımı modelleridir.
-  * Tavan öncesi gün ortalama RSI 33.7 seviyesindedir.
-* Kural: Tavan adayları veya tavan sistemi sorulduğunda yukarıdaki ${tavanCandidates.length} hisseyi ve bu kanıtlanmış 3 tavan arketipini (Dip Dönüşü, Sıkışma Patlaması, Tavan Serisi) baz alarak profesyonelce açıkla. Asla hayali hisse uydurma.
+  * Sektörel Domino & Sympathy Sinerjisi: Sektör lideri (+%7.5 - +%10) tavan kilitlediğinde, aynı sektördeki kardeş hisseler gecikmeli takip ivmesiyle tavana sürüklenir.
+  * KAP Haber Katalizörleri (Episodic Pivot): Yüksek tutarlı yeni iş sözleşmeleri ve stratejik yatırımlar anlık tavan hacmi yaratır.
+  * 09:40–09:55 Açılış Eşleşme Seansı: Sürekli müzayede öncesi teorik eşleşme fiyatı ve tavanda bekleyen lot yığılması 10:00 tavan açılışını önceden haber verir.
+  * Mega-Cap Koruması: MGROS, BIMAS, THYAO gibi 65 Milyar TL+ dev tahtalar tek seansta tavan yapamaz ve elenir.
+* Kural: Tavan adayları veya tavan sistemi sorulduğunda yukarıdaki ${tavanCandidates.length} hisseyi ve bu kanıtlanmış kurumsal modelleri baz alarak profesyonelce açıkla. Asla hayali hisse uydurma.
 
 2. ⚽ Futbol AI Kupon & Maç Analiz Robotu:
 - Toplam Maç: ${matchesCount}
@@ -1435,7 +1438,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.95';
+const APP_VERSION = '2026.11.20.96';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

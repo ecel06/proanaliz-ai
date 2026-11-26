@@ -35,9 +35,16 @@ export function formatLargeNumber(num: number | null, currency = 'TRY'): string 
   return `${num.toLocaleString('tr-TR')} ${sym}`;
 }
 
+export interface StockAnalysisOptions {
+  sessionPhase?: 'in_session' | 'post_market' | 'pre_market' | 'call_auction' | 'weekend';
+  sectorLeader?: { symbol: string; changePct: number; sector: string };
+  hasKapCatalyst?: boolean;
+  kapCatalystSummary?: string;
+}
+
 export function analyzeStockQuant(
   stock: StockItem,
-  options?: { sessionPhase?: 'in_session' | 'post_market' | 'pre_market' | 'weekend' }
+  options?: StockAnalysisOptions
 ): StockQuantAnalysis {
   const price = stock.close || 1;
   const bullReasons: string[] = [];
@@ -280,6 +287,9 @@ export function analyzeStockQuant(
     rawSignal: score >= 76 ? 'GÜÇLÜ AL' : score >= 64 ? 'AL' : score <= 38 ? 'SAT' : 'TUT',
     trendScore,
     sessionPhase: options?.sessionPhase,
+    sectorLeader: options?.sectorLeader,
+    hasKapCatalyst: options?.hasKapCatalyst,
+    kapCatalystSummary: options?.kapCatalystSummary,
   });
 
   // 🛡️ MUTLAK SİNYAL TUTARLILIĞI:
@@ -412,14 +422,19 @@ export function analyzeStockQuant(
   };
 }
 
+export interface TavanQuantContext {
+  rawScore?: number;
+  rawSignal?: StockSignalType;
+  trendScore?: number;
+  sessionPhase?: 'in_session' | 'post_market' | 'pre_market' | 'call_auction' | 'weekend';
+  sectorLeader?: { symbol: string; changePct: number; sector: string };
+  hasKapCatalyst?: boolean;
+  kapCatalystSummary?: string;
+}
+
 export function calculateTavanPotential(
   stock: StockItem,
-  quantContext?: {
-    rawScore?: number;
-    rawSignal?: StockSignalType;
-    trendScore?: number;
-    sessionPhase?: 'in_session' | 'post_market' | 'pre_market' | 'weekend';
-  }
+  quantContext?: TavanQuantContext
 ): TavanPotentialResult {
   const price = stock.close || 1;
   const changePct = stock.changePct || 0;
@@ -427,8 +442,10 @@ export function calculateTavanPotential(
 
   // Determine current market session context
   let isLiveSession = false;
+  let isCallAuction = false;
   if (quantContext?.sessionPhase) {
     isLiveSession = quantContext.sessionPhase === 'in_session';
+    isCallAuction = quantContext.sessionPhase === 'call_auction';
   } else {
     // Auto-detect BIST market hours (UTC+3, 10:00 - 18:10 weekdays)
     const now = new Date();
@@ -436,7 +453,8 @@ export function calculateTavanPotential(
     const trMin = now.getUTCMinutes();
     const day = now.getUTCDay();
     const mins = trHour * 60 + trMin;
-    isLiveSession = day >= 1 && day <= 5 && mins >= 10 * 60 && mins <= 18 * 60 + 10;
+    isCallAuction = day >= 1 && day <= 5 && mins >= 9 * 60 + 40 && mins < 9 * 60 + 55;
+    isLiveSession = day >= 1 && day <= 5 && mins >= 9 * 60 + 55 && mins <= 18 * 60 + 10;
   }
 
   // 1. Zaten tavan kitlemiş hisseler (+%9.7 ve üstü)
@@ -532,7 +550,7 @@ export function calculateTavanPotential(
 
   // --- 5. SEANS FAZINA GÖRE FİYAT VE KÂR REALİZASYONU DİNAMİĞİ ---
   if (isLiveSession) {
-    // CANLI SEANS (10:00 - 18:10): Gün içi tavan marjına (+%10) koşan hisseler
+    // CANLI SEANS (09:55 - 18:10): Gün içi tavan marjına (+%10) koşan hisseler
     if (changePct >= 5.5 && changePct < 9.7) {
       score += 32;
       reasons.push(`Canlı seansta tavan marjına yakın kuvvetli alıcı baskısı (+%${changePct.toFixed(2)})`);
@@ -550,8 +568,15 @@ export function calculateTavanPotential(
         reasons.push('Fiyat günün zirvesine yakın işlem görüyor (Satıcılar karşılanıyor)');
       }
     }
+  } else if (isCallAuction) {
+    // 09:40 - 09:55 TEORİK EŞLEŞME SEANSI: Sürekli müzayede öncesi tavan derinliği
+    score += 16;
+    reasons.unshift('🌅 09:40–09:55 Açılış Teorik Eşleşmesi: Sürekli müzayede öncesi emir toplama aşamasında tavanda bekleyen alıcı derinliği tespit edildi.');
+    if (changePct >= 2.5) {
+      score += 15;
+    }
   } else {
-    // SEANS KAPALI / AKŞAM (18:10 - 10:00): YARININ TAVAN ADAYI SEÇİMİ
+    // SEANS KAPALI / AKŞAM (18:10 - 09:40): YARININ TAVAN ADAYI SEÇİMİ
     // 🛡️ DÜN TAVAN KİLİTLEYEMEYİP AŞIRI PRİMLENENLERE KÂR SATIŞI UYARISI:
     if (changePct >= 6.5 && !isNearCeilingClose) {
       score -= 35; // Tavana kilitleyememiş hisse yarın sabah kâr satışına uğrar!
@@ -571,17 +596,45 @@ export function calculateTavanPotential(
   // MGROS, BIMAS, THYAO, TUPRS, KCHOL, SAHOL, EREGL, GARAN vb. BIST 30 devleri tek günde tavan yapamaz!
   const isMegaCap = Boolean(stock.marketCap && stock.marketCap > 65e9);
   if (isMegaCap) {
-    score = Math.min(score, 52); // Asla tavan adayı eşiğini (78) geçemez!
+    score = Math.min(score, 50); // Asla tavan adayı eşiğini (78) geçemez!
     reasons.push('Yüksek piyasa değeri (BIST 30 ağır sıklet dev tahta); tek seanslık tavan dinamiğine uygun değildir.');
   } else if (stock.marketCap && stock.marketCap < 35e9 && stock.marketCap > 1.5e9) {
     score += 8; // Çevik orta/küçük ölçekli tavan dinamizmi
+  }
+
+  // --- 6.5. KAP HABER KATALİZÖRÜ & EPISODIC PIVOT ---
+  let hasKapCatalyst = false;
+  if (!isMegaCap && quantContext?.hasKapCatalyst) {
+    hasKapCatalyst = true;
+    score += 24;
+    reasons.unshift(
+      `⚡ KAP Katalizörü (Episodic Pivot): ${quantContext.kapCatalystSummary || 'Yeni yüksek tutarlı sözleşme / sipariş bildirimi'} ile kurumsal tavan akışı teyit edildi.`
+    );
+  }
+
+  // --- 6.6. SEKTÖREL DOMİNO & KARDEŞ HİSSE SİNERJİSİ (Sympathy Sector Momentum) ---
+  let isSectorDomino = false;
+  const leader = quantContext?.sectorLeader;
+  if (
+    !isMegaCap &&
+    leader &&
+    leader.symbol !== stock.symbol &&
+    leader.changePct >= 7.5 &&
+    changePct >= 1.2 &&
+    changePct <= 6.2
+  ) {
+    isSectorDomino = true;
+    score += 22;
+    reasons.unshift(
+      `🔗 Sektörel Domino: Sektör lideri ${leader.symbol} (+%${leader.changePct.toFixed(2)}) tavan koşusundayken aynı sektördeki ${stock.symbol} (+%${changePct.toFixed(2)}) gecikmeli takip ivmesiyle (sympathy momentum) tavan çekim alanında.`
+    );
   }
 
   // --- 7. QUANT MODELİ & TREND UYUMU ---
   if (quantContext) {
     const { rawSignal, rawScore } = quantContext;
     if (rawSignal === 'SAT' || rawSignal === 'GÜÇLÜ SAT' || (rawScore !== undefined && rawScore <= 38)) {
-      if (!isDipReversal) {
+      if (!isDipReversal && !hasKapCatalyst && !isSectorDomino) {
         score -= 30;
         reasons.push('Ana teknik trend düşüş yönünde (SAT); tavan potansiyeli baskılanıyor');
       }
@@ -598,7 +651,16 @@ export function calculateTavanPotential(
   let categoryLabel = 'Normal Seyir';
 
   if (!isMegaCap) {
-    if (isDipReversal && score >= 75) {
+    if (isCallAuction && score >= 75) {
+      category = 'TAVAN_SERISI';
+      categoryLabel = '🌅 Açılış Eşleşme Tavanı';
+    } else if (hasKapCatalyst && score >= 75) {
+      category = 'HABER_KATALIZOR';
+      categoryLabel = '⚡ KAP Katalizör Tavanı (Episodic Pivot)';
+    } else if (isSectorDomino && score >= 75) {
+      category = 'SEKTOR_DOMINO';
+      categoryLabel = `🔗 Sektörel Domino (${leader?.symbol} Sürüklemesi)`;
+    } else if (isDipReversal && score >= 75) {
       category = 'DIP_TEPKI_TAVANI';
       categoryLabel = '🎯 Dip Tepki Tavanı Adayı';
     } else if (squeezeStatus === 'Daralma / Yay Eşiğinde' && score >= 75) {
@@ -615,16 +677,18 @@ export function calculateTavanPotential(
 
   // Adaylık Kriteri (Sıkı & Elit Filtreleme - En Fazla 3-5 Hisse Seçilir):
   // 1. Asla Mega-Cap dev olamaz (MGROS, BIMAS, THYAO elenir)
-  // 2. Canlı seansta: %2.5+ primli ve skoru >= 75
-  // 3. Seans dışında: Skoru >= 78 ve (Gerçek Dip RSI <= 32 veya Sıkışma + kontrollü prim veya Tavan Serisi)
+  // 2. Canlı seansta / Eşleşmede: %2.0+ primli (veya Domino/KAP) ve skoru >= 75
+  // 3. Seans dışında: Skoru >= 78 ve (Gerçek Dip RSI <= 32 veya Sıkışma + kontrollü prim veya Domino veya KAP veya Tavan Serisi)
   const isCandidate = !isMegaCap && (
-    isLiveSession
-      ? score >= 75 && changePct >= 2.5 && changePct < 9.7 && quantContext?.rawSignal !== 'SAT'
+    isLiveSession || isCallAuction
+      ? score >= 75 && (changePct >= 2.0 || category === 'SEKTOR_DOMINO' || category === 'HABER_KATALIZOR') && changePct < 9.7 && quantContext?.rawSignal !== 'SAT'
       : score >= 78 && (
           (changePct >= -3.5 && changePct <= 3.0 && isDipReversal && stock.rsi !== null && stock.rsi <= 32) ||
           (changePct >= 0.8 && changePct <= 4.2 && squeezeStatus === 'Daralma / Yay Eşiğinde') ||
+          category === 'SEKTOR_DOMINO' ||
+          category === 'HABER_KATALIZOR' ||
           isNearCeilingClose
-        ) && (quantContext?.rawSignal !== 'SAT' || isDipReversal)
+        ) && (quantContext?.rawSignal !== 'SAT' || isDipReversal || category === 'HABER_KATALIZOR' || category === 'SEKTOR_DOMINO')
   );
 
   const isHighProbability = score >= 82 && isCandidate;
