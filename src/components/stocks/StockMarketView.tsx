@@ -436,14 +436,6 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     }
   }, [stocks]);
 
-  const analysesMap = useMemo(() => {
-    const map = new Map<string, StockQuantAnalysis>();
-    stocks.forEach((s) => {
-      map.set(s.symbol, analyzeStockQuant(s));
-    });
-    return map;
-  }, [stocks]);
-
   // 🕒 BIST Akıllı Seans Zamanı Motoru (Hafta içi/sonu, Sabah Seans Öncesi, Canlı Seans, Akşam Kapanış)
   const bistSessionPhase = useMemo(() => {
     const trNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Istanbul' }));
@@ -510,6 +502,14 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       descText: 'Bugünkü BIST seansı kapandı. Gün sonu kapanış hacmi, aşırı satım dip uyumsuzluğu ve Bollinger daralmasıyla yarınki seansın potansiyel tavan kurulumu.',
     };
   }, []);
+
+  const analysesMap = useMemo(() => {
+    const map = new Map<string, StockQuantAnalysis>();
+    stocks.forEach((s) => {
+      map.set(s.symbol, analyzeStockQuant(s, { sessionPhase: bistSessionPhase.phase }));
+    });
+    return map;
+  }, [stocks, bistSessionPhase]);
 
   // All Ceiling / Breakout Candidates (Tavan Potansiyeli Yüksek Hisselerin Tümü)
   const tavanCandidates = useMemo(() => {
