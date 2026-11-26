@@ -39,6 +39,7 @@ interface ChatMsg {
   sender: 'user' | 'assistant';
   text: string;
   timestamp: string;
+  modelUsed?: string;
 }
 
 const STORAGE_KEY_API = 'proanaliz_admin_gemini_key';
@@ -261,6 +262,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
           id: 'a-' + Date.now(),
           sender: 'assistant',
           text: res.reply,
+          modelUsed: res.modelUsed,
           timestamp: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => {
@@ -395,7 +397,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
                 )}
               </div>
               <p className="text-[11px] text-slate-400">
-                Google DeepMind Gemini Entegrasyonu • Çok Cihazlı Bulut Senkronizasyonu
+                Google DeepMind Gemini 3.8 Flagship Entegrasyonu • Çok Cihazlı Bulut Senkronizasyonu
               </p>
             </div>
           </div>
@@ -550,7 +552,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
                 >
                   <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-white/10 text-[10px]">
                     <span className="font-black opacity-80">
-                      {isUser ? (currentUser?.name || 'Yönetici') : '👑 Admin AI Co-Pilot (Gemini)'}
+                      {isUser ? (currentUser?.name || 'Yönetici') : `👑 Admin AI Co-Pilot (${m.modelUsed || 'Gemini 3.8'})`}
                     </span>
                     <span className="font-mono opacity-60">{m.timestamp}</span>
                   </div>

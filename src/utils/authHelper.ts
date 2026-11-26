@@ -727,7 +727,7 @@ export async function callAdminAICoPilotApi(
   chatHistory: { sender: 'user' | 'assistant'; text: string }[] = [],
   customApiKey?: string,
   clientContext?: any
-): Promise<{ success: boolean; reply?: string; error?: string; hasApiKey?: boolean }> {
+): Promise<{ success: boolean; reply?: string; modelUsed?: string; error?: string; hasApiKey?: boolean }> {
   const token = getStoredToken();
   if (!token) return { success: false, error: 'Yönetici oturumu bulunamadı. Lütfen giriş yapın.' };
 

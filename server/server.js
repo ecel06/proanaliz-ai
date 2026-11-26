@@ -1278,16 +1278,27 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
             .filter((m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
             .map((m) => m.name.replace(/^models\//, ''));
 
-          // Priority sorting: modern flash models first (2.5-flash, 2.0-flash, 1.5-flash, etc.)
+          // Priority sorting: flagship Gemini 3.8 / 3.x models first, then fastest modern models
           contentModels.sort((a, b) => {
             const getScore = (name) => {
-              if (name.includes('2.5-flash')) return 100;
-              if (name.includes('2.0-flash')) return 90;
-              if (name.includes('flash')) return 80;
-              if (name.includes('2.5')) return 70;
-              if (name.includes('2.0')) return 60;
+              if (name.includes('3.8-flash')) return 160;
+              if (name.includes('3.8')) return 150;
+              if (name.includes('3.7-flash')) return 140;
+              if (name.includes('3.7')) return 135;
+              if (name.includes('3.1-pro')) return 130;
+              if (name.includes('3.1-flash')) return 125;
+              if (name.includes('3.1')) return 120;
+              if (name.includes('3-pro') || name.includes('3.0-pro')) return 115;
+              if (name.includes('3-flash') || name.includes('3.0-flash')) return 110;
+              if (name.includes('2.5-flash')) return 95;
+              if (name.includes('2.5-pro')) return 90;
+              if (name.includes('2.5')) return 85;
+              if (name.includes('2.0-flash')) return 80;
+              if (name.includes('2.0-pro')) return 75;
+              if (name.includes('2.0')) return 70;
               if (name.includes('1.5-flash')) return 50;
-              if (name.includes('1.5')) return 40;
+              if (name.includes('1.5-pro')) return 40;
+              if (name.includes('flash')) return 30;
               return 10;
             };
             return getScore(b) - getScore(a);
@@ -1309,12 +1320,14 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
     // 2. Verified fallback cascade if listModels could not be queried
     if (candidateConfigs.length === 0) {
       candidateConfigs = [
+        { ver: 'v1beta', model: 'gemini-3.8-flash' },
+        { ver: 'v1beta', model: 'gemini-3.8' },
+        { ver: 'v1beta', model: 'gemini-3.7-flash' },
+        { ver: 'v1beta', model: 'gemini-3.1-pro' },
+        { ver: 'v1beta', model: 'gemini-3.1-flash-lite' },
         { ver: 'v1beta', model: 'gemini-2.5-flash' },
         { ver: 'v1beta', model: 'gemini-2.0-flash' },
-        { ver: 'v1beta', model: 'gemini-2.0-flash-001' },
-        { ver: 'v1beta', model: 'gemini-2.0-flash-exp' },
         { ver: 'v1beta', model: 'gemini-1.5-flash' },
-        { ver: 'v1beta', model: 'gemini-1.5-flash-latest' },
       ];
     }
 
@@ -1395,6 +1408,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
           id: 'a-' + (Date.now() + 1),
           sender: 'assistant',
           text: reply,
+          modelUsed: successfulModel,
           timestamp: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
         },
       ];
@@ -1416,7 +1430,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.91';
+const APP_VERSION = '2026.11.20.92';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
