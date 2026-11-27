@@ -1406,9 +1406,11 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
             .filter((m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
             .map((m) => m.name.replace(/^models\//, ''));
 
-          // Priority sorting: flagship Gemini 3.8 / 3.x models first, then fastest modern models
+          // Priority sorting: Gemini 4 / Hydrogen models first, then 3.8 / 3.x models, then fastest modern models
           contentModels.sort((a, b) => {
             const getScore = (name) => {
+              if (name.includes('hydrogen')) return 200;
+              if (name.includes('gemini-4') || name.includes('4.0-') || name.includes('4.1-')) return 190;
               if (name.includes('3.8-flash')) return 160;
               if (name.includes('3.8')) return 150;
               if (name.includes('3.7-flash')) return 140;
@@ -1558,7 +1560,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.104';
+const APP_VERSION = '2026.11.20.105';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
