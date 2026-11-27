@@ -218,7 +218,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
 
     const safetyTimer = setTimeout(() => {
       setLoading(false);
-    }, 19000);
+    }, 27000);
 
     try {
       const chatHistory = messages

@@ -1377,16 +1377,43 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
       }
     }
 
-    // Send ONLY the clean user message in the final user turn (systemInstruction is passed via system_instruction)
-    const userMessageText = message.trim();
+    // Send compact, focused context + clean user question (universal across all Gemini models)
+    const cleanMsg = message.trim();
+    const isFirstTurn = contents.length === 0;
+    const msgLower = cleanMsg.toLowerCase();
+    const wantsBist = /hisse|borsa|bist|tavan|kırılım|flama|anele|odine|kuyas|tursg|cwene|efor|yeotk|alark|krdmd|dün/.test(msgLower);
+    const wantsFootball = /maç|futbol|kupon|banko|oran|lig|skor/.test(msgLower);
+    const wantsHorse = /at |yarış|tjk|koşu|altılı|ganyan|jokey/.test(msgLower);
+
+    let focusedPrompt = '';
+    if (isFirstTurn || wantsBist || wantsFootball || wantsHorse) {
+      const shortParts = [
+        `Sen ProAnaliz AI'nın zeki, samimi ve pratik kurucu ortağısın (Admin AI Co-Pilot). Doğrudan Admin'in sorusuna net ve özgün cevap ver; sorulmayan şeyleri ezbere tekrar etme.`
+      ];
+      if (wantsBist || isFirstTurn) {
+        shortParts.push(`BIST Fazı: ${sessionPhase}. Canlı Tavan/Kırılım Adayları: ${tavanCandidates.slice(0, 6).map(s => `${s.symbol}(${s.price}, ${s.changePct}, Skor:${s.score})`).join(', ')}.`);
+        if (msgLower.includes('dün')) {
+          shortParts.push(`Dünkü (26 Kasım) Adaylar: ANELE (9.06 TL), ODINE (66.65 TL), KUYAS (10.13 TL), TURSG (2.81 TL).`);
+        }
+      }
+      if (wantsFootball) {
+        shortParts.push(`Futbol: ${matchesCount} maç. Canlı: ${liveMatches.slice(0, 4).join(' | ') || 'Yok'}. Bankolar: ${topBankoMatches.slice(0, 4).join(' | ')}.`);
+      }
+      if (wantsHorse) {
+        shortParts.push(`TJK At Yarışı: ${horseContext?.bestHorse ? JSON.stringify(horseContext.bestHorse) : horseContext?.summary}.`);
+      }
+      focusedPrompt = `[Bağlam:\n${shortParts.join('\n')}]\n\nAdmin'in Sorusu (Sadece buna net cevap ver): ${cleanMsg}`;
+    } else {
+      focusedPrompt = cleanMsg;
+    }
 
     // Ensure the last turn is user and strictly alternates
     if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
-      contents[contents.length - 1].parts[0].text += `\n\n${userMessageText}`;
+      contents[contents.length - 1].parts[0].text += `\n\n${focusedPrompt}`;
     } else {
       contents.push({
         role: 'user',
-        parts: [{ text: userMessageText }],
+        parts: [{ text: focusedPrompt }],
       });
     }
 
@@ -1399,7 +1426,7 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
           'Content-Type': 'application/json',
           'x-goog-api-key': apiKey,
         },
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(3500),
       });
 
       if (listRes.ok) {
@@ -1407,7 +1434,17 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
         if (Array.isArray(listData.models) && listData.models.length > 0) {
           const contentModels = listData.models
             .filter((m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
-            .map((m) => m.name.replace(/^models\//, ''));
+            .map((m) => m.name.replace(/^models\//, ''))
+            .filter((name) =>
+              name.startsWith('gemini-') &&
+              !name.includes('image') &&
+              !name.includes('tts') &&
+              !name.includes('robotics') &&
+              !name.includes('computer') &&
+              !name.includes('embedding') &&
+              !name.includes('audio') &&
+              !name.includes('live')
+            );
 
           // Priority sorting: Gemini 4 / Hydrogen models first, then 3.8 / 3.x models, then fastest modern models
           contentModels.sort((a, b) => {
@@ -1439,7 +1476,7 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
 
           if (contentModels.length > 0) {
             console.log(`[Gemini Dynamic Discovery] ${contentModels.length} models found for key:`, contentModels.slice(0, 5));
-            candidateConfigs = contentModels.slice(0, 8).map((m) => ({ ver: 'v1beta', model: m }));
+            candidateConfigs = contentModels.slice(0, 4).map((m) => ({ ver: 'v1beta', model: m }));
           }
         }
       } else {
@@ -1475,9 +1512,6 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
     };
 
     const reqBody = {
-      system_instruction: {
-        parts: [{ text: systemInstruction }],
-      },
       contents,
       generationConfig: {
         temperature: 0.75,
@@ -1493,7 +1527,7 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
           method: 'POST',
           headers: reqHeaders,
           body: JSON.stringify(reqBody),
-          signal: AbortSignal.timeout(9000), // 9s timeout per model
+          signal: AbortSignal.timeout(7000), // 7s timeout per model
         });
 
         const data = await response.json();
@@ -1566,7 +1600,7 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.106';
+const APP_VERSION = '2026.11.20.107';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

@@ -744,7 +744,7 @@ export async function callAdminAICoPilotApi(
         customApiKey,
         clientContext
       }),
-      signal: AbortSignal.timeout(18000)
+      signal: AbortSignal.timeout(26000)
     });
     return await res.json();
   } catch (err: any) {
