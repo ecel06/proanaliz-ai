@@ -1333,13 +1333,23 @@ export function autoCheckAndRolloverCoupons(allMatches, force = false) {
     return null;
   }
 
-  // Bültenden aday maçları çek
-  const candidates = allMatches.filter((m) => {
+  // Bültenden aday maçları çek (Öncelik %100 BUGÜNÜN maçları!)
+  const allUpcomingCandidates = allMatches.filter((m) => {
     if (!m.homeTeam || !m.awayTeam) return false;
     if (m.status !== 'upcoming') return false;
     if (!m.odds) return false;
     return Boolean(m.odds.ms1 || m.odds.over25 || m.odds.bttsYes);
   });
+
+  const todayCandidates = allUpcomingCandidates.filter(
+    (m) => formatIstanbulMatchDate(m.date || m.time) === 'Bugün'
+  );
+  const tomorrowCandidates = allUpcomingCandidates.filter(
+    (m) => formatIstanbulMatchDate(m.date || m.time) === 'Yarın'
+  );
+
+  const isTodayCoupon = todayCandidates.length >= 3;
+  const candidates = isTodayCoupon ? todayCandidates : tomorrowCandidates;
 
   if (candidates.length < 3) {
     return null;
@@ -1418,8 +1428,8 @@ export function autoCheckAndRolloverCoupons(allMatches, force = false) {
 
   const newCoupon = {
     id: `ed_cp_auto_${Date.now()}`,
-    title: '👑 GÜNÜN YÖNETİCİ ŞEREF KUPONU',
-    subtitle: 'Yönetici Masası & AI Gece Otomasyonu',
+    title: isTodayCoupon ? '👑 GÜNÜN YÖNETİCİ ŞEREF KUPONU' : '👑 YARININ YÖNETİCİ ŞEREF KUPONU',
+    subtitle: isTodayCoupon ? 'Yönetici Masası & AI Günün Maçları' : 'Yönetici Masası & AI Gece Otomasyonu (Yarının Maçları)',
     category: 'football',
     confidence: 93,
     totalOdds,
