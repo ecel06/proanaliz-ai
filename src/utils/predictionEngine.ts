@@ -62,15 +62,35 @@ function getTeamDeterministicStats(team: TeamStats, isHome: boolean): { scored: 
     .replace(/ş/g, 's')
     .replace(/ü/g, 'u');
 
+  const isSuperClub = /real madrid|barcelona|manchester city|manchester united|bayern|liverpool|arsenal|inter|milan|juventus|psg|paris|galatasaray|fenerbahce|fenerbahçe|besiktas|beşiktaş|atletico|chelsea|leverkusen|dortmund|tottenham/i.test(name);
+  const isStrongClub = /aston villa|newcastle|brighton|roma|lazio|napoli|atalanta|fiorentina|sevilla|real sociedad|athletic bilbao|villarreal|porto|benfica|sporting|ajax|feyenoord|psv|trabzonspor|basaksehir|başakşehir|lille|monaco|lyon|marseille|frankfurt|stuttgart|leipzig/i.test(name);
+
+  // Eğer elimizde takımın gerçek son 5 maç formu (W/D/L) varsa xG'yi doğrudan gerçek formdan türet!
+  if (team.form && team.form.length > 0) {
+    const formScore = calculateFormScore(team.form); // 0 - 100
+    const ratio = formScore / 100;
+    let scored = 0.85 + ratio * 1.30 + (isHome ? 0.15 : 0);
+    let conceded = 1.85 - ratio * 1.05 - (isHome ? 0.10 : 0);
+    if (isSuperClub) {
+      scored += 0.35;
+      conceded = Math.max(0.55, conceded - 0.20);
+    } else if (isStrongClub) {
+      scored += 0.18;
+      conceded = Math.max(0.70, conceded - 0.10);
+    }
+    return {
+      scored: Number(scored.toFixed(2)),
+      conceded: Number(conceded.toFixed(2)),
+      form: team.form,
+    };
+  }
+
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = (hash << 5) - hash + name.charCodeAt(i);
     hash |= 0;
   }
   const pos = Math.abs(hash);
-
-  const isSuperClub = /real madrid|barcelona|manchester city|manchester united|bayern|liverpool|arsenal|inter|milan|juventus|psg|paris|galatasaray|fenerbahce|fenerbahçe|besiktas|beşiktaş|atletico|chelsea|leverkusen|dortmund|tottenham/i.test(name);
-  const isStrongClub = /aston villa|newcastle|brighton|roma|lazio|napoli|atalanta|fiorentina|sevilla|real sociedad|athletic bilbao|villarreal|porto|benfica|sporting|ajax|feyenoord|psv|trabzonspor|basaksehir|başakşehir|lille|monaco|lyon|marseille|frankfurt|stuttgart|leipzig/i.test(name);
 
   let baseScored = 1.20 + (pos % 75) / 100; // 1.20 to 1.95
   let baseConceded = 0.95 + ((pos >> 3) % 70) / 100; // 0.95 to 1.65

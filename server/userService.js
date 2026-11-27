@@ -1355,46 +1355,119 @@ export function autoCheckAndRolloverCoupons(allMatches, force = false) {
     return null;
   }
 
-  // Maçları güven skoruna göre sırala
+  // Takım formundan ağırlıklı puan (0-100) ve Türkçe form özeti (G-B-M)
+  const calcFormScore = (formArr) => {
+    if (!Array.isArray(formArr) || formArr.length === 0) return 50;
+    const weights = [1.0, 1.2, 1.4, 1.7, 2.0];
+    let pts = 0;
+    let wSum = 0;
+    formArr.slice(-5).forEach((res, i) => {
+      const w = weights[i] || 1;
+      wSum += w;
+      if (res === 'W') pts += 3 * w;
+      else if (res === 'D') pts += 1 * w;
+    });
+    return wSum > 0 ? Math.round((pts / (wSum * 3)) * 100) : 50;
+  };
+  const fmtTrForm = (formArr) =>
+    Array.isArray(formArr) && formArr.length > 0
+      ? formArr.slice(-5).map((r) => (r === 'W' ? 'G' : r === 'D' ? 'B' : 'M')).join('-')
+      : 'Bilinmiyor';
+
+  // Maçları gerçek form farkı, gol beklentisi, oran kalitesi ve lig seviyesine göre puanla
   const scored = candidates.map((m) => {
-    let score = 50;
+    let score = 45;
     const l = (m.league || '').toLowerCase();
-    if (l.includes('şampiyonlar') || l.includes('uefa') || l.includes('champions') || l.includes('nations')) score += 25;
-    else if (l.includes('premier') || l.includes('süper lig') || l.includes('super lig') || l.includes('la liga') || l.includes('serie a') || l.includes('bundesliga')) score += 20;
+    if (l.includes('şampiyonlar') || l.includes('uefa') || l.includes('champions') || l.includes('avrupa')) score += 22;
+    else if (l.includes('premier') || l.includes('süper lig') || l.includes('super lig') || l.includes('la liga') || l.includes('serie a') || l.includes('bundesliga') || l.includes('ligue 1')) score += 18;
+    else if (l.includes('championship') || l.includes('eredivisie') || l.includes('portugal') || l.includes('belgium')) score += 10;
 
-    if (m.odds?.ms1 && m.odds.ms1 >= 1.25 && m.odds.ms1 <= 1.85) score += 15;
-    if (m.odds?.over25 && m.odds.over25 >= 1.40 && m.odds.over25 <= 1.95) score += 15;
-    if (m.odds?.bttsYes && m.odds.bttsYes >= 1.45 && m.odds.bttsYes <= 1.85) score += 10;
+    const homeForm = calcFormScore(m.homeTeam?.form);
+    const awayForm = calcFormScore(m.awayTeam?.form);
+    const formDiff = Math.abs(homeForm - awayForm);
+    score += Math.min(24, Math.round(formDiff * 0.38));
 
-    return { match: m, score };
+    const homeExp = m.homeTeam?.avgGoalsScored > 0 ? m.homeTeam.avgGoalsScored : (0.85 + (homeForm / 100) * 1.3);
+    const awayExp = m.awayTeam?.avgGoalsScored > 0 ? m.awayTeam.avgGoalsScored : (0.85 + (awayForm / 100) * 1.3);
+    const totalExp = homeExp + awayExp;
+    if (totalExp >= 2.95) score += 10;
+
+    if (m.odds?.ms1 && m.odds.ms1 >= 1.25 && m.odds.ms1 <= 1.85) score += 8;
+    if (m.odds?.ms2 && m.odds.ms2 >= 1.30 && m.odds.ms2 <= 1.95) score += 8;
+    if (m.odds?.over25 && m.odds.over25 >= 1.38 && m.odds.over25 <= 1.90) score += 8;
+
+    return { match: m, score, homeForm, awayForm, totalExp };
   });
 
   scored.sort((a, b) => b.score - a.score);
-  const selectedMatches = scored.slice(0, 4).map((x) => x.match);
+  const selectedItems = scored.slice(0, 4);
 
-  // Kupon maçlarını ve tahminlerini oluştur
-  const couponMatches = selectedMatches.map((m, idx) => {
-    let prediction = 'MS 1';
-    let odds = 1.45;
-    let reason = `${m.homeTeam.name} iç saha form durumu ve kadro kalitesiyle galibiyete yakın.`;
+  // Kupon maçlarını çoklu piyasa (MS1, MS2, 2.5 ÜST, KG VAR, 1X/X2) ile oluştur
+  let over25Count = 0;
+  const couponMatches = selectedItems.map((item, idx) => {
+    const m = item.match;
+    const { homeForm, awayForm, totalExp } = item;
+    const formDiff = homeForm - awayForm;
+    const homeFStr = fmtTrForm(m.homeTeam?.form);
+    const awayFStr = fmtTrForm(m.awayTeam?.form);
 
-    if (m.odds?.over25 && m.odds.over25 <= 1.75) {
-      prediction = '2.5 ÜST';
-      odds = m.odds.over25;
-      reason = `${m.homeTeam.name} ve ${m.awayTeam.name} ekiplerinin ofansif temposu maçın 2.5 üst baremine ulaşacağını işaret ediyor.`;
-    } else if (m.odds?.bttsYes && m.odds.bttsYes <= 1.70) {
-      prediction = 'KG VAR';
-      odds = m.odds.bttsYes;
-      reason = `Her iki tarafın da gol yollarındaki etkinliği karşılıklı gol ihtimalini güçlendiriyor.`;
-    } else if (m.odds?.ms1 && m.odds.ms1 <= 1.65) {
-      prediction = 'MS 1';
-      odds = m.odds.ms1;
-      reason = `${m.homeTeam.name} seyirci desteği ve mutlak puan hedefiyle galibiyetin favorisi.`;
-    } else {
-      prediction = '1X Çifte Şans';
-      odds = m.odds?.ms1 ? Math.max(1.22, Number((m.odds.ms1 * 0.75).toFixed(2))) : 1.30;
-      reason = `${m.homeTeam.name} dengeli oyunuyla sahadan en az 1 puanla ayrılacaktır.`;
+    const options = [];
+    if (m.odds?.ms1 && m.odds.ms1 >= 1.25 && m.odds.ms1 <= 2.15 && formDiff >= 18) {
+      options.push({
+        prediction: 'MS 1',
+        odds: m.odds.ms1,
+        edge: formDiff * 0.8 + (m.odds.ms1 <= 1.70 ? 22 : 10),
+        reason: `${m.homeTeam.name} son 5 maçta (${homeFStr}) formda; ${m.awayTeam.name} (${awayFStr}) karşısında iç saha galibiyetine yakın.`
+      });
     }
+    if (m.odds?.ms2 && m.odds.ms2 >= 1.28 && m.odds.ms2 <= 2.25 && formDiff <= -18) {
+      options.push({
+        prediction: 'MS 2',
+        odds: m.odds.ms2,
+        edge: Math.abs(formDiff) * 0.8 + (m.odds.ms2 <= 1.80 ? 22 : 10),
+        reason: `Deplasmanda ${m.awayTeam.name} çok formda (${awayFStr}); ev sahibi ${m.homeTeam.name} (${homeFStr}) karşısında net deplasman favorisi.`
+      });
+    }
+    if (m.odds?.over25 && m.odds.over25 >= 1.38 && m.odds.over25 <= 1.92) {
+      const penalty = over25Count >= 2 ? -25 : 0;
+      options.push({
+        prediction: '2.5 ÜST',
+        odds: m.odds.over25,
+        edge: (totalExp >= 2.85 ? 36 : 20) + (m.odds.over25 <= 1.72 ? 12 : 4) + penalty,
+        reason: `İki ekibin gol beklentisi (${totalExp.toFixed(2)} xG) ve son maç tempoları (${homeFStr} / ${awayFStr}) 2.5 Üst barajını destekliyor.`
+      });
+    }
+    if (m.odds?.bttsYes && m.odds.bttsYes >= 1.42 && m.odds.bttsYes <= 1.88) {
+      options.push({
+        prediction: 'KG VAR',
+        odds: m.odds.bttsYes,
+        edge: (homeForm >= 40 && awayForm >= 40 ? 32 : 18) + (m.odds.bttsYes <= 1.72 ? 10 : 4),
+        reason: `Her iki takım da gol bulma potansiyeline sahip (${homeFStr} vs ${awayFStr}); karşılıklı gol ihtimali güçlü.`
+      });
+    }
+
+    options.sort((a, b) => b.edge - a.edge);
+    let chosen = options[0];
+    if (!chosen) {
+      if (formDiff <= -12 && m.odds?.ms2) {
+        chosen = {
+          prediction: 'X2 Çifte Şans',
+          odds: Math.max(1.22, Number((m.odds.ms2 * 0.72).toFixed(2))),
+          reason: `${m.awayTeam.name} (${awayFStr}) form üstünlüğüyle deplasmandan en az 1 puan çıkaracaktır.`
+        };
+      } else {
+        chosen = {
+          prediction: '1X Çifte Şans',
+          odds: m.odds?.ms1 ? Math.max(1.22, Number((m.odds.ms1 * 0.75).toFixed(2))) : 1.32,
+          reason: `${m.homeTeam.name} (${homeFStr}) iç saha avantajıyla sahadan kaybetmeden ayrılmaya yakın.`
+        };
+      }
+    }
+    if (chosen.prediction === '2.5 ÜST') over25Count += 1;
+
+    const prediction = chosen.prediction;
+    const odds = chosen.odds;
+    const reason = chosen.reason;
 
     let matchTimeStr = '20:00';
     if (m.time) {
