@@ -1475,8 +1475,14 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
           });
 
           if (contentModels.length > 0) {
-            console.log(`[Gemini Dynamic Discovery] ${contentModels.length} models found for key:`, contentModels.slice(0, 5));
-            candidateConfigs = contentModels.slice(0, 4).map((m) => ({ ver: 'v1beta', model: m }));
+            console.log(`[Gemini Dynamic Discovery] ${contentModels.length} models found for key:`, contentModels.slice(0, 6));
+            // Keep top priority models + ensure free-tier friendly Flash models are always included in cascade
+            const topModels = contentModels.slice(0, 5);
+            const freeTierFlashFallbacks = contentModels.filter(
+              (m) => (m.includes('2.5-flash') || m.includes('2.0-flash') || m.includes('flash-lite') || m.includes('1.5-flash')) && !topModels.includes(m)
+            );
+            const finalModels = [...topModels, ...freeTierFlashFallbacks].slice(0, 10);
+            candidateConfigs = finalModels.map((m) => ({ ver: 'v1beta', model: m }));
           }
         }
       } else {
@@ -1554,6 +1560,8 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
       let userFriendlyError = lastError || 'Gemini servisinden yanıt alınamadı. Lütfen API anahtarınızı kontrol edin.';
       if (typeof userFriendlyError === 'string' && (userFriendlyError.includes('API key not valid') || userFriendlyError.includes('API_KEY_INVALID'))) {
         userFriendlyError = 'Google Gemini API anahtarınız geçersiz. Lütfen sağ üstteki API Anahtarı butonuna tıklayıp geçerli bir anahtar (AIzaSy...) kaydedin.';
+      } else if (typeof userFriendlyError === 'string' && (userFriendlyError.includes('Quota exceeded') || userFriendlyError.includes('limit: 0'))) {
+        userFriendlyError = 'Google Gemini ücretsiz (Free Tier) API kotanız bu modelde dolmuş veya limit: 0 görünüyor. Google AI Studio üzerinden yeni bir ücretsiz proje/API anahtarı oluşturup sağ üstteki 🔑 API Anahtarı kısmından girerseniz hemen çalışacaktır.';
       }
       return res.json({
         success: false,
@@ -1600,7 +1608,7 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.107';
+const APP_VERSION = '2026.11.20.108';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
