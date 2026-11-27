@@ -313,34 +313,6 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
                   <p className="text-xs text-slate-400 max-w-md mx-auto">
                     Hisse detay sayfasındaki <strong>"Lot Mühendisi"</strong> panelinden tek tıkla sanal portföye pozisyon ekleyebilir veya yukarıdaki form ile manuel giriş yapabilirsiniz.
                   </p>
-                  <div className="pt-2">
-                    <button
-                      onClick={() => {
-                        const st = stocks.find((s) => s.symbol === 'THYAO') || stocks[0];
-                        const cur = st?.close || 308;
-                        const sl = Number((cur * 1.05).toFixed(2));
-                        const entry = Number((cur * 1.10).toFixed(2));
-                        onAddPosition({
-                          id: `test-pos-${Date.now()}`,
-                          symbol: st?.symbol || 'THYAO',
-                          name: st?.name || 'Türk Hava Yolları',
-                          market: st?.market || 'bist',
-                          units: 100,
-                          entryPrice: entry,
-                          currentPrice: cur,
-                          stopLoss: sl,
-                          targetPrice: Number((entry * 1.2).toFixed(2)),
-                          entryDate: new Date().toISOString(),
-                          status: 'open',
-                          notes: 'Test: Hafta sonu simülasyonu (Stop seviyesi güncel fiyatın üstünde bırakıldı)',
-                        });
-                      }}
-                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-600/30 to-amber-600/30 hover:from-rose-600 hover:to-amber-600 border border-rose-500/50 text-white text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-md"
-                    >
-                      <Zap className="w-3.5 h-3.5 text-rose-400" />
-                      <span>🧪 Risk Alarmını Test Et (Örnek THYAO Stop Kırılma Pozisyonu Ekle)</span>
-                    </button>
-                  </div>
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/40">
@@ -710,33 +682,6 @@ export const StockPortfolioModal: React.FC<StockPortfolioModalProps> = ({
             <span>Sanal portföy verileriniz güvenle tarayıcınızda saklanır.</span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                const st = stocks.find((s) => s.symbol === 'THYAO') || stocks[0];
-                const cur = st?.close || 308;
-                const sl = Number((cur * 1.05).toFixed(2));
-                const entry = Number((cur * 1.10).toFixed(2));
-                onAddPosition({
-                  id: `test-pos-${Date.now()}`,
-                  symbol: st?.symbol || 'THYAO',
-                  name: st?.name || 'Türk Hava Yolları',
-                  market: st?.market || 'bist',
-                  units: 100,
-                  entryPrice: entry,
-                  currentPrice: cur,
-                  stopLoss: sl,
-                  targetPrice: Number((entry * 1.2).toFixed(2)),
-                  entryDate: new Date().toISOString(),
-                  status: 'open',
-                  notes: 'Test: Hafta sonu simülasyonu (Stop seviyesi güncel fiyatın üstünde bırakıldı)',
-                });
-              }}
-              className="px-2.5 py-1.5 rounded-lg text-xs bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-              title="Stop-Loss seviyesi kırılmış örnek bir THYAO pozisyonu ekleyerek SAT/GÜÇLÜ SAT alarm sistemini test edin"
-            >
-              <Zap className="w-3.5 h-3.5 text-rose-400" />
-              <span>🧪 Test Pozisyonu Ekle</span>
-            </button>
             {positions.length > 0 && (
               <button
                 onClick={onResetPortfolio}

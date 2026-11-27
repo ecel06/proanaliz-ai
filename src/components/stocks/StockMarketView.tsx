@@ -87,7 +87,7 @@ import { INITIAL_IPOS } from '../../data/ipoData';
 import { INITIAL_KAP_NEWS } from '../../data/kapNewsData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
-type PresetFilter = 'all' | 'tavan_kirilim' | 'tavan_aday' | 'tavan_serisi' | 'tavan_gecmis' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
+type PresetFilter = 'all' | 'tavan_kirilim' | 'tavan_aday' | 'tavan_serisi' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
 type StockSort = 'ai_desc' | 'change_desc' | 'volume_desc' | 'rsi_asc' | 'pe_asc';
 
 interface BreakoutLedgerPick {
@@ -1100,9 +1100,6 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         const tp = analysesMap.get(s.symbol)?.tavanPotential;
         return Boolean(tp && (tp.streakInfo?.currentStreak && tp.streakInfo.currentStreak >= 2 || tp.category === 'TAVAN_SERISI'));
       });
-    } else if (preset === 'tavan_gecmis') {
-      const yesterdaySymbols = OFFICIAL_YESTERDAY_SNAPSHOT.candidates.map((c) => c.symbol);
-      list = list.filter((s) => yesterdaySymbols.includes(s.symbol));
     } else if (preset === 'tavan') {
       list = list.filter((s) => (s.changePct || 0) >= 9.7);
     } else if (preset === 'strong_buy') {
@@ -1911,7 +1908,6 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                 label: `${bistSessionPhase.pluralTitle} (${statsSummary.tavanAday})`,
               },
               { id: 'tavan_serisi', label: `🔥 Tavan Serisi (${statsSummary.tavanSerisi})` },
-              { id: 'tavan_gecmis', label: `📅 Dünkü Adaylar (${statsSummary.tavanGecmis})` },
               { id: 'tavan', label: `🚀 Kilit Tavanlar (${statsSummary.tavan})` },
               { id: 'strong_buy', label: `🔥 Güçlü AL (${statsSummary.strongBuy})` },
               { id: 'buy', label: `✅ AL (${statsSummary.strongBuy + statsSummary.buy})` },
@@ -1925,7 +1921,6 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
               const isTavan = p.id === 'tavan';
               const isRadar = p.id === 'tavan_aday';
               const isStreak = p.id === 'tavan_serisi';
-              const isHistory = p.id === 'tavan_gecmis';
               return (
                 <button
                   key={p.id}
@@ -1937,22 +1932,18 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                           ? 'bg-amber-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/30'
                           : isStreak
                             ? 'bg-gradient-to-r from-orange-500 via-amber-400 to-yellow-400 text-slate-950 border-orange-400 font-black shadow-md shadow-orange-500/30'
-                            : isHistory
-                              ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/30'
-                              : isTavan
-                                ? 'bg-emerald-400 text-slate-950 border-emerald-300 font-black shadow-md shadow-emerald-400/25'
-                                : 'bg-emerald-500 text-slate-950 border-emerald-400'
+                            : isTavan
+                              ? 'bg-emerald-400 text-slate-950 border-emerald-300 font-black shadow-md shadow-emerald-400/25'
+                              : 'bg-emerald-500 text-slate-950 border-emerald-400'
                       : isBreakout
                         ? 'bg-purple-950/40 text-purple-300 border-purple-500/40 hover:bg-purple-900/40'
                         : isRadar
                           ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
                           : isStreak
                             ? 'bg-orange-500/15 text-orange-300 border-orange-500/40 hover:bg-orange-500/25'
-                            : isHistory
-                              ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
-                              : isTavan
-                                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
-                                : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
+                            : isTavan
+                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+                              : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
                     }`}
                 >
                   {p.label}
@@ -2416,24 +2407,6 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                           </div>
                         </div>
                       )}
-                    </div>
-                  )}
-
-                  {preset === 'tavan_gecmis' && (
-                    <div className="p-3 bg-gradient-to-r from-amber-950/50 via-slate-900 to-orange-950/50 border-b border-amber-500/30 text-[11px] space-y-2 shrink-0">
-                      <div className="flex items-center justify-between text-amber-300 font-black">
-                        <span className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                          <span>DÜNÜN (26 KASIM) TAVAN SERİSİ HAFIZASI</span>
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-[10px] text-amber-300 font-mono font-bold border border-amber-500/30">
-                          4 / 4 Teyitli Aday
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-300 leading-relaxed">
-                        Dün akşam kurumsal 5 direk analizimizle belirlenen 4 elit tavan serisi adayı: <strong className="text-amber-300">ANELE, GRTHO, KRDMD, TRMET</strong>.
-                        Yapay zeka hafıza bankamız bu hisseleri ve gerçekleşen hedeflerini kalıcı olarak hatırlar.
-                      </p>
                     </div>
                   )}
 
