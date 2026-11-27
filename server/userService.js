@@ -1387,6 +1387,15 @@ export function autoCheckAndRolloverCoupons(allMatches, force = false) {
     const formDiff = Math.abs(homeForm - awayForm);
     score += Math.min(24, Math.round(formDiff * 0.38));
 
+    // Lig sıralaması / puan durumu farkı bonusu
+    const homeRank = Number(m.homeTeam?.rank) || 0;
+    const awayRank = Number(m.awayTeam?.rank) || 0;
+    if (homeRank > 0 && awayRank > 0) {
+      const rankGap = Math.abs(homeRank - awayRank);
+      if (rankGap >= 8) score += 14;
+      else if (rankGap >= 4) score += 7;
+    }
+
     const homeExp = m.homeTeam?.avgGoalsScored > 0 ? m.homeTeam.avgGoalsScored : (0.85 + (homeForm / 100) * 1.3);
     const awayExp = m.awayTeam?.avgGoalsScored > 0 ? m.awayTeam.avgGoalsScored : (0.85 + (awayForm / 100) * 1.3);
     const totalExp = homeExp + awayExp;
@@ -1509,9 +1518,63 @@ export function autoCheckAndRolloverCoupons(allMatches, force = false) {
     isVipOnly: true,
     status: 'pending',
     author: 'ProAnaliz AI Robotu',
+    systemSuggestion: couponMatches.length >= 4 ? '🛡️ Sistem 3-4 Önerilir' : '🛡️ Sistem 2-3 Önerilir',
     createdAt: Date.now(),
     matches: couponMatches
   };
+
+  // 🛡️ Ayrıca en yüksek ihtimalli ilk 2 maçtan "2 MAÇLIK ÇELİK KASA BANKOSU" üret
+  const hasActiveKasa = editorCoupons.some(
+    (c) => c.id.startsWith('ed_cp_kasa_') && c.status === 'pending' && (!c.createdAt || now - c.createdAt <= 22 * 60 * 60 * 1000)
+  );
+  if (!hasActiveKasa && couponMatches.length >= 2) {
+    const kasaMatches = selectedItems.slice(0, 2).map((item, idx) => {
+      const m = item.match;
+      const formDiff = item.homeForm - item.awayForm;
+      const homeFStr = fmtTrForm(m.homeTeam?.form);
+      const awayFStr = fmtTrForm(m.awayTeam?.form);
+      let kPred = '1X Çifte Şans';
+      let kOdds = m.odds?.ms1 ? Math.max(1.20, Number((m.odds.ms1 * 0.76).toFixed(2))) : 1.28;
+      let kReason = `${m.homeTeam.name} (${homeFStr}) form ve saha avantajıyla kaybetmeyecektir.`;
+      if (formDiff <= -22 && m.odds?.ms2) {
+        kPred = 'X2 Çifte Şans';
+        kOdds = Math.max(1.20, Number((m.odds.ms2 * 0.74).toFixed(2)));
+        kReason = `${m.awayTeam.name} (${awayFStr}) güçlü deplasman formuyla yenilmez.`;
+      } else if (item.totalExp >= 2.9 && m.odds?.over15) {
+        kPred = '1.5 ÜST';
+        kOdds = m.odds.over15;
+        kReason = `Yüksek gol beklentisi (${item.totalExp.toFixed(2)} xG) ile en az 2 gol bekleniyor.`;
+      } else if (formDiff >= 28 && m.odds?.ms1 && m.odds.ms1 <= 1.55) {
+        kPred = 'MS 1';
+        kOdds = m.odds.ms1;
+        kReason = `${m.homeTeam.name} (${homeFStr}) rakibi (${awayFStr}) karşısında net favori.`;
+      }
+      const orig = couponMatches[idx];
+      return {
+        ...orig,
+        prediction: kPred,
+        odds: Number(kOdds.toFixed(2)),
+        confidence: 95 - idx * 2,
+        reason: kReason,
+      };
+    });
+    const kasaOdds = Math.round(kasaMatches[0].odds * kasaMatches[1].odds * 100) / 100;
+    const kasaCoupon = {
+      id: `ed_cp_kasa_${Date.now() + 1}`,
+      title: isTodayCoupon ? '🛡️ GÜNÜN 2 MAÇLIK ÇELİK KASA BANKOSU' : '🛡️ YARININ 2 MAÇLIK ÇELİK KASA BANKOSU',
+      subtitle: 'Maksimum İsabet Odaklı 2 Maçlık Kasa Kuponu',
+      category: 'football',
+      confidence: 94,
+      totalOdds: kasaOdds,
+      isVipOnly: true,
+      status: 'pending',
+      author: 'ProAnaliz AI Kasa Robotu',
+      systemSuggestion: 'Direkt Kasa (2 Maç)',
+      createdAt: Date.now() + 1,
+      matches: kasaMatches,
+    };
+    editorCouponsMap.set(kasaCoupon.id, kasaCoupon);
+  }
 
   // Eski bekleyen kuponları arşive al
   for (const c of editorCouponsMap.values()) {

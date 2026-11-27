@@ -330,6 +330,14 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
                             <span>VIP Kilitli</span>
                           </span>
                         )}
+                        {(edCoupon.systemSuggestion || (!edCoupon.id.includes('kasa') && edCoupon.matches.length >= 3)) && (
+                          <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-black text-[10px]">
+                            {edCoupon.systemSuggestion ||
+                              (edCoupon.matches.length === 4
+                                ? '🛡️ Sistem 3-4 Önerilir'
+                                : '🛡️ Sistem 2-3 Önerilir')}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-amber-200/80">{edCoupon.subtitle}</p>
                     </div>
@@ -600,6 +608,16 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
 
               {/* Header */}
               <div className="space-y-3.5 relative z-10">
+                {coupon.id === 'surpriz' && coupon.items.length >= 3 && (
+                  <div className="px-2.5 py-1 rounded-xl bg-purple-500/15 border border-purple-400/40 text-purple-200 text-[11px] font-black flex items-center justify-between">
+                    <span>
+                      {coupon.items.length >= 4
+                        ? '🛡️ Sürpriz Kombine Tavsiyesi: Sistem 3-4'
+                        : '🛡️ Sürpriz Kombine Tavsiyesi: Sistem 2-3'}
+                    </span>
+                    <span className="text-[10px] text-purple-300 font-semibold">1 Maç Yatsa Bile Kazandırır</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2.5">
                     <div className="p-2 rounded-xl bg-slate-950/80 border border-slate-800">

@@ -46,6 +46,7 @@ export interface EditorCoupon {
   status: 'pending' | 'won' | 'lost';
   author: string;
   createdAt: number;
+  systemSuggestion?: string;
   matches: EditorMatch[];
 }
 
