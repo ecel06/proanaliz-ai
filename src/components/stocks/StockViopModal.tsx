@@ -66,6 +66,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
   onSelectStock,
 }) => {
   const [activeTab, setActiveTab] = useState<ViopTab>('radar');
+  const [radarOnlyPreAlert, setRadarOnlyPreAlert] = useState<boolean>(false);
   const [contractFilter, setContractFilter] = useState<ContractFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [liveContracts, setLiveContracts] = useState<StockViopContract[]>(INITIAL_VIOP_CONTRACTS);
@@ -214,7 +215,7 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
     };
   }, [calcContract, targetExitPrice, positionDirection, contractsCount]);
 
-  // 🎯 Sade VİOP Net Sinyal Radarı (Yükseliş LONG / Düşüş SHORT)
+  // 🎯 Sade VİOP Net Sinyal Radarı (Yükseliş LONG / Düşüş SHORT + 1 Gün Önceden Ön Uyarı)
   const viopRadarSignals = useMemo(() => {
     return enrichedContracts
       .map((c) => {
@@ -223,35 +224,74 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
         const ema20 = spot?.ema20 ?? null;
         const spotPrice = spot?.close ?? c.spotPrice;
         const chg = c.changePct || 0;
+        const closePos =
+          spot?.high && spot?.low && spot.high > spot.low
+            ? (spotPrice - spot.low) / (spot.high - spot.low)
+            : chg >= 1.5
+              ? 0.85
+              : chg <= -1.5
+                ? 0.15
+                : 0.5;
+        const bbWidth =
+          spot?.bbUpper && spot?.bbLower && spot.bbUpper > spot.bbLower
+            ? (spot.bbUpper - spot.bbLower) / (((spot.bbUpper + spot.bbLower) / 2) || 1)
+            : 0.25;
 
         let direction: 'long' | 'short' = 'long';
         let reason = '';
         let priority = c.signalScore || 70;
+        let preAlertLabel: string | null = null;
+        let preAlertTip: string | null = null;
+
+        const isPreLongBreakout =
+          chg >= 0.8 &&
+          chg <= 4.8 &&
+          rsi >= 40 &&
+          rsi <= 68 &&
+          (bbWidth <= 0.17 || (closePos >= 0.72 && (!ema20 || spotPrice >= ema20 * 0.995)));
+
+        const isPreShortBreakout =
+          (chg <= -0.8 && chg >= -4.8 && closePos <= 0.28 && (!ema20 || spotPrice <= ema20 * 1.005)) ||
+          (rsi >= 72 && closePos <= 0.40);
 
         const isUpBreakout =
           c.signal === 'GÜÇLÜ AL' ||
           c.signal === 'AL' ||
+          isPreLongBreakout ||
           (chg >= 1.2 && rsi >= 42 && rsi <= 68 && (!ema20 || spotPrice >= ema20 * 0.995));
         const isDownBreak =
           c.signal === 'GÜÇLÜ SAT' ||
           c.signal === 'SAT' ||
+          isPreShortBreakout ||
           chg <= -1.2 ||
           rsi >= 72;
 
-        if (isDownBreak && !isUpBreakout) {
+        if (isPreShortBreakout || (isDownBreak && !isUpBreakout)) {
           direction = 'short';
           priority += Math.min(20, Math.round(Math.abs(chg) * 4));
+          if (isPreShortBreakout) {
+            priority += 25;
+            preAlertLabel = '🔮 1 GÜN ÖNCEDEN • ALTIN SHORT';
+            preAlertTip = '💡 VİOP 09:30 Açılış Taktiği: Spot borsa 10:00\'da açılmadan önce VİOP 09:30\'da açılır. Günün dibinden kapanan bu tahtada sabah 09:30 açılışında Short yönlü pozisyon fırsatı.';
+          }
           reason =
             rsi >= 72
               ? `RSI aşırı ısındı (${rsi.toFixed(1)}); kâr satışı ve aşağı yönlü düşüş (Short) fırsatı.`
-              : `Negatif momentum (%${chg.toFixed(2)}) ile aşağı yönlü baskı sürüyor; düşüşten kazanma (Short) sinyali.`;
+              : `Günün %${Math.round(closePos * 100)} dip bölgesinde kapanış (%${chg.toFixed(2)}); düşüş kırılımı (Short) sinyali.`;
         } else {
           direction = 'long';
           priority += Math.min(20, Math.round(Math.max(0, chg) * 4));
+          if (isPreLongBreakout) {
+            priority += 25;
+            preAlertLabel = '🔮 1 GÜN ÖNCEDEN • ALTIN LONG';
+            preAlertTip = '💡 VİOP 09:30 Açılış Taktiği: VİOP sabah 09:30\'da açılır (hisselerden 30 dk önce). Zirveye yakın kapanış + kırılımla sabah erken saatte Long yakalama şansı.';
+          }
           reason =
-            ema20 && spotPrice >= ema20
-              ? `20 günlük ortalama üstünde (%${chg >= 0 ? '+' : ''}${chg.toFixed(2)}); yükseliş yönlü (Long) ivme güçlü.`
-              : `Pozitif sinyal skoru (%${c.signalScore}) ile yukarı yönlü (Long) kırılım adayı.`;
+            bbWidth <= 0.17
+              ? `Bollinger bandı sıkışması ve günün %${Math.round(closePos * 100)} zirve kapanışı (+%${chg.toFixed(2)}); patlama öncesi 1 gün önceden Long kurulumu.`
+              : ema20 && spotPrice >= ema20
+                ? `20 günlük ortalama üstünde (%${chg >= 0 ? '+' : ''}${chg.toFixed(2)}) ve günün %${Math.round(closePos * 100)} tepesinde; yükseliş yönlü (Long) ivme güçlü.`
+                : `Pozitif sinyal skoru (%${c.signalScore}) ile yukarı yönlü (Long) kırılım adayı.`;
         }
 
         const entry = c.futuresPrice;
@@ -264,6 +304,8 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
           direction,
           reason,
           priority,
+          preAlertLabel,
+          preAlertTip,
           entry,
           target,
           stop,
@@ -434,29 +476,45 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                     <span>🎯 Sade VİOP Sinyal Radarı (Yükseliş LONG / Düşüş SHORT)</span>
                   </div>
                   <p className="text-[11px] text-slate-300 mt-0.5">
-                    Karmaşık terimler olmadan net yön gösterir: <strong>📈 LONG</strong> = Yükselirse kazanırsın • <strong>📉 SHORT</strong> = Düşerse kazanırsın. Tek tıkla sanal test işlemi açıp Pazartesi canlı izleyebilirsin.
+                    <strong>🔮 1 Gün Önceden Ön Uyarı:</strong> Akşamdan kırılım/sıkışma yakalayan kontratlar en üstte altın rozetle çıkar. VİOP sabah <strong>09:30'da</strong> (spot borsadan 30 dk önce) açılır.
                   </p>
                 </div>
-                <button
-                  onClick={() => fetchViopData(true)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isViopLoading ? 'animate-spin text-cyan-400' : ''}`} />
-                  <span>Yenile</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setRadarOnlyPreAlert(!radarOnlyPreAlert)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black border transition cursor-pointer ${
+                      radarOnlyPreAlert
+                        ? 'bg-purple-500 text-white border-purple-400 shadow-md shadow-purple-500/30'
+                        : 'bg-purple-950/50 text-purple-300 border-purple-500/40 hover:bg-purple-900/50'
+                    }`}
+                  >
+                    🔮 Sadece 1 Gün Önceden ({viopRadarSignals.filter((s) => Boolean(s.preAlertLabel)).length})
+                  </button>
+                  <button
+                    onClick={() => fetchViopData(true)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isViopLoading ? 'animate-spin text-cyan-400' : ''}`} />
+                    <span>Yenile</span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {viopRadarSignals.map(({ contract: c, direction, reason, entry, target, stop, estimatedMarginGainPct }) => {
+                {viopRadarSignals
+                  .filter((item) => !radarOnlyPreAlert || Boolean(item.preAlertLabel))
+                  .map(({ contract: c, direction, reason, preAlertLabel, preAlertTip, entry, target, stop, estimatedMarginGainPct }) => {
                   const isLong = direction === 'long';
                   const curSym = getCurrencySymbol(c);
                   return (
                     <div
                       key={c.code}
                       className={`p-4 rounded-2xl border space-y-3 transition-all ${
-                        isLong
-                          ? 'bg-emerald-950/20 border-emerald-500/30 hover:border-emerald-400/60'
-                          : 'bg-rose-950/20 border-rose-500/30 hover:border-rose-400/60'
+                        preAlertLabel
+                          ? 'bg-gradient-to-br from-purple-950/40 via-slate-900 to-slate-950 border-purple-500/50 shadow-lg'
+                          : isLong
+                            ? 'bg-emerald-950/20 border-emerald-500/30 hover:border-emerald-400/60'
+                            : 'bg-rose-950/20 border-rose-500/30 hover:border-rose-400/60'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -472,6 +530,11 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                             >
                               {isLong ? '📈 YÜKSELİŞ (LONG)' : '📉 DÜŞÜŞ (SHORT)'}
                             </span>
+                            {preAlertLabel && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-gradient-to-r from-amber-300 to-yellow-400 text-slate-950 animate-pulse">
+                                {preAlertLabel}
+                              </span>
+                            )}
                             <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-300 text-[10px] font-mono font-bold">
                               {c.leverage}x Kaldıraç
                             </span>
@@ -491,6 +554,12 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
                       <p className="text-[11px] text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
                         {reason}
                       </p>
+
+                      {preAlertTip && (
+                        <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/30 text-[10px] text-purple-200 leading-relaxed">
+                          {preAlertTip}
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-3 gap-2 text-center text-[11px] font-mono">
                         <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
