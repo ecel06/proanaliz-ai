@@ -587,7 +587,8 @@ export function detectTechnicalBreakoutSetup(
   price: number,
   changePct: number,
   targetCeilingPrice: number,
-  tavanMargin: number
+  tavanMargin: number,
+  quantContext?: TavanQuantContext
 ): TechnicalBreakoutInfo | null {
   const isMegaCap = Boolean(stock.marketCap && stock.marketCap > 65e9);
   if (isMegaCap) return null; // Dev tahtalar elenir
@@ -618,7 +619,20 @@ export function detectTechnicalBreakoutSetup(
   const isSolidClose = closePos >= 0.60;
   const closeStrengthPct = Math.round(closePos * 100);
   const isGoldenPick = closeStrengthPct >= 85 && tavanMargin >= 6.0;
-  const pickPriorityScore = Math.round((closeStrengthPct * 0.65) + (tavanMargin * 4.5) + (isGoldenPick ? 30 : 0));
+  const hasSectorDomino = Boolean(
+    quantContext?.sectorLeader &&
+    quantContext.sectorLeader.symbol !== stock.symbol &&
+    quantContext.sectorLeader.changePct >= 3.5
+  );
+  const sectorLeaderSupport = hasSectorDomino && quantContext?.sectorLeader
+    ? {
+        leaderSymbol: quantContext.sectorLeader.symbol,
+        leaderChangePct: Number(quantContext.sectorLeader.changePct.toFixed(2)),
+      }
+    : undefined;
+  const pickPriorityScore = Math.round(
+    (closeStrengthPct * 0.65) + (tavanMargin * 4.5) + (isGoldenPick ? 30 : 0) + (hasSectorDomino ? 15 : 0)
+  );
 
   // Kural 5: Kısa/Orta Vadeli Düşen Trend Kırılımı (20 Günlük Dinamik Direnç Üstü)
   const trendResistance = stock.ema20 || stock.sma20 || stock.ema50;
@@ -644,6 +658,7 @@ export function detectTechnicalBreakoutSetup(
       closeStrengthPct,
       isGoldenPick,
       pickPriorityScore,
+      sectorLeaderSupport,
       recommendedOrderType: 'Gece / 09:40 Açılış Seansı Piyasa Emri',
       orderActionGuide: `💡 Emir Taktiği: Sabah saat 10:00'da koşturup geç kalmamak için, akşamdan veya sabah 09:40-09:55 karanlık odasında bankanızdan "Açılış Seansı Piyasa Emri" veya ${targetCeilingPrice} TL tavan limitli emir girerek saat 10:00'daki açılış eşleşmesinde ilk sırada yerinizi alın. Önünüzde +%${tavanMargin} net kâr marjı vardır.`,
     };
@@ -662,6 +677,7 @@ export function detectTechnicalBreakoutSetup(
       closeStrengthPct,
       isGoldenPick,
       pickPriorityScore,
+      sectorLeaderSupport,
       recommendedOrderType: 'Gece / 09:40 Açılış Seansı Piyasa Emri',
       orderActionGuide: `💡 Emir Taktiği: Sabah hızlı tavan kilitlenme ihtimaline karşı yetişmek için, akşamdan veya sabah 09:40-09:55 karanlık odasında bankanızdan "Açılış Seansı Piyasa Emri" girin. Açılış fiyatından portföye girip tavana kadar %${tavanMargin} kâr marjını koruyun.`,
     };
@@ -752,7 +768,7 @@ export function calculateTavanPotential(
   }
 
   // --- 1.6 İNSANLARIN ÇİZİP ÖNCEDEN BİLDİĞİ TEKNİK KIRILIM & FLAMA (1 Gün Önceden Tavan Kurulumu) ---
-  const breakoutInfo = detectTechnicalBreakoutSetup(stock, price, changePct, targetCeilingPrice, tavanMargin);
+  const breakoutInfo = detectTechnicalBreakoutSetup(stock, price, changePct, targetCeilingPrice, tavanMargin, quantContext);
   if (breakoutInfo && !isLiveSession) {
     return {
       score: breakoutInfo.isGoldenPick ? 96 : 93,

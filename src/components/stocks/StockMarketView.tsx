@@ -90,6 +90,20 @@ import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/
 type PresetFilter = 'all' | 'tavan_kirilim' | 'tavan_aday' | 'tavan_serisi' | 'tavan_gecmis' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
 type StockSort = 'ai_desc' | 'change_desc' | 'volume_desc' | 'rsi_asc' | 'pe_asc';
 
+interface BreakoutLedgerPick {
+  symbol: string;
+  signalPrice: number;
+  closeStrengthPct: number;
+  remainingCeilingMarginPct: number;
+  isGoldenPick: boolean;
+}
+
+interface BreakoutLedgerSnapshot {
+  dateKey: string;
+  dateLabel: string;
+  picks: BreakoutLedgerPick[];
+}
+
 // 🏛️ RESMİ DÜNKÜ TAVAN SERİSİ HAFIZA ARŞİVİ (26 KASIM PERŞEMBE KAPANIŞ KURULUMU)
 export const OFFICIAL_YESTERDAY_SNAPSHOT: DailyTavanSnapshot = {
   date: '2026-11-26',
@@ -786,6 +800,73 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       localStorage.setItem('proanaliz_bist_context', JSON.stringify(context));
     } catch {}
   }, [tavanCandidates, analysesMap, bistSessionPhase, stocks]);
+
+  // 📊 Kırılım & Flama Otomatik Tahmin Karnesi (Gerçekleşme Takibi)
+  const evaluatedBreakoutLedger = useMemo(() => {
+    if (market !== 'bist' || stocks.length === 0) return null;
+    try {
+      const nowTr = new Date(Date.now() + 3 * 3600 * 1000);
+      const todayKey = `${nowTr.getUTCFullYear()}-${String(nowTr.getUTCMonth() + 1).padStart(2, '0')}-${String(nowTr.getUTCDate()).padStart(2, '0')}`;
+      const dateLabel = `${nowTr.getUTCDate()}.${nowTr.getUTCMonth() + 1}.${nowTr.getUTCFullYear()}`;
+      const STORAGE_KEY = 'proanaliz_breakout_ledger_v1';
+
+      let ledger: BreakoutLedgerSnapshot[] = [];
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) ledger = JSON.parse(raw);
+      } catch { ledger = []; }
+      if (!Array.isArray(ledger)) ledger = [];
+
+      const currentBreakouts = stocks
+        .map((s) => ({ stock: s, bi: analysesMap.get(s.symbol)?.tavanPotential?.breakoutInfo }))
+        .filter((item) => Boolean(item.bi))
+        .sort((a, b) => (b.bi!.pickPriorityScore || 0) - (a.bi!.pickPriorityScore || 0))
+        .slice(0, 6);
+
+      if (!bistSessionPhase.isLive && currentBreakouts.length > 0) {
+        const newSnap: BreakoutLedgerSnapshot = {
+          dateKey: todayKey,
+          dateLabel,
+          picks: currentBreakouts.map((item) => ({
+            symbol: item.stock.symbol,
+            signalPrice: item.stock.close,
+            closeStrengthPct: item.bi!.closeStrengthPct,
+            remainingCeilingMarginPct: item.bi!.remainingCeilingMarginPct,
+            isGoldenPick: item.bi!.isGoldenPick,
+          })),
+        };
+        const idx = ledger.findIndex((l) => l.dateKey === todayKey);
+        if (idx >= 0) ledger[idx] = newSnap;
+        else ledger.unshift(newSnap);
+        ledger = ledger.slice(0, 5);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(ledger));
+      }
+
+      if (ledger.length === 0) return null;
+      const targetSnap = ledger.find((l) => l.dateKey !== todayKey) || ledger[0];
+      const stockMap = new Map(stocks.map((s) => [s.symbol, s]));
+      const evaluatedPicks = targetSnap.picks.map((p) => {
+        const live = stockMap.get(p.symbol);
+        const currentPrice = live?.close ?? p.signalPrice;
+        const gainPct = p.signalPrice > 0 ? ((currentPrice - p.signalPrice) / p.signalPrice) * 100 : 0;
+        const maxHigh = live?.high ? Math.max(live.high, currentPrice) : currentPrice;
+        const maxGainPct = p.signalPrice > 0 ? ((maxHigh - p.signalPrice) / p.signalPrice) * 100 : gainPct;
+        const isCeiling = maxGainPct >= 9.5 || (live?.changePct ?? 0) >= 9.7;
+        return { ...p, currentPrice, gainPct, maxGainPct, isCeiling };
+      });
+      const isAwaitingNextSession = targetSnap.dateKey === todayKey && !bistSessionPhase.isLive;
+      const positiveCount = evaluatedPicks.filter((p) => p.maxGainPct >= 1.0).length;
+      const hitRate = evaluatedPicks.length > 0 ? Math.round((positiveCount / evaluatedPicks.length) * 100) : 0;
+      return {
+        dateLabel: targetSnap.dateLabel,
+        isAwaitingNextSession,
+        hitRate,
+        picks: evaluatedPicks,
+      };
+    } catch {
+      return null;
+    }
+  }, [market, stocks, analysesMap, bistSessionPhase]);
 
   // 🌟 GÜNÜN BİST AI ZİRVESİ: SÜPER 3'LÜ VİTRİNİ
   const bistTopPicks = useMemo(() => {
@@ -2301,9 +2382,40 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                         );
                       })()}
                       <p className="text-[10px] text-slate-300 leading-relaxed">
-                        Liste otomatik olarak <strong>Zirve Kapanışı</strong> ve <strong>Kalan Tavan Alanına</strong> göre en güçlüden başlayarak sıralanır.
+                        Liste otomatik olarak <strong>Zirve Kapanışı</strong>, <strong>Kalan Tavan Alanı</strong> ve <strong>Sektör Domino Desteğine</strong> göre sıralanır.
                         Sabah hızlı açılışta kaçırmamak için <strong>Akşam (18:30–21:00) veya Sabah (09:40–09:55) Açılış Seansı Piyasa Emri</strong> önerilir.
                       </p>
+                      {evaluatedBreakoutLedger && (
+                        <div className="p-2 rounded-lg bg-slate-950/70 border border-purple-500/30 space-y-1.5">
+                          <div className="flex items-center justify-between flex-wrap gap-1 text-[10px]">
+                            <span className="font-black text-purple-200">
+                              📊 Kırılım Tahmin Karnesi ({evaluatedBreakoutLedger.dateLabel} Kapanış Kaydı)
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-200 font-bold">
+                              {evaluatedBreakoutLedger.isAwaitingNextSession
+                                ? '🔒 Kilitlendi • Sonraki Seansta Ölçülecek'
+                                : `Başarı: %${evaluatedBreakoutLedger.hitRate}`}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {evaluatedBreakoutLedger.picks.map((ep) => (
+                              <button
+                                key={ep.symbol}
+                                onClick={() => handleSelectStock(ep.symbol)}
+                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-purple-400 text-[10px] font-mono cursor-pointer flex items-center gap-1"
+                              >
+                                <span className="font-black text-white">{ep.symbol}</span>
+                                <span className="text-slate-400">{ep.signalPrice.toFixed(2)}₺</span>
+                                {!evaluatedBreakoutLedger.isAwaitingNextSession && (
+                                  <span className={ep.isCeiling ? 'text-emerald-300 font-black' : ep.gainPct >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                                    {ep.isCeiling ? '🚀 TAVAN' : `${ep.gainPct >= 0 ? '+' : ''}%${ep.gainPct.toFixed(1)}`}
+                                  </span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -2370,19 +2482,33 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                                   TAVAN 🚀
                                 </span>
                               ) : tp?.breakoutInfo?.isGoldenPick ? (
-                                <span
-                                  className="px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-orange-400 text-slate-950 uppercase tracking-wider shadow-sm animate-pulse"
-                                  title={`Otomatik Altın Seçim: Zirve %${tp.breakoutInfo.closeStrengthPct} | Kalan Alan +%${tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}`}
-                                >
-                                  🏆 ALTIN • Zirve %{tp.breakoutInfo.closeStrengthPct} • Alan +%{tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}
-                                </span>
+                                <>
+                                  <span
+                                    className="px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-orange-400 text-slate-950 uppercase tracking-wider shadow-sm animate-pulse"
+                                    title={`Otomatik Altın Seçim: Zirve %${tp.breakoutInfo.closeStrengthPct} | Kalan Alan +%${tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}`}
+                                  >
+                                    🏆 ALTIN • Zirve %{tp.breakoutInfo.closeStrengthPct} • Alan +%{tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}
+                                  </span>
+                                  {tp.breakoutInfo.sectorLeaderSupport && (
+                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                      ⚡ Sektör: {tp.breakoutInfo.sectorLeaderSupport.leaderSymbol} (+%{tp.breakoutInfo.sectorLeaderSupport.leaderChangePct})
+                                    </span>
+                                  )}
+                                </>
                               ) : tp?.breakoutInfo ? (
-                                <span
-                                  className="px-1.5 py-0.2 rounded text-[9px] font-black bg-purple-500/25 text-purple-200 border border-purple-400/40 uppercase tracking-wider"
-                                  title={`Zirve %${tp.breakoutInfo.closeStrengthPct} | Kalan Alan +%${tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}`}
-                                >
-                                  📐 Zirve %{tp.breakoutInfo.closeStrengthPct} • Alan +%{tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}
-                                </span>
+                                <>
+                                  <span
+                                    className="px-1.5 py-0.2 rounded text-[9px] font-black bg-purple-500/25 text-purple-200 border border-purple-400/40 uppercase tracking-wider"
+                                    title={`Zirve %${tp.breakoutInfo.closeStrengthPct} | Kalan Alan +%${tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}`}
+                                  >
+                                    📐 Zirve %{tp.breakoutInfo.closeStrengthPct} • Alan +%{tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}
+                                  </span>
+                                  {tp.breakoutInfo.sectorLeaderSupport && (
+                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                      ⚡ Sektör: {tp.breakoutInfo.sectorLeaderSupport.leaderSymbol} (+%{tp.breakoutInfo.sectorLeaderSupport.leaderChangePct})
+                                    </span>
+                                  )}
+                                </>
                               ) : tp?.isCandidate ? (
                                 <span
                                   className="px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-400 text-slate-950 uppercase tracking-wider shadow-sm animate-pulse"
@@ -2986,6 +3112,11 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                               <span className="px-2.5 py-1 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/40 text-[10px] font-mono font-black">
                                 Kalan Tavan Alanı: +%{selectedAnalysis.tavanPotential.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}
                               </span>
+                              {selectedAnalysis.tavanPotential.breakoutInfo.sectorLeaderSupport && (
+                                <span className="px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 text-[10px] font-bold">
+                                  ⚡ Sektör Desteği: {selectedAnalysis.tavanPotential.breakoutInfo.sectorLeaderSupport.leaderSymbol} (+%{selectedAnalysis.tavanPotential.breakoutInfo.sectorLeaderSupport.leaderChangePct})
+                                </span>
+                              )}
                             </div>
                           </div>
 

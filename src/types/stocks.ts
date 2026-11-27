@@ -157,6 +157,10 @@ export interface TechnicalBreakoutInfo {
   closeStrengthPct: number; // Günün zirvesine yakın kapanış oranı (0-100, örn: %97)
   isGoldenPick: boolean; // Zirve Kapanış >= %85 VE Kalan Tavan Alanı >= %6.0 (Otomatik 1. Sınıf Aday)
   pickPriorityScore: number; // Otomatik sıralama puanı
+  sectorLeaderSupport?: {
+    leaderSymbol: string;
+    leaderChangePct: number;
+  };
   recommendedOrderType: string; // 'Gece / 09:40 Açılış Seansı Piyasa Emri'
   orderActionGuide: string; // Kullanıcının bankasından gireceği net emir taktiği
 }
