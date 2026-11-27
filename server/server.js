@@ -1344,8 +1344,11 @@ Eğer Admin "dün paylaştığımız hisseler", "dünkü 4 hisse", "dün akşam 
 5. 🏆 Platform AI Başarı Karnesi:
 - Futbol Tahmin Başarısı: %84.2 | At Yarışı Banko Başarısı: %88.0 | Borsa Quant Al İsabeti: %87.5
 
-TEMEL İLKE:
-Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek verilerle yanıt ver. Normal sohbet veya soru-cevap yaptığında ise tıpkı yakın, bilgili ve zeki bir ortak gibi keyifle, akıcı ve samimiyetle sohbet et.
+TEMEL İLKE (ÇOK ÖNEMLİ):
+- Her zaman DOĞRUDAN Admin'in son sorduğu soruya odaklan!
+- Her soruya aynı şablon özeti veya tüm sistem verilerini (dünkü hisseler, futbol, at yarışı, kurlar vb.) ezbere tekrar etme!
+- Admin hangi konuyu soruyorsa SADECE o konuya net, özgün ve doğrudan yanıt ver; sorulmayan modülleri yanıta doldurma.
+- Teknik/piyasa verisi sorulduğunda yukarıdaki gerçek verileri kullan; normal sohbet veya spesifik soru sorulduğunda ise tıpkı zeki bir ortak gibi doğrudan o soruyu yanıtla.
 `.trim();
 
     // Strictly alternating contents array for Google Gemini: user -> model -> user -> model -> user
@@ -1358,7 +1361,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
         if (h.text.startsWith('⚠️') || h.text.includes('Sistem Bildirimi') || h.text.includes('Bağlantı Hatası')) continue;
 
         const role = (h.sender === 'user' || h.role === 'user') ? 'user' : 'model';
-        
+
         // Multiturn conversation cannot start with model
         if (role === 'model' && contents.length === 0) continue;
 
@@ -1374,16 +1377,16 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
       }
     }
 
-    // Embed systemInstruction directly inside prompt text (universal across all Gemini versions & endpoints)
-    const promptText = `[Rolün & ProAnaliz Canlı Sistem Durumu:\n${systemInstruction}]\n\nAdmin: ${message.trim()}`;
+    // Send ONLY the clean user message in the final user turn (systemInstruction is passed via system_instruction)
+    const userMessageText = message.trim();
 
     // Ensure the last turn is user and strictly alternates
     if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
-      contents[contents.length - 1].parts[0].text += `\n\n${promptText}`;
+      contents[contents.length - 1].parts[0].text += `\n\n${userMessageText}`;
     } else {
       contents.push({
         role: 'user',
-        parts: [{ text: promptText }],
+        parts: [{ text: userMessageText }],
       });
     }
 
@@ -1472,10 +1475,13 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
     };
 
     const reqBody = {
+      system_instruction: {
+        parts: [{ text: systemInstruction }],
+      },
       contents,
       generationConfig: {
         temperature: 0.75,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 4096,
       },
     };
 
@@ -1560,7 +1566,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.105';
+const APP_VERSION = '2026.11.20.106';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

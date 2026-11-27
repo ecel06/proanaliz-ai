@@ -80,6 +80,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastLocalSendRef = useRef<number>(0);
 
   // Auto-scroll on new message
   useEffect(() => {
@@ -124,7 +125,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
 
     // Periodic sync every 6 seconds while open (so messages sent from PC appear on mobile live)
     const interval = setInterval(async () => {
-      if (loading) return;
+      if (loading || Date.now() - lastLocalSendRef.current < 8000) return;
       try {
         const res = await fetchAdminAICoPilotSync();
         if (!isMounted || !res.success) return;
@@ -211,6 +212,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
     };
 
     setMessages((prev) => [...prev, userMsg]);
+    lastLocalSendRef.current = Date.now();
     setInput('');
     setLoading(true);
 
@@ -404,7 +406,7 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
                 )}
               </div>
               <p className="text-[11px] text-slate-400">
-                Google DeepMind Gemini 3.8 Flagship Entegrasyonu • Çok Cihazlı Bulut Senkronizasyonu
+                Google DeepMind Gemini AI (Hydrogen / 4.x Öncelikli) • Çok Cihazlı Bulut Senkronizasyonu
               </p>
             </div>
           </div>
