@@ -1047,6 +1047,11 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     }
 
     list.sort((a, b) => {
+      if (preset === 'tavan_kirilim' && sortBy === 'ai_desc') {
+        const pA = analysesMap.get(a.symbol)?.tavanPotential?.breakoutInfo?.pickPriorityScore || 0;
+        const pB = analysesMap.get(b.symbol)?.tavanPotential?.breakoutInfo?.pickPriorityScore || 0;
+        if (pB !== pA) return pB - pA;
+      }
       if (sortBy === 'change_desc') return b.changePct - a.changePct;
       if (sortBy === 'volume_desc') return b.valueTraded - a.valueTraded;
       if (sortBy === 'rsi_asc') return (a.rsi ?? 999) - (b.rsi ?? 999);
@@ -2267,9 +2272,37 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                           {filteredStocks.length} Formasyon Adayı
                         </span>
                       </div>
+                      {/* Otomatik Altın Seçim Şeridi: Zirve >= %85 VE Kalan Alan >= %6 */}
+                      {(() => {
+                        const goldenList = filteredStocks.filter(
+                          (s) => analysesMap.get(s.symbol)?.tavanPotential?.breakoutInfo?.isGoldenPick
+                        );
+                        if (goldenList.length === 0) return null;
+                        return (
+                          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-400/40 flex items-center justify-between flex-wrap gap-1.5">
+                            <span className="text-[10px] font-black text-amber-300 flex items-center gap-1">
+                              <span>🏆 OTOMATİK ALTIN SEÇİM (Zirve ≥ %85 + Alan ≥ %6):</span>
+                            </span>
+                            <div className="flex flex-wrap gap-1">
+                              {goldenList.map((gs) => {
+                                const bi = analysesMap.get(gs.symbol)?.tavanPotential?.breakoutInfo!;
+                                return (
+                                  <button
+                                    key={gs.symbol}
+                                    onClick={() => handleSelectStock(gs.symbol)}
+                                    className="px-2 py-0.5 rounded-md bg-amber-400 text-slate-950 font-black text-[10px] hover:bg-amber-300 transition cursor-pointer shadow-xs"
+                                  >
+                                    {gs.symbol} (Zirve %{bi.closeStrengthPct} • Alan +%{bi.remainingCeilingMarginPct.toFixed(1)})
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
                       <p className="text-[10px] text-slate-300 leading-relaxed">
-                        Teknik analistlerin 1 gün önceden tespit ettiği formasyonlar: Düşen trend direnci kırılanlar veya daralan simetrik üçgen/flama sıkışması yaşayanlar. 
-                        Sabah hızlı tavana kilitlenirse manuel yetişememe riskine karşı <strong>Akşam (18:30–21:00) veya Sabah (09:40–09:55) Açılış Seansı Piyasa Emri</strong> girilerek seans açılışında direkt pozisyon alınması hedeflenir.
+                        Liste otomatik olarak <strong>Zirve Kapanışı</strong> ve <strong>Kalan Tavan Alanına</strong> göre en güçlüden başlayarak sıralanır.
+                        Sabah hızlı açılışta kaçırmamak için <strong>Akşam (18:30–21:00) veya Sabah (09:40–09:55) Açılış Seansı Piyasa Emri</strong> önerilir.
                       </p>
                     </div>
                   )}
@@ -2335,6 +2368,20 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                               ) : (st.changePct || 0) >= 9.7 ? (
                                 <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 uppercase tracking-wider shadow-sm animate-pulse">
                                   TAVAN 🚀
+                                </span>
+                              ) : tp?.breakoutInfo?.isGoldenPick ? (
+                                <span
+                                  className="px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-orange-400 text-slate-950 uppercase tracking-wider shadow-sm animate-pulse"
+                                  title={`Otomatik Altın Seçim: Zirve %${tp.breakoutInfo.closeStrengthPct} | Kalan Alan +%${tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}`}
+                                >
+                                  🏆 ALTIN • Zirve %{tp.breakoutInfo.closeStrengthPct} • Alan +%{tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}
+                                </span>
+                              ) : tp?.breakoutInfo ? (
+                                <span
+                                  className="px-1.5 py-0.2 rounded text-[9px] font-black bg-purple-500/25 text-purple-200 border border-purple-400/40 uppercase tracking-wider"
+                                  title={`Zirve %${tp.breakoutInfo.closeStrengthPct} | Kalan Alan +%${tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}`}
+                                >
+                                  📐 Zirve %{tp.breakoutInfo.closeStrengthPct} • Alan +%{tp.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}
                                 </span>
                               ) : tp?.isCandidate ? (
                                 <span
@@ -2927,7 +2974,15 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {selectedAnalysis.tavanPotential.breakoutInfo.isGoldenPick && (
+                                <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 text-[10px] font-black shadow-sm animate-pulse">
+                                  🏆 OTOMATİK ALTIN SEÇİM
+                                </span>
+                              )}
+                              <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[10px] font-mono font-black">
+                                Zirve Kapanış: %{selectedAnalysis.tavanPotential.breakoutInfo.closeStrengthPct}
+                              </span>
                               <span className="px-2.5 py-1 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/40 text-[10px] font-mono font-black">
                                 Kalan Tavan Alanı: +%{selectedAnalysis.tavanPotential.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}
                               </span>
