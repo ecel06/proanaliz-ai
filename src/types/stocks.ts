@@ -152,6 +152,36 @@ export interface TavanStreakTargetStep {
   status: 'TAMAMLANDI' | 'HEDEF' | 'BEKLEMEDE';
 }
 
+export interface TavanCandidateHistoryRecord {
+  symbol: string;
+  name: string;
+  priceAtSignal: number;
+  priceAtSignalFormatted: string;
+  score: number;
+  category: TavanCategoryType;
+  categoryLabel: string;
+  primaryReason: string;
+  streakStageLabel?: string;
+  target1stCeiling: number;
+  target2ndCeiling: number;
+  trailingStopPrice: number;
+  // Ertesi gün gerçekleşen performans takibi
+  currentPrice?: number;
+  currentChangePct?: number;
+  highestPriceToday?: number;
+  highestReturnPct?: number;
+  didHitCeiling?: boolean;
+  streakStatus?: '1. Tavanı Kitledi 🎯' | 'Seriye Devam Ediyor 🔥' | 'Hedefe Yaklaştı' | 'İzleyen Stop Korudu' | 'İzleniyor';
+}
+
+export interface DailyTavanSnapshot {
+  date: string; // '2026-11-26'
+  dayLabel: string; // '26 Kasım Perşembe (Kapanış Kurulumu)'
+  sessionPhase: string;
+  candidates: TavanCandidateHistoryRecord[];
+  isLockedArchive?: boolean;
+}
+
 export interface TavanStreakInfo {
   currentStreak: number; // 0 = henüz tavan yapmadı, 1 = 1. tavan, 2 = 2. tavan, 3+ = mega seri
   streakStage: 'KOPUS_TAVANI' | 'IVME_TEYIDI' | 'MEGA_SERI' | 'ERKEN_ADAY';

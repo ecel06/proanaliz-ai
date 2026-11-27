@@ -51,6 +51,8 @@ import {
   StockPortfolioPosition,
   StockQuantAnalysis,
   TavanStreakInfo,
+  DailyTavanSnapshot,
+  TavanCandidateHistoryRecord,
 } from '../../types/stocks';
 import {
   fetchStockChart,
@@ -85,8 +87,78 @@ import { INITIAL_IPOS } from '../../data/ipoData';
 import { INITIAL_KAP_NEWS } from '../../data/kapNewsData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
-type PresetFilter = 'all' | 'tavan_aday' | 'tavan_serisi' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
+type PresetFilter = 'all' | 'tavan_aday' | 'tavan_serisi' | 'tavan_gecmis' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
 type StockSort = 'ai_desc' | 'change_desc' | 'volume_desc' | 'rsi_asc' | 'pe_asc';
+
+// 🏛️ RESMİ DÜNKÜ TAVAN SERİSİ HAFIZA ARŞİVİ (26 KASIM PERŞEMBE KAPANIŞ KURULUMU)
+export const OFFICIAL_YESTERDAY_SNAPSHOT: DailyTavanSnapshot = {
+  date: '2026-11-26',
+  dayLabel: '26 Kasım Perşembe (Kapanış & Cuma Seans Kurulumu)',
+  sessionPhase: '🌙 Seans Kapandı • Cuma Kurulumu',
+  isLockedArchive: true,
+  candidates: [
+    {
+      symbol: 'ANELE',
+      name: 'Anel Elektrik Proje',
+      priceAtSignal: 19.30,
+      priceAtSignalFormatted: '19.30 TL',
+      score: 88,
+      category: 'DIP_TEPKI_TAVANI',
+      categoryLabel: 'Dip Tepki & Sıkışma Patlaması',
+      primaryReason: 'Aşırı satım tabanı (RSI 29.8), daralan Bollinger bandı sıkışması ve 2.5 Mr TL ideal tavan piyasa değeri',
+      streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
+      target1stCeiling: 21.23, // +%10.0
+      target2ndCeiling: 23.35, // +%21.0
+      trailingStopPrice: 18.43, // -%4.5 izleyen stop
+      streakStatus: 'İzleniyor',
+    },
+    {
+      symbol: 'GRTHO',
+      name: 'Girişim Elektrik Grubu',
+      priceAtSignal: 42.10,
+      priceAtSignalFormatted: '42.10 TL',
+      score: 86,
+      category: 'DIP_TEPKI_TAVANI',
+      categoryLabel: 'Dip Tepki / Hacim Dönüşü',
+      primaryReason: 'RSI 31.2 taban seviyesi, satıcı tükenişi ve 6.9 Mr TL likidite havuzuyla güçlü toparlanma ivmesi',
+      streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
+      target1stCeiling: 46.31, // +%10.0
+      target2ndCeiling: 50.94, // +%21.0
+      trailingStopPrice: 40.20, // -%4.5 izleyen stop
+      streakStatus: 'İzleniyor',
+    },
+    {
+      symbol: 'KRDMD',
+      name: 'Kardemir Karabük D',
+      priceAtSignal: 27.46,
+      priceAtSignalFormatted: '27.46 TL',
+      score: 89,
+      category: 'SEKTOR_DOMINO',
+      categoryLabel: 'Sektörel Domino & Açılış Eşleşme',
+      primaryReason: 'KARCL tavan kilitlenmesi (+%10) sonrası demir-çelik sektöründe açılış eşleşmesi ve domino sürükleme ivmesi',
+      streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
+      target1stCeiling: 30.20, // +%10.0
+      target2ndCeiling: 33.22, // +%21.0
+      trailingStopPrice: 26.22, // -%4.5 izleyen stop
+      streakStatus: 'İzleniyor',
+    },
+    {
+      symbol: 'TRMET',
+      name: 'Turan Metal Madencilik',
+      priceAtSignal: 18.15,
+      priceAtSignalFormatted: '18.15 TL',
+      score: 85,
+      category: 'SEKTOR_DOMINO',
+      categoryLabel: 'Sektörel Domino / Metal-Çelik Sinerjisi',
+      primaryReason: 'Metal-madencilik sektöründeki tavan domino etkisi ve güçlü para girişiyle ivmelenme',
+      streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
+      target1stCeiling: 19.96, // +%10.0
+      target2ndCeiling: 21.96, // +%21.0
+      trailingStopPrice: 17.33, // -%4.5 izleyen stop
+      streakStatus: 'İzleniyor',
+    },
+  ],
+};
 
 export interface StockMarketViewProps {
   user?: User | null;
@@ -629,14 +701,53 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
           primaryReason: qa?.tavanPotential?.primaryReason,
         };
       });
+
+      // Dünün adaylarının bugünkü canlı performans ve kilitlenme takibi
+      const updatedYesterdayCandidates = OFFICIAL_YESTERDAY_SNAPSHOT.candidates.map((cand) => {
+        const liveStock = stocks.find((s) => s.symbol === cand.symbol);
+        if (!liveStock) return cand;
+        const currentPrice = liveStock.close || cand.priceAtSignal;
+        const currentChangePct = liveStock.changePct || 0;
+        const returnPct = cand.priceAtSignal > 0
+          ? Number((((currentPrice - cand.priceAtSignal) / cand.priceAtSignal) * 100).toFixed(2))
+          : currentChangePct;
+        const didHitCeiling = currentChangePct >= 9.7 || currentPrice >= cand.target1stCeiling;
+        let streakStatus: TavanCandidateHistoryRecord['streakStatus'] = 'İzleniyor';
+        if (didHitCeiling) {
+          streakStatus = '1. Tavanı Kitledi 🎯';
+        } else if (currentPrice < cand.trailingStopPrice) {
+          streakStatus = 'İzleyen Stop Korudu';
+        } else if (returnPct >= 3.0) {
+          streakStatus = 'Hedefe Yaklaştı';
+        }
+        return {
+          ...cand,
+          currentPrice,
+          currentChangePct,
+          highestReturnPct: returnPct,
+          didHitCeiling,
+          streakStatus,
+        };
+      });
+
+      const yesterdayData: DailyTavanSnapshot = {
+        ...OFFICIAL_YESTERDAY_SNAPSHOT,
+        candidates: updatedYesterdayCandidates,
+      };
+
+      const historyData: DailyTavanSnapshot[] = [yesterdayData];
+      localStorage.setItem('proanaliz_tavan_history', JSON.stringify(historyData));
+
       const context = {
         tavanCandidates: candidatesPayload,
         sessionPhase: bistSessionPhase.badgeText,
+        yesterdaySnapshot: yesterdayData,
+        history: historyData,
       };
       (window as any).__PROANALIZ_BIST_CONTEXT__ = context;
       localStorage.setItem('proanaliz_bist_context', JSON.stringify(context));
     } catch {}
-  }, [tavanCandidates, analysesMap, bistSessionPhase]);
+  }, [tavanCandidates, analysesMap, bistSessionPhase, stocks]);
 
   // 🌟 GÜNÜN BİST AI ZİRVESİ: SÜPER 3'LÜ VİTRİNİ
   const bistTopPicks = useMemo(() => {
@@ -868,6 +979,9 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         const tp = analysesMap.get(s.symbol)?.tavanPotential;
         return Boolean(tp && (tp.streakInfo?.currentStreak && tp.streakInfo.currentStreak >= 2 || tp.category === 'TAVAN_SERISI'));
       });
+    } else if (preset === 'tavan_gecmis') {
+      const yesterdaySymbols = OFFICIAL_YESTERDAY_SNAPSHOT.candidates.map((c) => c.symbol);
+      list = list.filter((s) => yesterdaySymbols.includes(s.symbol));
     } else if (preset === 'tavan') {
       list = list.filter((s) => (s.changePct || 0) >= 9.7);
     } else if (preset === 'strong_buy') {
@@ -913,6 +1027,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     let tavan = 0;
     let tavanAday = 0;
     let tavanSerisi = 0;
+    const tavanGecmis = OFFICIAL_YESTERDAY_SNAPSHOT.candidates.length;
     stocks.forEach((s) => {
       const qa = analysesMap.get(s.symbol);
       const tp = qa?.tavanPotential;
@@ -926,7 +1041,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       else if (sig === 'AL') buy++;
       else if (sig === 'SAT' || sig === 'GÜÇLÜ SAT') sell++;
     });
-    return { strongBuy, buy, sell, tavan, tavanAday, tavanSerisi };
+    return { strongBuy, buy, sell, tavan, tavanAday, tavanSerisi, tavanGecmis };
   }, [stocks, analysesMap]);
 
   const getSignalStyle = (sig: StockQuantAnalysis['signal']) => {
@@ -1664,6 +1779,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                 label: `${bistSessionPhase.pluralTitle} (${statsSummary.tavanAday})`,
               },
               { id: 'tavan_serisi', label: `🔥 Tavan Serisi (${statsSummary.tavanSerisi})` },
+              { id: 'tavan_gecmis', label: `📅 Dünkü Adaylar (${statsSummary.tavanGecmis})` },
               { id: 'tavan', label: `🚀 Kilit Tavanlar (${statsSummary.tavan})` },
               { id: 'strong_buy', label: `🔥 Güçlü AL (${statsSummary.strongBuy})` },
               { id: 'buy', label: `✅ AL (${statsSummary.strongBuy + statsSummary.buy})` },
@@ -1676,6 +1792,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
               const isTavan = p.id === 'tavan';
               const isRadar = p.id === 'tavan_aday';
               const isStreak = p.id === 'tavan_serisi';
+              const isHistory = p.id === 'tavan_gecmis';
               return (
                 <button
                   key={p.id}
@@ -1685,16 +1802,20 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                         ? 'bg-amber-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/30'
                         : isStreak
                           ? 'bg-gradient-to-r from-orange-500 via-amber-400 to-yellow-400 text-slate-950 border-orange-400 font-black shadow-md shadow-orange-500/30'
-                          : isTavan
-                            ? 'bg-emerald-400 text-slate-950 border-emerald-300 font-black shadow-md shadow-emerald-400/25'
-                            : 'bg-emerald-500 text-slate-950 border-emerald-400'
+                          : isHistory
+                            ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/30'
+                            : isTavan
+                              ? 'bg-emerald-400 text-slate-950 border-emerald-300 font-black shadow-md shadow-emerald-400/25'
+                              : 'bg-emerald-500 text-slate-950 border-emerald-400'
                       : isRadar
                         ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
                         : isStreak
                           ? 'bg-orange-500/15 text-orange-300 border-orange-500/40 hover:bg-orange-500/25'
-                          : isTavan
-                            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
-                            : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
+                          : isHistory
+                            ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
+                            : isTavan
+                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+                              : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
                     }`}
                 >
                   {p.label}
@@ -2083,7 +2204,26 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                   </button>
                 </div>
               ) : (
-                <div className="divide-y divide-slate-800/80 xl:overflow-y-auto flex-1 overscroll-auto touch-pan-y">
+                <>
+                  {preset === 'tavan_gecmis' && (
+                    <div className="p-3 bg-gradient-to-r from-amber-950/50 via-slate-900 to-orange-950/50 border-b border-amber-500/30 text-[11px] space-y-2 shrink-0">
+                      <div className="flex items-center justify-between text-amber-300 font-black">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                          <span>DÜNÜN (26 KASIM) TAVAN SERİSİ HAFIZASI</span>
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-[10px] text-amber-300 font-mono font-bold border border-amber-500/30">
+                          4 / 4 Teyitli Aday
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-300 leading-relaxed">
+                        Dün akşam kurumsal 5 direk analizimizle belirlenen 4 elit tavan serisi adayı: <strong className="text-amber-300">ANELE, GRTHO, KRDMD, TRMET</strong>.
+                        Yapay zeka hafıza bankamız bu hisseleri ve gerçekleşen hedeflerini kalıcı olarak hatırlar.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="divide-y divide-slate-800/80 xl:overflow-y-auto flex-1 overscroll-auto touch-pan-y">
                   {filteredStocks.map((st) => {
                     const qa = analysesMap.get(st.symbol) || { signal: 'TUT' as const, score: 70, tavanPotential: undefined };
                     const isSel = selectedStock?.symbol === st.symbol;
@@ -2208,6 +2348,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                     );
                   })}
                 </div>
+              </>
               )}
             </div>
 

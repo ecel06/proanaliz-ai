@@ -230,11 +230,18 @@ export const AdminAICoPilotModal: React.FC<AdminAICoPilotModalProps> = ({
       // Dynamically fetch live multi-domain context for 100% unified AI integration
       let dynamicContext: any = { ...(clientContext || {}) };
       try {
-        // 1. BIST Tavan Radarı
+        // 1. BIST Tavan Radarı & Tarihsel Tavan Hafızası
         const storedBist = localStorage.getItem('proanaliz_bist_context');
         const winBist = (window as any).__PROANALIZ_BIST_CONTEXT__;
-        const bistCtx = storedBist ? JSON.parse(storedBist) : winBist;
-        if (bistCtx) dynamicContext.bist = bistCtx;
+        let bistCtx = storedBist ? JSON.parse(storedBist) : winBist;
+        if (!bistCtx) bistCtx = {};
+        try {
+          const storedHistory = localStorage.getItem('proanaliz_tavan_history');
+          if (storedHistory && !bistCtx.history) {
+            bistCtx.history = JSON.parse(storedHistory);
+          }
+        } catch {}
+        dynamicContext.bist = bistCtx;
 
         // 2. Futbol AI Robotu & Bankolar
         const storedFt = localStorage.getItem('proanaliz_football_context');
