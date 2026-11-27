@@ -1251,6 +1251,11 @@ export function syncCouponMatchResults(allMatches) {
         if (!pickWon) anyLost = true;
       } else {
         allFinished = false;
+        const realDateLabel = formatIstanbulMatchDate(match.time || match.date);
+        if (realDateLabel && m.matchDate !== realDateLabel) {
+          m.matchDate = realDateLabel;
+          changed = true;
+        }
         if (match.status === 'live') {
           m.status = 'live';
           m.homeScore = match.currentScore?.home ?? 0;
@@ -1272,6 +1277,27 @@ export function syncCouponMatchResults(allMatches) {
   if (changed) {
     saveEditorCoupons();
   }
+}
+
+function formatIstanbulMatchDate(rawTimeOrDate) {
+  if (!rawTimeOrDate) return 'Bugün';
+  const s = String(rawTimeOrDate);
+  if (!s.includes('T') && !/^\d{4}-\d{2}-\d{2}/.test(s)) return 'Bugün';
+  const targetDate = new Date(s);
+  if (isNaN(targetDate.getTime())) return 'Bugün';
+
+  const trFmt = (d) =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  const now = new Date();
+  const todayStr = trFmt(now);
+  const tomorrowStr = trFmt(new Date(now.getTime() + 86400000));
+  const yesterdayStr = trFmt(new Date(now.getTime() - 86400000));
+  const targetStr = trFmt(targetDate);
+
+  if (targetStr === todayStr) return 'Bugün';
+  if (targetStr === tomorrowStr) return 'Yarın';
+  if (targetStr === yesterdayStr) return 'Dün';
+  return targetDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', timeZone: 'Europe/Istanbul' });
 }
 
 /**
@@ -1376,7 +1402,7 @@ export function autoCheckAndRolloverCoupons(allMatches, force = false) {
       awayTeam: m.awayTeam.name,
       league: m.league || 'Lig',
       matchTime: matchTimeStr,
-      matchDate: 'Bugün',
+      matchDate: formatIstanbulMatchDate(m.time || m.date),
       prediction,
       odds: Number(odds.toFixed(2)),
       confidence: 94 - idx * 2,
