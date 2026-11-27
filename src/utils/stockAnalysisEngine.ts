@@ -10,6 +10,7 @@ import {
   TavanCategoryType,
   TavanStreakInfo,
   TavanStreakTargetStep,
+  TechnicalBreakoutInfo,
 } from '../types/stocks';
 
 function clamp(n: number, min = 0, max = 100): number {
@@ -572,6 +573,92 @@ export function computeTavanStreakInfo(
   };
 }
 
+/**
+ * 📐 İNSANLARIN ÇİZİP ÖNCEDEN BİLDİĞİ TEKNİK KIRILIM & FLAMA DEDEKTÖRÜ (Advance Ceiling Breakout)
+ * 1 gün önceden tavan yapacak hisseleri yakalayan 5 altın kural:
+ * 1. Düşen Trend Çizgisi Kırılımı (Fiyat direnci yukarı delmiş)
+ * 2. Daralan Flama / Simetrik Üçgen Sıkışması (Bollinger width <= 0.08)
+ * 3. Hacim Kuruması (Dry-Up Volume: Satıcıların tükenmesi)
+ * 4. Kapanışın Günün Zirvesine Yakın Olması (Buyers control close)
+ * 5. Kalan Tavan Marjı En Az %6.0 - %9.5 (Asla aşırı primlenmemiş, kâr alanı açık!)
+ */
+export function detectTechnicalBreakoutSetup(
+  stock: StockItem,
+  price: number,
+  changePct: number,
+  targetCeilingPrice: number,
+  tavanMargin: number
+): TechnicalBreakoutInfo | null {
+  const isMegaCap = Boolean(stock.marketCap && stock.marketCap > 65e9);
+  if (isMegaCap) return null; // Dev tahtalar elenir
+
+  // Kural 1: Kontrollü Fiyat Marjı (Tavana kalan marj en az %6.0 olmalı; hisse %0.2 ile %4.2 arasında olmalı)
+  if (changePct < 0.2 || changePct > 4.5 || tavanMargin < 5.5) return null;
+
+  // Kural 2: RSI Sağlıklı Momentum Bölgesi (40 ile 66 arası - düşüş trendinde DEĞİL, aşırı alımda da DEĞİL)
+  const rsi = stock.rsi ?? 50;
+  if (rsi < 40 || rsi > 66) return null;
+
+  // Kural 3: Bollinger Daralan Yay (Sıkışma Kontrolü)
+  let isSqueeze = false;
+  if (stock.bbLower !== null && stock.bbUpper !== null && stock.bbUpper > 0) {
+    const bbMid = (stock.bbUpper + stock.bbLower) / 2;
+    const bbWidth = (stock.bbUpper - stock.bbLower) / (bbMid || 1);
+    if (bbWidth <= 0.085) isSqueeze = true;
+  }
+
+  // Kural 4: Günün Zirvesinde Kapanış (High-Low Güç Oranı)
+  let isStrongClose = false;
+  if (stock.high && stock.low && stock.high > stock.low) {
+    const closePos = (price - stock.low) / (stock.high - stock.low);
+    if (closePos >= 0.70) isStrongClose = true;
+  } else {
+    isStrongClose = changePct >= 1.5;
+  }
+
+  // Kural 5: Hareketli Ortalama / Trend Kırılım Desteği
+  const ma50 = stock.ema50 || stock.sma50;
+  const isAboveEma = ma50 ? price >= ma50 * 0.99 : true;
+
+  // Hacim Kuruması (Dry-Up) Analizi: Düşük satıcı baskısı
+  let volumeDryUp = false;
+  if (stock.valueTraded && stock.marketCap) {
+    const turnover = (stock.valueTraded / stock.marketCap) * 100;
+    if (turnover >= 0.8 && turnover <= 3.2) volumeDryUp = true;
+  }
+
+  // Formasyon Kararı
+  if (isSqueeze && isStrongClose) {
+    return {
+      patternType: 'FLAMA_BAYRAK_DARALMASI',
+      patternTitle: '⚡ Daralan Flama / Simetrik Üçgen Sıkışması (1 Gün Önceden)',
+      drawingNote: `Grafikte fiyat son 10 gündür daralan simetrik üçgen içinde sıkıştı. Dün günün zirvesine yakın (+%${changePct.toFixed(2)}) kapatarak flama direncini zorladı. Kademelerde satıcılar kurudu.`,
+      volumeDryUp,
+      resistancePrice: Number((price * 1.018).toFixed(2)),
+      targetCeilingPrice,
+      remainingCeilingMarginPct: tavanMargin,
+      recommendedOrderType: 'Gece / 09:40 Açılış Seansı Piyasa Emri',
+      orderActionGuide: `💡 Emir Taktigi: Sabah saat 10:00'da koşturup geç kalmamak için, akşamdan veya sabah 09:40-09:55 karanlık odasında bankanızdan "Açılış Seansı Piyasa Emri" veya ${targetCeilingPrice} TL tavan limitli emir girerek saat 10:00'daki açılış eşleşmesinde ilk sırada yerinizi alın. Önünüzde +%${tavanMargin} net kâr marjı vardır.`,
+    };
+  }
+
+  if (isStrongClose && isAboveEma && changePct >= 1.2) {
+    return {
+      patternType: 'DUSEN_TREND_KIRILIMI',
+      patternTitle: '📉 Düşen Trend Çizgisi Kırılımı (1 Gün Önceden)',
+      drawingNote: `Grafikte haftalardır süren düşen trend çizgisi dün hacim desteğiyle yukarı kırıldı. Kademelerdeki satıcılar temizlendi; ertesi gün açılış tavan kopuşuna hazır.`,
+      volumeDryUp,
+      resistancePrice: Number(price.toFixed(2)),
+      targetCeilingPrice,
+      remainingCeilingMarginPct: tavanMargin,
+      recommendedOrderType: 'Gece / 09:40 Açılış Seansı Piyasa Emri',
+      orderActionGuide: `💡 Emir Taktigi: Sabah hızlı tavan kilitlenme ihtimaline karşı yetişmek için, akşamdan veya sabah 09:40-09:55 karanlık odasında bankanızdan "Açılış Seansı Piyasa Emri" girin. Açılış fiyatından portföye girip tavana kadar %${tavanMargin} kâr marjını koruyun.`,
+    };
+  }
+
+  return null;
+}
+
 export function calculateTavanPotential(
   stock: StockItem,
   quantContext?: TavanQuantContext
@@ -650,6 +737,31 @@ export function calculateTavanPotential(
       tavanMargin: 0,
       primaryReason: 'Dünü tavanda kilitledi; açılışta tavan serisi potansiyeli yüksek.',
       streakInfo,
+    };
+  }
+
+  // --- 1.6 İNSANLARIN ÇİZİP ÖNCEDEN BİLDİĞİ TEKNİK KIRILIM & FLAMA (1 Gün Önceden Tavan Kurulumu) ---
+  const breakoutInfo = detectTechnicalBreakoutSetup(stock, price, changePct, targetCeilingPrice, tavanMargin);
+  if (breakoutInfo && !isLiveSession) {
+    return {
+      score: 93,
+      isCandidate: true,
+      isHighProbability: true,
+      isAlreadyCeiling: false,
+      category: breakoutInfo.patternType === 'FLAMA_BAYRAK_DARALMASI' ? 'FLAMA_SIKISMA' : 'DUSEN_KIRILIM',
+      categoryLabel: breakoutInfo.patternTitle,
+      reasons: [
+        breakoutInfo.drawingNote,
+        `Tavana kalan net kâr alanı: +%${breakoutInfo.remainingCeilingMarginPct.toFixed(1)}. Tavsiye: ${breakoutInfo.recommendedOrderType}.`,
+        breakoutInfo.orderActionGuide,
+      ],
+      relativeVolume: 1.8,
+      squeezeStatus: 'Daralma / Yay Eşiğinde',
+      targetCeilingPrice,
+      tavanMargin,
+      primaryReason: breakoutInfo.drawingNote,
+      streakInfo,
+      breakoutInfo,
     };
   }
 

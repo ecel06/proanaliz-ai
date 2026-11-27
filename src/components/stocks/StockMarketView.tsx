@@ -87,7 +87,7 @@ import { INITIAL_IPOS } from '../../data/ipoData';
 import { INITIAL_KAP_NEWS } from '../../data/kapNewsData';
 import { BistIndexType, isStockInIndex, BIST_INDICES_CONFIG } from '../../utils/bistIndexHelper';
 
-type PresetFilter = 'all' | 'tavan_aday' | 'tavan_serisi' | 'tavan_gecmis' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
+type PresetFilter = 'all' | 'tavan_kirilim' | 'tavan_aday' | 'tavan_serisi' | 'tavan_gecmis' | 'tavan' | 'strong_buy' | 'buy' | 'value' | 'rsi_dip' | 'sell' | 'watchlist';
 type StockSort = 'ai_desc' | 'change_desc' | 'volume_desc' | 'rsi_asc' | 'pe_asc';
 
 // 🏛️ RESMİ DÜNKÜ TAVAN SERİSİ HAFIZA ARŞİVİ (26 KASIM PERŞEMBE KAPANIŞ KURULUMU)
@@ -1010,7 +1010,9 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       );
     }
 
-    if (preset === 'tavan_aday') {
+    if (preset === 'tavan_kirilim') {
+      list = list.filter((s) => Boolean(analysesMap.get(s.symbol)?.tavanPotential?.breakoutInfo));
+    } else if (preset === 'tavan_aday') {
       list = list.filter((s) => analysesMap.get(s.symbol)?.tavanPotential?.isCandidate);
     } else if (preset === 'tavan_serisi') {
       list = list.filter((s) => {
@@ -1065,10 +1067,12 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     let tavan = 0;
     let tavanAday = 0;
     let tavanSerisi = 0;
+    let tavanKirilim = 0;
     const tavanGecmis = OFFICIAL_YESTERDAY_SNAPSHOT.candidates.length;
     stocks.forEach((s) => {
       const qa = analysesMap.get(s.symbol);
       const tp = qa?.tavanPotential;
+      if (tp?.breakoutInfo) tavanKirilim++;
       if ((s.changePct || 0) >= 9.7) tavan++;
       if (tp?.isCandidate) tavanAday++;
       if (Boolean(tp && (tp.streakInfo?.currentStreak && tp.streakInfo.currentStreak >= 2 || tp.category === 'TAVAN_SERISI'))) {
@@ -1079,7 +1083,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       else if (sig === 'AL') buy++;
       else if (sig === 'SAT' || sig === 'GÜÇLÜ SAT') sell++;
     });
-    return { strongBuy, buy, sell, tavan, tavanAday, tavanSerisi, tavanGecmis };
+    return { strongBuy, buy, sell, tavan, tavanAday, tavanSerisi, tavanGecmis, tavanKirilim };
   }, [stocks, analysesMap]);
 
   const getSignalStyle = (sig: StockQuantAnalysis['signal']) => {
@@ -1813,6 +1817,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
             {[
               { id: 'all', label: `Tümü (${stocks.length})` },
               {
+                id: 'tavan_kirilim',
+                label: `📐 Düşen Kırılımı / Flama (${statsSummary.tavanKirilim})`,
+              },
+              {
                 id: 'tavan_aday',
                 label: `${bistSessionPhase.pluralTitle} (${statsSummary.tavanAday})`,
               },
@@ -1827,6 +1835,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
               { id: 'watchlist', label: `⭐ Takip (${watchlist.length})` },
             ].map((p) => {
               const active = preset === p.id;
+              const isBreakout = p.id === 'tavan_kirilim';
               const isTavan = p.id === 'tavan';
               const isRadar = p.id === 'tavan_aday';
               const isStreak = p.id === 'tavan_serisi';
@@ -1836,24 +1845,28 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                   key={p.id}
                   onClick={() => setPreset(p.id as PresetFilter)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${active
-                      ? isRadar
-                        ? 'bg-amber-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/30'
-                        : isStreak
-                          ? 'bg-gradient-to-r from-orange-500 via-amber-400 to-yellow-400 text-slate-950 border-orange-400 font-black shadow-md shadow-orange-500/30'
-                          : isHistory
-                            ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/30'
-                            : isTavan
-                              ? 'bg-emerald-400 text-slate-950 border-emerald-300 font-black shadow-md shadow-emerald-400/25'
-                              : 'bg-emerald-500 text-slate-950 border-emerald-400'
-                      : isRadar
-                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
-                        : isStreak
-                          ? 'bg-orange-500/15 text-orange-300 border-orange-500/40 hover:bg-orange-500/25'
-                          : isHistory
-                            ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
-                            : isTavan
-                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
-                              : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
+                      ? isBreakout
+                        ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 text-white border-purple-400 font-black shadow-md shadow-purple-500/30'
+                        : isRadar
+                          ? 'bg-amber-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/30'
+                          : isStreak
+                            ? 'bg-gradient-to-r from-orange-500 via-amber-400 to-yellow-400 text-slate-950 border-orange-400 font-black shadow-md shadow-orange-500/30'
+                            : isHistory
+                              ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/30'
+                              : isTavan
+                                ? 'bg-emerald-400 text-slate-950 border-emerald-300 font-black shadow-md shadow-emerald-400/25'
+                                : 'bg-emerald-500 text-slate-950 border-emerald-400'
+                      : isBreakout
+                        ? 'bg-purple-950/40 text-purple-300 border-purple-500/40 hover:bg-purple-900/40'
+                        : isRadar
+                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
+                          : isStreak
+                            ? 'bg-orange-500/15 text-orange-300 border-orange-500/40 hover:bg-orange-500/25'
+                            : isHistory
+                              ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
+                              : isTavan
+                                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+                                : 'bg-slate-950/70 text-slate-300 border-slate-800 hover:text-white'
                     }`}
                 >
                   {p.label}
@@ -2243,6 +2256,24 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                 </div>
               ) : (
                 <>
+                  {preset === 'tavan_kirilim' && (
+                    <div className="p-3 bg-gradient-to-r from-purple-950/60 via-slate-900 to-indigo-950/60 border-b border-purple-500/40 text-[11px] space-y-2 shrink-0">
+                      <div className="flex items-center justify-between text-purple-300 font-black">
+                        <span className="flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                          <span>1 GÜN ÖNCEDEN YAZILIP-ÇİZİLEN DÜŞEN KIRILIMI &amp; FLAMA TAVAN RADARI</span>
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-[10px] text-purple-300 font-mono font-bold border border-purple-500/30">
+                          {filteredStocks.length} Formasyon Adayı
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-300 leading-relaxed">
+                        Teknik analistlerin 1 gün önceden tespit ettiği formasyonlar: Düşen trend direnci kırılanlar veya daralan simetrik üçgen/flama sıkışması yaşayanlar. 
+                        Sabah hızlı tavana kilitlenirse manuel yetişememe riskine karşı <strong>Akşam (18:30–21:00) veya Sabah (09:40–09:55) Açılış Seansı Piyasa Emri</strong> girilerek seans açılışında direkt pozisyon alınması hedeflenir.
+                      </p>
+                    </div>
+                  )}
+
                   {preset === 'tavan_gecmis' && (
                     <div className="p-3 bg-gradient-to-r from-amber-950/50 via-slate-900 to-orange-950/50 border-b border-amber-500/30 text-[11px] space-y-2 shrink-0">
                       <div className="flex items-center justify-between text-amber-300 font-black">
@@ -2873,6 +2904,56 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
                                 <span>{r}</span>
                               </div>
                             ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 📐 1 GÜN ÖNCEDEN YAZILIP-ÇİZİLEN TEKNİK KIRILIM & FLAMA SIKIŞMASI (BREAKOUT & PENNANT RADAR) */}
+                      {selectedAnalysis.tavanPotential.breakoutInfo && (
+                        <div className="p-3.5 rounded-xl bg-gradient-to-br from-purple-950/70 via-slate-900 to-indigo-950/70 border-2 border-purple-500/50 space-y-3 shadow-lg">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center space-x-2">
+                              <span className="p-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 font-black text-xs">
+                                📐
+                              </span>
+                              <div>
+                                <div className="text-xs font-black text-purple-200 uppercase tracking-wide flex items-center gap-1.5">
+                                  <span>{selectedAnalysis.tavanPotential.breakoutInfo.patternTitle}</span>
+                                </div>
+                                <div className="text-[10px] text-purple-300/80">
+                                  {selectedAnalysis.tavanPotential.breakoutInfo.volumeDryUp
+                                    ? '🎯 Satıcı Kuruması (Düşük Hacimle Sıkışma) + Kırılım Teyidi'
+                                    : '🚀 Kırılım Mum Onayı + Hacimsel Hareketlilik'}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="px-2.5 py-1 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/40 text-[10px] font-mono font-black">
+                                Kalan Tavan Alanı: +%{selectedAnalysis.tavanPotential.breakoutInfo.remainingCeilingMarginPct.toFixed(1)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Çizim Notu */}
+                          <div className="p-2.5 rounded-lg bg-slate-950/80 border border-purple-500/30 text-[11px] text-slate-200 leading-relaxed">
+                            <span className="font-bold text-purple-300">🔍 Formasyon Detayı: </span>
+                            {selectedAnalysis.tavanPotential.breakoutInfo.drawingNote}
+                          </div>
+
+                          {/* Gece / Sabah 09:40 Açılış Seansı Piyasa Emri Taktiği */}
+                          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/40 space-y-1 text-[11px]">
+                            <div className="flex items-center justify-between text-amber-300 font-black text-xs">
+                              <span className="flex items-center gap-1.5">
+                                <span>💡</span>
+                                <span>Hızlı Açılışta Kaçırmama Taktiği ({selectedAnalysis.tavanPotential.breakoutInfo.recommendedOrderType})</span>
+                              </span>
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono font-bold">
+                                Direnç: {formatStockPrice(selectedAnalysis.tavanPotential.breakoutInfo.resistancePrice, selectedStock.currency)}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-amber-100/90 leading-relaxed">
+                              {selectedAnalysis.tavanPotential.breakoutInfo.orderActionGuide}
+                            </p>
                           </div>
                         </div>
                       )}

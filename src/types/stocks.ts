@@ -135,6 +135,8 @@ export interface StockQuantAnalysis {
 
 export type TavanCategoryType =
   | 'KIRILIM_TAVANI'
+  | 'DUSEN_KIRILIM'
+  | 'FLAMA_SIKISMA'
   | 'DIP_TEPKI_TAVANI'
   | 'HACIM_PATLAMASI'
   | 'SIKISMA_PATLAMASI'
@@ -143,6 +145,18 @@ export type TavanCategoryType =
   | 'HABER_KATALIZOR'
   | 'TAVAN_KILIT'
   | 'NORMAL';
+
+export interface TechnicalBreakoutInfo {
+  patternType: 'DUSEN_TREND_KIRILIMI' | 'FLAMA_BAYRAK_DARALMASI' | 'HACIM_KURUMASI_FIRLAMA' | 'DIRENC_ZIRVE_KIRILIMI';
+  patternTitle: string;
+  drawingNote: string; // İnsanların çizip gördüğü teknik kırılım açıklaması
+  volumeDryUp: boolean; // Hacim kuruması gerçekleşti mi?
+  resistancePrice: number; // Kırılan / hedeflenen direnç çizgisi
+  targetCeilingPrice: number; // 1. Tavan hedefi
+  remainingCeilingMarginPct: number; // Tavana kalan net kâr alanı (örn: %8.4)
+  recommendedOrderType: string; // 'Gece / 09:40 Açılış Seansı Piyasa Emri'
+  orderActionGuide: string; // Kullanıcının bankasından gireceği net emir taktiği
+}
 
 export interface TavanStreakTargetStep {
   step: number; // 1, 2, 3, 4, 5
@@ -210,6 +224,7 @@ export interface TavanPotentialResult {
   tavanMargin?: number; // tavana kalan marj %
   primaryReason?: string;
   streakInfo?: TavanStreakInfo;
+  breakoutInfo?: TechnicalBreakoutInfo;
 }
 
 export interface TimeframeSnapshot {

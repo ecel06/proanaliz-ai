@@ -1297,6 +1297,14 @@ ${yesterdaySnapshot.candidates.map((c, i) => `  * ${i + 1}. ${c.symbol} (${c.nam
   * Dün geniş radarda izlenen diğer ivme hisseleri: EUPWR (+%3.09), GEREL (+%4.05), PETKM (+%4.40).
 
 - BIST Tavan Anatomisi Araştırma Sonuçları (Sistemimizdeki 106 Tavan Olayının Matematiksel Modeli):
+  * 📐 1 GÜN ÖNCEDEN YAZILIP-ÇİZİLEN DÜŞEN KIRILIMI & FLAMA TAVAN MODELİ (Usta Çizimcilerin Sırrı):
+    - Düşen Trend Direnci Kırılımı (15-30 günlük düşen trend çizgisinin son mumda kırılması veya üzerine fitil atılması).
+    - Daralan Simetrik Üçgen / Flama Sıkışması (Bollinger bant genişliği <= 0.085, ATR sıkışması, günün zirvesine yakın kapanış >= 0.70).
+    - Satıcı Kuruması (Volume dry-up): Düşüş trendinde satış baskısının tamamen tükenmesi.
+    - Sağlıklı RSI (40-66 aralığı): Aşırı satım dibi (RSI < 30) olan hisseler ertesi sabah hemen tavan olmaz, 2-3 seans taban çalışması yapar. Gerçek tavan yapanlar (KTLEV, BIGEN, INFO, BTCIM gibi) 45-60 RSI bandından kırılımla tavana fırlar.
+    - Tavan Kâr Alanı: Günlük prim kontrollü (+%0.2 ile +%4.2 arası), tavana en az +%5.5 - +%9.5 tavan marjı kalan hisseler.
+    - 💡 HIZLI TAVAN AÇILIŞINDA YETİŞME TAKTİĞİ (AKŞAM / SABAH 09:40 AÇILIŞ SEANSI PİYASA EMRİ):
+      Sabah 10:00:00'da sürekli müzayede başladığında hisse hızla tavana kilitlenirse manuel yetişilemez veya tavanda sıra beklenir. Bu sebeple 1 gün önceden (akşam 18:30-21:00 arası veya sabah 09:40-09:55 açılış eşleşme seansında) banka/aracı kuruma "Açılış Seansı Piyasa Emri" veya "Piyasadan Limite" emir girilir. Böylece 10:00:00'da eşleşme fiyatından ilk saniyede pozisyon alınır.
   * Tavanların %57.5'i Aşırı Satım Dip Dönüşünden (RSI < 35, satıcıların tükendiği taban noktası, örn: HEKTS, ASTOR, TCKRC) çıkar.
   * Tavanların %36.8'i Daralan Bollinger Bandı Sıkışması (volatilite depolaması, örn: KATMR 1. tavan) sonrası patlar.
   * Tavan Serisi Merdiveni (Peş Peşe Tavan Koşuları): 1. Tavan (+%10.0), 2. Tavan (+%21.0), 3. Tavan (+%33.1), 4. Tavan (+%46.4), 5. Tavan (+%61.1). Tavan serisi taze kopuş, ivme teyidi ve mega seri olarak 3 aşamada izlenir; dinamik izleyen kâr koruma stopu (-%4.5) ile korunur.
@@ -1550,7 +1558,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.101';
+const APP_VERSION = '2026.11.20.102';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
