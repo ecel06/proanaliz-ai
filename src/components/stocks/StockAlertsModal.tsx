@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Plus, Trash2, Volume2, CheckCircle2, AlertCircle, X, ShieldAlert } from 'lucide-react';
-import { StockAlertItem, StockItem, AlertConditionType, StockMarketType } from '../../types/stocks';
+import { Bell, Plus, Trash2, Volume2, CheckCircle2, AlertCircle, X, ShieldAlert, Briefcase } from 'lucide-react';
+import { StockAlertItem, StockItem, AlertConditionType, StockMarketType, StockPortfolioPosition } from '../../types/stocks';
 
 interface StockAlertsModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentStock?: StockItem | null;
   alerts: StockAlertItem[];
+  portfolioPositions?: StockPortfolioPosition[];
   onSaveAlert: (alert: StockAlertItem) => void;
+  onSaveBulkAlerts?: (newAlerts: StockAlertItem[]) => void;
   onDeleteAlert: (id: string) => void;
   onClearTriggered: () => void;
 }
@@ -35,7 +37,9 @@ export const StockAlertsModal: React.FC<StockAlertsModalProps> = ({
   onClose,
   currentStock,
   alerts,
+  portfolioPositions = [],
   onSaveAlert,
+  onSaveBulkAlerts,
   onDeleteAlert,
   onClearTriggered,
 }) => {
@@ -106,6 +110,60 @@ export const StockAlertsModal: React.FC<StockAlertsModalProps> = ({
   const triggeredCount = alerts.filter((a) => a.triggered).length;
   const activeCount = alerts.length - triggeredCount;
 
+  const handleBulkPortfolioAlerts = () => {
+    if (!portfolioPositions || portfolioPositions.length === 0) return;
+    const toCreate: StockAlertItem[] = [];
+    const nowIso = new Date().toISOString();
+
+    portfolioPositions.forEach((pos, idx) => {
+      const basePrice = pos.currentPrice || pos.entryPrice || 1;
+      const upTarget = Number((basePrice * 1.04).toFixed(2));
+      const downTarget = pos.stopLoss && pos.stopLoss > 0 && pos.stopLoss < basePrice
+        ? Number(pos.stopLoss.toFixed(2))
+        : Number((basePrice * 0.965).toFixed(2));
+
+      const hasUp = alerts.some((a) => !a.triggered && a.symbol === pos.symbol && a.condition === 'price_above');
+      const hasDown = alerts.some((a) => !a.triggered && a.symbol === pos.symbol && a.condition === 'price_below');
+
+      if (!hasUp) {
+        toCreate.push({
+          id: `alert-p-up-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
+          symbol: pos.symbol,
+          name: pos.name || pos.symbol,
+          market: pos.market,
+          condition: 'price_above',
+          targetValue: upTarget,
+          initialValue: basePrice,
+          note: 'Portföy Oto-Alarm (+%4 Kırılım İvmesi)',
+          createdAt: nowIso,
+          triggered: false,
+        });
+      }
+      if (!hasDown) {
+        toCreate.push({
+          id: `alert-p-dn-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
+          symbol: pos.symbol,
+          name: pos.name || pos.symbol,
+          market: pos.market,
+          condition: 'price_below',
+          targetValue: downTarget,
+          initialValue: basePrice,
+          note: 'Portföy Oto-Alarm (Stop / Bozulma Takibi)',
+          createdAt: nowIso,
+          triggered: false,
+        });
+      }
+    });
+
+    if (toCreate.length > 0) {
+      if (onSaveBulkAlerts) {
+        onSaveBulkAlerts(toCreate);
+      } else {
+        toCreate.forEach((a) => onSaveAlert(a));
+      }
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col">
@@ -149,23 +207,65 @@ export const StockAlertsModal: React.FC<StockAlertsModalProps> = ({
         {/* Modal Body */}
         <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
           {/* Action Bar */}
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg shadow-amber-500/10"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{showAddForm ? 'Formu Kapat' : 'Yeni Alarm Oluştur'}</span>
-            </button>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center flex-wrap gap-2">
+              <button
+                onClick={() => setShowAddForm(!showAddForm)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg shadow-amber-500/10 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{showAddForm ? 'Formu Kapat' : 'Yeni Alarm Oluştur'}</span>
+              </button>
+              {portfolioPositions.length > 0 && (
+                <button
+                  onClick={handleBulkPortfolioAlerts}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 transition-all shadow-lg shadow-cyan-500/15 cursor-pointer"
+                  title="Sanal portföyünüzdeki tüm açık hisseler için otomatik +%4 yukarı ve stop-loss alarmı kurar"
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  <span>Portföydeki {portfolioPositions.length} Hisseye Oto-Alarm Kur</span>
+                </button>
+              )}
+            </div>
             {triggeredCount > 0 && (
               <button
                 onClick={onClearTriggered}
-                className="text-xs text-slate-400 hover:text-rose-400 transition-colors"
+                className="text-xs text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
               >
                 Tetiklenenleri Temizle ({triggeredCount})
               </button>
             )}
           </div>
+
+          {/* Quick Portfolio Picker Strip */}
+          {portfolioPositions.length > 0 && (
+            <div className="p-3 rounded-xl bg-slate-800/40 border border-cyan-500/25 flex items-center flex-wrap gap-1.5">
+              <span className="text-[11px] font-bold text-cyan-300 mr-1 flex items-center gap-1">
+                <Briefcase className="w-3.5 h-3.5" />
+                <span>Portföyden Hızlı Seç:</span>
+              </span>
+              {portfolioPositions.map((pos) => {
+                const basePrice = pos.currentPrice || pos.entryPrice || 1;
+                return (
+                  <button
+                    key={pos.id}
+                    type="button"
+                    onClick={() => {
+                      setSymbol(pos.symbol);
+                      setName(pos.name || pos.symbol);
+                      setMarket(pos.market);
+                      setCondition('price_above');
+                      setTargetValue(Number((basePrice * 1.04).toFixed(2)));
+                      setShowAddForm(true);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-cyan-500/20 border border-slate-700 hover:border-cyan-400 text-[11px] font-mono font-bold text-white transition-colors cursor-pointer"
+                  >
+                    {pos.symbol} ({basePrice.toFixed(2)}₺)
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Add Form */}
           {showAddForm && (

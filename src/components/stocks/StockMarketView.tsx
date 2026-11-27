@@ -3995,9 +3995,14 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         onClose={() => setIsAlertsModalOpen(false)}
         currentStock={selectedStock}
         alerts={alerts}
+        portfolioPositions={portfolio.filter((p) => p.status === 'open')}
         onSaveAlert={(newAlert) => {
           saveAlerts([newAlert, ...alerts]);
           onShowToast?.(`🔔 ${newAlert.symbol} için alarm kaydedildi!`);
+        }}
+        onSaveBulkAlerts={(newAlerts) => {
+          saveAlerts([...newAlerts, ...alerts]);
+          onShowToast?.(`🔔 Portföydeki hisseler için ${newAlerts.length} otomatik alarm kuruldu!`);
         }}
         onDeleteAlert={(id) => {
           saveAlerts(alerts.filter((a) => a.id !== id));
