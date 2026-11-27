@@ -746,7 +746,17 @@ export async function callAdminAICoPilotApi(
       }),
       signal: AbortSignal.timeout(26000)
     });
-    return await res.json();
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return {
+        success: false,
+        error: res.status >= 500
+          ? 'Sunucu yanıt süresi aşıldı veya geçici olarak meşgul. Lütfen 5 saniye sonra tekrar gönderin.'
+          : 'Beklenmeyen sunucu yanıtı alındı. Lütfen tekrar deneyin.'
+      };
+    }
   } catch (err: any) {
     return { success: false, error: err.message || 'Sunucuya bağlanılamadı.' };
   }

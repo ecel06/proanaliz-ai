@@ -98,6 +98,8 @@ app.use(express.json({ limit: '500kb' }));
 let cachedBulletin = null;
 let lastFetchTime = null;
 let isFetching = false;
+let lastWorkingGeminiModel = null;
+let lastWorkingGeminiKeyPrefix = null;
 
 // Load pre-existing cached file if available (pick freshest/largest between public/data/bulletin.json & src/data/liveBulletin.json)
 function loadLocalCache() {
@@ -1417,80 +1419,87 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
       });
     }
 
-    // 1. Dynamic Discovery via ModelService.ListModels for 100% exact API key compatibility
+    // 1. Dynamic Discovery via ModelService.ListModels (skip if we already cached a working model for this key)
+    const keyPrefix = apiKey.slice(0, 12);
     let candidateConfigs = [];
-    try {
-      const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-      const listRes = await fetch(listUrl, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-        },
-        signal: AbortSignal.timeout(3500),
-      });
+    if (lastWorkingGeminiModel && lastWorkingGeminiKeyPrefix === keyPrefix) {
+      candidateConfigs.push({ ver: 'v1beta', model: lastWorkingGeminiModel });
+    }
 
-      if (listRes.ok) {
-        const listData = await listRes.json();
-        if (Array.isArray(listData.models) && listData.models.length > 0) {
-          const contentModels = listData.models
-            .filter((m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
-            .map((m) => m.name.replace(/^models\//, ''))
-            .filter((name) =>
-              name.startsWith('gemini-') &&
-              !name.includes('image') &&
-              !name.includes('tts') &&
-              !name.includes('robotics') &&
-              !name.includes('computer') &&
-              !name.includes('embedding') &&
-              !name.includes('audio') &&
-              !name.includes('live')
-            );
+    if (candidateConfigs.length === 0) {
+      try {
+        const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+        const listRes = await fetch(listUrl, {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          signal: AbortSignal.timeout(3000),
+        });
 
-          // Priority sorting: Gemini 4 / Hydrogen models first, then 3.8 / 3.x models, then fastest modern models
-          contentModels.sort((a, b) => {
-            const getScore = (name) => {
-              if (name.includes('hydrogen')) return 200;
-              if (name.includes('gemini-4') || name.includes('4.0-') || name.includes('4.1-')) return 190;
-              if (name.includes('3.8-flash')) return 160;
-              if (name.includes('3.8')) return 150;
-              if (name.includes('3.7-flash')) return 140;
-              if (name.includes('3.7')) return 135;
-              if (name.includes('3.1-pro')) return 130;
-              if (name.includes('3.1-flash')) return 125;
-              if (name.includes('3.1')) return 120;
-              if (name.includes('3-pro') || name.includes('3.0-pro')) return 115;
-              if (name.includes('3-flash') || name.includes('3.0-flash')) return 110;
-              if (name.includes('2.5-flash')) return 95;
-              if (name.includes('2.5-pro')) return 90;
-              if (name.includes('2.5')) return 85;
-              if (name.includes('2.0-flash')) return 80;
-              if (name.includes('2.0-pro')) return 75;
-              if (name.includes('2.0')) return 70;
-              if (name.includes('1.5-flash')) return 50;
-              if (name.includes('1.5-pro')) return 40;
-              if (name.includes('flash')) return 30;
-              return 10;
-            };
-            return getScore(b) - getScore(a);
-          });
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          if (Array.isArray(listData.models) && listData.models.length > 0) {
+            const contentModels = listData.models
+              .filter((m) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+              .map((m) => m.name.replace(/^models\//, ''))
+              .filter((name) =>
+                name.startsWith('gemini-') &&
+                !name.includes('image') &&
+                !name.includes('tts') &&
+                !name.includes('robotics') &&
+                !name.includes('computer') &&
+                !name.includes('embedding') &&
+                !name.includes('audio') &&
+                !name.includes('live')
+              );
 
-          if (contentModels.length > 0) {
-            console.log(`[Gemini Dynamic Discovery] ${contentModels.length} models found for key:`, contentModels.slice(0, 6));
-            // Keep top priority models + ensure free-tier friendly Flash models are always included in cascade
-            const topModels = contentModels.slice(0, 5);
-            const freeTierFlashFallbacks = contentModels.filter(
-              (m) => (m.includes('2.5-flash') || m.includes('2.0-flash') || m.includes('flash-lite') || m.includes('1.5-flash')) && !topModels.includes(m)
-            );
-            const finalModels = [...topModels, ...freeTierFlashFallbacks].slice(0, 10);
-            candidateConfigs = finalModels.map((m) => ({ ver: 'v1beta', model: m }));
+            // Priority sorting: Gemini 4 / Hydrogen models first, then 3.8 / 3.x models, then fastest modern models
+            contentModels.sort((a, b) => {
+              const getScore = (name) => {
+                if (name.includes('hydrogen')) return 200;
+                if (name.includes('gemini-4') || name.includes('4.0-') || name.includes('4.1-')) return 190;
+                if (name.includes('3.8-flash')) return 160;
+                if (name.includes('3.8')) return 150;
+                if (name.includes('3.7-flash')) return 140;
+                if (name.includes('3.7')) return 135;
+                if (name.includes('3.1-pro')) return 130;
+                if (name.includes('3.1-flash')) return 125;
+                if (name.includes('3.1')) return 120;
+                if (name.includes('3-pro') || name.includes('3.0-pro')) return 115;
+                if (name.includes('3-flash') || name.includes('3.0-flash')) return 110;
+                if (name.includes('2.5-flash')) return 95;
+                if (name.includes('2.5-pro')) return 90;
+                if (name.includes('2.5')) return 85;
+                if (name.includes('2.0-flash')) return 80;
+                if (name.includes('2.0-pro')) return 75;
+                if (name.includes('2.0')) return 70;
+                if (name.includes('1.5-flash')) return 50;
+                if (name.includes('1.5-pro')) return 40;
+                if (name.includes('flash')) return 30;
+                return 10;
+              };
+              return getScore(b) - getScore(a);
+            });
+
+            if (contentModels.length > 0) {
+              console.log(`[Gemini Dynamic Discovery] ${contentModels.length} models found for key:`, contentModels.slice(0, 6));
+              // Keep top 2 flagship + up to 3 free-tier friendly Flash models (max 5 total so never exceeds gateway timeout)
+              const topModels = contentModels.slice(0, 2);
+              const freeTierFlashFallbacks = contentModels
+                .filter((m) => (m.includes('flash-lite') || m.includes('2.5-flash') || m.includes('2.0-flash') || m.includes('1.5-flash')) && !topModels.includes(m))
+                .slice(0, 3);
+              const finalModels = [...topModels, ...freeTierFlashFallbacks];
+              candidateConfigs = finalModels.map((m) => ({ ver: 'v1beta', model: m }));
+            }
           }
+        } else {
+          const listErr = await listRes.text();
+          console.warn(`[Gemini Discovery HTTP ${listRes.status}]:`, listErr);
         }
-      } else {
-        const listErr = await listRes.text();
-        console.warn(`[Gemini Discovery HTTP ${listRes.status}]:`, listErr);
+      } catch (listErr) {
+        console.warn('[Gemini Discovery Exception]:', listErr.message);
       }
-    } catch (listErr) {
-      console.warn('[Gemini Discovery Exception]:', listErr.message);
     }
 
     // 2. Verified fallback cascade if listModels could not be queried
@@ -1536,13 +1545,24 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
           signal: AbortSignal.timeout(7000), // 7s timeout per model
         });
 
-        const data = await response.json();
+        const rawText = await response.text();
+        let data = {};
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          throw new Error(`HTTP ${response.status} (JSON dışı yanıt)`);
+        }
         if (response.ok && !data.error && data.candidates?.[0]?.content?.parts?.[0]?.text) {
           reply = data.candidates[0].content.parts[0].text;
           successfulModel = cfg.model;
+          lastWorkingGeminiModel = cfg.model;
+          lastWorkingGeminiKeyPrefix = keyPrefix;
           console.log(`[Gemini Success] Responded using model: ${cfg.model} (${cfg.ver})`);
           break; // Succeeded!
         } else {
+          if (cfg.model === lastWorkingGeminiModel) {
+            lastWorkingGeminiModel = null;
+          }
           const errMsg = data.error?.message || `HTTP ${response.status}`;
           attemptErrors.push(`${cfg.model}: ${errMsg}`);
           lastError = errMsg;
@@ -1608,7 +1628,7 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.108';
+const APP_VERSION = '2026.11.20.109';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
