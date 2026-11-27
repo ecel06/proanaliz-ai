@@ -48,18 +48,36 @@ export const StockAlertsModal: React.FC<StockAlertsModalProps> = ({
   const [market, setMarket] = useState<StockMarketType>('bist');
   const [condition, setCondition] = useState<AlertConditionType>('price_above');
   const [targetValue, setTargetValue] = useState<number>(0);
+  const [basePriceForCalc, setBasePriceForCalc] = useState<number>(0);
+  const [selectedPct, setSelectedPct] = useState<number | ''>(4);
   const [note, setNote] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // Resolve reference price dynamically from portfolio or currentStock
+  const matchedPortfolioPos = portfolioPositions.find((p) => p.symbol.toUpperCase() === symbol.trim().toUpperCase());
+  const effectiveBasePrice = matchedPortfolioPos
+    ? (matchedPortfolioPos.currentPrice || matchedPortfolioPos.entryPrice || 0)
+    : (currentStock && currentStock.symbol.toUpperCase() === symbol.trim().toUpperCase() ? currentStock.close : basePriceForCalc);
+
+  const applyPercentageToTarget = (pct: number, cond: AlertConditionType = condition, base: number = effectiveBasePrice) => {
+    setSelectedPct(pct);
+    if (!base || base <= 0 || cond.startsWith('rsi')) return;
+    const multiplier = cond === 'price_below' ? 1 - pct / 100 : 1 + pct / 100;
+    setTargetValue(Number((base * multiplier).toFixed(2)));
+  };
 
   useEffect(() => {
     if (currentStock) {
       setSymbol(currentStock.symbol);
       setName(currentStock.name || currentStock.symbol);
       setMarket(currentStock.market);
+      setBasePriceForCalc(currentStock.close);
       if (condition === 'price_above') {
-        setTargetValue(Number((currentStock.close * 1.05).toFixed(2)));
+        setSelectedPct(4);
+        setTargetValue(Number((currentStock.close * 1.04).toFixed(2)));
       } else if (condition === 'price_below') {
-        setTargetValue(Number((currentStock.close * 0.95).toFixed(2)));
+        setSelectedPct(3);
+        setTargetValue(Number((currentStock.close * 0.97).toFixed(2)));
       } else if (condition === 'rsi_below') {
         setTargetValue(30);
       } else if (condition === 'rsi_above') {
@@ -71,15 +89,19 @@ export const StockAlertsModal: React.FC<StockAlertsModalProps> = ({
 
   const handleConditionChange = (c: AlertConditionType) => {
     setCondition(c);
-    if (!currentStock) return;
-    if (c === 'price_above') {
-      setTargetValue(Number((currentStock.close * 1.05).toFixed(2)));
-    } else if (c === 'price_below') {
-      setTargetValue(Number((currentStock.close * 0.95).toFixed(2)));
-    } else if (c === 'rsi_below') {
+    if (c === 'rsi_below') {
       setTargetValue(30);
-    } else if (c === 'rsi_above') {
+      return;
+    }
+    if (c === 'rsi_above') {
       setTargetValue(70);
+      return;
+    }
+    const defaultPct = typeof selectedPct === 'number' && selectedPct > 0 ? selectedPct : (c === 'price_above' ? 4 : 3);
+    setSelectedPct(defaultPct);
+    if (effectiveBasePrice > 0) {
+      const multiplier = c === 'price_below' ? 1 - defaultPct / 100 : 1 + defaultPct / 100;
+      setTargetValue(Number((effectiveBasePrice * multiplier).toFixed(2)));
     }
   };
 
@@ -254,8 +276,16 @@ export const StockAlertsModal: React.FC<StockAlertsModalProps> = ({
                       setSymbol(pos.symbol);
                       setName(pos.name || pos.symbol);
                       setMarket(pos.market);
-                      setCondition('price_above');
-                      setTargetValue(Number((basePrice * 1.04).toFixed(2)));
+                      setBasePriceForCalc(basePrice);
+                      const pctToUse = typeof selectedPct === 'number' && selectedPct > 0 ? selectedPct : 4;
+                      setSelectedPct(pctToUse);
+                      const mult = condition === 'price_below' ? 1 - pctToUse / 100 : 1 + pctToUse / 100;
+                      if (condition.startsWith('rsi')) {
+                        setCondition('price_above');
+                        setTargetValue(Number((basePrice * (1 + pctToUse / 100)).toFixed(2)));
+                      } else {
+                        setTargetValue(Number((basePrice * mult).toFixed(2)));
+                      }
                       setShowAddForm(true);
                     }}
                     className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-cyan-500/20 border border-slate-700 hover:border-cyan-400 text-[11px] font-mono font-bold text-white transition-colors cursor-pointer"
@@ -321,14 +351,21 @@ export const StockAlertsModal: React.FC<StockAlertsModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
-                    {condition.startsWith('rsi') ? 'Hedef RSI Değeri' : 'Tetiklenme Fiyatı'}
+                    {condition.startsWith('rsi')
+                      ? 'Hedef RSI Değeri'
+                      : effectiveBasePrice > 0
+                        ? `Tetiklenme Fiyatı (Güncel: ${effectiveBasePrice.toFixed(2)}₺)`
+                        : 'Tetiklenme Fiyatı'}
                   </label>
                   <input
                     type="number"
                     step="any"
                     required
                     value={targetValue || ''}
-                    onChange={(e) => setTargetValue(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      setTargetValue(parseFloat(e.target.value) || 0);
+                      setSelectedPct('');
+                    }}
                     placeholder={condition.startsWith('rsi') ? '30 veya 70' : 'Örn: 310.50'}
                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-amber-500"
                   />
@@ -346,6 +383,67 @@ export const StockAlertsModal: React.FC<StockAlertsModalProps> = ({
                   />
                 </div>
               </div>
+
+              {/* Hızlı Yüzde Oranı Hesaplayıcı (Yükseliş / Düşüş) */}
+              {!condition.startsWith('rsi') && effectiveBasePrice > 0 && (
+                <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-700/70 space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-[11px] font-bold text-slate-300">
+                      {condition === 'price_below'
+                        ? '📉 Düşüş Yüzdesi Seç (Otomatik Fiyat Hesapla):'
+                        : '📈 Yükseliş Yüzdesi Seç (Otomatik Fiyat Hesapla):'}
+                    </span>
+                    <span className="text-[11px] font-mono text-amber-300 font-bold">
+                      {effectiveBasePrice.toFixed(2)}₺ → {targetValue.toFixed(2)}₺
+                      {effectiveBasePrice > 0 && targetValue > 0 && (
+                        <> ({targetValue >= effectiveBasePrice ? '+' : ''}{(((targetValue - effectiveBasePrice) / effectiveBasePrice) * 100).toFixed(1)}%)</>
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center flex-wrap gap-1.5">
+                    {(condition === 'price_below' ? [1, 2, 3, 4, 5, 7] : [1, 2, 3, 4, 5, 7, 9.5]).map((pct) => {
+                      const isSelected = selectedPct === pct;
+                      const calcPrice = Number((effectiveBasePrice * (condition === 'price_below' ? 1 - pct / 100 : 1 + pct / 100)).toFixed(2));
+                      return (
+                        <button
+                          key={pct}
+                          type="button"
+                          onClick={() => applyPercentageToTarget(pct)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold border transition-all cursor-pointer ${
+                            isSelected
+                              ? condition === 'price_below'
+                                ? 'bg-rose-500 text-white border-rose-400 shadow-sm'
+                                : 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-sm'
+                              : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                          }`}
+                        >
+                          {condition === 'price_below' ? `-%${pct}` : `+%${pct}`} ({calcPrice.toFixed(2)}₺)
+                        </button>
+                      );
+                    })}
+                    <div className="flex items-center gap-1 ml-1">
+                      <span className="text-[10px] text-slate-400">Özel %:</span>
+                      <input
+                        type="number"
+                        step="0.5"
+                        min="0.1"
+                        max="50"
+                        value={selectedPct}
+                        onChange={(e) => {
+                          const v = parseFloat(e.target.value);
+                          if (!isNaN(v) && v > 0) {
+                            applyPercentageToTarget(v);
+                          } else {
+                            setSelectedPct('');
+                          }
+                        }}
+                        placeholder="%"
+                        className="w-14 px-2 py-1 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono text-[11px] focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end gap-2 pt-1">
                 <button
