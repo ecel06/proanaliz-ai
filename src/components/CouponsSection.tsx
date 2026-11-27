@@ -81,6 +81,7 @@ export const CouponsSection: React.FC<CouponsSectionProps> = ({
 
   const filteredEditorCoupons = useMemo(() => {
     return editorCoupons.filter((c) => {
+      if ((c as { status?: string }).status === 'archived') return false;
       const isPastCoupon = c.matches.some(
         (m) => m.matchDate === 'Dün' || (c.createdAt && Date.now() - c.createdAt > 30 * 60 * 60 * 1000)
       );
