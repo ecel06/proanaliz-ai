@@ -18,6 +18,9 @@ import {
   Building2,
   Sparkles,
   RefreshCw,
+  Briefcase,
+  Target,
+  Trash2,
 } from 'lucide-react';
 import { StockViopContract, StockItem } from '../../types/stocks';
 import { INITIAL_VIOP_CONTRACTS, INITIAL_VIOP_BROKER_POSITIONS } from '../../data/viopData';
@@ -29,8 +32,27 @@ interface StockViopModalProps {
   onSelectStock?: (symbol: string) => void;
 }
 
-type ViopTab = 'contracts' | 'calculator' | 'open_interest' | 'guide';
+type ViopTab = 'radar' | 'portfolio' | 'contracts' | 'calculator' | 'open_interest' | 'guide';
 type ContractFilter = 'all' | 'index' | 'stock' | 'metal' | 'fx';
+
+interface ViopVirtualPosition {
+  id: string;
+  code: string;
+  name: string;
+  underlyingCode: string;
+  direction: 'long' | 'short';
+  contractsCount: number;
+  entryPrice: number;
+  targetPrice: number;
+  stopPrice: number;
+  initialMarginPerContract: number;
+  contractSize: number;
+  leverage: number;
+  currency: string;
+  openedAt: string;
+  status: 'open' | 'closed';
+  closedPrice?: number;
+}
 
 export const getCurrencySymbol = (c?: StockViopContract | null) => {
   if (!c) return '₺';
@@ -43,11 +65,32 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
   stocks = [],
   onSelectStock,
 }) => {
-  const [activeTab, setActiveTab] = useState<ViopTab>('contracts');
+  const [activeTab, setActiveTab] = useState<ViopTab>('radar');
   const [contractFilter, setContractFilter] = useState<ContractFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [liveContracts, setLiveContracts] = useState<StockViopContract[]>(INITIAL_VIOP_CONTRACTS);
   const [isViopLoading, setIsViopLoading] = useState<boolean>(false);
+  const [viopToast, setViopToast] = useState<string | null>(null);
+  const [viopPositions, setViopPositions] = useState<ViopVirtualPosition[]>(() => {
+    try {
+      const raw = localStorage.getItem('proanaliz_viop_portfolio_v1');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const saveViopPositions = (next: ViopVirtualPosition[]) => {
+    setViopPositions(next);
+    try {
+      localStorage.setItem('proanaliz_viop_portfolio_v1', JSON.stringify(next));
+    } catch {}
+  };
+
+  const showLocalToast = (msg: string) => {
+    setViopToast(msg);
+    setTimeout(() => setViopToast(null), 3500);
+  };
 
   // Fetch real-time live VIOP data from server
   const fetchViopData = (force = false) => {
@@ -171,6 +214,94 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
     };
   }, [calcContract, targetExitPrice, positionDirection, contractsCount]);
 
+  // 🎯 Sade VİOP Net Sinyal Radarı (Yükseliş LONG / Düşüş SHORT)
+  const viopRadarSignals = useMemo(() => {
+    return enrichedContracts
+      .map((c) => {
+        const spot = stockMap.get(c.underlyingCode);
+        const rsi = spot?.rsi ?? 50;
+        const ema20 = spot?.ema20 ?? null;
+        const spotPrice = spot?.close ?? c.spotPrice;
+        const chg = c.changePct || 0;
+
+        let direction: 'long' | 'short' = 'long';
+        let reason = '';
+        let priority = c.signalScore || 70;
+
+        const isUpBreakout =
+          c.signal === 'GÜÇLÜ AL' ||
+          c.signal === 'AL' ||
+          (chg >= 1.2 && rsi >= 42 && rsi <= 68 && (!ema20 || spotPrice >= ema20 * 0.995));
+        const isDownBreak =
+          c.signal === 'GÜÇLÜ SAT' ||
+          c.signal === 'SAT' ||
+          chg <= -1.2 ||
+          rsi >= 72;
+
+        if (isDownBreak && !isUpBreakout) {
+          direction = 'short';
+          priority += Math.min(20, Math.round(Math.abs(chg) * 4));
+          reason =
+            rsi >= 72
+              ? `RSI aşırı ısındı (${rsi.toFixed(1)}); kâr satışı ve aşağı yönlü düşüş (Short) fırsatı.`
+              : `Negatif momentum (%${chg.toFixed(2)}) ile aşağı yönlü baskı sürüyor; düşüşten kazanma (Short) sinyali.`;
+        } else {
+          direction = 'long';
+          priority += Math.min(20, Math.round(Math.max(0, chg) * 4));
+          reason =
+            ema20 && spotPrice >= ema20
+              ? `20 günlük ortalama üstünde (%${chg >= 0 ? '+' : ''}${chg.toFixed(2)}); yükseliş yönlü (Long) ivme güçlü.`
+              : `Pozitif sinyal skoru (%${c.signalScore}) ile yukarı yönlü (Long) kırılım adayı.`;
+        }
+
+        const entry = c.futuresPrice;
+        const target = direction === 'long' ? Number((entry * 1.04).toFixed(2)) : Number((entry * 0.96).toFixed(2));
+        const stop = direction === 'long' ? Number((entry * 0.97).toFixed(2)) : Number((entry * 1.03).toFixed(2));
+        const estimatedMarginGainPct = Number((4 * c.leverage).toFixed(1));
+
+        return {
+          contract: c,
+          direction,
+          reason,
+          priority,
+          entry,
+          target,
+          stop,
+          estimatedMarginGainPct,
+        };
+      })
+      .sort((a, b) => b.priority - a.priority);
+  }, [enrichedContracts, stockMap]);
+
+  const handleOpenVirtualViop = (
+    contract: StockViopContract,
+    direction: 'long' | 'short',
+    count = 1
+  ) => {
+    const entry = contract.futuresPrice;
+    const targetPrice = direction === 'long' ? Number((entry * 1.04).toFixed(2)) : Number((entry * 0.96).toFixed(2));
+    const stopPrice = direction === 'long' ? Number((entry * 0.97).toFixed(2)) : Number((entry * 1.03).toFixed(2));
+    const pos: ViopVirtualPosition = {
+      id: `viop-pos-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      code: contract.code,
+      name: contract.name,
+      underlyingCode: contract.underlyingCode,
+      direction,
+      contractsCount: count,
+      entryPrice: entry,
+      targetPrice,
+      stopPrice,
+      initialMarginPerContract: contract.initialMargin,
+      contractSize: contract.contractSize,
+      leverage: contract.leverage,
+      currency: contract.currency || 'TL',
+      openedAt: new Date().toISOString(),
+      status: 'open',
+    };
+    saveViopPositions([pos, ...viopPositions]);
+    showLocalToast(`💼 ${contract.underlyingCode} (${direction === 'long' ? '📈 LONG' : '📉 SHORT'}) sanal test portföyüne eklendi!`);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -207,6 +338,30 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
 
         {/* Modal Navigation Tabs */}
         <div className="flex items-center gap-2 px-5 sm:px-6 pt-3 pb-2 border-b border-slate-800/80 bg-slate-950/60 overflow-x-auto scrollbar-none shrink-0">
+          <button
+            onClick={() => setActiveTab('radar')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'radar'
+                ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 shadow-md shadow-amber-950/40'
+                : 'text-amber-300 hover:text-white hover:bg-slate-800/50'
+            }`}
+          >
+            <Target className="w-3.5 h-3.5" />
+            <span>🎯 Net Sinyal Radarı ({viopRadarSignals.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('portfolio')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'portfolio'
+                ? 'bg-gradient-to-r from-emerald-400 to-cyan-500 text-slate-950 shadow-md shadow-emerald-950/40'
+                : 'text-emerald-300 hover:text-white hover:bg-slate-800/50'
+            }`}
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            <span>💼 VİOP Sanal Portföy ({viopPositions.filter((p) => p.status === 'open').length})</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('contracts')}
             className={`px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
@@ -258,6 +413,244 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
 
         {/* Modal Body Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          {viopToast && (
+            <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 text-xs font-bold flex items-center justify-between">
+              <span>{viopToast}</span>
+              <button
+                onClick={() => setActiveTab('portfolio')}
+                className="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-black text-[11px] cursor-pointer"
+              >
+                Portföye Git →
+              </button>
+            </div>
+          )}
+
+          {/* TAB 0A: NET SİNYAL RADARI (LONG / SHORT) */}
+          {activeTab === 'radar' && (
+            <div className="space-y-4">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/50 via-slate-900 to-cyan-950/40 border border-amber-500/30 flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <div className="text-xs sm:text-sm font-black text-amber-300 flex items-center gap-1.5">
+                    <span>🎯 Sade VİOP Sinyal Radarı (Yükseliş LONG / Düşüş SHORT)</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 mt-0.5">
+                    Karmaşık terimler olmadan net yön gösterir: <strong>📈 LONG</strong> = Yükselirse kazanırsın • <strong>📉 SHORT</strong> = Düşerse kazanırsın. Tek tıkla sanal test işlemi açıp Pazartesi canlı izleyebilirsin.
+                  </p>
+                </div>
+                <button
+                  onClick={() => fetchViopData(true)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isViopLoading ? 'animate-spin text-cyan-400' : ''}`} />
+                  <span>Yenile</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {viopRadarSignals.map(({ contract: c, direction, reason, entry, target, stop, estimatedMarginGainPct }) => {
+                  const isLong = direction === 'long';
+                  const curSym = getCurrencySymbol(c);
+                  return (
+                    <div
+                      key={c.code}
+                      className={`p-4 rounded-2xl border space-y-3 transition-all ${
+                        isLong
+                          ? 'bg-emerald-950/20 border-emerald-500/30 hover:border-emerald-400/60'
+                          : 'bg-rose-950/20 border-rose-500/30 hover:border-rose-400/60'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-black text-sm text-white">{c.underlyingCode}</span>
+                            <span
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${
+                                isLong
+                                  ? 'bg-emerald-500 text-slate-950'
+                                  : 'bg-rose-500 text-white'
+                              }`}
+                            >
+                              {isLong ? '📈 YÜKSELİŞ (LONG)' : '📉 DÜŞÜŞ (SHORT)'}
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-300 text-[10px] font-mono font-bold">
+                              {c.leverage}x Kaldıraç
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">{c.name}</div>
+                        </div>
+                        <div className="text-right font-mono">
+                          <div className="text-sm font-black text-white">
+                            {entry.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {curSym}
+                          </div>
+                          <div className={`text-[11px] font-bold ${(c.changePct || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {(c.changePct || 0) >= 0 ? '+' : ''}{(c.changePct || 0).toFixed(2)}%
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-[11px] text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+                        {reason}
+                      </p>
+
+                      <div className="grid grid-cols-3 gap-2 text-center text-[11px] font-mono">
+                        <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
+                          <div className="text-[9px] text-slate-400">Hedef (%4)</div>
+                          <div className="font-black text-emerald-400">{target.toLocaleString('tr-TR')} {curSym}</div>
+                        </div>
+                        <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
+                          <div className="text-[9px] text-slate-400">Stop (%3)</div>
+                          <div className="font-black text-rose-400">{stop.toLocaleString('tr-TR')} {curSym}</div>
+                        </div>
+                        <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
+                          <div className="text-[9px] text-slate-400">Hedefte Teminat</div>
+                          <div className="font-black text-amber-300">+%{estimatedMarginGainPct}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          1 Kontrat Teminatı: <strong className="text-white">{c.initialMargin.toLocaleString('tr-TR')} ₺</strong>
+                        </span>
+                        <button
+                          onClick={() => handleOpenVirtualViop(c, direction, 1)}
+                          className={`px-3 py-1.5 rounded-xl text-[11px] font-black transition cursor-pointer flex items-center gap-1.5 ${
+                            isLong
+                              ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
+                              : 'bg-rose-500 hover:bg-rose-400 text-white'
+                          }`}
+                        >
+                          <Briefcase className="w-3.5 h-3.5" />
+                          <span>Sanal Test İşlemi Aç</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 0B: VİOP SANAL TEST PORTFÖYÜ */}
+          {activeTab === 'portfolio' && (
+            <div className="space-y-4">
+              {(() => {
+                const openPos = viopPositions.filter((p) => p.status === 'open');
+                const contractMap = new Map(enrichedContracts.map((c) => [c.code, c]));
+                let totalMargin = 0;
+                let totalPnl = 0;
+
+                const enrichedPos = openPos.map((p) => {
+                  const live = contractMap.get(p.code);
+                  const currentPrice = live?.futuresPrice ?? p.entryPrice;
+                  const margin = p.initialMarginPerContract * p.contractsCount;
+                  const diff = p.direction === 'long' ? currentPrice - p.entryPrice : p.entryPrice - currentPrice;
+                  const pnlTl = diff * p.contractSize * p.contractsCount;
+                  const roiPct = margin > 0 ? (pnlTl / margin) * 100 : 0;
+                  totalMargin += margin;
+                  totalPnl += pnlTl;
+                  const hitTarget = p.direction === 'long' ? currentPrice >= p.targetPrice : currentPrice <= p.targetPrice;
+                  const hitStop = p.direction === 'long' ? currentPrice <= p.stopPrice : currentPrice >= p.stopPrice;
+                  return { ...p, currentPrice, margin, pnlTl, roiPct, hitTarget, hitStop };
+                });
+
+                return (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
+                        <div className="text-[11px] text-slate-400">Açık VİOP Test İşlemi</div>
+                        <div className="text-lg font-black text-white mt-0.5">{openPos.length} Adet</div>
+                      </div>
+                      <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
+                        <div className="text-[11px] text-slate-400">Bağlanan Sanal Teminat</div>
+                        <div className="text-lg font-black font-mono text-cyan-300 mt-0.5">
+                          {totalMargin.toLocaleString('tr-TR')} ₺
+                        </div>
+                      </div>
+                      <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
+                        <div className="text-[11px] text-slate-400">Anlık Kaldıraçlı Kâr / Zarar</div>
+                        <div className={`text-lg font-black font-mono mt-0.5 ${totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {totalPnl >= 0 ? '+' : ''}{totalPnl.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
+                        </div>
+                      </div>
+                    </div>
+
+                    {enrichedPos.length === 0 ? (
+                      <div className="p-8 rounded-2xl bg-slate-950/60 border border-slate-800 text-center space-y-3">
+                        <div className="text-sm font-bold text-slate-300">Henüz VİOP sanal test işleminiz yok.</div>
+                        <p className="text-xs text-slate-400">
+                          <strong>🎯 Net Sinyal Radarı</strong> sekmesinden beğendiğiniz bir sinyalin altındaki{' '}
+                          <strong>"Sanal Test İşlemi Aç"</strong> butonuna basarak gerçek para riski olmadan Pazartesi için test başlatabilirsiniz.
+                        </p>
+                        <button
+                          onClick={() => setActiveTab('radar')}
+                          className="px-4 py-2 rounded-xl bg-amber-400 text-slate-950 font-black text-xs cursor-pointer"
+                        >
+                          Sinyal Radarına Git →
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => saveViopPositions([])}
+                            className="text-xs text-rose-400 hover:text-rose-300 font-bold cursor-pointer"
+                          >
+                            Tüm Test İşlemlerini Sıfırla
+                          </button>
+                        </div>
+                        {enrichedPos.map((ep) => (
+                          <div key={ep.id} className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center justify-between flex-wrap gap-3">
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-black text-sm text-white">{ep.underlyingCode}</span>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-black ${ep.direction === 'long' ? 'bg-emerald-500 text-slate-950' : 'bg-rose-500 text-white'}`}>
+                                  {ep.direction === 'long' ? '📈 LONG' : '📉 SHORT'}
+                                </span>
+                                <span className="text-[11px] text-slate-400 font-mono">
+                                  {ep.contractsCount} Kontrat • Teminat: {ep.margin.toLocaleString('tr-TR')} ₺
+                                </span>
+                                {ep.hitTarget && (
+                                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black">
+                                    🎯 Hedefe Ulaştı!
+                                  </span>
+                                )}
+                                {ep.hitStop && (
+                                  <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-black">
+                                    🛑 Stop Kırıldı!
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-slate-400 font-mono mt-1">
+                                Giriş: {ep.entryPrice.toFixed(2)} • Güncel: <strong className="text-white">{ep.currentPrice.toFixed(2)}</strong> • Hedef: <span className="text-emerald-400">{ep.targetPrice.toFixed(2)}</span> • Stop: <span className="text-rose-400">{ep.stopPrice.toFixed(2)}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="text-right font-mono">
+                                <div className={`text-sm font-black ${ep.pnlTl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                  {ep.pnlTl >= 0 ? '+' : ''}{ep.pnlTl.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
+                                </div>
+                                <div className={`text-[10px] font-bold ${ep.roiPct >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                                  Teminat: {ep.roiPct >= 0 ? '+' : ''}%{ep.roiPct.toFixed(1)}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => saveViopPositions(viopPositions.filter((x) => x.id !== ep.id))}
+                                className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-900 cursor-pointer"
+                                title="Pozisyonu Sil"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
           {/* TAB 1: LIVE VIOP CONTRACTS SCREENER */}
           {activeTab === 'contracts' && (
             <div className="space-y-4">
