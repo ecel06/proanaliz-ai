@@ -1381,18 +1381,29 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
 
     // Send compact, focused context + clean user question (universal across all Gemini models)
     const cleanMsg = message.trim();
-    const isFirstTurn = contents.length === 0;
     const msgLower = cleanMsg.toLowerCase();
-    const wantsBist = /hisse|borsa|bist|tavan|kırılım|flama|anele|odine|kuyas|tursg|cwene|efor|yeotk|alark|krdmd|dün/.test(msgLower);
-    const wantsFootball = /maç|futbol|kupon|banko|oran|lig|skor/.test(msgLower);
+    const wantsBist = /hisse|borsa|bist|tavan|kırılım|flama|anele|odine|kuyas|tursg|cwene|efor|yeotk|alark|krdmd|dün|seans|endeks/.test(msgLower);
+    const wantsFootball = /maç|futbol|kupon|banko|oran|lig|skor|iddaa/.test(msgLower);
     const wantsHorse = /at |yarış|tjk|koşu|altılı|ganyan|jokey/.test(msgLower);
 
+    // Exact Turkish local date & BIST trading calendar awareness
+    const nowTr = new Date(Date.now() + 3 * 3600 * 1000);
+    const trDays = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+    const trDayIdx = nowTr.getUTCDay();
+    const trDayName = trDays[trDayIdx];
+    const trHour = nowTr.getUTCHours();
+    const trDateStr = `${nowTr.getUTCDate()}.${nowTr.getUTCMonth() + 1}.${nowTr.getUTCFullYear()} ${String(trHour).padStart(2, '0')}:${String(nowTr.getUTCMinutes()).padStart(2, '0')}`;
+    const isWeekendClosed = trDayIdx === 6 || trDayIdx === 0 || (trDayIdx === 5 && trHour >= 18);
+    const nextBistSessionNote = isWeekendClosed
+      ? 'DİKKAT: Bugün/yarın hafta sonu olduğu için BIST (borsa) KAPALI! Bir sonraki seans PAZARTESİ saat 10:00.'
+      : 'Bir sonraki BIST seansı hafta içi saat 10:00.';
+
     let focusedPrompt = '';
-    if (isFirstTurn || wantsBist || wantsFootball || wantsHorse) {
+    if (wantsBist || wantsFootball || wantsHorse) {
       const shortParts = [
-        `Sen ProAnaliz AI'nın zeki, samimi ve pratik kurucu ortağısın (Admin AI Co-Pilot). Doğrudan Admin'in sorusuna net ve özgün cevap ver; sorulmayan şeyleri ezbere tekrar etme.`
+        `Sen ProAnaliz AI'nın zeki, samimi ve gerçekçi kurucu ortağısın (Admin AI Co-Pilot). Şu anki Türkiye tarih/saati: ${trDateStr} (${trDayName}). ${nextBistSessionNote} Doğrudan Admin'in sorusuna net ve doğal bir insan gibi cevap ver.`
       ];
-      if (wantsBist || isFirstTurn) {
+      if (wantsBist) {
         shortParts.push(`BIST Fazı: ${sessionPhase}. Canlı Tavan/Kırılım Adayları: ${tavanCandidates.slice(0, 6).map(s => `${s.symbol}(${s.price}, ${s.changePct}, Skor:${s.score})`).join(', ')}.`);
         if (msgLower.includes('dün')) {
           shortParts.push(`Dünkü (26 Kasım) Adaylar: ANELE (9.06 TL), ODINE (66.65 TL), KUYAS (10.13 TL), TURSG (2.81 TL).`);
@@ -1404,7 +1415,9 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
       if (wantsHorse) {
         shortParts.push(`TJK At Yarışı: ${horseContext?.bestHorse ? JSON.stringify(horseContext.bestHorse) : horseContext?.summary}.`);
       }
-      focusedPrompt = `[Bağlam:\n${shortParts.join('\n')}]\n\nAdmin'in Sorusu (Sadece buna net cevap ver): ${cleanMsg}`;
+      focusedPrompt = `[Bağlam:\n${shortParts.join('\n')}]\n\nAdmin'in Mesajı: ${cleanMsg}`;
+    } else if (contents.length === 0) {
+      focusedPrompt = `[Rolün: Sen ProAnaliz AI'nın zeki, samimi, sıcak ve gerçekçi kurucu ortağısın. Tarih: ${trDateStr} (${trDayName}). ${nextBistSessionNote} Admin ile tıpkı akıllı bir arkadaş/ortak gibi doğal sohbet et. Admin açıkça hisse, maç veya at yarışı sormadıkça durup dururken hisse listesi veya şablon analiz dökme!]\n\nAdmin: ${cleanMsg}`;
     } else {
       focusedPrompt = cleanMsg;
     }
@@ -1628,7 +1641,7 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.109';
+const APP_VERSION = '2026.11.20.110';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
