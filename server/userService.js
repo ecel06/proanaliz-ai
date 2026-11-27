@@ -1251,7 +1251,7 @@ export function syncCouponMatchResults(allMatches) {
         if (!pickWon) anyLost = true;
       } else {
         allFinished = false;
-        const realDateLabel = formatIstanbulMatchDate(match.time || match.date);
+        const realDateLabel = formatIstanbulMatchDate(match.date || match.time);
         if (realDateLabel && m.matchDate !== realDateLabel) {
           m.matchDate = realDateLabel;
           changed = true;
@@ -1402,7 +1402,7 @@ export function autoCheckAndRolloverCoupons(allMatches, force = false) {
       awayTeam: m.awayTeam.name,
       league: m.league || 'Lig',
       matchTime: matchTimeStr,
-      matchDate: formatIstanbulMatchDate(m.time || m.date),
+      matchDate: formatIstanbulMatchDate(m.date || m.time),
       prediction,
       odds: Number(odds.toFixed(2)),
       confidence: 94 - idx * 2,
