@@ -599,60 +599,62 @@ export function detectTechnicalBreakoutSetup(
   const rsi = stock.rsi ?? 50;
   if (rsi < 40 || rsi > 66) return null;
 
-  // Kural 3: Bollinger Daralan Yay (Sıkışma Kontrolü)
+  // Kural 3: Bollinger Daralan Yay (BIST Volatilite Sıkışması Kontrolü)
   let isSqueeze = false;
   if (stock.bbLower !== null && stock.bbUpper !== null && stock.bbUpper > 0) {
     const bbMid = (stock.bbUpper + stock.bbLower) / 2;
     const bbWidth = (stock.bbUpper - stock.bbLower) / (bbMid || 1);
-    if (bbWidth <= 0.085) isSqueeze = true;
+    if (bbWidth <= 0.165) isSqueeze = true;
   }
 
-  // Kural 4: Günün Zirvesinde Kapanış (High-Low Güç Oranı)
-  let isStrongClose = false;
+  // Kural 4: Günün Zirvesine Yakın Güçlü Kapanış (High-Low Güç Oranı)
+  let closePos = 0.5;
   if (stock.high && stock.low && stock.high > stock.low) {
-    const closePos = (price - stock.low) / (stock.high - stock.low);
-    if (closePos >= 0.70) isStrongClose = true;
-  } else {
-    isStrongClose = changePct >= 1.5;
+    closePos = (price - stock.low) / (stock.high - stock.low);
+  } else if (changePct >= 1.5) {
+    closePos = 0.8;
   }
+  const isStrongClose = closePos >= 0.72;
+  const isSolidClose = closePos >= 0.60;
 
-  // Kural 5: Hareketli Ortalama / Trend Kırılım Desteği
-  const ma50 = stock.ema50 || stock.sma50;
-  const isAboveEma = ma50 ? price >= ma50 * 0.99 : true;
+  // Kural 5: Kısa/Orta Vadeli Düşen Trend Kırılımı (20 Günlük Dinamik Direnç Üstü)
+  const trendResistance = stock.ema20 || stock.sma20 || stock.ema50;
+  const brokeDescendingTrend = trendResistance ? price >= trendResistance * 0.995 : true;
 
   // Hacim Kuruması (Dry-Up) Analizi: Düşük satıcı baskısı
   let volumeDryUp = false;
   if (stock.valueTraded && stock.marketCap) {
     const turnover = (stock.valueTraded / stock.marketCap) * 100;
-    if (turnover >= 0.8 && turnover <= 3.2) volumeDryUp = true;
+    if (turnover >= 0.6 && turnover <= 3.8) volumeDryUp = true;
   }
 
-  // Formasyon Kararı
-  if (isSqueeze && isStrongClose) {
+  // Formasyon Kararı 1: Daralan Flama / Üçgen Sıkışması
+  if (isSqueeze && isSolidClose && changePct >= 0.8) {
     return {
       patternType: 'FLAMA_BAYRAK_DARALMASI',
       patternTitle: '⚡ Daralan Flama / Simetrik Üçgen Sıkışması (1 Gün Önceden)',
-      drawingNote: `Grafikte fiyat son 10 gündür daralan simetrik üçgen içinde sıkıştı. Dün günün zirvesine yakın (+%${changePct.toFixed(2)}) kapatarak flama direncini zorladı. Kademelerde satıcılar kurudu.`,
+      drawingNote: `Grafikte fiyat daralan simetrik üçgen/Bollinger bandı içinde sıkıştı. Dün günün üst bölgesinde (+%${changePct.toFixed(2)}) kapatarak flama direncini zorladı.`,
       volumeDryUp,
       resistancePrice: Number((price * 1.018).toFixed(2)),
       targetCeilingPrice,
       remainingCeilingMarginPct: tavanMargin,
       recommendedOrderType: 'Gece / 09:40 Açılış Seansı Piyasa Emri',
-      orderActionGuide: `💡 Emir Taktigi: Sabah saat 10:00'da koşturup geç kalmamak için, akşamdan veya sabah 09:40-09:55 karanlık odasında bankanızdan "Açılış Seansı Piyasa Emri" veya ${targetCeilingPrice} TL tavan limitli emir girerek saat 10:00'daki açılış eşleşmesinde ilk sırada yerinizi alın. Önünüzde +%${tavanMargin} net kâr marjı vardır.`,
+      orderActionGuide: `💡 Emir Taktiği: Sabah saat 10:00'da koşturup geç kalmamak için, akşamdan veya sabah 09:40-09:55 karanlık odasında bankanızdan "Açılış Seansı Piyasa Emri" veya ${targetCeilingPrice} TL tavan limitli emir girerek saat 10:00'daki açılış eşleşmesinde ilk sırada yerinizi alın. Önünüzde +%${tavanMargin} net kâr marjı vardır.`,
     };
   }
 
-  if (isStrongClose && isAboveEma && changePct >= 1.2) {
+  // Formasyon Kararı 2: Düşen Trend Çizgisi Kırılımı
+  if (isStrongClose && brokeDescendingTrend && changePct >= 1.5) {
     return {
       patternType: 'DUSEN_TREND_KIRILIMI',
       patternTitle: '📉 Düşen Trend Çizgisi Kırılımı (1 Gün Önceden)',
-      drawingNote: `Grafikte haftalardır süren düşen trend çizgisi dün hacim desteğiyle yukarı kırıldı. Kademelerdeki satıcılar temizlendi; ertesi gün açılış tavan kopuşuna hazır.`,
+      drawingNote: `Grafikte 20 günlük düşen trend direnci (+%${changePct.toFixed(2)} ve günün %${Math.round(closePos * 100)} zirve kapanışıyla) yukarı kırıldı. Satıcılar temizlendi; ertesi gün tavan kopuşuna hazır.`,
       volumeDryUp,
       resistancePrice: Number(price.toFixed(2)),
       targetCeilingPrice,
       remainingCeilingMarginPct: tavanMargin,
       recommendedOrderType: 'Gece / 09:40 Açılış Seansı Piyasa Emri',
-      orderActionGuide: `💡 Emir Taktigi: Sabah hızlı tavan kilitlenme ihtimaline karşı yetişmek için, akşamdan veya sabah 09:40-09:55 karanlık odasında bankanızdan "Açılış Seansı Piyasa Emri" girin. Açılış fiyatından portföye girip tavana kadar %${tavanMargin} kâr marjını koruyun.`,
+      orderActionGuide: `💡 Emir Taktiği: Sabah hızlı tavan kilitlenme ihtimaline karşı yetişmek için, akşamdan veya sabah 09:40-09:55 karanlık odasında bankanızdan "Açılış Seansı Piyasa Emri" girin. Açılış fiyatından portföye girip tavana kadar %${tavanMargin} kâr marjını koruyun.`,
     };
   }
 
