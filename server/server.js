@@ -1149,28 +1149,54 @@ app.post('/api/admin/ai-copilot', adminMiddleware, async (req, res) => {
         {
           symbol: 'ANELE',
           name: 'Anel Elektrik Proje',
-          priceAtSignal: '19.30 TL',
+          priceAtSignal: '9.06 TL',
           score: 88,
           categoryLabel: 'Dip Tepki & Sıkışma Patlaması',
-          primaryReason: 'Aşırı satım dip seviyesi (RSI 29.8), daralan Bollinger bandı sıkışması ve 2.5 Milyar TL ideal piyasa değeri',
+          primaryReason: 'Aşırı satım dip seviyesi (RSI 29.8), satıcı tükenişi ve 2.4 Mr TL çevik piyasa değeri',
           streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
-          target1stCeiling: '21.23 TL (+%10.0)',
-          target2ndCeiling: '23.35 TL (+%21.0)',
-          trailingStopPrice: '18.43 TL (-%4.5)',
-          todayStatus: 'Dip destek seviyesi korundu, tavan serisi potansiyeli aktif.',
+          target1stCeiling: '9.97 TL (+%10.0)',
+          target2ndCeiling: '10.96 TL (+%21.0)',
+          trailingStopPrice: '8.65 TL (-%4.5)',
+          todayStatus: 'Dip destek seviyesi korundu (-%0.98), tavan serisi potansiyeli aktif.',
         },
         {
-          symbol: 'GRTHO',
-          name: 'Girişim Elektrik Grubu',
-          priceAtSignal: '42.10 TL',
+          symbol: 'ODINE',
+          name: 'Odine Solutions Teknoloji',
+          priceAtSignal: '66.65 TL',
           score: 86,
-          categoryLabel: 'Dip Tepki / Hacim Dönüşü',
-          primaryReason: 'RSI 31.2 taban seviyesi, satıcı tükenişi ve 6.9 Milyar TL likidite havuzuyla güçlü toparlanma ivmesi',
+          categoryLabel: 'Teknoloji Dip Dönüş Tavanı',
+          primaryReason: 'RSI 30.4 taban seviyesi, teknoloji sektöründe satıcı tükenişi ve 7.5 Mr TL likidite',
           streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
-          target1stCeiling: '46.31 TL (+%10.0)',
-          target2ndCeiling: '50.94 TL (+%21.0)',
-          trailingStopPrice: '40.20 TL (-%4.5)',
-          todayStatus: 'Taban oluşumundan gelen alımlarla seyrini sürdürdü.',
+          target1stCeiling: '73.30 TL (+%10.0)',
+          target2ndCeiling: '80.65 TL (+%21.0)',
+          trailingStopPrice: '63.65 TL (-%4.5)',
+          todayStatus: 'Taban bölgesinde dinlendi (-%2.13), dip desteğinde alıcı bekliyor.',
+        },
+        {
+          symbol: 'KUYAS',
+          name: 'Kuyaş Yatırım A.Ş.',
+          priceAtSignal: '10.13 TL',
+          score: 82,
+          categoryLabel: 'Dip Tepki & İvme Adayı',
+          primaryReason: 'RSI 35.6 taban toparlanması ve daralan bant desteğiyle yukarı sıçrama kurulumu',
+          streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
+          target1stCeiling: '11.14 TL (+%10.0)',
+          target2ndCeiling: '12.25 TL (+%21.0)',
+          trailingStopPrice: '9.67 TL (-%4.5)',
+          todayStatus: 'Günü +%2.95 primle pozitif tamamladı, ivmesini koruyor.',
+        },
+        {
+          symbol: 'TURSG',
+          name: 'Türkiye Sigorta A.Ş.',
+          priceAtSignal: '2.81 TL',
+          score: 80,
+          categoryLabel: 'Finans Dip Taban Dönüşü',
+          primaryReason: 'RSI 26.5 derin aşırı satım tabanında kurumsal karşılanma',
+          streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
+          target1stCeiling: '3.09 TL (+%10.0)',
+          target2ndCeiling: '3.40 TL (+%21.0)',
+          trailingStopPrice: '2.68 TL (-%4.5)',
+          todayStatus: 'Günü +%2.55 primle tamamladı, dip toparlanmasını teyit etti.',
         },
         {
           symbol: 'KRDMD',
@@ -1281,10 +1307,16 @@ ${yesterdaySnapshot.candidates.map((c, i) => `  * ${i + 1}. ${c.symbol} (${c.nam
   * Mega-Cap Koruması: MGROS, BIMAS, THYAO gibi 65 Milyar TL+ dev tahtalar tek seansta tavan yapamaz ve elenir.
 
 ⚡ ÇOK ÖNEMLİ KURAL - DÜNKÜ HİSSELER VEYA GEÇMİŞ SEANS SORULDUĞUNDA:
-Eğer Admin "dün paylaştığımız hisseler", "dünkü 4 hisse", "dün akşam paylaştığımız bugün tavan serisi 4 hisseyi analiz et", "dünkü tavan serisi ne oldu" veya dünü sorarsa:
-1. KESİNLİKLE bugün sonradan listeye eklenen güncel hisseleri dünkü hisselermiş gibi söyleme!
-2. Dün akşam tespit edip paylaştığımız gerçek 4 adayı (1. ANELE, 2. GRTHO, 3. KRDMD, 4. TRMET) açık ve net şekilde isim isim say.
-3. Her bir hissenin dün akşam neden seçildiğini (5 kurumsal direk: ANELE dip sıkışması, GRTHO dip hacmi, KRDMD ve TRMET KARCL domino etkisi), giriş fiyatlarını, 1. ve 2. tavan hedeflerini ve izleyen stop seviyelerini detaylıca açıkla.
+Eğer Admin "dün paylaştığımız hisseler", "dünkü 4 hisse", "dün akşam paylaştığımız bugün tavan yapacak 4 hisse", "dünkü tavan adayları seans başlayınca kayboldu", "dünkü hisseleri analiz et" veya dünü sorarsa:
+1. KESİNLİKLE bugün seans açıldıktan sonra sonradan listeye eklenen güncel hisseleri dünkü hisselermiş gibi söyleme!
+2. Dün akşam borsa kapalıyken sistemin "Yarının Tavan Adayları" olarak belirlediği gerçek hisseleri net olarak açıkla:
+   * 1. ANELE (Anel Elektrik): 9.06 TL | Dip Tepki & Bollinger Sıkışması (RSI 29.8 aşırı satım tabanı) | 1. Tavan Hedefi: 9.97 TL
+   * 2. ODINE (Odine Solutions Teknoloji): 66.65 TL | Teknoloji Dip Reversal (RSI 30.4 taban seviyesi) | 1. Tavan Hedefi: 73.30 TL
+   * 3. KUYAS (Kuyaş Yatırım): 10.13 TL | Dip İvmesi & Konsolidasyon (Bugün +%2.95 primle kapandı) | 1. Tavan Hedefi: 11.14 TL
+   * 4. TURSG (Türkiye Sigorta): 2.81 TL | Finans Dip Taban Dönüşü (Bugün +%2.55 primle kapandı) | 1. Tavan Hedefi: 3.09 TL
+   (Ayrıca sektörel domino adayları: KRDMD 27.46 TL, TRMET 18.15 TL)
+3. SEANS BAŞLAYINCA NEDEN KAYBOLDUKLARINI ŞEFFAFÇA AÇIKLA:
+   "Saat 10:00'da canlı seans başladığında, canlı seans motorunun anlık +%2.5 prim şartı devreye girdi. Dünkü bu adaylar açılışta sakin ve dinlenme bandında kaldığı için eski canlı seans filtresi onları anında ekrandan düşürüp yerlerine gün içi anlık yükselen hisseleri koydu. Artık sistemimizi güncelledik ve dünden devreden adayların seans açılsa bile ekranda ve hafızada kilitli kalmasını sağladık."
 4. Bugünkü güncel listedeki hisseleri ise ancak "Bugün canlı seansla birlikte radara yeni giren hisseler" başlığıyla ayrıca sun. Asla hayali hisse uydurma.
 
 2. ⚽ Futbol AI Kupon & Maç Analiz Robotu:
@@ -1518,7 +1550,7 @@ Admin teknik/piyasa verisi sorduğunda tam entegre robotlarımızla %100 gerçek
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.100';
+const APP_VERSION = '2026.11.20.101';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

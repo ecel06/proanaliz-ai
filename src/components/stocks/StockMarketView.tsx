@@ -100,31 +100,61 @@ export const OFFICIAL_YESTERDAY_SNAPSHOT: DailyTavanSnapshot = {
     {
       symbol: 'ANELE',
       name: 'Anel Elektrik Proje',
-      priceAtSignal: 19.30,
-      priceAtSignalFormatted: '19.30 TL',
+      priceAtSignal: 9.06,
+      priceAtSignalFormatted: '9.06 TL',
       score: 88,
       category: 'DIP_TEPKI_TAVANI',
       categoryLabel: 'Dip Tepki & Sıkışma Patlaması',
-      primaryReason: 'Aşırı satım tabanı (RSI 29.8), daralan Bollinger bandı sıkışması ve 2.5 Mr TL ideal tavan piyasa değeri',
+      primaryReason: 'Aşırı satım dip seviyesi (RSI 29.8), satıcı tükenişi ve 2.4 Mr TL çevik piyasa değeri',
       streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
-      target1stCeiling: 21.23, // +%10.0
-      target2ndCeiling: 23.35, // +%21.0
-      trailingStopPrice: 18.43, // -%4.5 izleyen stop
+      target1stCeiling: 9.97, // +%10.0
+      target2ndCeiling: 10.96, // +%21.0
+      trailingStopPrice: 8.65, // -%4.5 izleyen stop
       streakStatus: 'İzleniyor',
     },
     {
-      symbol: 'GRTHO',
-      name: 'Girişim Elektrik Grubu',
-      priceAtSignal: 42.10,
-      priceAtSignalFormatted: '42.10 TL',
+      symbol: 'ODINE',
+      name: 'Odine Solutions Teknoloji',
+      priceAtSignal: 66.65,
+      priceAtSignalFormatted: '66.65 TL',
       score: 86,
       category: 'DIP_TEPKI_TAVANI',
-      categoryLabel: 'Dip Tepki / Hacim Dönüşü',
-      primaryReason: 'RSI 31.2 taban seviyesi, satıcı tükenişi ve 6.9 Mr TL likidite havuzuyla güçlü toparlanma ivmesi',
+      categoryLabel: 'Teknoloji Dip Dönüş Tavanı',
+      primaryReason: 'RSI 30.4 taban seviyesi, teknoloji sektöründe satıcı tükenişi ve 7.5 Mr TL likidite',
       streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
-      target1stCeiling: 46.31, // +%10.0
-      target2ndCeiling: 50.94, // +%21.0
-      trailingStopPrice: 40.20, // -%4.5 izleyen stop
+      target1stCeiling: 73.30, // +%10.0
+      target2ndCeiling: 80.65, // +%21.0
+      trailingStopPrice: 63.65, // -%4.5 izleyen stop
+      streakStatus: 'İzleniyor',
+    },
+    {
+      symbol: 'KUYAS',
+      name: 'Kuyaş Yatırım A.Ş.',
+      priceAtSignal: 10.13,
+      priceAtSignalFormatted: '10.13 TL',
+      score: 82,
+      category: 'DIP_TEPKI_TAVANI',
+      categoryLabel: 'Dip Tepki & İvme Adayı',
+      primaryReason: 'RSI 35.6 taban toparlanması ve daralan bant desteğiyle yukarı sıçrama kurulumu',
+      streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
+      target1stCeiling: 11.14, // +%10.0
+      target2ndCeiling: 12.25, // +%21.0
+      trailingStopPrice: 9.67, // -%4.5 izleyen stop
+      streakStatus: 'İzleniyor',
+    },
+    {
+      symbol: 'TURSG',
+      name: 'Türkiye Sigorta A.Ş.',
+      priceAtSignal: 2.81,
+      priceAtSignalFormatted: '2.81 TL',
+      score: 80,
+      category: 'DIP_TEPKI_TAVANI',
+      categoryLabel: 'Finans Dip Taban Dönüşü',
+      primaryReason: 'RSI 26.5 derin aşırı satım tabanında kurumsal karşılanma',
+      streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
+      target1stCeiling: 3.09, // +%10.0
+      target2ndCeiling: 3.40, // +%21.0
+      trailingStopPrice: 2.68, // -%4.5 izleyen stop
       streakStatus: 'İzleniyor',
     },
     {
@@ -137,9 +167,9 @@ export const OFFICIAL_YESTERDAY_SNAPSHOT: DailyTavanSnapshot = {
       categoryLabel: 'Sektörel Domino & Açılış Eşleşme',
       primaryReason: 'KARCL tavan kilitlenmesi (+%10) sonrası demir-çelik sektöründe açılış eşleşmesi ve domino sürükleme ivmesi',
       streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
-      target1stCeiling: 30.20, // +%10.0
-      target2ndCeiling: 33.22, // +%21.0
-      trailingStopPrice: 26.22, // -%4.5 izleyen stop
+      target1stCeiling: 30.20,
+      target2ndCeiling: 33.22,
+      trailingStopPrice: 26.22,
       streakStatus: 'İzleniyor',
     },
     {
@@ -152,9 +182,9 @@ export const OFFICIAL_YESTERDAY_SNAPSHOT: DailyTavanSnapshot = {
       categoryLabel: 'Sektörel Domino / Metal-Çelik Sinerjisi',
       primaryReason: 'Metal-madencilik sektöründeki tavan domino etkisi ve güçlü para girişiyle ivmelenme',
       streakStageLabel: '🎯 1. Tavan (Kopuş Evresi)',
-      target1stCeiling: 19.96, // +%10.0
-      target2ndCeiling: 21.96, // +%21.0
-      trailingStopPrice: 17.33, // -%4.5 izleyen stop
+      target1stCeiling: 19.96,
+      target2ndCeiling: 21.96,
+      trailingStopPrice: 17.33,
       streakStatus: 'İzleniyor',
     },
   ],
@@ -664,10 +694,16 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     return map;
   }, [stocks, bistSessionPhase, sectorLeadersMap, kapCatalystsMap]);
 
-  // All Ceiling / Breakout Candidates (Tavan Potansiyeli Yüksek Hisselerin En Elit 3-5 Tanesi)
+  // All Ceiling / Breakout Candidates (Dünden Devredenler Asla Silinmez + Canlı Yeni Adaylar)
   const tavanCandidates = useMemo(() => {
-    return [...stocks]
+    // 1. Dünden devreden teyitli tavan adayları (seans açılınca ASLA kaybolmaz!)
+    const yesterdaySymbols = OFFICIAL_YESTERDAY_SNAPSHOT.candidates.map((c) => c.symbol);
+    const retainedYesterday = stocks.filter((s) => yesterdaySymbols.includes(s.symbol));
+
+    // 2. Canlı seanstaki yeni tavan adayları
+    const liveNew = [...stocks]
       .filter((s) => {
+        if (yesterdaySymbols.includes(s.symbol)) return false;
         const qa = analysesMap.get(s.symbol);
         return Boolean(qa?.tavanPotential?.isCandidate && (s.changePct || 0) < 9.7);
       })
@@ -676,8 +712,10 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         const scoreB = analysesMap.get(b.symbol)?.tavanPotential?.score || 0;
         if (scoreB !== scoreA) return scoreB - scoreA;
         return (b.changePct || 0) - (a.changePct || 0);
-      })
-      .slice(0, 5); // 🎯 ELİT LİSTE SINIRI: En fazla 3 ila 5 yüksek olasılıklı aday listelenir!
+      });
+
+    // Hem dünden devredenler korunur hem canlı seanstaki yeni adaylar eklenir (asla kaybolma yaşanmaz)
+    return [...retainedYesterday, ...liveNew].slice(0, 8);
   }, [stocks, analysesMap]);
 
   // Synchronize live BIST tavan radar and session phase to global context for Admin AI Co-Pilot
