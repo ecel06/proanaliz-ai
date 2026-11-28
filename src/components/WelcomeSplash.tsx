@@ -62,7 +62,7 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
   {
     id: 'horses',
     title: 'At Yarışı & TJK AI',
-    badge: 'TJK Canlı',
+    badge: '8+ Modül',
     accentClass: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
     icon: <Layers className="w-4 h-4 text-amber-400" />,
     items: [
