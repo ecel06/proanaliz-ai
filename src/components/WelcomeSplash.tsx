@@ -113,7 +113,7 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label="Hoş Geldiniz"
-      className={`fixed inset-0 z-[100000] bg-[#030712] overflow-y-auto select-none transition-all duration-300 ease-out ${
+      className={`fixed inset-0 z-[90000] bg-[#030712] overflow-y-auto select-none transition-all duration-300 ease-out ${
         fadingOut ? 'opacity-0 scale-105 pointer-events-none' : 'opacity-100 scale-100'
       }`}
     >
