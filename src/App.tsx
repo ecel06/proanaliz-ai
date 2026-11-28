@@ -358,6 +358,29 @@ export const App: React.FC = () => {
 
   // User Authentication & VIP Subscription State
   const [currentUser, setCurrentUser] = useState<User | null>(() => getStoredUser());
+  const [isWelcomeOpen, setIsWelcomeOpen] = useState<boolean>(() => {
+    try {
+      return !sessionStorage.getItem('proanaliz_welcome_shown');
+    } catch {
+      return true;
+    }
+  });
+  const [welcomeDefaultMenuOpen, setWelcomeDefaultMenuOpen] = useState(false);
+
+  const handleCloseWelcome = () => {
+    try {
+      sessionStorage.setItem('proanaliz_welcome_shown', '1');
+    } catch {
+      // ignore storage errors
+    }
+    setIsWelcomeOpen(false);
+    setWelcomeDefaultMenuOpen(false);
+  };
+
+  const handleOpenWelcome = () => {
+    setWelcomeDefaultMenuOpen(true);
+    setIsWelcomeOpen(true);
+  };
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
@@ -422,7 +445,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.130';
+  const CLIENT_BUILD_VERSION = '2026.11.20.131';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1340,7 +1363,7 @@ export const App: React.FC = () => {
         className="min-h-[100dvh] w-full overflow-y-auto flex flex-col bg-slate-950 scrollbar-none pb-16 sm:pb-0"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        <WelcomeSplash userName={currentUser?.name} isLoggedIn={Boolean(currentUser)} onOpenAuth={() => setIsAuthModalOpen(true)} />
+        <WelcomeSplash isOpen={isWelcomeOpen} onClose={handleCloseWelcome} userName={currentUser?.name} isLoggedIn={Boolean(currentUser)} onOpenAuth={() => setIsAuthModalOpen(true)} defaultMenuOpen={welcomeDefaultMenuOpen} />
         {newVersionAvailable && (
           <aside
             aria-label="Uygulama Güncellemesi"
@@ -1424,6 +1447,7 @@ export const App: React.FC = () => {
           }}
         onOpenInstallModal={() => setIsInstallModalOpen(true)}
         onOpenLiveGoldModal={() => setIsLiveGoldModalOpen(true)}
+        onOpenWelcome={handleOpenWelcome}
         onOpenVIP={() => setIsVipModalOpen(true)}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenProfile={() => setIsProfileModalOpen(true)}
@@ -1584,7 +1608,7 @@ export const App: React.FC = () => {
         backgroundColor: activeSection === 'football' ? (activeTheme?.bgDark || '#0b0f19') : '#020617'
       }}
     >
-      <WelcomeSplash userName={currentUser?.name} isLoggedIn={Boolean(currentUser)} onOpenAuth={() => setIsAuthModalOpen(true)} />
+      <WelcomeSplash isOpen={isWelcomeOpen} onClose={handleCloseWelcome} userName={currentUser?.name} isLoggedIn={Boolean(currentUser)} onOpenAuth={() => setIsAuthModalOpen(true)} defaultMenuOpen={welcomeDefaultMenuOpen} />
 
       {/* Toast Notification */}
       {refreshToast && (
@@ -1645,6 +1669,7 @@ export const App: React.FC = () => {
         onOpenShare={() => setIsShareModalOpen(true)}
         onOpenCoupons={() => setActiveTabMode('coupons')}
         onOpenInstallApp={() => setIsInstallModalOpen(true)}
+        onOpenWelcome={handleOpenWelcome}
         onOpenAIChat={() => setIsAIChatOpen(true)}
         onOpenLiveTV={() => handleOpenLiveTV()}
         onRefreshLiveBulletin={handleRefreshBulletin}

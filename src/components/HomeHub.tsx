@@ -50,6 +50,7 @@ interface HomeHubProps {
   onOpenAdminAICoPilot?: () => void;
   onOpenAIPerformance?: () => void;
   onOpenLiveGoldModal?: () => void;
+  onOpenWelcome?: () => void;
   onLogout?: () => void;
   user?: User | null;
   allMatches?: Match[];
@@ -82,6 +83,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
   onOpenAdminAICoPilot,
   onOpenAIPerformance,
   onOpenLiveGoldModal,
+  onOpenWelcome,
   onLogout,
   user,
   allMatches = [],
@@ -720,6 +722,16 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </div>
 
           <div className="flex items-center space-x-1.5 sm:space-x-2">
+            {onOpenWelcome && (
+              <button
+                onClick={onOpenWelcome}
+                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 hover:bg-emerald-500/25 font-bold text-xs cursor-pointer active:scale-95 transition-all shadow-xs"
+                title="Platform Özelliklerini & Karşılama Ekranını Gör"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">Özellikler</span>
+              </button>
+            )}
             {user?.role === 'admin' && onOpenAdmin && (
               <button
                 onClick={onOpenAdmin}

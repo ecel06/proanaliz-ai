@@ -69,6 +69,7 @@ interface HeaderProps {
   activeSection?: 'home' | 'football' | 'horseRacing' | 'stocks';
   onSelectSection?: (section: 'home' | 'football' | 'horseRacing' | 'stocks') => void;
   onOpenFeedback?: () => void;
+  onOpenWelcome?: () => void;
   onOpenLiveTV?: () => void;
 }
 
@@ -83,6 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   onGoHome,
   onOpenFeedback,
+  onOpenWelcome,
   onOpenLiveTV,
   onOpenCustomAnalyzer,
   onOpenStandings,
@@ -151,15 +153,27 @@ export const Header: React.FC<HeaderProps> = ({
             ProAnaliz AI Geliştirme &amp; Test Aşamasındadır.
           </span>
         </div>
-        {onOpenFeedback && (
-          <button
-            onClick={onOpenFeedback}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-950 hover:bg-slate-900 text-amber-300 hover:text-white font-black text-[10px] shrink-0 cursor-pointer transition-all active:scale-95"
-          >
-            <MessageSquare className="w-3 h-3 text-amber-400" />
-            <span>Geri Bildirim</span>
-          </button>
-        )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {onOpenWelcome && (
+            <button
+              onClick={onOpenWelcome}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-950 hover:bg-emerald-900 text-emerald-300 hover:text-white font-black text-[10px] shrink-0 cursor-pointer transition-all active:scale-95"
+              title="Uygulama Özelliklerini İncele"
+            >
+              <Sparkles className="w-3 h-3 text-emerald-400" />
+              <span>Özellikler</span>
+            </button>
+          )}
+          {onOpenFeedback && (
+            <button
+              onClick={onOpenFeedback}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-950 hover:bg-slate-900 text-amber-300 hover:text-white font-black text-[10px] shrink-0 cursor-pointer transition-all active:scale-95"
+            >
+              <MessageSquare className="w-3 h-3 text-amber-400" />
+              <span>Geri Bildirim</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="w-full max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 min-w-0">

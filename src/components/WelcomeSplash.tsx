@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Sparkles,
   ChevronDown,
@@ -7,15 +7,17 @@ import {
   LogIn,
   ArrowRight,
   Layers,
+  X,
 } from 'lucide-react';
 
 interface WelcomeSplashProps {
+  isOpen: boolean;
+  onClose: () => void;
   userName?: string | null;
   isLoggedIn: boolean;
   onOpenAuth: () => void;
+  defaultMenuOpen?: boolean;
 }
-
-const SESSION_KEY = 'proanaliz_welcome_shown';
 
 interface FeatureCategory {
   id: 'football' | 'horses' | 'stocks';
@@ -67,46 +69,55 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
 ];
 
 export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
+  isOpen,
+  onClose,
   userName,
   isLoggedIn,
   onOpenAuth,
+  defaultMenuOpen = false,
 }) => {
-  const [visible, setVisible] = useState<boolean>(() => {
-    try {
-      return !sessionStorage.getItem(SESSION_KEY);
-    } catch {
-      return true;
-    }
-  });
   const [fadingOut, setFadingOut] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(defaultMenuOpen);
   const [activeCategory, setActiveCategory] = useState<'football' | 'horses' | 'stocks' | null>('football');
+
+  useEffect(() => {
+    if (isOpen) {
+      setFadingOut(false);
+      setMenuOpen(defaultMenuOpen);
+    }
+  }, [isOpen, defaultMenuOpen]);
 
   const dismiss = (afterFade?: () => void) => {
     if (fadingOut) return;
-    try {
-      sessionStorage.setItem(SESSION_KEY, '1');
-    } catch {
-      // ignore storage errors
-    }
     setFadingOut(true);
     window.setTimeout(() => {
-      setVisible(false);
+      onClose();
+      setFadingOut(false);
       if (afterFade) afterFade();
-    }, 360);
+    }, 320);
   };
 
-  if (!visible) return null;
+  if (!isOpen) return null;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Hoş Geldiniz"
-      className={`fixed inset-0 z-[100000] bg-[#030712] overflow-y-auto select-none transition-all duration-400 ease-out ${
+      className={`fixed inset-0 z-[100000] bg-[#030712] overflow-y-auto select-none transition-all duration-300 ease-out ${
         fadingOut ? 'opacity-0 scale-105 pointer-events-none' : 'opacity-100 scale-100'
       }`}
     >
+      {/* Top-right quick close button */}
+      <button
+        type="button"
+        onClick={() => dismiss()}
+        aria-label="Karşılama ekranını kapat"
+        className="fixed top-4 right-4 z-20 p-2 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/70 text-slate-300 hover:text-white transition-colors backdrop-blur-md"
+      >
+        <X className="w-4 h-4" />
+      </button>
+
       {/* Subtle radial dot-grid backdrop */}
       <div
         className="fixed inset-0 opacity-25 pointer-events-none"
