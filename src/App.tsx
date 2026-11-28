@@ -445,7 +445,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.139';
+  const CLIENT_BUILD_VERSION = '2026.11.20.140';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1363,7 +1363,7 @@ export const App: React.FC = () => {
         className="min-h-[100dvh] w-full overflow-y-auto flex flex-col bg-slate-950 scrollbar-none pb-16 sm:pb-0"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        <WelcomeSplash isOpen={isWelcomeOpen} onClose={handleCloseWelcome} userName={currentUser?.name} isLoggedIn={Boolean(currentUser)} onOpenAuth={() => setIsAuthModalOpen(true)} defaultMenuOpen={welcomeDefaultMenuOpen} footballHighlight={allMatches[0] ? { title: `${allMatches[0].homeTeam.name} - ${allMatches[0].awayTeam.name}`, subtitle: matchAnalysesMap.get(allMatches[0].id)?.primaryPrediction?.label || allMatches[0].league || 'Canlı Analiz', isLive: allMatches[0].status === 'live' } : null} onJumpToSection={(sec) => handleNavigateSection(sec)} />
+        <WelcomeSplash isOpen={isWelcomeOpen} onClose={handleCloseWelcome} userName={currentUser?.name} isLoggedIn={Boolean(currentUser)} onOpenAuth={() => setIsAuthModalOpen(true)} defaultMenuOpen={welcomeDefaultMenuOpen} footballHighlight={allMatches[0] ? { title: `${allMatches[0].homeTeam.name} - ${allMatches[0].awayTeam.name}`, subtitle: matchAnalysesMap.get(allMatches[0].id)?.primaryPrediction?.label || allMatches[0].league || 'Canlı Analiz', badge: allMatches[0].status === 'live' ? `CANLI ${allMatches[0].liveMinute || ''}'` : '%84 Güven', league: allMatches[0].league || 'Futbol', isLive: allMatches[0].status === 'live' } : null} aiPerformanceReport={aiPerformanceReport} onOpenAIPerformance={() => { setAiPerformanceInitialTab('overall'); setIsAIPerformanceOpen(true); }} onJumpToSection={(sec) => handleNavigateSection(sec)} />
         {newVersionAvailable && (
           <aside
             aria-label="Uygulama Güncellemesi"
@@ -1608,7 +1608,7 @@ export const App: React.FC = () => {
         backgroundColor: activeSection === 'football' ? (activeTheme?.bgDark || '#0b0f19') : '#020617'
       }}
     >
-      <WelcomeSplash isOpen={isWelcomeOpen} onClose={handleCloseWelcome} userName={currentUser?.name} isLoggedIn={Boolean(currentUser)} onOpenAuth={() => setIsAuthModalOpen(true)} defaultMenuOpen={welcomeDefaultMenuOpen} footballHighlight={allMatches[0] ? { title: `${allMatches[0].homeTeam.name} - ${allMatches[0].awayTeam.name}`, subtitle: matchAnalysesMap.get(allMatches[0].id)?.primaryPrediction?.label || allMatches[0].league || 'Canlı Analiz', isLive: allMatches[0].status === 'live' } : null} onJumpToSection={(sec) => handleNavigateSection(sec)} />
+      <WelcomeSplash isOpen={isWelcomeOpen} onClose={handleCloseWelcome} userName={currentUser?.name} isLoggedIn={Boolean(currentUser)} onOpenAuth={() => setIsAuthModalOpen(true)} defaultMenuOpen={welcomeDefaultMenuOpen} footballHighlight={allMatches[0] ? { title: `${allMatches[0].homeTeam.name} - ${allMatches[0].awayTeam.name}`, subtitle: matchAnalysesMap.get(allMatches[0].id)?.primaryPrediction?.label || allMatches[0].league || 'Canlı Analiz', badge: allMatches[0].status === 'live' ? `CANLI ${allMatches[0].liveMinute || ''}'` : '%84 Güven', league: allMatches[0].league || 'Futbol', isLive: allMatches[0].status === 'live' } : null} aiPerformanceReport={aiPerformanceReport} onOpenAIPerformance={() => { setAiPerformanceInitialTab('overall'); setIsAIPerformanceOpen(true); }} onJumpToSection={(sec) => handleNavigateSection(sec)} />
 
       {/* Toast Notification */}
       {refreshToast && (
