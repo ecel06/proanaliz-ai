@@ -1312,6 +1312,14 @@ export function autoCheckAndRolloverCoupons(allMatches, force = false) {
   const now = Date.now();
   const editorCoupons = Array.from(editorCouponsMap.values());
 
+  // Eğer bugünkü Kasa kuponu az önce yanlışlıkla 'archived' olduysa geri 'pending' yap
+  for (const c of editorCoupons) {
+    if (c.id.startsWith('ed_cp_kasa_') && c.status === 'archived' && c.createdAt && now - c.createdAt < 18 * 60 * 60 * 1000) {
+      c.status = 'pending';
+      saveEditorCoupons();
+    }
+  }
+
   // Günün bekleyen aktif kuponu var mı kontrol et
   const activeCoupon = editorCoupons.find((c) => {
     if (!c.matches || c.matches.length === 0) return false;
@@ -1523,8 +1531,15 @@ export function autoCheckAndRolloverCoupons(allMatches, force = false) {
     matches: couponMatches
   };
 
+  // Eski bekleyen kuponları arşive al (yeni Kasa ve Şeref kuponlarını eklemeden önce!)
+  for (const c of editorCouponsMap.values()) {
+    if (c.status === 'pending') {
+      c.status = 'archived';
+    }
+  }
+
   // 🛡️ Ayrıca en yüksek ihtimalli ilk 2 maçtan "2 MAÇLIK ÇELİK KASA BANKOSU" üret
-  const hasActiveKasa = editorCoupons.some(
+  const hasActiveKasa = Array.from(editorCouponsMap.values()).some(
     (c) => c.id.startsWith('ed_cp_kasa_') && c.status === 'pending' && (!c.createdAt || now - c.createdAt <= 22 * 60 * 60 * 1000)
   );
   if (!hasActiveKasa && couponMatches.length >= 2) {
@@ -1574,13 +1589,6 @@ export function autoCheckAndRolloverCoupons(allMatches, force = false) {
       matches: kasaMatches,
     };
     editorCouponsMap.set(kasaCoupon.id, kasaCoupon);
-  }
-
-  // Eski bekleyen kuponları arşive al
-  for (const c of editorCouponsMap.values()) {
-    if (c.status === 'pending') {
-      c.status = 'archived';
-    }
   }
 
   editorCouponsMap.set(newCoupon.id, newCoupon);
