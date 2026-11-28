@@ -179,32 +179,95 @@ body.no-scrollbar *::-webkit-scrollbar-thumb {
 @keyframes welcomeGrow {
   0% {
     opacity: 0;
-    transform: scale(0.55);
-    filter: blur(8px);
+    transform: scale(0.58) translateY(10px);
+    filter: blur(10px);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
     filter: blur(0px);
   }
 }
 @keyframes welcomeGlow {
   0% {
     opacity: 0;
-    transform: scale(0.6);
+    transform: scale(0.55);
   }
-  60% {
+  65% {
     opacity: 1;
-    transform: scale(1.08);
+    transform: scale(1.1);
   }
   100% {
-    opacity: 0.85;
+    opacity: 0.9;
     transform: scale(1);
+  }
+}
+@keyframes welcomeRing {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.45);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.1);
+  }
+}
+@keyframes welcomeLine {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+@keyframes welcomeSubtitle {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes welcomeShimmer {
+  0% {
+    background-size: 200% auto;
+    background-position: 0% center;
+  }
+  100% {
+    background-size: 200% auto;
+    background-position: 200% center;
+  }
+}
+@keyframes welcomeProgress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
   }
 }
 .animate-welcome-grow {
   animation: welcomeGrow 0.95s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .animate-welcome-glow {
-  animation: welcomeGlow 1.3s ease-out forwards;
+  animation: welcomeGlow 1.4s ease-out forwards;
+}
+.animate-welcome-ring {
+  animation: welcomeRing 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-welcome-line {
+  animation: welcomeLine 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both;
+}
+.animate-welcome-subtitle {
+  animation: welcomeSubtitle 0.65s ease-out 0.35s both;
+}
+.animate-welcome-shimmer {
+  animation: welcomeShimmer 2.4s linear infinite;
+}
+.animate-welcome-progress {
+  animation: welcomeProgress 1.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
