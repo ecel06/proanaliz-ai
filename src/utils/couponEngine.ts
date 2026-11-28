@@ -507,7 +507,7 @@ export function generateCuratedCoupons(
 
   const bankoRaw = pickTierMatches('banko', 3);
   const idealRaw = pickTierMatches('ideal', 3);
-  const surprizRaw = pickTierMatches('surpriz', 3);
+  const surprizRaw = pickTierMatches('surpriz', 4);
 
   const dayTitleSuffix = selectedDay === 'today' ? ' (Bugün)' : selectedDay === 'yesterday' ? ' (Dün)' : '';
 
