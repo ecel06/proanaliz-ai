@@ -187,12 +187,12 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
             )}
           </p>
 
-          {/* Expandable Feature Menu (Accordion) */}
-          <div className="w-full mt-6 animate-welcome-subtitle">
+          {/* Expandable Feature Menu (Floating z-index overlay - zero layout shift) */}
+          <div className="relative w-full mt-6 animate-welcome-subtitle z-40">
             <button
               type="button"
               onClick={() => setMenuOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-700/70 hover:border-emerald-500/40 text-left transition-all shadow-lg"
+              className="relative z-40 w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-slate-900/85 hover:bg-slate-900 border border-slate-700/70 hover:border-emerald-500/40 text-left transition-all shadow-lg"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shrink-0">
@@ -215,56 +215,65 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
             </button>
 
             {menuOpen && (
-              <div className="mt-2.5 space-y-2 text-left animate-fadeIn">
-                {FEATURE_CATEGORIES.map((cat) => {
-                  const isOpen = activeCategory === cat.id;
-                  return (
-                    <div
-                      key={cat.id}
-                      className="rounded-2xl bg-slate-900/75 border border-slate-800/90 overflow-hidden backdrop-blur-md"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setActiveCategory(isOpen ? null : cat.id)}
-                        className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-slate-800/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className={`p-1.5 rounded-lg border ${cat.accentClass}`}>
-                            {cat.icon}
-                          </span>
-                          <span className="text-xs sm:text-sm font-bold text-slate-100">
-                            {cat.title}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${cat.accentClass}`}>
-                            {cat.badge}
-                          </span>
-                          <ChevronDown
-                            className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
-                              isOpen ? 'rotate-180 text-white' : ''
-                            }`}
-                          />
-                        </div>
-                      </button>
+              <>
+                {/* Click-outside backdrop to close floating menu */}
+                <div
+                  className="fixed inset-0 z-30 bg-black/45 backdrop-blur-[2px]"
+                  onClick={() => setMenuOpen(false)}
+                  aria-hidden="true"
+                />
 
-                      {isOpen && (
-                        <ul className="px-4 pb-3 pt-1 space-y-1.5 border-t border-slate-800/70">
-                          {cat.items.map((item, idx) => (
-                            <li
-                              key={idx}
-                              className="flex items-start gap-2 text-[11px] sm:text-xs text-slate-300 leading-relaxed"
-                            >
-                              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                <div className="absolute left-0 right-0 top-full mt-2 z-50 max-h-[50vh] overflow-y-auto rounded-2xl bg-slate-950/95 border border-emerald-500/35 p-2.5 space-y-2 text-left shadow-[0_24px_60px_rgba(0,0,0,0.9)] backdrop-blur-xl animate-fadeIn">
+                  {FEATURE_CATEGORIES.map((cat) => {
+                    const isOpen = activeCategory === cat.id;
+                    return (
+                      <div
+                        key={cat.id}
+                        className="rounded-xl bg-slate-900/90 border border-slate-800/90 overflow-hidden"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setActiveCategory(isOpen ? null : cat.id)}
+                          className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-slate-800/60 transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className={`p-1.5 rounded-lg border ${cat.accentClass}`}>
+                              {cat.icon}
+                            </span>
+                            <span className="text-xs sm:text-sm font-bold text-slate-100">
+                              {cat.title}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${cat.accentClass}`}>
+                              {cat.badge}
+                            </span>
+                            <ChevronDown
+                              className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                                isOpen ? 'rotate-180 text-white' : ''
+                              }`}
+                            />
+                          </div>
+                        </button>
+
+                        {isOpen && (
+                          <ul className="px-4 pb-3 pt-1.5 space-y-1.5 border-t border-slate-800/70">
+                            {cat.items.map((item, idx) => (
+                              <li
+                                key={idx}
+                                className="flex items-start gap-2 text-[11px] sm:text-xs text-slate-300 leading-relaxed"
+                              >
+                                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
 
