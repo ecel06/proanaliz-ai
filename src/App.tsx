@@ -20,6 +20,7 @@ import { AuthModal } from './components/AuthModal';
 import { HomeHub } from './components/HomeHub';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { DraggableAIFab } from './components/DraggableAIFab';
+import { WelcomeSplash } from './components/WelcomeSplash';
 import { User, getStoredUser, clearAuthSession, fetchCurrentUser, SiteAnnouncement, fetchAnnouncementApi, fetchUserFullAppSyncApi, saveUserFullAppSyncApi } from './utils/authHelper';
 import { computeAIPerformance } from './utils/aiPerformanceHelper';
 import type { AIChatCoupon, AICouponItem } from './utils/aiChatEngine';
@@ -421,7 +422,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.127';
+  const CLIENT_BUILD_VERSION = '2026.11.20.128';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1339,6 +1340,7 @@ export const App: React.FC = () => {
         className="min-h-[100dvh] w-full overflow-y-auto flex flex-col bg-slate-950 scrollbar-none pb-16 sm:pb-0"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
+        <WelcomeSplash userName={currentUser?.name} />
         {newVersionAvailable && (
           <aside
             aria-label="Uygulama Güncellemesi"
@@ -1582,6 +1584,7 @@ export const App: React.FC = () => {
         backgroundColor: activeSection === 'football' ? (activeTheme?.bgDark || '#0b0f19') : '#020617'
       }}
     >
+      <WelcomeSplash userName={currentUser?.name} />
 
       {/* Toast Notification */}
       {refreshToast && (
