@@ -40,7 +40,7 @@ import {
   Coins,
   Radio,
 } from 'lucide-react';
-import { User } from '../../utils/authHelper';
+import { User, fetchUserStockSyncApi, saveUserStockSyncApi } from '../../utils/authHelper';
 import {
   MacroTicker,
   StockAlertItem,
@@ -298,18 +298,24 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
     }
   });
 
-  const saveAlerts = (next: StockAlertItem[]) => {
+  const saveAlerts = (next: StockAlertItem[], syncCloud = true) => {
     setAlerts(next);
     try {
       localStorage.setItem('proanaliz_stock_alerts_v1', JSON.stringify(next));
     } catch { }
+    if (syncCloud) {
+      saveUserStockSyncApi({ alerts: next });
+    }
   };
 
-  const savePortfolio = (next: StockPortfolioPosition[]) => {
+  const savePortfolio = (next: StockPortfolioPosition[], syncCloud = true) => {
     setPortfolio(next);
     try {
       localStorage.setItem('proanaliz_stock_portfolio_v1', JSON.stringify(next));
     } catch { }
+    if (syncCloud) {
+      saveUserStockSyncApi({ portfolio: next });
+    }
   };
 
   const handleToggleTavanWatchdog = (stock: StockItem, streak?: TavanStreakInfo) => {
@@ -360,9 +366,62 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       try {
         localStorage.setItem('proanaliz_stock_watchlist', JSON.stringify(next));
       } catch { }
+      saveUserStockSyncApi({ watchlist: next });
       return next;
     });
   };
+
+  // ☁️ Bulut Hesap Senkronizasyonu (PC <-> Mobil Portföy, Alarm, Takip Listesi)
+  useEffect(() => {
+    if (!user?.id) return;
+    let mounted = true;
+    fetchUserStockSyncApi().then((res) => {
+      if (!mounted || !res.success || !res.stockData) return;
+      const sd = res.stockData;
+      const cloudPort = Array.isArray(sd.portfolio) ? sd.portfolio : [];
+      const cloudAlerts = Array.isArray(sd.alerts) ? sd.alerts : [];
+      const cloudWatch = Array.isArray(sd.watchlist) ? sd.watchlist : [];
+
+      const localPortRaw = localStorage.getItem('proanaliz_stock_portfolio_v1');
+      const localPort: StockPortfolioPosition[] = localPortRaw ? JSON.parse(localPortRaw) : [];
+      const localAlertsRaw = localStorage.getItem('proanaliz_stock_alerts_v1');
+      const localAlerts: StockAlertItem[] = localAlertsRaw ? JSON.parse(localAlertsRaw) : [];
+      const localWatchRaw = localStorage.getItem('proanaliz_stock_watchlist');
+      const localWatch: string[] = localWatchRaw ? JSON.parse(localWatchRaw) : [];
+
+      let needsPush = false;
+      const pushPayload: { portfolio?: any[]; alerts?: any[]; watchlist?: string[] } = {};
+
+      if (cloudPort.length > 0) {
+        setPortfolio(cloudPort);
+        try { localStorage.setItem('proanaliz_stock_portfolio_v1', JSON.stringify(cloudPort)); } catch {}
+      } else if (localPort.length > 0) {
+        pushPayload.portfolio = localPort;
+        needsPush = true;
+      }
+
+      if (cloudAlerts.length > 0) {
+        setAlerts(cloudAlerts);
+        try { localStorage.setItem('proanaliz_stock_alerts_v1', JSON.stringify(cloudAlerts)); } catch {}
+      } else if (localAlerts.length > 0) {
+        pushPayload.alerts = localAlerts;
+        needsPush = true;
+      }
+
+      if (cloudWatch.length > 0) {
+        setWatchlist(cloudWatch);
+        try { localStorage.setItem('proanaliz_stock_watchlist', JSON.stringify(cloudWatch)); } catch {}
+      } else if (localWatch.length > 0) {
+        pushPayload.watchlist = localWatch;
+        needsPush = true;
+      }
+
+      if (needsPush) {
+        saveUserStockSyncApi(pushPayload);
+      }
+    });
+    return () => { mounted = false; };
+  }, [user?.id]);
 
   // Debounce live backend search
   useEffect(() => {
@@ -579,7 +638,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
       return pos;
     });
     if (changed) {
-      savePortfolio(nextPortfolio);
+      savePortfolio(nextPortfolio, false);
     }
   }, [stocks]);
 

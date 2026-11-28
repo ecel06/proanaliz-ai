@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { StockViopContract, StockItem } from '../../types/stocks';
 import { INITIAL_VIOP_CONTRACTS, INITIAL_VIOP_BROKER_POSITIONS } from '../../data/viopData';
+import { fetchUserStockSyncApi, saveUserStockSyncApi } from '../../utils/authHelper';
 
 interface StockViopModalProps {
   isOpen: boolean;
@@ -81,12 +82,28 @@ export const StockViopModal: React.FC<StockViopModalProps> = ({
     }
   });
 
-  const saveViopPositions = (next: ViopVirtualPosition[]) => {
+  const saveViopPositions = (next: ViopVirtualPosition[], syncCloud = true) => {
     setViopPositions(next);
     try {
       localStorage.setItem('proanaliz_viop_portfolio_v1', JSON.stringify(next));
     } catch {}
+    if (syncCloud) {
+      saveUserStockSyncApi({ viopPortfolio: next });
+    }
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetchUserStockSyncApi().then((res) => {
+      if (!res.success || !res.stockData) return;
+      const cloudViop = Array.isArray(res.stockData.viopPortfolio) ? res.stockData.viopPortfolio : [];
+      if (cloudViop.length > 0) {
+        saveViopPositions(cloudViop, false);
+      } else if (viopPositions.length > 0) {
+        saveUserStockSyncApi({ viopPortfolio: viopPositions });
+      }
+    });
+  }, [isOpen]);
 
   const showLocalToast = (msg: string) => {
     setViopToast(msg);

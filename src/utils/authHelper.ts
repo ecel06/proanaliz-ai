@@ -427,6 +427,45 @@ export async function updateUserPreferenceApi(preference: 'football' | 'horses' 
   }
 }
 
+export async function fetchUserStockSyncApi(): Promise<{
+  success: boolean;
+  stockData?: {
+    portfolio?: any[];
+    alerts?: any[];
+    watchlist?: string[];
+    viopPortfolio?: any[];
+    updatedAt?: number;
+  };
+}> {
+  const token = getStoredToken();
+  if (!token) return { success: false };
+  try {
+    const res = await fetch('/api/user/stocks-sync', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: false };
+  }
+}
+
+export async function saveUserStockSyncApi(payload: {
+  portfolio?: any[];
+  alerts?: any[];
+  watchlist?: string[];
+  viopPortfolio?: any[];
+}): Promise<void> {
+  const token = getStoredToken();
+  if (!token) return;
+  try {
+    await fetch('/api/user/stocks-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload)
+    });
+  } catch {}
+}
+
 // --- Editor Curated Coupons API ---
 export async function fetchEditorCouponsApi(): Promise<{ success: boolean; coupons?: EditorCoupon[]; error?: string }> {
   try {

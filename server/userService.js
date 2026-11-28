@@ -1087,6 +1087,42 @@ export function updateUserPreference(userId, preferredInterest) {
   return { success: true, user: sanitizeUser(user) };
 }
 
+export function getUserStockSync(userId) {
+  const user = usersMap.get(userId);
+  if (!user) return { success: false, error: 'Kullanıcı bulunamadı.' };
+  return {
+    success: true,
+    stockData: user.stockData || {
+      portfolio: [],
+      alerts: [],
+      watchlist: [],
+      viopPortfolio: [],
+      updatedAt: 0,
+    },
+  };
+}
+
+export function saveUserStockSync(userId, payload = {}) {
+  const user = usersMap.get(userId);
+  if (!user) return { success: false, error: 'Kullanıcı bulunamadı.' };
+  const current = user.stockData || {
+    portfolio: [],
+    alerts: [],
+    watchlist: [],
+    viopPortfolio: [],
+    updatedAt: 0,
+  };
+  user.stockData = {
+    portfolio: Array.isArray(payload.portfolio) ? payload.portfolio : current.portfolio,
+    alerts: Array.isArray(payload.alerts) ? payload.alerts : current.alerts,
+    watchlist: Array.isArray(payload.watchlist) ? payload.watchlist : current.watchlist,
+    viopPortfolio: Array.isArray(payload.viopPortfolio) ? payload.viopPortfolio : current.viopPortfolio,
+    updatedAt: Date.now(),
+  };
+  saveUsers();
+  return { success: true, stockData: user.stockData };
+}
+
 // --- User Profile & Account Management ---
 export function updateOwnProfile(userId, { name, phone, currentPassword, newPassword }) {
   const user = usersMap.get(userId);
