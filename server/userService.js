@@ -1623,53 +1623,106 @@ export function autoCheckAndRolloverCoupons(allMatches, force = false) {
   const hasActiveKasa = Array.from(editorCouponsMap.values()).some(
     (c) => c.id.startsWith('ed_cp_kasa_') && c.status === 'pending' && (!c.createdAt || now - c.createdAt <= 22 * 60 * 60 * 1000)
   );
-  if (!hasActiveKasa && couponMatches.length >= 2) {
-    const kasaMatches = selectedItems.slice(0, 2).map((item, idx) => {
+  if (!hasActiveKasa && scored.length >= 2) {
+    const buildSafeKasaPick = (item) => {
       const m = item.match;
       const formDiff = item.homeForm - item.awayForm;
       const homeFStr = fmtTrForm(m.homeTeam?.form);
       const awayFStr = fmtTrForm(m.awayTeam?.form);
-      let kPred = '1X Çifte Şans';
-      let kOdds = m.odds?.ms1 ? Math.max(1.20, Number((m.odds.ms1 * 0.76).toFixed(2))) : 1.28;
-      let kReason = `${m.homeTeam.name} (${homeFStr}) form ve saha avantajıyla kaybetmeyecektir.`;
-      if (formDiff <= -22 && m.odds?.ms2) {
-        kPred = 'X2 Çifte Şans';
-        kOdds = Math.max(1.20, Number((m.odds.ms2 * 0.74).toFixed(2)));
-        kReason = `${m.awayTeam.name} (${awayFStr}) güçlü deplasman formuyla yenilmez.`;
-      } else if (item.totalExp >= 2.9 && m.odds?.over15) {
-        kPred = '1.5 ÜST';
-        kOdds = m.odds.over15;
-        kReason = `Yüksek gol beklentisi (${item.totalExp.toFixed(2)} xG) ile en az 2 gol bekleniyor.`;
-      } else if (formDiff >= 28 && m.odds?.ms1 && m.odds.ms1 <= 1.55) {
-        kPred = 'MS 1';
-        kOdds = m.odds.ms1;
-        kReason = `${m.homeTeam.name} (${homeFStr}) rakibi (${awayFStr}) karşısında net favori.`;
+      const candidates = [];
+
+      if (m.odds?.ms1) {
+        const dc1x = Math.max(1.15, Number((m.odds.ms1 * 0.76).toFixed(2)));
+        candidates.push({
+          prediction: '1X Çifte Şans',
+          odds: dc1x,
+          reason: `${m.homeTeam.name} (${homeFStr}) form ve saha avantajıyla kaybetmeyecektir.`,
+          priority: formDiff >= 0 ? 1 : 3,
+        });
       }
-      const orig = couponMatches[idx];
+      if (formDiff <= -15 && m.odds?.ms2) {
+        const dcx2 = Math.max(1.15, Number((m.odds.ms2 * 0.74).toFixed(2)));
+        candidates.push({
+          prediction: 'X2 Çifte Şans',
+          odds: dcx2,
+          reason: `${m.awayTeam.name} (${awayFStr}) güçlü deplasman formuyla yenilmez.`,
+          priority: 1,
+        });
+      }
+      if (item.totalExp >= 2.75 && m.odds?.over15) {
+        candidates.push({
+          prediction: '1.5 ÜST',
+          odds: Number(m.odds.over15),
+          reason: `Yüksek gol beklentisi (${item.totalExp.toFixed(2)} xG) ile en az 2 gol bekleniyor.`,
+          priority: 2,
+        });
+      }
+      if (formDiff >= 25 && m.odds?.ms1 && m.odds.ms1 <= 1.55) {
+        candidates.push({
+          prediction: 'MS 1',
+          odds: Number(m.odds.ms1),
+          reason: `${m.homeTeam.name} (${homeFStr}) rakibi (${awayFStr}) karşısında net favori.`,
+          priority: 2,
+        });
+      }
+
+      const safe = candidates
+        .filter((c) => c.odds >= 1.12 && c.odds <= 1.65)
+        .sort((a, b) => a.priority - b.priority || a.odds - b.odds);
+      return safe[0] || null;
+    };
+
+    const kasaCandidates = [];
+    for (const item of scored) {
+      const pick = buildSafeKasaPick(item);
+      if (pick) {
+        kasaCandidates.push({ item, pick });
+        if (kasaCandidates.length >= 2) break;
+      }
+    }
+
+    const kasaMatches = kasaCandidates.map(({ item, pick }, idx) => {
+      const m = item.match;
+      let matchTimeStr = '20:00';
+      if (m.time) {
+        if (m.time.includes('T')) {
+          const d = new Date(m.time);
+          matchTimeStr = d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Istanbul' });
+        } else {
+          matchTimeStr = m.time;
+        }
+      }
       return {
-        ...orig,
-        prediction: kPred,
-        odds: Number(kOdds.toFixed(2)),
+        id: String(m.id),
+        homeTeam: m.homeTeam.name,
+        awayTeam: m.awayTeam.name,
+        league: m.league || 'Lig',
+        matchTime: matchTimeStr,
+        matchDate: formatIstanbulMatchDate(m.date || m.time),
+        prediction: pick.prediction,
+        odds: Number(pick.odds.toFixed(2)),
         confidence: 95 - idx * 2,
-        reason: kReason,
+        reason: pick.reason,
       };
     });
-    const kasaOdds = Math.round(kasaMatches[0].odds * kasaMatches[1].odds * 100) / 100;
-    const kasaCoupon = {
-      id: `ed_cp_kasa_${Date.now() + 1}`,
-      title: isTodayCoupon ? '🛡️ GÜNÜN 2 MAÇLIK ÇELİK KASA BANKOSU' : '🛡️ YARININ 2 MAÇLIK ÇELİK KASA BANKOSU',
-      subtitle: 'Maksimum İsabet Odaklı 2 Maçlık Kasa Kuponu',
-      category: 'football',
-      confidence: 94,
-      totalOdds: kasaOdds,
-      isVipOnly: true,
-      status: 'pending',
-      author: 'ProAnaliz AI Kasa Robotu',
-      systemSuggestion: 'Direkt Kasa (2 Maç)',
-      createdAt: Date.now() + 1,
-      matches: kasaMatches,
-    };
-    editorCouponsMap.set(kasaCoupon.id, kasaCoupon);
+    if (kasaMatches.length === 2) {
+      const kasaOdds = Math.round(kasaMatches[0].odds * kasaMatches[1].odds * 100) / 100;
+      const kasaCoupon = {
+        id: `ed_cp_kasa_${Date.now() + 1}`,
+        title: isTodayCoupon ? '🛡️ GÜNÜN 2 MAÇLIK ÇELİK KASA BANKOSU' : '🛡️ YARININ 2 MAÇLIK ÇELİK KASA BANKOSU',
+        subtitle: 'Maksimum İsabet Odaklı 2 Maçlık Kasa Kuponu',
+        category: 'football',
+        confidence: 94,
+        totalOdds: kasaOdds,
+        isVipOnly: true,
+        status: 'pending',
+        author: 'ProAnaliz AI Kasa Robotu',
+        systemSuggestion: 'Direkt Kasa (2 Maç)',
+        createdAt: Date.now() + 1,
+        matches: kasaMatches,
+      };
+      editorCouponsMap.set(kasaCoupon.id, kasaCoupon);
+    }
   }
 
   editorCouponsMap.set(newCoupon.id, newCoupon);
