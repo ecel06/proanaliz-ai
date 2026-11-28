@@ -107,7 +107,9 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
   const [fadingOut, setFadingOut] = useState(false);
   const [menuOpen, setMenuOpen] = useState(defaultMenuOpen);
   const [selectedCategory, setSelectedCategory] = useState<FeatureCategory | null>(null);
-  const [showRadarDetails, setShowRadarDetails] = useState(true);
+  const [showRadarDetails, setShowRadarDetails] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 768 : true
+  );
 
   const [bestHorse, setBestHorse] = useState<{
     title: string;
@@ -135,6 +137,7 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
       setFadingOut(false);
       setMenuOpen(defaultMenuOpen);
       setSelectedCategory(null);
+      setShowRadarDetails(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
     }
   }, [isOpen, defaultMenuOpen]);
 
