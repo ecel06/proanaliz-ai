@@ -842,6 +842,105 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </p>
         </div>
 
+        {/* ⚡ GÜNÜN AI ÖZETİ: Tek Bakışta 3 Dünyadan En Güçlü Fırsat */}
+        <section
+          aria-label="Günün AI Özeti"
+          className="w-full rounded-2xl bg-slate-900/75 border border-slate-800/90 p-2.5 sm:p-3 shadow-lg"
+        >
+          <div className="flex items-center justify-between px-1 mb-2">
+            <div className="flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-200">
+                Günün AI Özeti • Tek Bakışta 3 Fırsat
+              </span>
+            </div>
+            <span className="text-[10px] font-semibold text-slate-400 hidden sm:inline">
+              Dokunarak ilgili bölüme git →
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {/* ⚽ Futbol AI Özeti */}
+            <button
+              type="button"
+              onClick={() => onSelectFootball(bestFootballMatch?.rawMatch)}
+              className="flex items-center justify-between gap-2.5 p-2.5 rounded-xl bg-slate-950/80 hover:bg-emerald-950/40 border border-slate-800 hover:border-emerald-500/45 text-left transition-all group cursor-pointer"
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                  <span>⚽ Futbol AI</span>
+                  {bestFootballMatch?.isLive && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px]">
+                      CANLI
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs font-black text-white truncate mt-0.5">
+                  {bestFootballMatch ? bestFootballMatch.title : 'Günün Bülteni Hazır'}
+                </div>
+                <div className="text-[11px] text-slate-400 truncate">
+                  {bestFootballMatch ? bestFootballMatch.recommendation : 'AI Kuponları & Maç Analizleri'}
+                </div>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 shrink-0 transition-colors" />
+            </button>
+
+            {/* 🏇 At Yarışı AI Özeti */}
+            <button
+              type="button"
+              onClick={() =>
+                onSelectHorseRacing(
+                  bestHorse
+                    ? { programId: bestHorse.programId, raceNo: bestHorse.raceNo, horseNumber: bestHorse.horseNumber }
+                    : null
+                )
+              }
+              className="flex items-center justify-between gap-2.5 p-2.5 rounded-xl bg-slate-950/80 hover:bg-amber-950/35 border border-slate-800 hover:border-amber-500/45 text-left transition-all group cursor-pointer"
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                  <span>🏇 TJK AI</span>
+                  <span className="text-[9px] text-amber-300/80 font-semibold truncate">
+                    {bestHorse?.place || 'Günün Programı'}
+                  </span>
+                </div>
+                <div className="text-xs font-black text-white truncate mt-0.5">
+                  {bestHorse ? bestHorse.title : '6’lı Ganyan Şablonu'}
+                </div>
+                <div className="text-[11px] text-slate-400 truncate">
+                  {bestHorse ? bestHorse.recommendation : 'TJK Koşu & AGF Analizleri'}
+                </div>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 shrink-0 transition-colors" />
+            </button>
+
+            {/* 📈 Borsa AI Özeti */}
+            <button
+              type="button"
+              onClick={() => onSelectStocks(bestStock?.symbol || null)}
+              className="flex items-center justify-between gap-2.5 p-2.5 rounded-xl bg-slate-950/80 hover:bg-cyan-950/35 border border-slate-800 hover:border-cyan-500/45 text-left transition-all group cursor-pointer"
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+                  <span>📈 Borsa AI</span>
+                  {bestStock && (
+                    <span className={`text-[9px] font-black ${bestStock.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {bestStock.changePct}
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs font-black text-white truncate mt-0.5">
+                  {bestStock ? `${bestStock.symbol} • ${bestStock.price}` : 'BIST Quant Radarı'}
+                </div>
+                <div className="text-[11px] text-slate-400 truncate">
+                  {bestStock ? bestStock.recommendation : 'VİOP, Altın & Hisse Sinyalleri'}
+                </div>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 shrink-0 transition-colors" />
+            </button>
+          </div>
+        </section>
+
         {/* 🪙 2-KATLI CANLI ALTIN & DÖVİZ PİYASALARI RADAR BANNER (Full Width Ticker) */}
         <div
           onClick={() => onSelectStocks()}
