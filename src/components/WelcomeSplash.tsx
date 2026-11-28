@@ -290,7 +290,7 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
         />
 
         {/* Growing Header & Controls */}
-        <div className="relative w-full max-w-md flex flex-col items-center text-center animate-welcome-grow">
+        <div className="relative z-50 w-full max-w-md flex flex-col items-center text-center animate-welcome-grow">
           {/* Glowing Glass Emblem */}
           <div className="mb-3 p-[1.5px] rounded-2xl bg-gradient-to-br from-emerald-400/75 via-teal-300/30 to-cyan-400/75 shadow-[0_0_32px_rgba(16,185,129,0.28)]">
             <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-[14px] bg-slate-950/90 backdrop-blur-md flex items-center justify-center">
@@ -384,7 +384,7 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
         </div>
 
         {/* 🌟 GÜNÜN YAPAY ZEKA ÖZETİ & FIRSATLARI (HomeHub'dan taşındı) */}
-        <div className="relative w-full max-w-4xl mt-5 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-900/95 border border-amber-500/30 p-2.5 sm:p-3 space-y-1.5 shadow-2xl animate-welcome-subtitle backdrop-blur-md">
+        <div className="relative z-10 w-full max-w-4xl mt-5 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-900/95 border border-amber-500/30 p-2.5 sm:p-3 space-y-1.5 shadow-2xl animate-welcome-subtitle backdrop-blur-md">
           {/* Üst Başlık & Canlı Genel Başarı Skoru */}
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5 flex-wrap gap-2">
             <div className="flex items-center gap-2">
