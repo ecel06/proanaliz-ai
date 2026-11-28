@@ -1016,23 +1016,25 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </div>
         </div>
 
-        {/* Clean Portal Cards: Futbol, At Yarışı & Borsa (Proportioned to fit screen) */}
+        {/* Clean Portal Cards: Futbol, At Yarışı & Borsa (Proportioned to fit screen without mobile scroll) */}
         <div className="w-full shrink-0 grid grid-cols-1 md:grid-cols-3 gap-1.5 sm:gap-2.5 md:gap-3">
           {/* FUTBOL CARD */}
           <button
             onClick={() => onSelectFootball()}
-            className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-emerald-400/70 p-2 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-emerald-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-0.5 sm:space-y-1 md:space-y-1.5"
+            className="group relative rounded-xl sm:rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-emerald-400/70 px-3 py-2 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-emerald-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-row md:flex-col items-center justify-between md:justify-center gap-2.5 md:gap-0 md:space-y-1.5"
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-lg sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-emerald-500/10">
-              ⚽
-            </div>
-            <div className="text-center space-y-0.5">
-              <div className="text-base sm:text-lg md:text-lg font-black tracking-tight text-white group-hover:text-emerald-300 transition-colors">
-                Futbol
+            <div className="flex md:flex-col items-center gap-2.5 md:gap-1.5 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-lg sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-emerald-500/10 shrink-0">
+                ⚽
               </div>
-              <p className="text-[10px] text-slate-400">Canlı Skorlar • Poisson AI • xG</p>
+              <div className="text-left md:text-center space-y-0.5 min-w-0">
+                <div className="text-sm sm:text-lg font-black tracking-tight text-white group-hover:text-emerald-300 transition-colors">
+                  Futbol
+                </div>
+                <p className="text-[10px] text-slate-400 truncate">Canlı Skorlar • Poisson AI • xG</p>
+              </div>
             </div>
-            <div className="inline-flex items-center space-x-1 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-400 opacity-80 group-hover:opacity-100">
+            <div className="inline-flex items-center space-x-1 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-400 opacity-85 group-hover:opacity-100 shrink-0">
               <span>Giriş Yap</span>
               <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -1041,18 +1043,20 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           {/* AT YARIŞI CARD */}
           <button
             onClick={() => onSelectHorseRacing()}
-            className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-400/70 p-2 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-amber-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-0.5 sm:space-y-1 md:space-y-1.5"
+            className="group relative rounded-xl sm:rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-400/70 px-3 py-2 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-amber-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-row md:flex-col items-center justify-between md:justify-center gap-2.5 md:gap-0 md:space-y-1.5"
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-lg sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-amber-500/10">
-              🏇
-            </div>
-            <div className="text-center space-y-0.5">
-              <div className="text-base sm:text-lg md:text-lg font-black tracking-tight text-white group-hover:text-amber-300 transition-colors">
-                At Yarışı
+            <div className="flex md:flex-col items-center gap-2.5 md:gap-1.5 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-lg sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-amber-500/10 shrink-0">
+                🏇
               </div>
-              <p className="text-[10px] text-slate-400">TJK Bülteni • Canlı AGF • Altılı Robotu</p>
+              <div className="text-left md:text-center space-y-0.5 min-w-0">
+                <div className="text-sm sm:text-lg font-black tracking-tight text-white group-hover:text-amber-300 transition-colors">
+                  At Yarışı
+                </div>
+                <p className="text-[10px] text-slate-400 truncate">TJK Bülteni • Canlı AGF • Altılı Robotu</p>
+              </div>
             </div>
-            <div className="inline-flex items-center space-x-1 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-amber-400 opacity-80 group-hover:opacity-100">
+            <div className="inline-flex items-center space-x-1 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-amber-400 opacity-85 group-hover:opacity-100 shrink-0">
               <span>Giriş Yap</span>
               <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -1061,18 +1065,20 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           {/* BORSA CARD */}
           <button
             onClick={() => onSelectStocks()}
-            className="group relative rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-cyan-400/70 p-2 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-cyan-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-col items-center justify-center space-y-0.5 sm:space-y-1 md:space-y-1.5"
+            className="group relative rounded-xl sm:rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-cyan-400/70 px-3 py-2 sm:p-3 md:py-2.5 md:px-3 text-left transition-all duration-200 cursor-pointer shadow-xl hover:shadow-cyan-500/15 hover:-translate-y-0.5 active:scale-[0.99] flex flex-row md:flex-col items-center justify-between md:justify-center gap-2.5 md:gap-0 md:space-y-1.5"
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-10 md:h-10 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-lg sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-cyan-500/10">
-              📈
-            </div>
-            <div className="text-center space-y-0.5">
-              <div className="text-base sm:text-lg md:text-lg font-black tracking-tight text-white group-hover:text-cyan-300 transition-colors">
-                Borsa
+            <div className="flex md:flex-col items-center gap-2.5 md:gap-1.5 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-lg sm:text-2xl group-hover:scale-110 transition-transform shadow-lg shadow-cyan-500/10 shrink-0">
+                📈
               </div>
-              <p className="text-[10px] text-slate-400">BIST &amp; ABD • Quant Al-Sat • Canlı KAP</p>
+              <div className="text-left md:text-center space-y-0.5 min-w-0">
+                <div className="text-sm sm:text-lg font-black tracking-tight text-white group-hover:text-cyan-300 transition-colors">
+                  Borsa
+                </div>
+                <p className="text-[10px] text-slate-400 truncate">BIST &amp; ABD • Quant Al-Sat • Canlı KAP</p>
+              </div>
             </div>
-            <div className="inline-flex items-center space-x-1 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-cyan-400 opacity-80 group-hover:opacity-100">
+            <div className="inline-flex items-center space-x-1 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-cyan-400 opacity-85 group-hover:opacity-100 shrink-0">
               <span>Giriş Yap</span>
               <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </div>
@@ -1080,7 +1086,7 @@ export const HomeHub: React.FC<HomeHubProps> = ({
         </div>
 
         {/* Subtle quick utility links */}
-        <div className="w-full flex items-center justify-center gap-3 sm:gap-6 text-xs text-slate-400 py-1.5 flex-wrap">
+        <div className="w-full flex items-center justify-center gap-2 sm:gap-5 text-xs text-slate-400 py-0.5 sm:py-1.5 flex-wrap">
           {onOpenInstallModal && (
             <button
               onClick={onOpenInstallModal}

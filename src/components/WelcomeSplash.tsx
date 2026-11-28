@@ -249,7 +249,7 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label="Hoş Geldiniz"
-      className={`fixed inset-0 z-[90000] bg-[#030712] overflow-y-auto select-none transition-all duration-300 ease-out ${
+      className={`fixed inset-0 h-[100dvh] z-[90000] bg-[#030712] overflow-y-auto md:overflow-hidden overflow-x-hidden select-none transition-all duration-300 ease-out ${
         fadingOut ? 'opacity-0 scale-105 pointer-events-none' : 'opacity-100 scale-100'
       }`}
     >
@@ -285,7 +285,7 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
         aria-hidden="true"
       />
 
-      <div className="relative min-h-full w-full flex flex-col items-center justify-center px-3 sm:px-6 py-8">
+      <div className="relative min-h-full w-full flex flex-col items-center justify-center px-3 sm:px-6 py-4 sm:py-5 overflow-hidden">
         {/* Expanding subtle pulse ring */}
         <div
           className="w-44 h-44 sm:w-56 sm:h-56 rounded-full border border-emerald-400/25 pointer-events-none animate-welcome-ring absolute"
