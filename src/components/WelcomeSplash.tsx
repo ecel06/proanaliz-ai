@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Layers,
   X,
+  Zap,
 } from 'lucide-react';
 
 interface WelcomeSplashProps {
@@ -17,6 +18,8 @@ interface WelcomeSplashProps {
   isLoggedIn: boolean;
   onOpenAuth: () => void;
   defaultMenuOpen?: boolean;
+  footballHighlight?: { title: string; subtitle: string; isLive?: boolean } | null;
+  onJumpToSection?: (section: 'football' | 'horseRacing' | 'stocks') => void;
 }
 
 interface FeatureCategory {
@@ -84,10 +87,14 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
   isLoggedIn,
   onOpenAuth,
   defaultMenuOpen = false,
+  footballHighlight = null,
+  onJumpToSection,
 }) => {
   const [fadingOut, setFadingOut] = useState(false);
   const [menuOpen, setMenuOpen] = useState(defaultMenuOpen);
   const [selectedCategory, setSelectedCategory] = useState<FeatureCategory | null>(null);
+  const [horseSummary, setHorseSummary] = useState<{ title: string; subtitle: string } | null>(null);
+  const [stockSummary, setStockSummary] = useState<{ title: string; subtitle: string; change?: string; isPos?: boolean } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -96,6 +103,49 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
       setSelectedCategory(null);
     }
   }, [isOpen, defaultMenuOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+
+    fetch('/api/horse-racing/bulletin')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!active || !data?.programs?.length) return;
+        const prog = data.programs[0];
+        const firstRace = prog?.races?.[0];
+        const topHorse = firstRace?.horses?.[0];
+        if (topHorse) {
+          setHorseSummary({
+            title: `${topHorse.number ? `#${topHorse.number} ` : ''}${topHorse.name}`,
+            subtitle: `${prog.place || 'TJK'} • ${firstRace.no || 1}. Koşu`,
+          });
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/stocks/screener?market=bist')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!active || !data?.stocks?.length) return;
+        const sorted = [...data.stocks].sort((a: any, b: any) => (b.changePct || 0) - (a.changePct || 0));
+        const top = sorted[0];
+        if (top) {
+          const chg = Number(top.changePct || 0);
+          setStockSummary({
+            title: `${top.symbol} • ${Number(top.close || top.price || 0).toFixed(2)} ₺`,
+            subtitle: top.name || 'BIST Quant Lideri',
+            change: `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`,
+            isPos: chg >= 0,
+          });
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, [isOpen]);
 
   const dismiss = (afterFade?: () => void) => {
     if (fadingOut) return;
@@ -187,6 +237,74 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
               'Futbol, At Yarışı ve Borsada Yapay Zeka Gücü'
             )}
           </p>
+
+          {/* ⚡ Günün AI Özeti — Tek Bakışta 3 Dünya */}
+          <div className="w-full mt-5 rounded-2xl bg-slate-900/70 border border-slate-800/90 p-2.5 text-left animate-welcome-subtitle backdrop-blur-md">
+            <div className="flex items-center justify-between px-1 mb-2">
+              <div className="flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-200">
+                  Günün AI Özeti
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-400">Canlı Fırsatlar</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+              <button
+                type="button"
+                onClick={() => dismiss(() => onJumpToSection?.('football'))}
+                className="p-2 rounded-xl bg-slate-950/85 hover:bg-emerald-950/40 border border-slate-800/90 hover:border-emerald-500/40 transition-all text-left"
+              >
+                <div className="flex items-center justify-between text-[10px] font-bold text-emerald-400">
+                  <span>⚽ Futbol</span>
+                  {footballHighlight?.isLive && (
+                    <span className="px-1 rounded bg-rose-500/20 text-rose-300 text-[9px]">CANLI</span>
+                  )}
+                </div>
+                <div className="text-[11px] font-bold text-white truncate mt-0.5">
+                  {footballHighlight ? footballHighlight.title : 'Günün Bülteni'}
+                </div>
+                <div className="text-[10px] text-slate-400 truncate">
+                  {footballHighlight ? footballHighlight.subtitle : 'AI Kupon & Analizler'}
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => dismiss(() => onJumpToSection?.('horseRacing'))}
+                className="p-2 rounded-xl bg-slate-950/85 hover:bg-amber-950/35 border border-slate-800/90 hover:border-amber-500/40 transition-all text-left"
+              >
+                <div className="text-[10px] font-bold text-amber-400">🏇 At Yarışı</div>
+                <div className="text-[11px] font-bold text-white truncate mt-0.5">
+                  {horseSummary ? horseSummary.title : 'TJK Bülteni'}
+                </div>
+                <div className="text-[10px] text-slate-400 truncate">
+                  {horseSummary ? horseSummary.subtitle : '6’lı Ganyan & TJK TV'}
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => dismiss(() => onJumpToSection?.('stocks'))}
+                className="p-2 rounded-xl bg-slate-950/85 hover:bg-cyan-950/35 border border-slate-800/90 hover:border-cyan-500/40 transition-all text-left"
+              >
+                <div className="flex items-center justify-between text-[10px] font-bold text-cyan-400">
+                  <span>📈 Borsa</span>
+                  {stockSummary?.change && (
+                    <span className={stockSummary.isPos ? 'text-emerald-400' : 'text-rose-400'}>
+                      {stockSummary.change}
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] font-bold text-white truncate mt-0.5">
+                  {stockSummary ? stockSummary.title : 'BIST & VİOP'}
+                </div>
+                <div className="text-[10px] text-slate-400 truncate">
+                  {stockSummary ? stockSummary.subtitle : 'Quant & Altın Radarı'}
+                </div>
+              </button>
+            </div>
+          </div>
 
           {/* Expandable Feature Menu (Floating z-index overlay - zero layout shift) */}
           <div className="relative w-full mt-6 animate-welcome-subtitle z-40">
