@@ -422,7 +422,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.129';
+  const CLIENT_BUILD_VERSION = '2026.11.20.130';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1340,7 +1340,7 @@ export const App: React.FC = () => {
         className="min-h-[100dvh] w-full overflow-y-auto flex flex-col bg-slate-950 scrollbar-none pb-16 sm:pb-0"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        <WelcomeSplash userName={currentUser?.name} />
+        <WelcomeSplash userName={currentUser?.name} isLoggedIn={Boolean(currentUser)} onOpenAuth={() => setIsAuthModalOpen(true)} />
         {newVersionAvailable && (
           <aside
             aria-label="Uygulama Güncellemesi"
@@ -1584,7 +1584,7 @@ export const App: React.FC = () => {
         backgroundColor: activeSection === 'football' ? (activeTheme?.bgDark || '#0b0f19') : '#020617'
       }}
     >
-      <WelcomeSplash userName={currentUser?.name} />
+      <WelcomeSplash userName={currentUser?.name} isLoggedIn={Boolean(currentUser)} onOpenAuth={() => setIsAuthModalOpen(true)} />
 
       {/* Toast Notification */}
       {refreshToast && (
