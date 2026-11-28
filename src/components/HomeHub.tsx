@@ -159,30 +159,6 @@ export const HomeHub: React.FC<HomeHubProps> = ({
     return macroRates;
   }, [macroRates, tickerCategory]);
 
-  // Mobile scroll down detection for floating guide indicator
-  const [hasScrolledDown, setHasScrolledDown] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-      setHasScrolledDown(scrollY > 50);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    document.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      document.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  const scrollToOpportunities = () => {
-    const el = document.getElementById('daily-opportunities-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   // PWA Install prompt listener
   useEffect(() => {
     const handler = (e: any) => {
@@ -1103,23 +1079,6 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </button>
         </div>
 
-        {/* 🎯 MOBİLDE AŞAĞI KAYDIR VE FIRSATLARI KEŞFET ŞERİDİ */}
-        <div
-          onClick={scrollToOpportunities}
-          className="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/15 via-emerald-500/15 to-amber-500/15 border border-amber-400/40 flex items-center justify-between text-xs font-bold text-amber-300 cursor-pointer active:scale-[0.99] transition-all hover:border-amber-400/70 shadow-sm"
-        >
-          <div className="flex items-center gap-2 text-[11px] sm:text-xs font-black text-white">
-            <span className="text-sm animate-bounce">👇</span>
-            <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent font-black">
-              Günün Fırsatları &amp; Başarı Karnesi
-            </span>
-          </div>
-          <div className="flex items-center gap-1 text-[10px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full shadow-xs">
-            <span>Aşağı Kaydır</span>
-            <ChevronDown className="w-3 h-3 animate-pulse" />
-          </div>
-        </div>
-
         {/* Subtle quick utility links */}
         <div className="w-full flex items-center justify-center gap-3 sm:gap-6 text-xs text-slate-400 py-1.5 flex-wrap">
           {onOpenInstallModal && (
@@ -1184,19 +1143,6 @@ export const HomeHub: React.FC<HomeHubProps> = ({
           </div>
         </div>
       </div>
-
-      {/* 🚀 Mobil Ekran İçin Yüzen 'Fırsatlar Aşağıda' Göstergesi (Kullanıcı aşağı inene kadar zıplayarak rehberlik eder) */}
-      {!hasScrolledDown && (
-        <button
-          type="button"
-          onClick={scrollToOpportunities}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 sm:hidden flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/95 backdrop-blur-md border-2 border-amber-400/80 shadow-2xl shadow-amber-500/40 text-amber-300 font-black text-xs cursor-pointer active:scale-95 transition-all animate-bounce"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          <span>Günün Fırsatları &amp; Karnesi Aşağıda</span>
-          <ChevronDown className="w-4 h-4 text-amber-300" />
-        </button>
-      )}
     </div>
   );
 };
