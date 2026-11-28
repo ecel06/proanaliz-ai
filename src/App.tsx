@@ -445,7 +445,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.146';
+  const CLIENT_BUILD_VERSION = '2026.11.20.147';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -1414,7 +1414,7 @@ export const App: React.FC = () => {
             <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-white/20 text-white shrink-0">
               DUYURU
             </span>
-            <span className="truncate">{siteAnnouncement.text}</span>
+            <div className="flex-1 sm:flex-initial min-w-0 overflow-hidden"><span className="sm:hidden animate-announcement-marquee whitespace-nowrap"><span className="pr-10">{siteAnnouncement.text}</span><span className="pr-10" aria-hidden="true">{siteAnnouncement.text}</span></span><span className="hidden sm:inline truncate">{siteAnnouncement.text}</span></div>
             {siteAnnouncement.link && (
               <a
                 href={siteAnnouncement.link}
@@ -1628,7 +1628,7 @@ export const App: React.FC = () => {
           <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-white/20 text-white shrink-0">
             DUYURU
           </span>
-          <span className="truncate">{siteAnnouncement.text}</span>
+          <div className="flex-1 sm:flex-initial min-w-0 overflow-hidden"><span className="sm:hidden animate-announcement-marquee whitespace-nowrap"><span className="pr-10">{siteAnnouncement.text}</span><span className="pr-10" aria-hidden="true">{siteAnnouncement.text}</span></span><span className="hidden sm:inline truncate">{siteAnnouncement.text}</span></div>
           {siteAnnouncement.link && (
             <a
               href={siteAnnouncement.link}

@@ -271,3 +271,20 @@ body.no-scrollbar *::-webkit-scrollbar-thumb {
 .animate-welcome-progress {
   animation: welcomeProgress 1.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
+
+/* Mobil duyuru şeridi kesintisiz kayan yazı */
+@keyframes announcementMarquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+@media (max-width: 639px) {
+  .animate-announcement-marquee {
+    display: inline-flex;
+    width: max-content;
+    animation: announcementMarquee 16s linear infinite;
+  }
+}
