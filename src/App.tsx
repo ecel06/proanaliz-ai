@@ -20,7 +20,7 @@ import { AuthModal } from './components/AuthModal';
 import { HomeHub } from './components/HomeHub';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { DraggableAIFab } from './components/DraggableAIFab';
-import { User, getStoredUser, clearAuthSession, fetchCurrentUser, SiteAnnouncement, fetchAnnouncementApi } from './utils/authHelper';
+import { User, getStoredUser, clearAuthSession, fetchCurrentUser, SiteAnnouncement, fetchAnnouncementApi, fetchUserFullAppSyncApi, saveUserFullAppSyncApi } from './utils/authHelper';
 import { computeAIPerformance } from './utils/aiPerformanceHelper';
 import type { AIChatCoupon, AICouponItem } from './utils/aiChatEngine';
 
@@ -421,7 +421,7 @@ export const App: React.FC = () => {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
 
   // Check for app version updates from server - Ultra-responsive instant detection
-  const CLIENT_BUILD_VERSION = '2026.11.20.125';
+  const CLIENT_BUILD_VERSION = '2026.11.20.126';
 
   // Capture viral referral link if accessed via ?ref=...
   useEffect(() => {
@@ -644,6 +644,96 @@ export const App: React.FC = () => {
       prev.includes(matchId) ? prev.filter(id => id !== matchId) : [...prev, matchId]
     );
   };
+
+  // ☁️ Tüm Uygulama Bulut Senkronizasyonu (Betslip, Favoriler, Kasa, At Yarışı Kuponları, Kırılım Karnesi, Tema)
+  const hasHydratedAppSyncRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (!currentUser?.id) {
+      hasHydratedAppSyncRef.current = false;
+      return;
+    }
+    let mounted = true;
+    fetchUserFullAppSyncApi().then((res) => {
+      if (!mounted || !res.success || !res.appData) return;
+      const d = res.appData;
+      const pushPayload: Record<string, any> = {};
+      let needsPush = false;
+
+      if (Array.isArray(d.betslipItems) && d.betslipItems.length > 0) {
+        setBetslipItems(d.betslipItems);
+        try { localStorage.setItem('proanaliz_betslip_items', JSON.stringify(d.betslipItems)); } catch {}
+      } else if (betslipItems.length > 0) {
+        pushPayload.betslipItems = betslipItems;
+        needsPush = true;
+      }
+
+      if (Array.isArray(d.favorites) && d.favorites.length > 0) {
+        setFavorites(d.favorites);
+        try { localStorage.setItem('proanaliz_favorites', JSON.stringify(d.favorites)); } catch {}
+      } else if (favorites.length > 0) {
+        pushPayload.favorites = favorites;
+        needsPush = true;
+      }
+
+      try {
+        const localSlipsRaw = localStorage.getItem('proanaliz_saved_slips');
+        const localSlips = localSlipsRaw ? JSON.parse(localSlipsRaw) : [];
+        if (Array.isArray(d.savedSlips) && d.savedSlips.length > 0) {
+          localStorage.setItem('proanaliz_saved_slips', JSON.stringify(d.savedSlips));
+        } else if (Array.isArray(localSlips) && localSlips.length > 0) {
+          pushPayload.savedSlips = localSlips;
+          needsPush = true;
+        }
+
+        const localInitRaw = localStorage.getItem('proanaliz_initial_bankroll');
+        const localInit = localInitRaw ? Number(localInitRaw) : null;
+        if (typeof d.initialBankroll === 'number' && d.initialBankroll > 0) {
+          localStorage.setItem('proanaliz_initial_bankroll', String(d.initialBankroll));
+        } else if (localInit && localInit > 0) {
+          pushPayload.initialBankroll = localInit;
+          needsPush = true;
+        }
+
+        const localHrRaw = localStorage.getItem('proanaliz_hr_coupons');
+        const localHr = localHrRaw ? JSON.parse(localHrRaw) : [];
+        if (Array.isArray(d.hrCoupons) && d.hrCoupons.length > 0) {
+          localStorage.setItem('proanaliz_hr_coupons', JSON.stringify(d.hrCoupons));
+        } else if (Array.isArray(localHr) && localHr.length > 0) {
+          pushPayload.hrCoupons = localHr;
+          needsPush = true;
+        }
+
+        const localLedgerRaw = localStorage.getItem('proanaliz_breakout_ledger_v1');
+        const localLedger = localLedgerRaw ? JSON.parse(localLedgerRaw) : [];
+        if (Array.isArray(d.breakoutLedger) && d.breakoutLedger.length > 0) {
+          localStorage.setItem('proanaliz_breakout_ledger_v1', JSON.stringify(d.breakoutLedger));
+        } else if (Array.isArray(localLedger) && localLedger.length > 0) {
+          pushPayload.breakoutLedger = localLedger;
+          needsPush = true;
+        }
+
+        const localThemeRaw = localStorage.getItem('proanaliz_active_team_theme');
+        if (d.activeTheme) {
+          localStorage.setItem('proanaliz_active_team_theme', JSON.stringify(d.activeTheme));
+        } else if (localThemeRaw) {
+          pushPayload.activeTheme = JSON.parse(localThemeRaw);
+          needsPush = true;
+        }
+      } catch {}
+
+      if (needsPush) {
+        saveUserFullAppSyncApi(pushPayload);
+      }
+      hasHydratedAppSyncRef.current = true;
+    });
+    return () => { mounted = false; };
+  }, [currentUser?.id]);
+
+  // Sync betslip & favorites changes to cloud after hydration
+  useEffect(() => {
+    if (!currentUser?.id || !hasHydratedAppSyncRef.current) return;
+    saveUserFullAppSyncApi({ betslipItems, favorites });
+  }, [betslipItems, favorites, currentUser?.id]);
 
   // 3. Pre-calculate Poisson analyses for all matches in bulletin
   const allMatches: Match[] = weeklyMatches;

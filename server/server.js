@@ -72,7 +72,9 @@ import {
   getAdminAiState,
   saveAdminAiState,
   getUserStockSync,
-  saveUserStockSync
+  saveUserStockSync,
+  getUserFullAppSync,
+  saveUserFullAppSync
 } from './userService.js';
 import {
   securityHeadersMiddleware,
@@ -781,6 +783,14 @@ app.get('/api/user/stocks-sync', authMiddleware, (req, res) => {
 
 app.post('/api/user/stocks-sync', authMiddleware, (req, res) => {
   res.json(saveUserStockSync(req.userId, req.body));
+});
+
+app.get('/api/user/app-sync', authMiddleware, (req, res) => {
+  res.json(getUserFullAppSync(req.userId));
+});
+
+app.post('/api/user/app-sync', authMiddleware, (req, res) => {
+  res.json(saveUserFullAppSync(req.userId, req.body));
 });
 
 // Update own profile (name, phone, password)
@@ -1651,7 +1661,7 @@ TEMEL İLKE (ÇOK ÖNEMLİ):
 });
 
 // 5. Mobil ve Yerel Ağ Bağlantı Bilgisi (PWA Kurulumu için)
-const APP_VERSION = '2026.11.20.125';
+const APP_VERSION = '2026.11.20.126';
 
 app.get('/api/version', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

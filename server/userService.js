@@ -1123,6 +1123,51 @@ export function saveUserStockSync(userId, payload = {}) {
   return { success: true, stockData: user.stockData };
 }
 
+export function getUserFullAppSync(userId) {
+  const user = usersMap.get(userId);
+  if (!user) return { success: false, error: 'Kullanıcı bulunamadı.' };
+  return {
+    success: true,
+    appData: user.appSyncData || {
+      betslipItems: [],
+      favorites: [],
+      savedSlips: [],
+      initialBankroll: null,
+      hrCoupons: [],
+      breakoutLedger: [],
+      activeTheme: null,
+      updatedAt: 0,
+    },
+  };
+}
+
+export function saveUserFullAppSync(userId, payload = {}) {
+  const user = usersMap.get(userId);
+  if (!user) return { success: false, error: 'Kullanıcı bulunamadı.' };
+  const current = user.appSyncData || {
+    betslipItems: [],
+    favorites: [],
+    savedSlips: [],
+    initialBankroll: null,
+    hrCoupons: [],
+    breakoutLedger: [],
+    activeTheme: null,
+    updatedAt: 0,
+  };
+  user.appSyncData = {
+    betslipItems: Array.isArray(payload.betslipItems) ? payload.betslipItems : current.betslipItems,
+    favorites: Array.isArray(payload.favorites) ? payload.favorites : current.favorites,
+    savedSlips: Array.isArray(payload.savedSlips) ? payload.savedSlips : current.savedSlips,
+    initialBankroll: typeof payload.initialBankroll === 'number' ? payload.initialBankroll : current.initialBankroll,
+    hrCoupons: Array.isArray(payload.hrCoupons) ? payload.hrCoupons : current.hrCoupons,
+    breakoutLedger: Array.isArray(payload.breakoutLedger) ? payload.breakoutLedger : current.breakoutLedger,
+    activeTheme: payload.activeTheme !== undefined ? payload.activeTheme : current.activeTheme,
+    updatedAt: Date.now(),
+  };
+  saveUsers();
+  return { success: true, appData: user.appSyncData };
+}
+
 // --- User Profile & Account Management ---
 export function updateOwnProfile(userId, { name, phone, currentPassword, newPassword }) {
   const user = usersMap.get(userId);

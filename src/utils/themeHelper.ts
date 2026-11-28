@@ -164,6 +164,8 @@ export const DEFAULT_THEME: TeamTheme = PRESET_THEMES[PRESET_THEMES.length - 1];
 
 const STORAGE_KEY = 'proanaliz_active_team_theme';
 
+import { saveUserFullAppSyncApi } from './authHelper';
+
 export function getStoredTheme(): TeamTheme {
   if (typeof window === 'undefined') return DEFAULT_THEME;
   try {
@@ -185,6 +187,7 @@ export function saveStoredTheme(theme: TeamTheme): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(theme));
   } catch {}
+  saveUserFullAppSyncApi({ activeTheme: theme });
 }
 
 /**

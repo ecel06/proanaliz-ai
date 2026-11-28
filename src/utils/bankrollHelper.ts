@@ -2,6 +2,7 @@
 // Virtual Bankroll & Saved Slip Tracking Engine for ProAnaliz AI.
 
 import { Match, UserBetslipItem } from '../types';
+import { saveUserFullAppSyncApi } from './authHelper';
 import { getMatchLiveState } from './liveMatchHelper';
 import { calculateSettledSystemPayout, SavedSystemConfig } from './systemBetHelper';
 
@@ -50,6 +51,7 @@ export function setInitialBankroll(amount: number): void {
   try {
     localStorage.setItem(BANKROLL_INIT_KEY, String(amount));
   } catch {}
+  saveUserFullAppSyncApi({ initialBankroll: amount });
 }
 
 export function getSavedSlips(): SavedSlip[] {
@@ -85,6 +87,7 @@ export function saveNewSlip(
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch {}
+  saveUserFullAppSyncApi({ savedSlips: updated });
   return newSlip;
 }
 
@@ -93,12 +96,14 @@ export function deleteSavedSlip(id: string): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(slips));
   } catch {}
+  saveUserFullAppSyncApi({ savedSlips: slips });
 }
 
 export function clearAllSavedSlips(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch {}
+  saveUserFullAppSyncApi({ savedSlips: [] });
 }
 
 function evaluateSinglePickResult(

@@ -466,6 +466,51 @@ export async function saveUserStockSyncApi(payload: {
   } catch {}
 }
 
+export async function fetchUserFullAppSyncApi(): Promise<{
+  success: boolean;
+  appData?: {
+    betslipItems?: any[];
+    favorites?: string[];
+    savedSlips?: any[];
+    initialBankroll?: number | null;
+    hrCoupons?: any[];
+    breakoutLedger?: any[];
+    activeTheme?: any;
+    updatedAt?: number;
+  };
+}> {
+  const token = getStoredToken();
+  if (!token) return { success: false };
+  try {
+    const res = await fetch('/api/user/app-sync', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  } catch {
+    return { success: false };
+  }
+}
+
+export async function saveUserFullAppSyncApi(payload: {
+  betslipItems?: any[];
+  favorites?: string[];
+  savedSlips?: any[];
+  initialBankroll?: number | null;
+  hrCoupons?: any[];
+  breakoutLedger?: any[];
+  activeTheme?: any;
+}): Promise<void> {
+  const token = getStoredToken();
+  if (!token) return;
+  try {
+    await fetch('/api/user/app-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload)
+    });
+  } catch {}
+}
+
 // --- Editor Curated Coupons API ---
 export async function fetchEditorCouponsApi(): Promise<{ success: boolean; coupons?: EditorCoupon[]; error?: string }> {
   try {

@@ -40,7 +40,7 @@ import {
   Coins,
   Radio,
 } from 'lucide-react';
-import { User, fetchUserStockSyncApi, saveUserStockSyncApi } from '../../utils/authHelper';
+import { User, fetchUserStockSyncApi, saveUserStockSyncApi, saveUserFullAppSyncApi } from '../../utils/authHelper';
 import {
   MacroTicker,
   StockAlertItem,
@@ -899,6 +899,7 @@ export const StockMarketView: React.FC<StockMarketViewProps> = ({
         else ledger.unshift(newSnap);
         ledger = ledger.slice(0, 5);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(ledger));
+        saveUserFullAppSyncApi({ breakoutLedger: ledger });
       }
 
       if (ledger.length === 0) return null;

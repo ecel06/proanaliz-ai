@@ -65,6 +65,7 @@ import {
   getLegBadgeForRace,
   getLegRaceNumbers,
 } from '../../utils/horseRacingEngine';
+import { fetchUserFullAppSyncApi, saveUserFullAppSyncApi } from '../../utils/authHelper';
 
 type HRSubTab = 'bulletin' | 'ai_coupons' | 'ikili_cifte' | 'results' | 'changes';
 type SortMode = 'number' | 'agf' | 'ganyan' | 'ai' | 'handicap';
@@ -1898,6 +1899,17 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
     );
   }, [legRaceNumbers, currentSelections]);
 
+  useEffect(() => {
+    fetchUserFullAppSyncApi().then((res) => {
+      if (res.success && res.appData && Array.isArray(res.appData.hrCoupons) && res.appData.hrCoupons.length > 0) {
+        setSavedCoupons(res.appData.hrCoupons);
+        try {
+          localStorage.setItem('proanaliz_hr_coupons', JSON.stringify(res.appData.hrCoupons));
+        } catch {}
+      }
+    });
+  }, []);
+
   const handleSaveCoupon = () => {
     if (!activeGame || !detail || totalCombinations === 0) return;
     const legStr = legRaceNumbers
@@ -1928,6 +1940,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
     try {
       localStorage.setItem('proanaliz_hr_coupons', JSON.stringify(next));
     } catch { }
+    saveUserFullAppSyncApi({ hrCoupons: next });
     onShowToast?.(
       `${entry.title} kaydedildi (${totalCombinations} kolon • ${totalCouponCost.toFixed(2)} ₺)`,
       'success'
@@ -1940,6 +1953,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
     try {
       localStorage.setItem('proanaliz_hr_coupons', JSON.stringify(next));
     } catch { }
+    saveUserFullAppSyncApi({ hrCoupons: next });
     onShowToast?.('Kupon silindi.', 'info');
   };
 
@@ -1949,6 +1963,7 @@ export const HorseRacingView: React.FC<HorseRacingViewProps> = ({
       try {
         localStorage.removeItem('proanaliz_hr_coupons');
       } catch { }
+      saveUserFullAppSyncApi({ hrCoupons: [] });
       onShowToast?.('Tüm kayıtlı kuponlar temizlendi.', 'info');
     }
   };
