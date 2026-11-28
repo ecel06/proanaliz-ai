@@ -351,7 +351,7 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
             {menuOpen && (
               <>
                 <div
-                  className="fixed inset-0 z-30 bg-black/45 backdrop-blur-[2px]"
+                  className="fixed inset-0 z-30 bg-black/65 backdrop-blur-sm"
                   onClick={() => setMenuOpen(false)}
                   aria-hidden="true"
                 />
@@ -387,7 +387,11 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
         </div>
 
         {/* 🌟 GÜNÜN YAPAY ZEKA ÖZETİ & FIRSATLARI (HomeHub'dan taşındı) */}
-        <div className="relative z-10 w-full max-w-4xl mt-5 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-900/95 border border-amber-500/30 p-2.5 sm:p-3 space-y-1.5 shadow-2xl animate-welcome-subtitle backdrop-blur-md">
+        <div
+          className={`relative z-10 w-full max-w-4xl mt-5 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-900/95 border border-amber-500/30 p-2.5 sm:p-3 space-y-1.5 shadow-2xl animate-welcome-subtitle backdrop-blur-md transition-all duration-300 ${
+            menuOpen ? 'opacity-20 blur-[1px] pointer-events-none' : 'opacity-100'
+          }`}
+        >
           {/* Üst Başlık & Canlı Genel Başarı Skoru */}
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5 flex-wrap gap-2">
             <div className="flex items-center gap-2">
@@ -554,7 +558,11 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
         </div>
 
         {/* Primary Action Buttons */}
-        <div className="w-full max-w-md mt-5 space-y-2.5 animate-welcome-subtitle">
+        <div
+          className={`w-full max-w-md mt-5 space-y-2.5 animate-welcome-subtitle transition-all duration-300 ${
+            menuOpen ? 'opacity-20 blur-[1px] pointer-events-none' : 'opacity-100'
+          }`}
+        >
           {!isLoggedIn ? (
             <>
               <button
