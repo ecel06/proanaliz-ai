@@ -87,12 +87,13 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
 }) => {
   const [fadingOut, setFadingOut] = useState(false);
   const [menuOpen, setMenuOpen] = useState(defaultMenuOpen);
-  const [activeCategory, setActiveCategory] = useState<'football' | 'horses' | 'stocks' | null>('football');
+  const [selectedCategory, setSelectedCategory] = useState<FeatureCategory | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setFadingOut(false);
       setMenuOpen(defaultMenuOpen);
+      setSelectedCategory(null);
     }
   }, [isOpen, defaultMenuOpen]);
 
@@ -223,55 +224,30 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
                   aria-hidden="true"
                 />
 
-                <div className="absolute left-0 right-0 top-full mt-2 z-50 max-h-[50vh] overflow-y-auto rounded-2xl bg-slate-950/95 border border-emerald-500/35 p-2.5 space-y-2 text-left shadow-[0_24px_60px_rgba(0,0,0,0.9)] backdrop-blur-xl animate-fadeIn">
-                  {FEATURE_CATEGORIES.map((cat) => {
-                    const isOpen = activeCategory === cat.id;
-                    return (
-                      <div
-                        key={cat.id}
-                        className="rounded-xl bg-slate-900/90 border border-slate-800/90 overflow-hidden"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => setActiveCategory(isOpen ? null : cat.id)}
-                          className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-slate-800/60 transition-colors"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <span className={`p-1.5 rounded-lg border ${cat.accentClass}`}>
-                              {cat.icon}
-                            </span>
-                            <span className="text-xs sm:text-sm font-bold text-slate-100">
-                              {cat.title}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${cat.accentClass}`}>
-                              {cat.badge}
-                            </span>
-                            <ChevronDown
-                              className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
-                                isOpen ? 'rotate-180 text-white' : ''
-                              }`}
-                            />
-                          </div>
-                        </button>
-
-                        {isOpen && (
-                          <ul className="px-4 pb-3 pt-1.5 space-y-1.5 border-t border-slate-800/70">
-                            {cat.items.map((item, idx) => (
-                              <li
-                                key={idx}
-                                className="flex items-start gap-2 text-[11px] sm:text-xs text-slate-300 leading-relaxed"
-                              >
-                                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                                <span>{item}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl bg-slate-950/95 border border-emerald-500/35 p-2.5 space-y-2 text-left shadow-[0_24px_60px_rgba(0,0,0,0.9)] backdrop-blur-xl animate-fadeIn">
+                  {FEATURE_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat)}
+                      className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800/80 border border-slate-800/90 hover:border-emerald-500/40 transition-all group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className={`p-1.5 rounded-lg border ${cat.accentClass}`}>
+                          {cat.icon}
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold text-slate-100 group-hover:text-white">
+                          {cat.title}
+                        </span>
                       </div>
-                    );
-                  })}
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${cat.accentClass}`}>
+                          {cat.badge}
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </>
             )}
@@ -311,6 +287,68 @@ export const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Separate Floating Feature Detail Frame (on top of everything with z-[95000]) */}
+      {selectedCategory && (
+        <div
+          className="fixed inset-0 z-[95000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn"
+          onClick={() => setSelectedCategory(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-3xl bg-slate-950 border-2 border-emerald-500/45 shadow-[0_24px_80px_rgba(0,0,0,0.95)] overflow-hidden"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800/80 bg-slate-900/70">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className={`p-2 rounded-xl border ${selectedCategory.accentClass}`}>
+                  {selectedCategory.icon}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-black text-white truncate">
+                    {selectedCategory.title}
+                  </h3>
+                  <span className={`inline-block mt-0.5 text-[10px] font-bold px-2 py-0.5 rounded-full border ${selectedCategory.accentClass}`}>
+                    {selectedCategory.badge}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedCategory(null)}
+                aria-label="Detay penceresini kapat"
+                className="p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Feature list */}
+            <ul className="p-5 space-y-2.5 max-h-[60vh] overflow-y-auto text-left">
+              {selectedCategory.items.map((item, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-200 leading-relaxed"
+                >
+                  <span className="mt-1.5 w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* Footer close */}
+            <div className="px-5 py-3.5 border-t border-slate-800/80 bg-slate-900/50 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedCategory(null)}
+                className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-colors"
+              >
+                Tamam, Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
